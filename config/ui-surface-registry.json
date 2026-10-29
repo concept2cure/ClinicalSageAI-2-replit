@@ -63,7 +63,7 @@
       "projects": { "status": "active", "railTarget": "projects" },
       "communication-center": { "status": "active", "railTarget": null, "note": "not a rail item by the 2026-07-28 decision; reachable via ⌘K, deep link, project home, AnA navigate_to" },
       "apps": { "status": "active", "accountMenu": ["Subscription & features"], "note": "the account menu, for organization administrators, since 2026-10-25: features open from inside a project (docs/design/CLIENT_JOURNEY_2026-10-25.md)" },
-      "settings": { "status": "active", "railTarget": null, "accountMenu": ["Admin", "Platform licensing", "Access requests", "Usage & limits", "Billing", "Compare subscriptions", "Set up a workspace", "Log out"] }
+      "settings": { "status": "active", "railTarget": null, "accountMenu": ["Admin", "Platform licensing", "Access requests", "Usage & limits", "Subscription & billing", "Compare subscriptions", "Set up a workspace", "Log out"] }
     }
   },
   "limits": {

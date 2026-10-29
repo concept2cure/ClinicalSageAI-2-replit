@@ -1073,22 +1073,11 @@ export const UI_SURFACES: UiSurface[] = [
     notes: 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification.',
     engineering: 'Routes: /api/intelligent-reports.',
   },
-  {
-    id: 'billing',
-    label: 'Billing',
-    navTier: 'admin',
-    layoutMode: 'billing',
-    icon: 'creditCard',
-    group: 'admin',
-    uiKit: null,
-    apiPrefixes: ['/api/billing/invoices', '/api/billing/budgets', '/api/billing/portal'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Usage, invoices, budgets, alerts. See MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS.',
-  },
+  /* No `billing`. Billing folded into Licensing (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/): the invoice list,
+     checkout and the billing portal are Licensing's, for billing
+     administrators, and `licensing` already claims all of '/api/billing'
+     (ui-surface-registry.ui-v2.ts). The id is an alias of `licensing`. */
   /* No `ana-memory`. AnA memory folded into the conversation (D2, 2026-10-29;
      docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/): its two real reads are
      the conversation's "What AnA remembers", which claims the one route it reads

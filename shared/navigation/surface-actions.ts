@@ -1341,33 +1341,20 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Usage & billing ──
-  // UsageBilling is ONE component mounted under TWO registry ids ('usage' /
-  // 'billing') depending on which nav target brought the person here — only
-  // one publishes at a time (usePublishSurfaceContext('usage', activeId===
-  // 'usage' ? ctx : null), symmetrically for 'billing'). Independently, the
-  // SAME rendered screen has three internal on-screen tabs (usage / billing /
-  // limits — the `tab` state, already reported as `facts.openTab` regardless
-  // of activeId). The act channel mirrors the publish gating: whichever
-  // registry id is currently mounted owns the switch between all three tabs.
+  // ── Usage & limits ──
+  // The usage screen (UsageBilling.tsx) has two tabs: usage (the session window
+  // and weekly caps) and limits (the rate limits the platform enforces, P-68).
+  // Its billing tab and the `billing` id it opened under are gone: the invoices
+  // folded into Licensing (D2, 2026-10-29; fold-billing), so there is no
+  // `billing.open-tab` and no billing tab to open.
   {
     id: 'usage.open-tab',
     surfaceId: 'usage',
-    label: 'Open a usage/billing tab',
+    label: 'Open a usage tab',
     description:
-      'Switch between the usage-metering, billing/invoices, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+      'Switch between the usage-metering tab and the rate-limits tab. Read-only: it never changes a plan, a cap or a limit — those stay deliberate human acts. Invoices are not on this screen; they are on Licensing, for billing administrators.',
     params: [
-      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
-    ],
-  },
-  {
-    id: 'billing.open-tab',
-    surfaceId: 'billing',
-    label: 'Open a usage/billing tab',
-    description:
-      'Switch between the billing/invoices, usage-metering, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
-    params: [
-      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'limits'] },
     ],
   },
 

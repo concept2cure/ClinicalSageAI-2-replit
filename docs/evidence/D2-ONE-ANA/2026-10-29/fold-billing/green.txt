@@ -261,3 +261,331 @@ tests/ci/no-ghost-globals.contract.test.ts
 ## Regression set, 62 suites (Part 1's 51 + onboarding, sign-up, free-tier service, webhook contract)
  Test Files  62 passed (62)
       Tests  741 passed (741)
+
+# ═══ Part 2 — GREEN, on d56be445f + this change ═══
+## Every fold-billing suite, Parts 1, 1b and 2: 16 files, 284/284
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > shows the enforced limits from the route, the same for every subscription, with no tier comparison 280ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > says the tier is not recorded rather than naming one 34ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a failed read is an error with Try again, never an empty table, and the retry reads again 65ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (a bare array) is an error 28ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (no limits list) is an error 31ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (a row without numbers) is an error 23ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (a row whose ceiling is not a number) is an error 23ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (no second-limiter record) is an error 27ms
+ ✓ client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > AnA reads the same limits, and a failure as a failure 58ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a member keeps Usage & limits and Compare subscriptions, and has no billing entry 223ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > an organisation administrator whose session lacks the billing permission is offered what a member is 47ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a billing administrator has one entry, Subscription & billing, opening Licensing, and Usage & limits 80ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > resolves billing to Licensing from a link, an in-app move and AnA's target, with or without a project open 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > lands on Licensing, which mounts the invoice list and claims every billing route 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > keeps no screen of its own: no view, no registry entry for ⌘K, no AnA publisher, no action, no billing tab 184ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > is in no launch scope list, rail group or CI list, and no tour stops on it; Licensing and usage stay 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > no catalogue writer names it, and Stripe does not return a customer to it 1ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > states every platform limit exactly as platform-limits.ts sets it 16ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > states the second limiter where it applies, with its own numbers 4ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > every router it names as applying the second limiter really mounts it, and it names them all 46ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > answers the same limits whatever the subscription 6ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > an organisation with no tier (null) is told its tier is not recorded, never "standard" 2ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > an organisation with no tier ("") is told its tier is not recorded, never "standard" 2ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > a recorded tier is reported as recorded 2ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > carries no per-tier grid 3ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > any member reads it; a failed tier read is an error, not a guess 5ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > requires the authenticated principal 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants 6ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row 3ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 515ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 283ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 246ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 246ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 279ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a session without the billing permission sends no checkout, and the summary says who chooses 242ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a 403 from checkout is reported as the role answer, not as a missing link 244ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a failed checkout points to the screen that has checkout now, not "Usage & Billing" 274ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 148ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 32ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 142ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 95ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 31ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 120ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 128ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the top bar’s search opens the palette, and the result opens the Vault, not a retired screen 72ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 63ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 101ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9 decides the scope: every slice 1 row is checked here, and only those 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy" 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named after a folded feature (section 5.8) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > each slice 1 row carries its section 9 name, exactly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, as the project chip does 35ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9's own names pass this file's word and fold checks (so the guard can be met) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > section 9 lists the doors 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > the door names live in one module, one constant per job, each with its section 9 name 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > no step door still carries today's name (Project*.tsx) 92ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > a job name is written once, in projectDoors.ts, and read from there by every door 234ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway 221ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Plan, Evidence, Author, Review, Submit and Respond each have one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line uses a word from "Not in client copy" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line names a folded feature as a thing still to come 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Submit's lines name only Submit's rows not yet shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Respond's line names precedent responses and FDA's Pre-Sub feedback 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name 6ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy" 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > /concept2cure/features opens Subscription & features 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > no address a client can reach has "app" in it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the account menu: Subscription & features, Subscription & billing (P-68), Platform licensing 187ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > a member's menu offers Compare subscriptions 26ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the lock copy (rail, ⌘K, Subscription & features, unlock panel) names the subscription and the job 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > every door to Compare subscriptions has that name (no "View all plans", "View plans", "See plans", "Manage plan") 146ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > no heading or label outside the registry still carries a slice 1 row's old name 606ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > Setup's module panel no longer sends anyone to the Workflows 2ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > reads the first page under the plan status: mapped rows, a View link only where Stripe gave one 111ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > says billing is not set up when there is no Stripe customer — never "No invoices yet" 34ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > says "No invoices yet" when billing is set up and Stripe has issued none 34ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a failed read is an error with Try again, never an empty list, and the retry reads again 174ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > an unreachable service is an error, never an empty list 28ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (a bare array) is an error, not "no invoices" 29ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (a non-array list) is an error, not "no invoices" 28ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (no billingSetUp verdict) is an error, not "no invoices" 24ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (no cursor field) is an error, not "no invoices" 29ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (null rows) is an error, not "no invoices" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a 403 is a refusal for the role, not a failure 22ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > pages by Stripe cursor and says which invoices are on screen 140ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a member > is told who sees invoices, and no invoice request is made 18ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > the page on screen, row by row 26ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > a failed read is said to be a failure, with no rows 29ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > billing not set up is its own fact 22ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > for a member, says the list was not read and why 18ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered to a customer org admin the console refuses 201ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered on masterAdmin alone — the commercial unlock is not console access 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is offered when the server says the console guard admits this viewer, and opens it 97ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > follows the server, not the org role: a platform admin without an org-admin role sees it 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > survives resolved:false — the answer does not depend on the catalog read 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when the navigation fetch fails 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when an older server omits the field 29ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered to a member or an organisation administrator 30ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is offered to a platform administrator when it can be opened 64ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered, even to a platform administrator, when the release locks it 38ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > adopts the snapshot: plan label, session window, weekly buckets 84ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > states an idle session honestly instead of fabricating a countdown 19ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > renders honest empty states on a malformed snapshot (never a fixture) 20ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > reads no invoices and offers no Billing tab 116ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > shows no credit balance, auto-reload or credit pools — the ledger is never spent 36ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > the usage tab shows no per-category credit card 13ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > points to Compare subscriptions, where the invoices are 30ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — service unreachable > renders honest error states when the billing service is unreachable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > AnA's tab action after the fold > opens the two tabs the screen has; a billing tab is not offered at all 28ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a member > is offered no checkout and no billing portal, and is told who chooses the subscription 264ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a member > AnA is told the subscription acts are not this viewer’s 30ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a billing administrator > is offered Manage billing and checkout, and each reaches its route 62ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > no balance, no Buy more, no auto-reload control, and no credits read 227ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > makes no price claim it cannot honour 41ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > the referral offer > is gone — the product cannot pay it 66ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses member before anything is created 18ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses viewer before anything is created 3ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses manager before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses approver before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses reviewer before anything is created 3ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses user before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses business_admin before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > admits admin, for the organisation in the token only 3ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > admits owner, for the organisation in the token only 3ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > agrees with the session permission the screen reads, for every role 13ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > requires the authenticated principal 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses member before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses viewer before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses manager before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses approver before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses reviewer before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses user before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses business_admin before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > admits admin, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > admits owner, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > agrees with the session permission the screen reads, for every role 10ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > requires the authenticated principal 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses member before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses viewer before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses manager before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses approver before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses reviewer before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses user before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses business_admin before anything is created 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > admits admin, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > admits owner, for the organisation in the token only 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > agrees with the session permission the screen reads, for every role 11ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > requires the authenticated principal 1ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > what stays open > a member still reads which subscription the organisation is on 4ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > what stays open > the public price list needs no sign-in 1ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses member before reading anything 21ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses viewer before reading anything 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses manager before reading anything 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses approver before reading anything 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses reviewer before reading anything 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses user before reading anything 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > admits admin 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > admits owner 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > agrees with the session permission the screen reads, for every role 14ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > requires the authenticated principal 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > requires an organisation context, and reads only its own customer 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > says billing is not set up when the organisation has no Stripe customer, and asks Stripe nothing 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > says billing is set up when the list is merely empty 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > projects each Stripe invoice, amounts in major units 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > does not call the page length a total 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > a failed Stripe read is an error, never an empty list 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > asks Stripe for one page of the organisation’s customer, ten by default 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > returns the cursor for the next page when Stripe has more, and none on the last page 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > clamps the page size to 1..100 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("abc") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("in_1;drop") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("cus_7") 1ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("in_") 1ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id (" in_1") 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "admin" 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "manager" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "member" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "viewer" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "owner" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "super_admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "editor" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "user" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "Admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "VIEWER" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > gives a viewer nothing and a member the write permission 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > every auth response that returns a user derives its permissions, none hard-codes an empty list 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "manager" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "member" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "viewer" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "owner" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "super_admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "editor" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "user" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "Admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "VIEWER" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a member is not offered Finalize; under the default signing policy an admin is and a manager is not 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a signing policy that names managers offers them Finalize 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is the admin|owner set exactly — `withExtendingRoles` must not widen it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is granted to exactly the roles the route admits, and to no other 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is narrower than governed:write — a manager writes, and does not attest 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > an admin holds all three; the three gates are not the same gate 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > offers the control to a session that carries no permissions array, as the two precedents do 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > the client predicate agrees with the session for every role 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is the admin|owner set exactly — `withExtendingRoles` must not widen it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "owner" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "manager" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "approver" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "reviewer" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "member" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "viewer" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "user" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "super_admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "Admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > a manager writes governed records and does not administer billing 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > offers to a session with no permissions array, as the precedents do; an array is authoritative 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > every billing-administration guard in billing-dashboard.ts reads the one list 1ms
+ Test Files  16 passed (16)
+      Tests  284 passed (284)
+
+## Regression set: 310 suites (everything that reads the registry, aliases, launch scope, surface actions, navigation, the shell,
+## the usage and Licensing screens, the billing routes and platform-limits), 4,290 passed, 18 failed. None is this change's:
+##  - 12 fail identically on a git archive of HEAD d56be445f (head-tree run below): engineChoices 1, oneBoxDuringRun 4,
+##    runPolicySwitch 5 (a conversation import path reading an authService export the tests' mock lacks), composition-boundary-callers 1,
+##    template-library-truth 1;
+##  - 6 in mdx-risk-accept-residual-signature.test.ts come from another session's uncommitted server/routes/mdx-risk-management.ts
+##    and untracked mdx-risk-acceptance-lock.ts in the shared tree.
+      Tests  18 failed | 4290 passed (4308)
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > acceptable false records no acceptance and asks for nothing, as before
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > acceptable null records no acceptance and asks for nothing, as before
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to closed updates the row on the pool and signs nothing
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to mitigating updates the row on the pool and signs nothing
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to open updates the row on the pool and signs nothing
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to verified updates the row on the pool and signs nothing
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/authoring/module2-sav…': `'export async function readSavedModule…'` asks before it calls [ 'composeFullModule3' ]
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16
+ Test Files  6 failed | 304 passed (310)
+AssertionError: expected 500 to be 200 // Object.is equality
+AssertionError: expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+AssertionError: expected false to be true // Object.is equality
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+## The six failing suites on a git archive of HEAD (scratchpad head-tree, node_modules symlinked)
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed | 1 passed (6)
+      Tests  12 failed | 72 passed (84)

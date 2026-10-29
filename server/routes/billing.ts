@@ -120,14 +120,17 @@ router.post('/checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROLES),
     const { tier, billingCycle, seats, successUrl, cancelUrl } = parsed.data;
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
+    // Stripe returns the customer to Licensing, where the subscription and its
+    // invoices are; `billing` is an alias of it since the fold (2026-10-29), so a
+    // Checkout session created before then still lands there.
     const checkoutSuccessUrl =
       typeof successUrl === 'string' && successUrl.trim().length > 0
         ? successUrl
-        : `${baseUrl}/concept2cure/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+        : `${baseUrl}/concept2cure/licensing?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
     const checkoutCancelUrl =
       typeof cancelUrl === 'string' && cancelUrl.trim().length > 0
         ? cancelUrl
-        : `${baseUrl}/concept2cure/billing?checkout=canceled`;
+        : `${baseUrl}/concept2cure/licensing?checkout=canceled`;
 
     const result = await createCheckoutSession({
       organizationId: Number(orgId),
@@ -249,7 +252,7 @@ router.post('/dtc-checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROL
       billingCycle: billingCycle || 'monthly',
       successUrl:
         successUrl ||
-        `${baseUrl}/concept2cure/billing?checkout=success&welcome=true`,
+        `${baseUrl}/concept2cure/licensing?checkout=success&welcome=true`,
       cancelUrl: cancelUrl || `${baseUrl}/concept2cure/signup`,
       currency,
     });

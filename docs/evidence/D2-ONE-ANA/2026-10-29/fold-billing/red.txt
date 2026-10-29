@@ -204,3 +204,137 @@ AssertionError: expected 'Onboarding  your organizationSet up y…' to match /Ch
 AssertionError: expected 'Onboarding  your organizationSet up y…' to match /no plan was provisioned\. Retry from …/
  ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
       Tests  6 failed | 5 passed (11)
+
+# ═══ Part 2 — RED, against trunk d56be445f before the change: 23 failed across 7 files (103 pins passed before and after) ═══
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9 decides the scope: every slice 1 row is checked here, and only those 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy" 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named after a folded feature (section 5.8) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > each slice 1 row carries its section 9 name, exactly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, as the project chip does 34ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9's own names pass this file's word and fold checks (so the guard can be met) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > section 9 lists the doors 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > the door names live in one module, one constant per job, each with its section 9 name 6ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > no step door still carries today's name (Project*.tsx) 96ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > a job name is written once, in projectDoors.ts, and read from there by every door 242ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway 221ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Plan, Evidence, Author, Review, Submit and Respond each have one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line uses a word from "Not in client copy" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line names a folded feature as a thing still to come 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Submit's lines name only Submit's rows not yet shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Respond's line names precedent responses and FDA's Pre-Sub feedback 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name 7ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy" 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > /concept2cure/features opens Subscription & features 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > no address a client can reach has "app" in it 0ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the account menu: Subscription & features, Subscription & billing (P-68), Platform licensing 154ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > a member's menu offers Compare subscriptions 33ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the lock copy (rail, ⌘K, Subscription & features, unlock panel) names the subscription and the job 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > every door to Compare subscriptions has that name (no "View all plans", "View plans", "See plans", "Manage plan") 156ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > no heading or label outside the registry still carries a slice 1 row's old name 609ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > Setup's module panel no longer sends anyone to the Workflows 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 140ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 138ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 100ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 31ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 119ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 130ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the top bar’s search opens the palette, and the result opens the Vault, not a retired screen 72ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 74ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 97ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 60ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 54ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a member keeps Usage & limits and Compare subscriptions, and has no billing entry 212ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > an organisation administrator whose session lacks the billing permission is offered what a member is 45ms
+ × client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — the subscription entry (P-68) > a billing administrator has one entry, Subscription & billing, opening Licensing, and Usage & limits 40ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants 6ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29) 0ms
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29) 5ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32) 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row 3ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold 0ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > states every platform limit exactly as platform-limits.ts sets it 18ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > states the second limiter where it applies, with its own numbers 6ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > every router it names as applying the second limiter really mounts it, and it names them all 16ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > answers the same limits whatever the subscription 8ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > an organisation with no tier (null) is told its tier is not recorded, never "standard" 3ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > an organisation with no tier ("") is told its tier is not recorded, never "standard" 2ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > a recorded tier is reported as recorded 3ms
+ × server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > carries no per-tier grid 4ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > any member reads it; a failed tier read is an error, not a guess 5ms
+ ✓ server/routes/__tests__/billing-rate-limits-enforced.test.ts > GET /api/billing/rate-limits > requires the authenticated principal 2ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > shows the enforced limits from the route, the same for every subscription, with no tier comparison 5171ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > says the tier is not recorded rather than naming one 5033ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a failed read is an error with Try again, never an empty table, and the retry reads again 5028ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (a bare array) is an error 5029ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (no limits list) is an error 5026ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > a body that is not the enforced limits (a row without numbers) is an error 5025ms
+ × client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx > Rate limits on the usage screen > AnA reads the same limits, and a failure as a failure 5026ms
+ × client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > resolves billing to Licensing from a link, an in-app move and AnA's target, with or without a project open 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > lands on Licensing, which mounts the invoice list and claims every billing route 1ms
+ × client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > keeps no screen of its own: no view, no registry entry for ⌘K, no AnA publisher, no action, no billing tab 2ms
+ × client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > is in no launch scope list, rail group or CI list, and no tour stops on it; Licensing and usage stay 1ms
+ × client/src/concept2cure/v2/__tests__/foldBilling.test.ts > billing is folded into Licensing > no catalogue writer names it, and Stripe does not return a customer to it 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  7 failed (7)
+      Tests  23 failed | 103 passed (126)
+
+## Surviving mutations as red (mutations.txt, Part 2): P13 survived the first run because the 'row without numbers' body
+## also lacked exemptRoles; the case was tightened and two added (a non-numeric ceiling, no second-limiter record). P13 is then killed.

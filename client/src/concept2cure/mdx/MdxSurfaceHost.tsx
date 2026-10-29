@@ -359,7 +359,8 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * One builder, fourteen literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
    * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
-   * this is the sanctioned multi-id shape from v2/surfaces/UsageBilling.tsx.
+   * this is the sanctioned multi-id shape (v2/surfaces/UsageBilling.tsx used it
+   * for `usage` and `billing` until billing folded into Licensing, 2026-10-29).
    * Only the call whose id matches `nav` publishes; the store treats the
    * thirteen null calls as no-ops (each clears only its own id), and hook order
    * stays fixed because every call runs unconditionally on every render.
