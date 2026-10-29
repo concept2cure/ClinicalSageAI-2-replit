@@ -1,0 +1,48 @@
+# HEAD 4d57a4164, working tree, 2026-10-29T11:09:37Z. node v22.22.0.
+# RED. 1: the cases this change exists for, against the gate as it is at HEAD (before this change).
+$ node harness-redgreen.mjs <HEAD's scripts/ci/check-sign-ceremony.mjs>
+gate: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/sign-gate/gate-before/check-sign-ceremony.mjs
+  MISS  A. the signed status-only act is a site, and passes: expected "seen, ok", got "not seen (0 site(s) of any kind)"
+  MISS  B. the same write without the ceremony fails (same file as the signed one): expected "fails", got "passes"
+  PASS  C. a non-governed status (mitigating) is not an act: expected "no site", got "no site"
+  MISS  D. the plain PATCH alone, the acceptance pair recorded (M11: the ceremony removed): expected "fails", got "passes"
+  MISS  E. an IRB approval written outside its ceremony (a declared signed status): expected "fails", got "passes"
+RED: 4 of 5 cases missed.
+exit 1
+
+# RED. 2: the current gate over the real tree, scored against the baseline as it stands at HEAD.
+# Every new status act, and every pair a ceremony signs, fails until it is classified and recorded.
+$ node harness-head-baseline-red.mjs
+  ✗ server/routes/authoring.router.ts:6881  status-act  c2c_document_sections.status = 'approved'
+  ✗ server/routes/authoring.router.ts:7011  approval-stamp
+  ✗ server/routes/authoring.router.ts:7104  status-act  authoring_workflow_steps.status = 'approved'
+    server/routes/authoring.router.ts: 3 site(s), HEAD baseline allows 1.
+  ✗ server/services/audit/compliance-reviews.ts:521  status-act  compliance_review_records.status = 'signed'
+  ✗ server/services/coverage-analysis/coverage-service.ts:210  status-act  coverage_analyses.status = 'finalized'
+  ✗ server/services/financial-disclosures/fcoi-service.ts:249  status-act  financial_disclosures.status = 'signed'
+  ✗ server/services/iacuc/iacuc-service.ts:163  status-act  iacuc_protocols.status = 'approved'
+  ✗ server/services/ibc/ibc-service.ts:169  status-act  ibc_registrations.status = 'approved'
+  ✗ server/services/irb/irb-service.ts:230  status-act  irb_submissions.status = 'approved'
+  ✗ server/services/labeling/labeling-pi-service.ts:298  status-act  labeling_pi_sections.status = 'approved'
+  ✗ server/services/protocol-consent/protocol-consent-service.ts:202  status-act  consent_forms.status = 'approved'
+  ✗ server/services/protocol-development/protocol-development-service.ts:468  status-act  protocol_documents.status = 'finalized'
+  ✗ signed pair not recorded: cmc_module3_section_versions.state=approved  (signed in server/api/cmc/module3OperatingSystemRoutes.ts)
+  ✗ signed pair not recorded: cmc_module3_sections.approval_state=approved  (signed in server/api/cmc/module3OperatingSystemRoutes.ts)
+  ✗ signed pair not recorded: quality_specifications.approval_status=approved  (signed in server/api/cmc/specificationRoutes.ts)
+  ✗ signed pair not recorded: authoring_documents.status=frozen  (signed in server/routes/authoring.router.ts)
+  ✗ signed pair not recorded: authoring_documents.status=approved  (signed in server/routes/authoring.router.ts)
+  ✗ signed pair not recorded: c2c_bla_assessments.status=signed  (signed in server/routes/biopharma/bla-workbench.ts)
+  ✗ signed pair not recorded: labeling_documents.status=approved  (signed in server/routes/mdx-labeling-approvals.ts)
+  ✗ signed pair not recorded: labeling_documents.status=effective  (signed in server/routes/mdx-labeling-approvals.ts)
+  ✗ signed pair not recorded: labeling_documents.status=superseded  (signed in server/routes/mdx-labeling-approvals.ts)
+  ✗ signed pair not recorded: labeling_translations.status=approved  (signed in server/routes/mdx-labeling-approvals.ts)
+  ✗ signed pair not recorded: risk_items.status=accepted  (signed in server/routes/mdx-risk-management.ts)
+  ✗ signed pair not recorded: risk_items.acceptable=true  (signed in server/routes/mdx-risk-management.ts)
+  ✗ signed pair not recorded: estar_submissions.status=filed  (signed in server/services/pathway-engines/estar/estar-submission-service.ts)
+  ✗ signed pair not recorded: qms_change_controls.status=approved  (signed in server/services/qms/change-approval-signature.ts)
+RED: 10 file(s) over their HEAD allowance; 11 status-act site(s) among them.
+exit 1
+
+# RED. 3: the gate at HEAD lists no site in the risk route, signed or not (list-before.txt):
+$ grep -c 'mdx-risk-management' list-before.txt
+0

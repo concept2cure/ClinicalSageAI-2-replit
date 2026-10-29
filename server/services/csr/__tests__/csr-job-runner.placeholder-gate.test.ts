@@ -244,13 +244,23 @@ describe('runCSRBuildJob — retained target selections and progress', () => {
     expect(continueMock).not.toHaveBeenCalled();
   });
 
-  it('retains the existing placeholder refusal for saved target text without redrafting it', async () => {
+  // 46fe0e349 (2026-10-27, "verify saved section hashes and placeholders before
+  // resuming") deliberately stopped counting saved placeholder text as finished:
+  // a resume redrafts it. The placeholder refusal still holds when the redraft
+  // is placeholder text again, and a clean redraft completes the job.
+  it('redrafts saved placeholder target text on resume and keeps the placeholder refusal', async () => {
     fake = makeFakeDb({ ...makeJob(), status: 'failed' }, [{ sectionNumber: '13', content: '[DATA TO BE INSERTED]' }]);
+    draftMock.mockResolvedValue(sectionDraft('13', 'The benefit-risk profile is considered [favorable/unfavorable].'));
     await runCSRBuildJob(42);
+    expect(draftMock).toHaveBeenCalledOnce();
     expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', error: { reason: 'unresolved_placeholders', sections: ['13'] } });
-    expect(fake.persisted).toEqual([{ sectionNumber: '13', content: '[DATA TO BE INSERTED]' }]);
-    expect(draftMock).not.toHaveBeenCalled();
     expect(continueMock).not.toHaveBeenCalled();
+
+    draftMock.mockClear().mockResolvedValue(sectionDraft('13', 'A source-prepared discussion.'));
+    await runCSRBuildJob(42);
+    expect(draftMock).toHaveBeenCalledOnce();
+    expect(fake.persisted).toEqual([{ sectionNumber: '13', content: 'A source-prepared discussion.' }]);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'complete', progress: 100 });
   });
 
   it('does not let unrelated retained placeholder rows block an otherwise covered explicit subset', async () => {

@@ -46,6 +46,8 @@ export interface SupplierRow {
   last_audit_date: string | null;
   next_audit_date: string | null;
   iso_certifications: string[] | null;
+  /** qms_documents.id of the supplier's quality agreement; the server admits only this organisation's. */
+  quality_agreement_id: number | null;
 }
 
 export interface InternalAuditRow {
@@ -216,11 +218,12 @@ export const dispositionNonconformance = (id: number, v: { disposition: string; 
 
 export const createSupplier = (v: {
   supplierName: string; criticality: string; supplierCode?: string; scope?: string; approvalStatus?: string;
-  approvalDate?: string; nextAuditDate?: string; reapprovalDate?: string;
+  approvalDate?: string; nextAuditDate?: string; reapprovalDate?: string; qualityAgreementId?: number;
 }) => qmsWrite<SupplierRow>('POST', 'suppliers', compact(v));
 
 export const updateSupplier = (id: number, v: {
   approvalStatus?: string; approvalDate?: string; lastAuditDate?: string; nextAuditDate?: string; reapprovalDate?: string;
+  qualityAgreementId?: number;
 }) => qmsWrite<SupplierRow>('PATCH', `suppliers/${id}`, compact(v));
 
 export const createInternalAudit = (v: { auditNumber: string; scope: string; auditStandard?: string; plannedDate?: string }) =>

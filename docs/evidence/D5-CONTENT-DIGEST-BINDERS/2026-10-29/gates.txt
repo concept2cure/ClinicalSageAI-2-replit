@@ -1,0 +1,18 @@
+# $ npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+# exit: 0
+
+# $ npm run -s ci:sql-interpolation
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-search.ts:190:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1065 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+# exit: 0
+
+# $ npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+# exit: 0
+

@@ -1,0 +1,11 @@
+ ✓ server/services/__tests__/csr-retired-modules-have-no-importer.test.ts > retired CSR modules > are deleted 3ms
+ × server/services/__tests__/csr-retired-modules-have-no-importer.test.ts > retired CSR modules > have no importer anywhere in server, shared, client/src or scripts 1144ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++ Received
++ [
++   "server/services/index.ts: services/csr barrel",
++   "server/services/zz-slice9-red-probe.ts: csr-knowledge-extractor",
++   "server/services/zz-slice9-red-probe.ts: services/csr barrel",
++   "server/services/zz-slice9-red-probe.ts: analyzeCSRSafetySignals",
++ ]
+      Tests  1 failed | 1 passed (2)

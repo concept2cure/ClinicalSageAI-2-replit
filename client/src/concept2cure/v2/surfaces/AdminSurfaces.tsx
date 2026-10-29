@@ -52,6 +52,8 @@ import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { getSurfaceMeta } from '../registryModel';
+import { artifactSignatureState, type ArtifactOrigin } from '@shared/artifact-governance';
+import { downloadArtifactManifest, type ArtifactManifestRow } from '../artifactManifest';
 
 /* `window.TXW_ADMIN` used to be published from the Setup panel below and was
    read by nothing in the repository. Its successor, the Translation workspace
@@ -1395,23 +1397,44 @@ interface ArtifactRow {
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+  /* What the shared manifest writes (fold F3 slice B): from the same read as
+     the Vault's leaves. Absent from an older server, which the manifest says
+     as not recorded. */
+  ctdSection?: string | null;
+  status?: string;
+  origin?: ArtifactOrigin | null;
+  author?: string | null;
+  contentHash?: string | null;
 }
 
 /** What one artifact's signature says about its CURRENT version. The gallery
     showed the e-signed shield whenever any active signature existed, so a
-    version edited after signing read as signed. */
-function signatureState(a: Pick<ArtifactRow, 'sig' | 'sigStale' | 'sigVersion'>): 'none' | 'current' | 'stale' | 'unknown' {
-  if (!a.sig) return 'none';
-  if (a.sigStale === true) return 'stale';
-  if (a.sigStale === false) return 'current';
-  return 'unknown';
-}
+    version edited after signing read as signed. The rule is shared with the
+    project Vault's governed artifacts (shared/artifact-governance.ts). */
+const signatureState = (a: Pick<ArtifactRow, 'sig' | 'sigStale'>) => artifactSignatureState(a);
 
-/* CSV cell: quote always, double any embedded quote. Artifact names carry
-   commas and parentheses ("… — 510(k) Summary, rev 2"), which is exactly the
-   text that silently corrupts a hand-rolled CSV. */
-function csvCell(v: unknown): string {
-  return `"${String(v ?? '').replace(/"/g, '""')}"`;
+/** A gallery row as the shared governed-artifact manifest writes it (artifactManifest.ts). */
+function manifestRow(r: ArtifactRow): ArtifactManifestRow {
+  return {
+    name: r.name,
+    artifactId: r.id,
+    ctdSection: r.ctdSection ?? null,
+    kind: r.kind,
+    format: r.fmt,
+    origin: r.origin ?? null,
+    model: r.model,
+    author: r.author ?? null,
+    status: r.status ?? 'unknown',
+    version: r.ver,
+    signature: signatureState(r),
+    signedVersion: r.sigVersion ?? null,
+    reviewed: r.reviewed,
+    sourceCount: r.sourceCount ?? 0,
+    contentHash: r.contentHash ?? null,
+    size: r.size,
+    project: r.prog,
+    updated: r.when,
+  };
 }
 
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
@@ -1561,23 +1584,11 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* The manifest is the shared governed-artifact manifest (artifactManifest.ts,
+     fold F3 slice B): the project Vault exports the same columns from the same
+     read, so the two files never disagree about a row. */
   const exportManifest = () => {
-    const cols: Array<[string, (r: ArtifactRow) => unknown]> = [
-      ['Name', (r) => r.name],
-      ['Kind', (r) => r.kind],
-      ['Format', (r) => r.fmt ?? ''],
-      ['Size', (r) => r.size],
-      ['Model', (r) => r.model ?? ''],
-      ['Version', (r) => r.ver],
-      ['Signed', (r) => ({ none: 'no', current: 'yes', stale: `earlier version only (v${r.sigVersion})`, unknown: 'yes, version not determined' })[signatureState(r)]],
-      ['Project', (r) => r.prog],
-      ['Updated', (r) => r.when],
-    ];
-    const csv = [
-      cols.map((c) => csvCell(c[0])).join(','),
-      ...rows.map((r) => cols.map((c) => csvCell(c[1](r))).join(',')),
-    ].join('\n');
-    downloadText('artifacts-manifest.csv', csv, 'text/csv;charset=utf-8');
+    downloadArtifactManifest('artifacts-manifest.csv', rows.map(manifestRow));
   };
   return (
     <div className="page-inner">

@@ -1,0 +1,98 @@
+# HEAD 4d57a4164, working tree, 2026-10-29T11:10:00Z. node v22.22.0.
+$ npm run ci:sign-ceremony:list
+server/api/cmc/batchRecordRoutes.ts:572  recordGovernedAction  ok
+server/api/cmc/module3OperatingSystemRoutes.ts:823  status-act  ok  (cmc_module3_section_versions.state = 'approved')
+server/api/cmc/module3OperatingSystemRoutes.ts:838  status-act  ok  (cmc_module3_sections.approval_state = 'approved')
+server/api/cmc/module3OperatingSystemRoutes.ts:861  recordGovernedAction  ok
+server/api/cmc/routes.ts:1328  recordGovernedAction  ok
+server/api/cmc/specificationRoutes.ts:492  status-act  ok  (quality_specifications.approval_status = 'approved')
+server/api/cmc/specificationRoutes.ts:510  recordGovernedAction  ok
+server/routes/authoring.router.ts:4952  status-act  ok  (authoring_documents.status = 'frozen')
+server/routes/authoring.router.ts:5192  approval-stamp  ok
+server/routes/authoring.router.ts:6881  status-act  no signature row  (c2c_document_sections.status = 'approved')
+server/routes/authoring.router.ts:7011  approval-stamp  no signature row
+server/routes/authoring.router.ts:7104  status-act  no signature row  (authoring_workflow_steps.status = 'approved')
+server/routes/biopharma/bla-workbench.ts:326  status-act  ok  (c2c_bla_assessments.status = 'signed')
+server/routes/document-lifecycle.ts:318  recordGovernedAction  ok
+server/routes/financial-disclosures.ts:340  recordGovernedAction  ok
+server/routes/governed-signed-act.ts:283  recordGovernedAction  ok
+server/routes/ivdr-binder-routes.ts:552  approval-stamp  no signature row
+server/routes/mdx-imports.ts:460  approval-stamp  no signature row
+server/routes/mdx-imports.ts:461  approval-stamp  no signature row
+server/routes/mdx-labeling-approvals.ts:173  approval-stamp  ok
+server/routes/mdx-labeling-approvals.ts:182  approval-stamp  ok
+server/routes/mdx-labeling-approvals.ts:190  status-act  ok  (labeling_documents.status = 'superseded')
+server/routes/mdx-labeling-approvals.ts:435  approval-stamp  ok
+server/routes/mdx-risk-management.ts:381  status-act  ok  (risk_items.status = 'accepted')
+server/services/ana-ri/governed-command-signature.ts:118  recordGovernedAction  no signer re-verification
+server/services/ana/authoring-plan-generator.ts:1175  approval-stamp  no signature row
+server/services/ana/authoring-plan-generator.ts:1176  approval-stamp  no signature row
+server/services/audit/compliance-reviews.ts:521  status-act  no signature row  (compliance_review_records.status = 'signed')
+server/services/cognitive-ecosystem/global-dossier.service.ts:522  approval-stamp  no signature row
+server/services/cognitive-ecosystem/global-dossier.service.ts:996  approval-stamp  no signature row
+server/services/coverage-analysis/coverage-service.ts:210  status-act  no signature row  (coverage_analyses.status = 'finalized')
+server/services/decision-record-service.ts:419  approval-stamp  no signature row
+server/services/ectd/filed-sequence-rejection.ts:277  recordGovernedAction  no signer re-verification
+server/services/financial-disclosures/fcoi-service.ts:249  status-act  no signature row  (financial_disclosures.status = 'signed')
+server/services/grants/grants-service.ts:420  approval-stamp  no signature row
+server/services/iacuc/iacuc-service.ts:163  status-act  no signature row  (iacuc_protocols.status = 'approved')
+server/services/ibc/ibc-service.ts:169  status-act  no signature row  (ibc_registrations.status = 'approved')
+server/services/irb/irb-service.ts:230  status-act  no signature row  (irb_submissions.status = 'approved')
+server/services/labeling/labeling-pi-service.ts:298  status-act  no signature row  (labeling_pi_sections.status = 'approved')
+server/services/part11/governed-signature-ceremony.ts:257  recordGovernedAction  ok
+server/services/pathway-engines/estar/estar-submission-service.ts:269  status-act  ok  (estar_submissions.status = 'filed')
+server/services/pathway-engines/estar/estar-submission-service.ts:297  recordGovernedAction  no signer re-verification
+server/services/protocol-consent/protocol-consent-service.ts:202  status-act  no signature row  (consent_forms.status = 'approved')
+server/services/protocol-development/protocol-development-service.ts:468  status-act  no signature row  (protocol_documents.status = 'finalized')
+server/services/qms/change-approval-signature.ts:173  approval-stamp  ok
+server/services/qms/change-approval-signature.ts:174  approval-stamp  ok
+server/services/qms/document-approval-signature.ts:320  approval-stamp  no signature row
+server/services/qms/document-approval-signature.ts:321  approval-stamp  no signature row
+server/services/qms/document-approval-signature.ts:439  approval-stamp  ok
+server/services/rbm/rbm-actuator.ts:864  approval-stamp  no signature row
+server/services/rbm/rbm-actuator.ts:923  approval-stamp  no signature row
+server/services/submission-gateways/governed-transmit.ts:770  recordGovernedAction  no signer re-verification
+server/api/cmc/batchRecordRoutes.ts:495  re-authentication  ok
+server/api/cmc/module3OperatingSystemRoutes.ts:651  re-authentication  ok
+server/api/cmc/routes.ts:1267  re-authentication  ok
+server/api/cmc/specificationRoutes.ts:468  re-authentication  ok
+server/routes/510k-estar-routes.ts:2130  re-authentication  ok
+server/routes/ana-features.ts:2256  re-authentication  ok
+server/routes/ana-ri/governed-esignature.ts:98  re-authentication  ok
+server/routes/ana-ri/seal-verified.ts:126  re-authentication  ok
+server/routes/authoring.router.ts:815  re-authentication  no signing-authority check in its handler
+server/routes/c2c/actions.ts:306  re-authentication  no signing-authority check in its handler
+server/routes/c2c/actions.ts:652  re-authentication  ok
+server/routes/c2c/artifacts.ts:2673  re-authentication  ok
+server/routes/c2c/documents.ts:756  re-authentication  no signing-authority check in its handler
+server/routes/document-lifecycle.ts:133  re-authentication  ok
+server/routes/esignature.ts:287  re-authentication  ok
+server/routes/financial-disclosures.ts:326  re-authentication  ok
+server/routes/gateway-accounts.ts:121  re-authentication  no signing-authority check in its handler
+server/routes/governed-signed-act.ts:257  re-authentication  ok
+server/routes/mdx-qms.ts:683  re-authentication  ok
+server/routes/mdx-rbm.ts:1034  re-authentication  ok
+server/routes/mdx-rbm.ts:1155  re-authentication  ok
+server/routes/mdx-submission-gateway.ts:367  re-authentication  ok
+server/routes/mdx-submission-gateway.ts:605  re-authentication  ok
+server/routes/pccp.ts:272  re-authentication  ok
+server/routes/submission-sign-release.ts:232  re-authentication  ok
+server/services/part11/governed-signature-ceremony.ts:242  re-authentication  ok
+server/services/part11/governed-signature-ceremony.ts:243  re-authentication  ok
+server/services/tasking/task-signoff.ts:192  re-authentication  ok
+declared signed statuses, governed on every table: approved, dispatched, effective, finalized, frozen, signed
+signed pair cmc_module3_section_versions.state=approved  signed in server/api/cmc/module3OperatingSystemRoutes.ts
+signed pair cmc_module3_sections.approval_state=approved  signed in server/api/cmc/module3OperatingSystemRoutes.ts
+signed pair quality_specifications.approval_status=approved  signed in server/api/cmc/specificationRoutes.ts
+signed pair authoring_documents.status=frozen  signed in server/routes/authoring.router.ts
+signed pair authoring_documents.status=approved  signed in server/routes/authoring.router.ts
+signed pair c2c_bla_assessments.status=signed  signed in server/routes/biopharma/bla-workbench.ts
+signed pair labeling_documents.status=approved  signed in server/routes/mdx-labeling-approvals.ts
+signed pair labeling_documents.status=effective  signed in server/routes/mdx-labeling-approvals.ts
+signed pair labeling_documents.status=superseded  signed in server/routes/mdx-labeling-approvals.ts
+signed pair labeling_translations.status=approved  signed in server/routes/mdx-labeling-approvals.ts
+signed pair risk_items.status=accepted  signed in server/routes/mdx-risk-management.ts
+signed pair risk_items.acceptable=true  signed in server/routes/mdx-risk-management.ts
+signed pair estar_submissions.status=filed  signed in server/services/pathway-engines/estar/estar-submission-service.ts
+signed pair qms_change_controls.status=approved  signed in server/services/qms/change-approval-signature.ts
+exit 0

@@ -158,7 +158,7 @@ describe('Vault — "N documents" counts documents, not tree entries', () => {
 
   it('one authored document with three sections is "1 document", to the user and to AnA', async () => {
     mockApi(() =>
-      ok(vaultPayload({ tree: authoredTree(), documentCount: 1, documentCounts: { authored: 1, cmcArtifacts: 0, uploads: 0 } })),
+      ok(vaultPayload({ tree: authoredTree(), documentCount: 1, documentCounts: { authored: 1, artifacts: 0, uploads: 0 } })),
     );
     let latest: any = null;
     const { container } = render(
@@ -175,6 +175,6 @@ describe('Vault — "N documents" counts documents, not tree entries', () => {
     expect(header).not.toMatch(/\b3 (authored )?documents/);
     await waitFor(() => expect(latest?.facts?.totalDocuments).toBe(1));
     expect(latest.summary).toMatch(/Document vault: 1 document/);
-    expect(latest.facts.documentCounts).toEqual({ authored: 1, cmcArtifacts: 0, uploads: 0 });
+    expect(latest.facts.documentCounts).toEqual({ authored: 1, artifacts: 0, uploads: 0 });
   });
 });

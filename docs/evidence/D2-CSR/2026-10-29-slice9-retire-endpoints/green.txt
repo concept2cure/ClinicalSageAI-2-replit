@@ -1,0 +1,37 @@
+ ✓ server/services/__tests__/csr-retired-modules-have-no-importer.test.ts > retired CSR modules > are deleted 2ms
+ ✓ server/services/__tests__/csr-retired-modules-have-no-importer.test.ts > retired CSR modules > have no importer anywhere in server, shared, client/src or scripts 1224ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 25ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 19ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 6ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 17ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a build with no project or program anchor before storing a job 6ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 16ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 25ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/safety-signals answers 404 44ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/safety-signals answers 404 9ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/generate-narrative answers 404 5ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/generate-narrative answers 404 5ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/analyze-benefit-risk answers 404 5ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/analyze-benefit-risk answers 404 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > no longer mounts the builder a second time at /api/csr 13ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > keeps the builder routes that remain at /api/csr-builder 11ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > reaches /api/csr/jobs through its own router 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content ("") 14ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content (" \n\t ") 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > preserves valid partial outputs and counts only requested rows through an explicit resume 13ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > repairs a retained blank row only on explicit resume while preserving valid saved text 9ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "999" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "13" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > redrafts saved placeholder target text on resume and keeps the placeholder refusal 15ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > does not let unrelated retained placeholder rows block an otherwise covered explicit subset 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > preserves the existing full-build meaning of an empty retained selection 13ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > drafts a duplicate supported subset only once 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > resets stale progress before retrying targets when retained rows are unrelated or blank 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > rejects an altered retained hash without overwriting the source section 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > does not turn a cancelled job into failed when a late AI call rejects 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > cannot complete or continue a job cancelled during an AI call 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > does not relabel completed CSR work as failed when dependent continuation is unavailable 5ms
+      Tests  35 passed (35)
+npx tsc --noEmit -p . : exit 0, 0 errors (second run, 14 GiB heap; the first run OOM'd)

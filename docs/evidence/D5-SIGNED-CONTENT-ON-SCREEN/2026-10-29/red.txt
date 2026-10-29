@@ -1,0 +1,158 @@
+# Red at HEAD (6b70fd0a4): the four new test files run against the product code as HEAD has it.
+# The four changed product files are HEAD's bytes (git show HEAD:<path>); the two new modules are absent, as at HEAD.
+# Product files' git status during the run (empty = HEAD's bytes):
+#   (none: each tracked file is HEAD's bytes) and the two new modules, client/src/concept2cure/v2/SignedContentState.tsx and
+#   client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx, are removed for the run (they are new in this change).
+# Run: 2026-10-29T11:33:42Z
+
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > tells a translation's creator they are its author 36ms
+   → expected undefined to deeply equal { state: 'author' }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > tells a colleague they are independent of it 12ms
+   → expected undefined to deeply equal { state: 'independent' }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > says 'unresolved' for a translation with no creator recorded, for every reader (the approval then signs it, not applicable) 10ms
+   → expected undefined to deeply equal { state: 'unresolved' }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > is asked of each translation by its own target and the reader, organisation-scoped 10ms
+   → expected undefined to deeply equal { state: 'unresolved' }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > an authorship lookup that fails reads 'unverified', never 'independent', and the document is still returned 12ms
+   → expected undefined to deeply equal { state: 'unverified' }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > a check that throws reads 'unverified', and the read answers 200 10ms
+   → expected { de: undefined, fr: undefined } to deeply equal { de: { state: 'unverified' }, …(1) }
+ × server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > a reader with no user id reads 'unverified' for every translation 9ms
+   → expected { de: undefined, fr: undefined } to deeply equal { de: { state: 'unverified' }, …(1) }
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > matches says "{}" 96ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > changed says "{ reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' }" 39ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > unverified says "{ bindingBasis: 'governed-action-sha256-chain', reason: 'This signature was taken before its content was bound.' }" 37ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > unverified says "{ reason: 'The record\'s content could not be read to compare with the signature.' }" 41ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > withdrawn says "{ reason: 'Every signature on this record has been withdrawn.' }" 38ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a changed signature gives the server's reason; a pre-binding one does not repeat it 35ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > an approved translation with no signature says "Not signed" 37ms
+   → expected undefined to be 'unsigned' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a translation never signed and not approved says nothing 29ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a translation in review whose approval was withdrawn says so 34ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > the document read failing says "Signature state could not be read" 32ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > a facet this client cannot read is unavailable 36ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > a translation the document read did not carry is unavailable 33ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > an answer for another document is not this document's state 34ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the label document's signature > an approved document shows its state above the lead 31ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the label document's signature > an effective document whose read failed says it could not be read 37ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the label document's signature > a draft never signed shows nothing 33ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the read > is the open project's document, read once, and again after an approval signed here 31ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the read > is read again after a translation is added here, so its creator is warned once it is in review 31ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > Approve is not offered as if it would work: it is disabled and described by the reason 126ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > another reviewer's translation is offered as before 43ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > unresolved offers Approve with no warning: the server decides 44ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > unverified offers Approve with no warning: the server decides 42ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > not read offers Approve with no warning: the server decides 41ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > a read that failed offers Approve with no warning 38ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > AnA is told the same, and is not offered the approval the screen withholds 28ms
+   → expected undefined to be 'author' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > a viewer sees no creator note: they are offered nothing to approve 27ms
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states > the document's and each translation's state, and the summary says a change 26ms
+   → expected undefined to match object { state: 'matches', …(2) }
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states > a state not read is told as not read, not as unsigned 28ms
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard edited after its acceptance says "Changed since it was signed", with the reason 86ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard unchanged since its acceptance says "Signed content unchanged" 39ms
+   → expected undefined to be 'Signed content unchanged' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an acceptance signed before content binding says it cannot be verified 31ms
+   → expected undefined to be 'Signed before content binding; not ve…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a read that failed says "Signature state could not be read", never "Not signed" 35ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an answer for another hazard is not this hazard's state 30ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it > a hazard not accepted reads nothing more and shows no acceptance signature 48ms
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it > a hazard accepted here is read once the signature is confirmed 5138ms
+   → expected undefined to be 'matches' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > the selected hazard carries its state, and the summary says it 32ms
+   → expected undefined to match object { state: 'changed', …(3) }
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a state not read is told as not read, not as unsigned 27ms
+ × client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a hazard not accepted carries no acceptance signature 28ms
+   → expected undefined to be null
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentState.test.tsx [ client/src/concept2cure/v2/__tests__/signedContentState.test.tsx ]
+Error: Failed to resolve import "../SignedContentState" from "client/src/concept2cure/v2/__tests__/signedContentState.test.tsx". Does the file exist?
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > tells a translation's creator they are its author
+AssertionError: expected undefined to deeply equal { state: 'author' }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > tells a colleague they are independent of it
+AssertionError: expected undefined to deeply equal { state: 'independent' }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > says 'unresolved' for a translation with no creator recorded, for every reader (the approval then signs it, not applicable)
+AssertionError: expected undefined to deeply equal { state: 'unresolved' }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance > is asked of each translation by its own target and the reader, organisation-scoped
+AssertionError: expected undefined to deeply equal { state: 'unresolved' }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > an authorship lookup that fails reads 'unverified', never 'independent', and the document is still returned
+AssertionError: expected undefined to deeply equal { state: 'unverified' }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > a check that throws reads 'unverified', and the read answers 200
+AssertionError: expected { de: undefined, fr: undefined } to deeply equal { de: { state: 'unverified' }, …(1) }
+ FAIL  server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > a reader with no user id reads 'unverified' for every translation
+AssertionError: expected { de: undefined, fr: undefined } to deeply equal { de: { state: 'unverified' }, …(1) }
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > matches says "{}"
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > changed says "{ reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' }"
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > unverified says "{ bindingBasis: 'governed-action-sha256-chain', reason: 'This signature was taken before its content was bound.' }"
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > unverified says "{ reason: 'The record\'s content could not be read to compare with the signature.' }"
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > withdrawn says "{ reason: 'Every signature on this record has been withdrawn.' }"
+TypeError: Cannot read properties of null (reading 'getAttribute')
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a changed signature gives the server's reason; a pre-binding one does not repeat it
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > an approved translation with no signature says "Not signed"
+AssertionError: expected undefined to be 'unsigned' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a translation in review whose approval was withdrawn says so
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > the document read failing says "Signature state could not be read"
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > a facet this client cannot read is unavailable
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > a translation the document read did not carry is unavailable
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" > an answer for another document is not this document's state
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the label document's signature > an approved document shows its state above the lead
+TestingLibraryElementError: Unable to find an element by: [data-testid="labeling-document-signature"]
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the label document's signature > an effective document whose read failed says it could not be read
+TestingLibraryElementError: Unable to find an element by: [data-testid="labeling-document-signature"]
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the read > is the open project's document, read once, and again after an approval signed here
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > the read > is read again after a translation is added here, so its creator is warned once it is in review
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > Approve is not offered as if it would work: it is disabled and described by the reason
+AssertionError: expected false to be true // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving > AnA is told the same, and is not offered the approval the screen withholds
+AssertionError: expected undefined to be 'author' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states > the document's and each translation's state, and the summary says a change
+AssertionError: expected undefined to match object { state: 'matches', …(2) }
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states > a state not read is told as not read, not as unsigned
+TypeError: Cannot read properties of undefined (reading 'state')
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard edited after its acceptance says "Changed since it was signed", with the reason
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard unchanged since its acceptance says "Signed content unchanged"
+AssertionError: expected undefined to be 'Signed content unchanged' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an acceptance signed before content binding says it cannot be verified
+AssertionError: expected undefined to be 'Signed before content binding; not ve…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a read that failed says "Signature state could not be read", never "Not signed"
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an answer for another hazard is not this hazard's state
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it > a hazard accepted here is read once the signature is confirmed
+AssertionError: expected undefined to be 'matches' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > the selected hazard carries its state, and the summary says it
+AssertionError: expected undefined to match object { state: 'changed', …(3) }
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a state not read is told as not read, not as unsigned
+TypeError: Cannot read properties of undefined (reading 'state')
+ FAIL  client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a hazard not accepted carries no acceptance signature
+AssertionError: expected undefined to be null
+ Test Files  4 failed (4)
+      Tests  36 failed | 9 passed (45)
+
+# Restored from the bytes copied before the run; sha256 now (must equal before):
+#   0a8c9b9457aa79160b24800dbec27f8150cfddb4129cb759d1cfb280207984ee  client/src/concept2cure/v2/surfaces/Labeling.tsx
+#   906b4da7c831c0ba0dc90f8c85e2c83419c94dfc41b6050744b023d691bb3040  client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx
+#   4edd1adbe233f1d6fd1f0605ee0472e1dcc37a71194138ef4b2db14b405d8b26  client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+#   dac1fdc1dce2edb9d87e06048e4572d0968c7625ac7bbf4f54aef84c23677717  server/routes/mdx-labeling.ts
+#   bfbaf7064e3d4159b0ee027107aa0726a50e653b44ee9d4134257ff703ebed0f  client/src/concept2cure/v2/SignedContentState.tsx
+#   221836eea51718fe7fec5558b51997c860af4b78434ad98ddb6171ad8fbb3c12  client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx

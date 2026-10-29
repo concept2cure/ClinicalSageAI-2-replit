@@ -32,6 +32,7 @@ const VAULT_FILTER_FROM_VAULT = new Map([
 // the lifecycle stage), each with a literal alias. No value reaches them.
 const VAULT_SEAL_BUILDERS = new Map([
   ['vaultDataEligibleSql', '../document-data-disposition/eligibility.js'],
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
   ['supersededSql', './vault-version-family.js'],
   ['vaultLifecycleStageSql', './vault-document-filter.js'],
 ]);

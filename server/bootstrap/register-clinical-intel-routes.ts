@@ -110,12 +110,16 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount citation verification routes:', error);
   }
 
-  // ── CSR Builder (dual-mount for backward compat) ──
+  // ── CSR Builder ──
+  //
+  // Mounted once. A second mount at /api/csr (removed 2026-10-29, CSR slice 9)
+  // served every builder route again beside /api/csr/jobs, a second build path
+  // with no client caller. CSR build jobs live at /api/csr/jobs
+  // (register-document-routes.ts).
   try {
     const csrBuilderRoutes = await import('../routes/csr-builder-routes');
     app.use('/api/csr-builder', csrBuilderRoutes.default);
-    app.use('/api/csr', csrBuilderRoutes.default);
-    console.log('✅ CSR Builder routes mounted at /api/csr-builder and /api/csr');
+    console.log('✅ CSR Builder routes mounted at /api/csr-builder');
   } catch (error) {
     console.error('Failed to mount CSR builder routes:', error);
   }

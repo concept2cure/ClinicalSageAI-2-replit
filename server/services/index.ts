@@ -21,7 +21,10 @@ export * as cortex from './cortex';
 // certificate check behind "FDA credentials validated successfully"). All three
 // were deleted 2026-10-15. FDAFormGenerator is exported below.
 export * as cer from './cer';
-export * as csr from './csr';
+// A `csr` namespace re-export of the services/csr barrel was here. Its index (an
+// UnifiedCSRService wrapping csr-search-service, extract() a throw) had no
+// importer but this file; deleted 2026-10-29 (CSR slice 9), with the
+// csrKnowledgeExtractor re-export below it.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
@@ -52,7 +55,6 @@ export { RegulatoryIntelligenceService } from './regulatory-intelligence-service
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { csrSearchService } from './csr-search-service';
-export { csrKnowledgeExtractor } from './csr-knowledge-extractor';
 export { clinicalIntelligenceService } from './clinical-intelligence-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════

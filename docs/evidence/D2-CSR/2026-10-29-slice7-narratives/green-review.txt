@@ -1,0 +1,24 @@
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > composes every selected subject and lands §14.3.3 and the §12.3.2 cross-reference 34ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > resumes per subject: a stopped run keeps its saved subjects and the rerun composes only the rest 23ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > never overwrites a saved narrative that fails its hash: the run fails and preserves it 17ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > lands no section while a selected subject is refused, and lists it 5ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds 154ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5) 434ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 31ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 2ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 20ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 20ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 11ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 14ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 12ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form 13ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none 11ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 12ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 4ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 15ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 9ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 17ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 29ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 3ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 2ms
+      Tests  23 passed (23)

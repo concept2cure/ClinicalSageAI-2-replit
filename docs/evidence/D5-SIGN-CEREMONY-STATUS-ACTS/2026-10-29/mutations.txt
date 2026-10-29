@@ -1,0 +1,150 @@
+# HEAD 4d57a4164, working tree, 2026-10-29T11:09:42Z. node v22.22.0.
+# Gate mutations: each on a fresh copy of the gate's modules in a scratch directory; the copy's selftest is run.
+
+G1  scanSource drops status acts (the gate as it was)
+  check-sign-ceremony.mjs: `const sites = [...findSignSites(code), ...statusActs]`
+        -> `const sites = [...findSignSites(code)]`
+  selftest: RED (exit 1; 20 passed before the first failure, failing assertion at selftest line 274)
+  last passing case: the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+
+G2  source 1 off: nothing a ceremony writes becomes a signed pair
+  check-sign-ceremony-status-acts.mjs: `if (isGovernable(a) && inCeremony(a.index)) pairs.add(pairKey(a));`
+        -> `if (isGovernable(a) && inCeremony(a.index) && false) pairs.add(pairKey(a));`
+  selftest: RED (exit 1; 20 passed before the first failure, failing assertion at selftest line 274)
+  last passing case: the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+
+G3  source 2 off: the declared signed statuses are not read
+  check-sign-ceremony-status-acts.mjs: `for (const v of values) if (!Object.hasOwn(TABLE_SCOPED_SIGNED_STATUSES, v)) statuses.add(`
+        -> `for (const v of values) if (false) statuses.add(v);`
+  selftest: RED (exit 1; 33 passed before the first failure)
+  last passing case: a status act is baselined like a stamp: a ceiling with a written reason
+
+G4  no table-scoped exclusions: superseded and locked governed on every table
+  check-sign-ceremony-status-acts.mjs: `if (!Object.hasOwn(TABLE_SCOPED_SIGNED_STATUSES, v)) statuses.add(v);`
+        -> `statuses.add(v);`
+  selftest: RED (exit 1; 33 passed before the first failure)
+  last passing case: a status act is baselined like a stamp: a ceiling with a written reason
+  over the real tree: 9 new failure(s)
+    FAIL server/routes/c2c/documents.ts:788 status-act c2c_documents.status = 'locked'
+    FAIL server/routes/mdx-ana-memory.ts:213 status-act client_memory_entries.status = 'superseded'
+    FAIL server/services/account-canon.ts:277 status-act account_canon_items.status = 'locked'
+    FAIL server/services/account-canon.ts:365 status-act account_canon_items.status = 'superseded'
+    FAIL server/services/ana/submission-chat-proposal-store.ts:134 status-act ana_submission_chat_proposals.status = 'superseded'
+    FAIL server/services/assumption-registry-service.ts:658 status-act assumption_records.status = 'superseded'
+    FAIL server/services/intelligence/pattern-maintenance.ts:194 status-act intelligence.failure_patterns.status = 'superseded'
+    FAIL server/services/licensing/eula-service.ts:468 status-act license_agreements.status = 'superseded'
+    FAIL server/services/rim/rim-service.ts:110 status-act rim_labels.status = 'superseded'
+
+G5  a value is any quoted literal in the expression (the prototype's reading): a CASE test reads as a write
+  check-sign-ceremony-status-acts.mjs: `const lit = /^'([^']*)'(?:\s*::\s*\w+)?$/.exec(e);`
+        -> `const lit = /'([^']*)'/.exec(e);`
+  selftest: RED (exit 1; 27 passed before the first failure)
+  last passing case: a declared signed status is governed on every table (an IRB approval written outside its ceremony fails)
+  over the real tree: 5 new failure(s)
+    FAIL server/routes/ivdr-binder-routes.ts:309 status-act ivdr_binder_claims.status = 'approved'
+    FAIL server/routes/ivdr-binder-routes.ts:552 approval-stamp
+    FAIL server/routes/orchestration-checkpoints.ts:272 status-act approval_checkpoints.status = 'approved'
+    FAIL server/services/financial-disclosures/fcoi-service.ts:142 status-act financial_disclosures.status = 'signed'
+    FAIL server/services/financial-disclosures/fcoi-service.ts:249 status-act financial_disclosures.status = 'signed'
+
+G6  writeMutation of any command counts as the status act's ceremony
+  check-sign-ceremony-status-acts.mjs: `|signGovernedAct)\s*\(|\bwriteMutation\s*\(\s*(['"`])sign\1/;`
+        -> `|signGovernedAct|writeMutation)\s*\(/;`
+  selftest: RED (exit 1; 30 passed before the first failure, failing assertion at selftest line 354)
+  last passing case: a `$n` whose value is a literal in the inline parameter array is read; a computed one is not
+
+G7  the ratchet off: a newly signed pair is never reported unrecorded
+  check-sign-ceremony-status-acts.mjs: `unrecorded: [...derived].filter(([p]) => !record.has(p))`
+        -> `unrecorded: [...derived].filter(() => false)`
+  selftest: RED (exit 1; 24 passed before the first failure)
+  last passing case: creating a hazard already accepted is a status act (INSERT … VALUES)
+
+G8  a `$n` is never read from the inline parameter array
+  check-sign-ceremony-status-acts.mjs: `return p === undefined ? null : paramValue(p);`
+        -> `return null;`
+  selftest: RED (exit 1; 29 passed before the first failure, failing assertion at selftest line 342)
+  last passing case: a status the product signs only on some tables counts only there (superseded)
+
+G9  a statement that stamps an approval is also a status-act site
+  check-sign-ceremony-status-acts.mjs: `if (a.stamped || seen.has(a.statement) || !isGovernable(a)) continue;`
+        -> `if (seen.has(a.statement) || !isGovernable(a)) continue;`
+  selftest: RED (exit 1; 13 passed before the first failure, failing assertion at selftest line 191)
+  last passing case: a baseline entry without a written reason fails
+
+G10  a status act passes without any ceremony in its handler
+  check-sign-ceremony.mjs: `(s.kind === 'status-act' ? STATUS_CEREMONY : SIGNATURE_ROW).test(body.text)`
+        -> `(s.kind === 'status-act' ? /(?:)/ : SIGNATURE_ROW).test(body.text)`
+  selftest: RED (exit 1; 21 passed before the first failure, failing assertion at selftest line 283)
+  last passing case: a status-only act signed through signGovernedAct is a site, and passes (the residual-risk acceptance)
+
+10 of 10 gate mutations red on the selftest. The repository's gate files were not written.
+exit 0
+$ sha256sum -c (the repository's gate files after the run)
+scripts/ci/check-sign-ceremony-source.mjs: OK
+scripts/ci/check-sign-ceremony-status-acts.mjs: OK
+scripts/ci/check-sign-ceremony.mjs: OK
+scripts/ci/check-sign-ceremony.selftest.mjs: OK
+scripts/ci/sign-ceremony-baseline.json: OK
+
+# Product mutations: in memory only (the map of sources the gate scans); no server file is written.
+unmutated tree, current gate: green
+
+P1  M11: the acceptance goes back to a plain write (signGovernedAct removed from acceptResidualSigned)
+  file: server/routes/mdx-risk-management.ts
+  current gate:    RED (expected red)
+    FAIL server/routes/mdx-risk-management.ts:381 status-act risk_items.status = 'accepted'
+  pre-change gate: green
+
+P1b  P1 again, on a gate with no signed-pair record (derived pairs only): why the record exists
+  file: server/routes/mdx-risk-management.ts
+  current gate:    GREEN (expected green)
+  pre-change gate: green
+
+P2  a second, unsigned accept route: UPDATE risk_items SET status = 'accepted'
+  file: server/routes/mdx-risk-management.ts
+  current gate:    RED (expected red)
+    FAIL server/routes/mdx-risk-management.ts:392 status-act risk_items.status = 'accepted'
+  pre-change gate: green
+
+P3  the flag alone, unsigned: UPDATE risk_items SET acceptable = TRUE
+  file: server/routes/mdx-risk-management.ts
+  current gate:    RED (expected red)
+    FAIL server/routes/mdx-risk-management.ts:392 status-act risk_items.acceptable = TRUE
+  pre-change gate: green
+
+P4  a hazard created already accepted: INSERT INTO risk_items (..., status) VALUES (..., 'accepted')
+  file: server/routes/mdx-risk-management.ts
+  current gate:    RED (expected red)
+    FAIL server/routes/mdx-risk-management.ts:392 status-act risk_items.status = 'accepted'
+  pre-change gate: green
+
+P5  control: a non-governed status write, unsigned: UPDATE risk_items SET status = 'mitigating'
+  file: server/routes/mdx-risk-management.ts
+  current gate:    GREEN (expected green)
+  pre-change gate: green
+
+P6  a new file approving a consent form from a session: UPDATE consent_forms SET status = 'approved'
+  file: server/routes/zz-mutation-unsigned-approval.ts (new, in memory)
+  current gate:    RED (expected red)
+    FAIL server/routes/zz-mutation-unsigned-approval.ts:2 status-act consent_forms.status = 'approved'
+  pre-change gate: green
+
+P7  a ceremony starts signing a new pair (risk_controls.status = 'verified' inside the acceptance's run), not recorded
+  file: server/routes/mdx-risk-management.ts
+  current gate:    RED (expected red)
+    FAIL signed pair not recorded: risk_controls.status=verified (signed in server/routes/mdx-risk-management.ts)
+  pre-change gate: green
+
+P8  the labeling-pi defect fixed (acceptAgencyText stops writing 'approved'): its allowance must be lowered
+  file: server/services/labeling/labeling-pi-service.ts
+  current gate:    RED (expected red)
+    FAIL baseline allows more than exists: server/services/labeling/labeling-pi-service.ts 0 now, baseline 1
+  pre-change gate: green
+
+9 of 9 product mutations as expected on the current gate. No repository file was written.
+exit 0
+$ sha256sum -c (the mutated product files after the run)
+server/routes/mdx-risk-management.ts: OK
+server/services/labeling/labeling-pi-service.ts: OK
+$ ls server/routes/zz-mutation-unsigned-approval.ts
+ls: cannot access 'server/routes/zz-mutation-unsigned-approval.ts': No such file or directory

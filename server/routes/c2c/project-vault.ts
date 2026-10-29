@@ -10,9 +10,12 @@
  *   c2c_rule_packs           → the required-section spec tree for each build
  *   c2c_document_sections    → LIVE section status / version / owner / timestamp
  *   users                    → real owner attribution (section & document owner_id)
- *   concept2cure_artifacts   → the "Module 3 (CMC)" branch: governed §3.x
- *                              artifacts the CMC compile bridge files, via the
- *                              program→project anchor
+ *   concept2cure_artifacts   → the "Governed artifacts" branch: every
+ *                              non-archived artifact of the project, across
+ *                              CTD sections, grouped by CTD module, via the
+ *                              program→project anchor (fold F3 slice A,
+ *                              2026-10-29; until then §3.x only, as
+ *                              "Module 3 (CMC)")
  *   vault.documents          → the "Uploaded files" branch: what this surface's
  *                              own Upload button ingests
  *
@@ -44,7 +47,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { createReadStream, promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
@@ -90,6 +93,15 @@ import { StorageIntegrityError } from '../../services/storage/storage-provider.j
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+  type ArtifactRegistryRow,
+} from '../../services/artifact-registry-read.js';
+import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import { ProgramReadAccessError, getCurrentAccessibleProgramScope } from '../../services/c2c/current-program-access';
@@ -114,12 +126,16 @@ interface VaultDoc {
   preview: string;
   blocker?: boolean;
   flag?: string;
-  /** Discriminator: an authored section vs an uploaded vault.documents row. */
-  src?: 'authored' | 'upload';
+  /** Discriminator: an authored section, an uploaded vault.documents row, or a
+   *  governed artifact (concept2cure_artifacts). */
+  src?: 'authored' | 'upload' | 'artifact';
+  /** Artifact-only: what the registry records of its governance. */
+  artifact?: ArtifactLeafFacts;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  /** An upload's stored file size; on an artifact, its stored content's size (formatContentBytes). */
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -136,6 +152,33 @@ interface VaultDoc {
   documentCode?: string | null;
   /** This version's lifecycle stage (uploads only, VR-13): null when it has no record, i.e. not reviewed. */
   lifecycleStage?: string | null;
+}
+
+/**
+ * A governed artifact's facts on its leaf, from the registry's one read
+ * (services/artifact-registry-read.ts): what the Artifacts center shows of it,
+ * plus its author, recorded hash and the origin the row records.
+ */
+interface ArtifactLeafFacts {
+  artifactId: string;
+  kind: string;
+  format: string;
+  /** The model the writer recorded; null when none was (never invented). */
+  model: string | null;
+  /** Read from a column its writer sets; null when the row records none. */
+  origin: ArtifactOrigin | null;
+  author: string | null;
+  /**
+   * The hash the writer recorded. Not offered as `hash`, which on an upload is
+   * the SHA-256 of the stored bytes: the CMC composer hashes its inputs and an
+   * import records the source file's hash beside empty content.
+   */
+  contentHash: string | null;
+  ctdSection: string | null;
+  signature: ArtifactSignatureState;
+  signedVersion: number | null;
+  reviewed: boolean;
+  sourceCount: number;
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -209,6 +252,16 @@ interface DataRoomBlock {
  *  window can say it is full without a second query. */
 const DATA_ROOM_WINDOW = 200;
 
+interface GovernedArtifactsBlock {
+  total: number;
+  /** Keyed by the leaf's status vocabulary (draft, review, approved, final, …). */
+  byStatus: Record<string, number>;
+  signatures: Record<ArtifactSignatureState, number>;
+  /** Artifacts whose current version has a recorded human review. */
+  reviewed: number;
+  window: { shown: number; total: number; truncated: boolean };
+}
+
 interface VaultDisplayShape {
   program: string;
   spine: string;
@@ -224,12 +277,20 @@ interface VaultDisplayShape {
   documentCounts?: {
     /** Authored documents — one each, however many rule-pack sections. */
     authored: number;
-    /** Governed Module 3 (CMC) artifacts filed for the programme. */
-    cmcArtifacts: number | null;
+    /** Governed artifacts of the project, every CTD section (the whole
+     *  project, not the window the tree carries). */
+    artifacts: number | null;
     /** Uploads in the whole programme, not the page the tree carries. */
     uploads: number | null;
   };
   tree: VaultFolder[];
+  /**
+   * The "Governed artifacts" branch's breakdown. `total` is the project's;
+   * the other counts cover the artifacts the window lists, which is all of
+   * them unless `window.truncated`. Absent when the branch could not be read
+   * (`unavailable` says why), so an absent block is never a zero.
+   */
+  artifacts?: GovernedArtifactsBlock;
   /**
    * What the Vault holds against the program's required sections (VR-15):
    * counts of confirmed filings from the one resolver, with where the list
@@ -385,6 +446,66 @@ export async function recordVaultDownload(
   } finally {
     client?.release();
   }
+}
+
+/**
+ * Record a seal's closing archive BEFORE it is sent, with the SHA-256 of the
+ * exact file that will leave (VR-20), as a download is recorded
+ * (recordVaultDownload). False when it could not be recorded; the caller then
+ * sends nothing.
+ */
+export async function recordVaultArchive(
+  req: Request,
+  d: { orgId: number; userId: number | undefined; programId: string; sealId: string; manifestSha256: string;
+    archiveSha256: string; archiveSize: number; documentCount: number; withheldCount: number },
+): Promise<boolean> {
+  let client: PoolClient | undefined;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await setTenantContextTx(client, d.orgId);
+    await writeChainedAuditRow(client, {
+      tenantId: d.orgId, userId: d.userId, action: 'vault.data_room.archive',
+      resourceType: 'vault_data_room_seal', resourceId: d.sealId,
+      ipAddress: req.ip, userAgent: req.headers['user-agent'],
+      details: { programId: d.programId, manifestSha256: d.manifestSha256, archiveSha256: d.archiveSha256,
+        archiveSize: d.archiveSize, documentCount: d.documentCount, withheldCount: d.withheldCount },
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (auditErr) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    logger.error('vault closing archive refused: audit write failed', {
+      sealId: d.sealId, err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  } finally {
+    client?.release();
+  }
+}
+
+/** Why a sealed document's file is not in its closing archive: the single download refuses it too. */
+const WITHHELD_BY_DISPOSITION = 'Its original file was removed under a data disposition; the record and its data are kept.';
+
+/** Stream a finished archive with its recorded SHA-256, then remove its staging directory. */
+function sendStagedArchive(
+  res: Response,
+  built: { path: string; size: number; sha256: string },
+  stage: { cleanup(): Promise<void> },
+  fileName: string,
+): void {
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Length', String(built.size));
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('X-Content-SHA256', built.sha256);
+  res.setHeader('Cache-Control', 'no-store');
+  const stream = createReadStream(built.path);
+  res.on('close', () => { stream.destroy(); void stage.cleanup(); });
+  stream.on('error', (err) => {
+    logger.error('vault closing archive stream failed', { fileName, err: err.message });
+    res.destroy(err);
+  });
+  stream.pipe(res);
 }
 
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
@@ -819,16 +940,6 @@ function isMissingStore(err: unknown): boolean {
   return code === '42P01' || code === '42703';
 }
 
-interface M3ArtifactRow {
-  id: string | number;
-  artifact_id: string;
-  title: string | null;
-  ctd_section: string;
-  status: string | null;
-  version: number | null;
-  updated_at: string | Date | null;
-}
-
 /**
  * Read a vault document's bytes and prove they are the bytes that were
  * recorded, or say precisely why not.
@@ -1012,75 +1123,144 @@ export async function readVerifiedVaultBytes(
   return { ok: true, bytes };
 }
 
+/** The branch's name, in the tree and in `unavailable`. */
+const ARTIFACTS_BRANCH = 'Governed artifacts';
+
+/** Said when the project has no PM-spine anchor. The resolver's own sentence is
+ *  the CMC module's ("its governed Module 3 artifacts…"); this branch lists
+ *  every artifact, so it says so. */
+const ARTIFACTS_UNANCHORED =
+  'This project is not linked to your organization’s artifact registry yet, so its governed artifacts ' +
+  'are not listed here. To have them listed, ask your organization administrator to link the project.';
+
 /**
- * The Module 3 (CMC) branch: governed §3.x artifacts the CMC compile bridge
- * files into concept2cure_artifacts, reached through the program→project
- * anchor (the same EXISTS idiom mdx-vault.ts uses — org predicate repeated on
- * projects so a mis-anchored row can never pull another tenant's data in).
- * These rows were invisible in this surface even though the CMC module's
- * "vault" affordances pointed here — the data room now lists what the
- * pipeline files, organized by CTD section.
- */
-/**
- * What the Module 3 branch read found — three answers, not two.
+ * The "Governed artifacts" branch (fold F3 slice A, D2, 2026-10-29): every
+ * non-archived concept2cure_artifacts row of the project, across CTD sections,
+ * grouped by CTD module, each leaf carrying the governance the Artifacts
+ * center computes for it.
  *
- * `null` used to carry both "this program is anchored and nothing has been
- * filed yet" and "this program has no PM-spine anchor, so the artifact
- * registry cannot be asked about it at all", and the surface rendered them
- * identically: no Module 3 section. The second is a state the user has to be
- * told about — the artifact query below joins through
- * `projects.regulatory_program_id`, so with no anchor it CANNOT match however
- * much has been compiled and approved. CLAUDE.md's working agreement: an error
- * is never rendered as an empty result.
+ * It replaced the "Module 3 (CMC)" branch, which listed only ctd_section
+ * LIKE '3.%' with no signature, review, author or hash, so a clinical overview
+ * AnA drafted for the project was in the registry and not in its Vault. §3
+ * artifacts are the "Module 3" group here, listed once.
+ *
+ * What the read found — three answers, not two. `empty` (anchored, nothing
+ * filed) and `unaddressable` (no PM-spine anchor, so the registry cannot be
+ * asked: its query joins through projects.regulatory_program_id) used to render
+ * identically; the second is said. CLAUDE.md: an error is never rendered as an
+ * empty result.
  */
-type Module3BranchResult =
-  | { kind: 'branch'; folder: VaultFolder }
-  /** Addressable, and nothing filed. The honest empty state. */
-  | { kind: 'empty' }
-  /** The registry cannot be addressed for this program. Carries the reason. */
+type ArtifactsBranchResult =
+  | { kind: 'branch'; folder: VaultFolder; block: GovernedArtifactsBlock }
+  | { kind: 'empty'; block: GovernedArtifactsBlock }
   | { kind: 'unaddressable'; reason: string };
 
-async function module3Branch(programId: string, orgId: number): Promise<Module3BranchResult> {
+/* The registry's status in the Vault chip's vocabulary is artifactRegistryStatus
+   in the shared read, where it moved (slice B, 2026-10-29) so the Artifacts
+   center's rows say it the same way in the shared manifest. */
+
+export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
+  const g = artifactGovernance(row);
+  const section = artifactCtdSection(row.ctd_section);
+  const title = row.title || section || 'Untitled artifact';
+  const author = row.author_name ?? null;
+  const version = row.version == null ? null : Number(row.version);
+  const origin = g.origin ? ARTIFACT_ORIGIN_LABELS[g.origin] : null;
+  return {
+    id: `art-${row.id}`,
+    num: section ?? '—',
+    title,
+    type: g.kind,
+    status: artifactRegistryStatus(row.status),
+    // The one completion definition the rest of this read uses (approved or
+    // locked is 100, anything else 0).
+    pct: sectionCompletionPct(row.status),
+    owner: author ?? '—',
+    ver: version != null && Number.isFinite(version) ? `v${version}` : '—',
+    updated: relativeTime(row.updated_at),
+    preview: [title, section ? `CTD §${section}` : null, origin].filter(Boolean).join(' · '),
+    src: 'artifact',
+    // The stored content's size, as the Artifacts center states it (slice B: the
+    // two screens share one manifest). Not a rendered file's size: none is stored.
+    sizeLabel: formatContentBytes(Number(row.content_bytes)),
+    artifact: {
+      artifactId: row.artifact_id,
+      kind: g.kind,
+      format: g.fmt,
+      model: g.model,
+      origin: g.origin,
+      author,
+      contentHash: row.content_hash ?? null,
+      ctdSection: section,
+      signature: g.signature,
+      signedVersion: g.sigVersion,
+      reviewed: g.reviewed,
+      sourceCount: g.sourceCount,
+    },
+  };
+}
+
+/** Group leaves by CTD module, Modules 1–5 in order and the rows with no CTD
+ *  section last. Within a module, section order (3.2.S before 3.2.P), not text order. */
+export function artifactsFolder(leaves: VaultDoc[]): VaultFolder {
+  const groups = new Map<string, VaultDoc[]>();
+  for (const leaf of leaves) {
+    const code = normalizeCtdCode(leaf.artifact?.ctdSection ?? null);
+    const key = code ? code.charAt(0) : 'none';
+    const list = groups.get(key) ?? [];
+    list.push(leaf);
+    groups.set(key, list);
+  }
+  const children: VaultFolder[] = [];
+  for (const key of ['1', '2', '3', '4', '5', 'none']) {
+    const list = groups.get(key);
+    if (!list) continue;
+    const ordered = key === 'none'
+      ? list
+      : [...list].sort((a, b) => compareSectionCode(a.num, b.num) || a.title.localeCompare(b.title));
+    children.push({
+      id: key === 'none' ? 'art-none' : `art-m${key}`,
+      code: '',
+      label: key === 'none' ? 'No CTD section' : `Module ${key}`,
+      children: ordered,
+    });
+  }
+  return { id: 'artifacts', code: '', label: ARTIFACTS_BRANCH, children };
+}
+
+function artifactsBlock(leaves: VaultDoc[], total: number, truncated: boolean): GovernedArtifactsBlock {
+  const byStatus: Record<string, number> = {};
+  const signatures: Record<ArtifactSignatureState, number> = { none: 0, current: 0, stale: 0, unknown: 0 };
+  let reviewed = 0;
+  for (const leaf of leaves) {
+    byStatus[leaf.status] = (byStatus[leaf.status] ?? 0) + 1;
+    if (leaf.artifact) {
+      signatures[leaf.artifact.signature] += 1;
+      if (leaf.artifact.reviewed) reviewed += 1;
+    }
+  }
+  return { total, byStatus, signatures, reviewed, window: { shown: leaves.length, total, truncated } };
+}
+
+async function governedArtifactsBranch(programId: string, orgId: number, cap: number): Promise<ArtifactsBranchResult> {
   /* Ask the spine resolver BEFORE the artifact query, through the one module
      that owns the translation (services/cmc/resolve-cmc-artifact-project.ts).
-     Its own contract requires callers to "skip the registry query and say why,
-     never substitute the raw id, and never render the absence as a plain empty
-     result" — which is exactly what this branch was doing. */
+     Its contract: skip the registry query and say why, never substitute the
+     raw id, and never render the absence as a plain empty result. */
   const spine = await resolveCmcArtifactProject(orgId, programId);
   if (spine.state !== 'linked') {
-    return { kind: 'unaddressable', reason: spine.detail };
+    return { kind: 'unaddressable', reason: spine.state === 'unanchored' ? ARTIFACTS_UNANCHORED : spine.detail };
   }
-
-  const artRes = await pool.query(
-    `SELECT a.id, a.artifact_id, a.title, a.ctd_section, a.status, a.version, a.updated_at
-       FROM concept2cure_artifacts a
-      WHERE a.organization_id = $2
-        AND a.status != 'archived'
-        AND a.ctd_section LIKE '3.%'
-        AND EXISTS (SELECT 1 FROM projects p
-                     WHERE p.id = a.project_id
-                       AND p.organization_id = a.organization_id
-                       AND p.regulatory_program_id = $1::uuid)
-      ORDER BY a.ctd_section, a.version DESC`,
-    [programId, orgId],
-  );
-  if (artRes.rows.length === 0) return { kind: 'empty' };
-  const children: VaultDoc[] = (artRes.rows as M3ArtifactRow[]).map((a) => ({
-    id: `m3art-${a.id}`,
-    num: a.ctd_section,
-    title: a.title || a.ctd_section,
-    type: 'Governed artifact',
-    // The same status vocabulary the artifact registry stores, mapped through
-    // the one normalizer; completion is the section-approval definition the
-    // rest of this read-model uses (approved/locked = 100, else 0).
-    status: normalizeStatus(a.status === 'draft' ? 'drafted' : a.status, true),
-    pct: sectionCompletionPct(a.status),
-    owner: '—',
-    ver: a.version != null ? `v${a.version}` : '—',
-    updated: relativeTime(a.updated_at),
-    preview: `${a.title || a.ctd_section} · CTD §${a.ctd_section} · compiled from CMC canonical sources`,
-  }));
-  return { kind: 'branch', folder: { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children } };
+  // One past the window, so a full window can say it is full.
+  const rows = await readArtifactRegistry({ organizationId: orgId, programId, limit: cap + 1 });
+  const truncated = rows.length > cap;
+  const listed = truncated ? rows.slice(0, cap) : rows;
+  const counted = Number(rows[0]?.total_rows);
+  const total = Number.isFinite(counted) && counted >= listed.length ? counted : listed.length;
+  const leaves = listed.map(artifactLeaf);
+  const block = artifactsBlock(leaves, total, truncated);
+  if (leaves.length === 0) return { kind: 'empty', block };
+  return { kind: 'branch', folder: artifactsFolder(leaves), block };
 }
 
 /* The Uploaded-files branch is the filing cabinet (uploadLeaf / filingCabinet
@@ -1302,24 +1482,29 @@ export default function createProjectVaultRoutes(): Router {
       //    empty branch (which would read as "no documents"); any other
       //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
-      let cmcArtifacts: number | null = null;
+      /** The tree's windows (governed artifacts, uploads): one cap, VAULT_TREE_MAX_DOCS. */
+      const treeCap = Math.min(
+        Math.max(parseInt(String(process.env.VAULT_TREE_MAX_DOCS ?? '2000'), 10) || 2000, 1),
+        20000,
+      );
+      let artifactsCount: number | null = null;
+      let artifacts: GovernedArtifactsBlock | undefined;
       try {
-        const m3 = await module3Branch(id, orgId);
-        if (m3.kind === 'branch') {
-          tree.push(m3.folder);
-          cmcArtifacts = m3.folder.children.length;
-        } else if (m3.kind === 'empty') {
-          cmcArtifacts = 0;
-        } else if (m3.kind === 'unaddressable') {
+        const branch = await governedArtifactsBranch(id, orgId, treeCap);
+        if (branch.kind === 'branch') tree.push(branch.folder);
+        if (branch.kind === 'unaddressable') {
           // Not an empty branch: the registry cannot be asked about this
-          // program at all, and the resolver's own sentence says why and what
-          // to do. Reported through the same contract a missing store uses.
-          unavailable.push({ branch: 'Module 3 (CMC)', reason: m3.reason });
+          // project at all. Reported through the same contract a missing
+          // store uses.
+          unavailable.push({ branch: ARTIFACTS_BRANCH, reason: branch.reason });
+        } else {
+          artifacts = branch.block;
+          artifactsCount = branch.block.total;
         }
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         unavailable.push({
-          branch: 'Module 3 (CMC)',
+          branch: ARTIFACTS_BRANCH,
           reason: 'The governed artifact registry (or its link to this project) is not provisioned in this environment.',
         });
       }
@@ -1347,10 +1532,6 @@ export default function createProjectVaultRoutes(): Router {
       //
       //    The window itself is reported so the surface can say it is showing
       //    part of a larger cabinet instead of implying it is the whole of it.
-      const uploadsCap = Math.min(
-        Math.max(parseInt(String(process.env.VAULT_TREE_MAX_DOCS ?? '2000'), 10) || 2000, 1),
-        20000,
-      );
       /** The program+tenant predicate, shared by the page and its aggregates so
        *  a count can never be taken over a different set than the rows. */
       const uploadsWhere = `d.program_id = $1 AND d.organization_id=$2 AND d.deleted_at IS NULL
@@ -1391,10 +1572,10 @@ export default function createProjectVaultRoutes(): Router {
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
-          [id, orgId, uploadsCap + 1],
+          [id, orgId, treeCap + 1],
         );
-        const truncated = upRes.rows.length > uploadsCap;
-        uploads = (upRes.rows as UploadRow[]).slice(0, uploadsCap);
+        const truncated = upRes.rows.length > treeCap;
+        uploads = (upRes.rows as UploadRow[]).slice(0, treeCap);
 
         // Program-wide totals. Always taken, so `unfiledCount` means the same
         // thing whether or not the page was truncated.
@@ -1527,7 +1708,7 @@ export default function createProjectVaultRoutes(): Router {
          programme's uploads — beside a note saying the page was partial. */
       const documentCounts = {
         authored: docsRes.rows.length,
-        cmcArtifacts,
+        artifacts: artifactsCount,
         uploads: uploadsWindow ? uploadsWindow.total : null,
       };
       // 8) Vault coverage (VR-15): never throws; a store it cannot read is
@@ -1544,9 +1725,10 @@ export default function createProjectVaultRoutes(): Router {
         spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
-          documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
+          documentCounts.authored + (documentCounts.artifacts ?? 0) + (documentCounts.uploads ?? 0),
         documentCounts,
         tree,
+        ...(artifacts ? { artifacts } : {}),
         coverage,
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
@@ -2475,6 +2657,28 @@ export default function createProjectVaultRoutes(): Router {
     return numbers;
   };
 
+  /** The organisation, project and seal a seal route names, or null once the refusal is sent. */
+  const readSealRequest = (req: Request, res: Response): { orgId: number; id: string; sealId: string } | null => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) { res.status(403).json({ success: false, error: 'FORBIDDEN' }); return null; }
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const sealId = String(req.params.sealId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return null; }
+    return { orgId, id, sealId };
+  };
+
+  /** A sealed version's stored file, through the one verified reader, against its recorded hash. */
+  const readSealedBytes = async (orgId: number, documentId: string, row: Record<string, unknown>):
+    Promise<{ ok: true; bytes: Buffer } | { ok: false; why: string }> => {
+    const read = await readVerifiedVaultBytes({
+      storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
+      storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
+      storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
+      organizationId: orgId,
+    }, typeof row.content_hash === 'string' ? row.content_hash : null, documentId);
+    return read.ok ? { ok: true, bytes: read.bytes } : { ok: false, why: read.message ?? 'The stored file could not be read.' };
+  };
+
   router.get('/:id/seals', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
@@ -2517,23 +2721,16 @@ export default function createProjectVaultRoutes(): Router {
   });
 
   router.get('/:id/seals/:sealId/verify', async (req: Request, res: Response) => {
-    const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
-    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
-    const sealId = String(req.params.sealId ?? '');
-    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
     const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
     try {
       // With ?bytes=1 each sealed file is re-read through the one verified reader.
       const checkBytes = req.query.bytes === '1'
         ? async (doc: { id: string }, row: Record<string, unknown>) => {
-          const read = await readVerifiedVaultBytes({
-            storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
-            storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
-            storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
-            organizationId: orgId,
-          }, typeof row.content_hash === 'string' ? row.content_hash : null, doc.id);
-          return read.ok ? null : (read.message ?? 'The stored file could not be read.');
+          const read = await readSealedBytes(orgId, doc.id, row);
+          return read.ok ? null : read.why;
         }
         : undefined;
       const { seal, verification } = await verifySeal(pool, { organizationId: orgId, programId: id, sealId, checkBytes });
@@ -2542,6 +2739,69 @@ export default function createProjectVaultRoutes(): Router {
       if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
       logger.error('vault seal verify failed', { sealId, err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'SEAL_VERIFY_UNAVAILABLE', message: 'The seal could not be verified. This is not a verdict.' });
+    }
+  });
+
+  /* The seal's closing archive (VR-20, docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md).
+     The seal is verified with its files re-read, and the bytes that made the
+     verdict are staged as they are read; an archive is built only for an intact
+     seal. A chained row carrying the archive's SHA-256 is committed before a
+     byte is sent, and a failed write sends nothing. */
+  router.get('/:id/seals/:sealId/archive', async (req: Request, res: Response) => {
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
+    const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
+    const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
+    const { buildSealArchiveContents, SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
+    let sending = false;
+    // A sealed document whose original file a data disposition removed is
+    // listed as withheld; its file is not read, as the download refuses it.
+    const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    try {
+      stage = await openVaultArchive();
+      const staging = stage;
+      const { seal, manifest, verification } = await verifySeal(pool, {
+        organizationId: orgId, programId: id, sealId,
+        checkBytes: async (doc, row) => {
+          if (row.binary_available === false) {
+            withheld.push({ id: doc.id, title: doc.title, sha256: doc.contentHash, why: WITHHELD_BY_DISPOSITION });
+            return null;
+          }
+          const read = await readSealedBytes(orgId, doc.id, row);
+          if (!read.ok) return read.why;
+          return staging.put({ id: doc.id, title: doc.title, fileName: typeof row.file_name === 'string' ? row.file_name : null,
+            indexNumber: doc.indexNumber, sha256: doc.contentHash }, read.bytes);
+        },
+      });
+      if (verification.verdict !== 'intact') {
+        return res.status(409).json({ success: false, error: 'SEAL_NOT_INTACT', verification,
+          message: 'This seal does not verify intact, so no closing archive was built. Nothing was sent.' });
+      }
+      const actorId = governedActorId(req) ?? undefined;
+      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
+      const built = await stage.finish(contents);
+      const recorded = await recordVaultArchive(req, {
+        orgId, userId: actorId, programId: id, sealId: seal.id, manifestSha256: seal.manifestSha256,
+        archiveSha256: built.sha256, archiveSize: built.size, documentCount: built.files.length, withheldCount: withheld.length,
+      });
+      if (!recorded) {
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The archive could not be recorded in the audit trail, so it was not sent.' });
+      }
+      sending = true;
+      res.setHeader('X-Archive-Withheld', String(withheld.length));
+      sendStagedArchive(res, built, stage, `vault-seal-${seal.id.slice(0, 8)}-closing-archive.zip`);
+      return undefined;
+    } catch (err) {
+      if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
+      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault closing archive failed', { sealId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'ARCHIVE_UNAVAILABLE',
+        message: 'The closing archive could not be built. Nothing was sent.' });
+    } finally {
+      if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
 

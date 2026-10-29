@@ -318,7 +318,13 @@ export const UI_SURFACES: UiSurface[] = [
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents'],
+    // 2026-10-29 (D2, fold F3 slice B): a governed artifact's leaf downloads the governed DOCX
+    // (/api/artifacts-center/:id/export). A shared claim, as a86ed04ed: the Artifacts center keeps
+    // its own. It opens two reads to a Vault-only organization, both organization-scoped
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/vault-artifact-leaf/README.md). The leaf's versions and
+    // audit report (/api/concept2cure/projects/...) are NOT claimed here: that prefix holds 97
+    // routes, 49 of them writes, and its claim is a decision of its own (same README).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -466,7 +472,11 @@ export const UI_SURFACES: UiSurface[] = [
     // standalone CSR/Module 2 content builders retain their launch fences.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
-      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
+      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract',
+      // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
+      // build bound to the run, read its sections, triage them, build narratives. Exactly the
+      // jobs router, not the /api/csr builder prefix.
+      '/api/csr/jobs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,

@@ -15,6 +15,8 @@ import {
 } from './qmsRecordData';
 import { type PillTone, type RegisterConfig, optionsOf, pill, num, Refused } from './qmsRegisterKit';
 import { raiseCapaFrom } from './qmsCapaRegister';
+import { documentLabel, type RegisterContext } from './registerContext';
+import type { C2CFormField } from '../v2/C2CForm';
 
 const DISPOSITION_TONE: Record<string, PillTone> = {
   use_as_is: 'effective', rework: 'review', regrade: 'review', scrap: 'muted', return_to_supplier: 'muted',
@@ -115,6 +117,27 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   }),
 };
 
+/* A supplier's quality agreement is one of this organisation's controlled
+   documents (the server refuses any other: mdx-qms.ts qualityAgreementRefusal).
+   Effective documents are listed first; an unread or failed read says so. */
+export function qualityAgreementField(ctx: RegisterContext, current: number | null): C2CFormField {
+  const docs = [...(ctx.documents ?? [])].sort((a, b) => Number(b.status === 'effective') - Number(a.status === 'effective'));
+  const options = docs.map((d) => ({ value: String(d.id), label: `${d.docNumber} · ${d.title}${d.status === 'effective' ? '' : ` (${d.status.replace('_', ' ')})`}` }));
+  if (current != null && !docs.some((d) => d.id === current)) options.unshift({ value: String(current), label: documentLabel(ctx, current) });
+  let descStatus = '';
+  if (ctx.documentsFailed) descStatus = 'The controlled documents could not be read, so none can be chosen now.';
+  else if (!ctx.documents) descStatus = 'Reading the controlled documents…';
+  else if (docs.length === 0) descStatus = 'No controlled document is recorded yet.';
+  return {
+    key: 'qualityAgreementId', label: 'Quality agreement', type: 'select',
+    options,
+    default: current == null ? '' : String(current),
+    desc: 'The controlled document that is this supplier\'s quality agreement.',
+    descStatus,
+  };
+}
+const agreementId = (v: string | undefined) => (v ? Number(v) : undefined);
+
 export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   title: 'Suppliers',
   sub:
@@ -122,7 +145,8 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     'when it is next due for audit and re-approval. Changes to approval standing are recorded under your name.',
   noun: ['supplier', 'suppliers'],
   listPath: '/api/mdx/qms/suppliers',
-  grid: 'minmax(0, 1fr) minmax(0, 1fr) 96px 120px 110px 110px 120px',
+  grid: 'minmax(0, 1fr) minmax(0, 1fr) 96px 120px 110px 110px 130px',
+  needs: { documents: true },
   columns: [
     {
       label: 'Supplier',
@@ -133,6 +157,7 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     { label: 'Approval', cell: (r) => pill(SUPPLIER_TONE[r.approval_status] ?? 'muted', SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status) },
     { label: 'Next audit', cell: (r) => formatDate(r.next_audit_date) },
     { label: 'Re-approval', cell: (r) => formatDate(r.reapproval_date) },
+    { label: 'Quality agreement', cell: (r, ctx) => <span className="mono">{documentLabel(ctx, r.quality_agreement_id)}</span> },
   ],
   kpis: (rows, today) => {
     const unapprovedCritical = rows.filter((r) => r.criticality === 'critical' && r.approval_status !== 'approved').length;
@@ -144,7 +169,7 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     ];
   },
   createLabel: 'Add supplier',
-  createForm: {
+  createForm: (ctx) => ({
     eyebrow: 'Quality',
     title: 'Add a supplier',
     sub: 'Recorded as pending unless you record its approval here.',
@@ -159,20 +184,21 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
       { key: 'approvalDate', label: 'Approved on', type: 'date', half: true },
       { key: 'nextAuditDate', label: 'Next audit', type: 'date', half: true },
       { key: 'reapprovalDate', label: 'Re-approval due', type: 'date', half: true },
+      qualityAgreementField(ctx, null),
     ],
-  },
+  }),
   create: async (v) => {
     const row = await createSupplier({
       supplierName: v.supplierName.trim(), supplierCode: v.supplierCode.trim(), scope: v.scope.trim(),
       criticality: v.criticality, approvalStatus: v.approvalStatus, approvalDate: v.approvalDate,
-      nextAuditDate: v.nextAuditDate, reapprovalDate: v.reapprovalDate,
+      nextAuditDate: v.nextAuditDate, reapprovalDate: v.reapprovalDate, qualityAgreementId: agreementId(v.qualityAgreementId),
     });
     return `${row.supplier_name} was added as ${(SUPPLIER_STATUS_LABEL[row.approval_status] ?? row.approval_status).toLowerCase()}.`;
   },
   rowActions: [{
     label: 'Update',
     title: 'Record a change to approval standing or audit dates',
-    form: (r) => ({
+    form: (r, ctx) => ({
       eyebrow: 'Quality',
       title: `Update ${r.supplier_name}`,
       sub: `Currently ${(SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status).toLowerCase()}. Only the fields you change are recorded.`,
@@ -184,6 +210,7 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
         { key: 'lastAuditDate', label: 'Last audit', type: 'date', half: true, default: r.last_audit_date?.slice(0, 10) ?? '' },
         { key: 'nextAuditDate', label: 'Next audit', type: 'date', half: true, default: r.next_audit_date?.slice(0, 10) ?? '' },
         { key: 'reapprovalDate', label: 'Re-approval due', type: 'date', half: true, default: r.reapproval_date?.slice(0, 10) ?? '' },
+        qualityAgreementField(ctx, r.quality_agreement_id),
       ],
     }),
     submit: async (r, v) => {
@@ -191,9 +218,13 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
         approvalStatus: r.approval_status, approvalDate: r.approval_date?.slice(0, 10) ?? '',
         lastAuditDate: r.last_audit_date?.slice(0, 10) ?? '', nextAuditDate: r.next_audit_date?.slice(0, 10) ?? '',
         reapprovalDate: r.reapproval_date?.slice(0, 10) ?? '',
+        qualityAgreementId: r.quality_agreement_id == null ? '' : String(r.quality_agreement_id),
       };
-      const changed = Object.fromEntries(Object.entries(before).filter(([k, was]) => (v[k] ?? '') !== was && v[k] !== ''));
+      /* What the person changed, with the value they chose (never the value it had). */
+      const changed: Record<string, string | number> = Object.fromEntries(
+        Object.entries(before).filter(([k, was]) => (v[k] ?? '') !== was && v[k] !== '').map(([k]) => [k, v[k]]));
       if (Object.keys(changed).length === 0) throw new Refused('nothing was changed.');
+      if (typeof changed.qualityAgreementId === 'string') changed.qualityAgreementId = Number(changed.qualityAgreementId);
       await updateSupplier(r.id, changed);
       return `${r.supplier_name} was updated.`;
     },
@@ -206,9 +237,10 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   capaSourceKind: CAPA_SOURCE_KIND.supplier,
   ask: 'Give me a read-out on suppliers: which critical suppliers are not approved, whose audits or re-approvals are past due, and what falls due next quarter.',
   askRow: (r) => `Summarise supplier ${r.supplier_name}: what it supplies, its approval standing, and what its qualification needs next.`,
-  facts: (r) => ({
+  facts: (r, ctx) => ({
     supplier: r.supplier_name, code: r.supplier_code, supplies: r.scope, criticality: r.criticality, approval: r.approval_status,
     nextAudit: r.next_audit_date?.slice(0, 10) ?? null, reapprovalDue: r.reapproval_date?.slice(0, 10) ?? null,
+    qualityAgreement: documentLabel(ctx, r.quality_agreement_id),
   }),
 };
 

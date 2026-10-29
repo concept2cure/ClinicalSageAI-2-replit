@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const auth = vi.hoisted(() => vi.fn());
 vi.mock('../source-access.js', async load => ({ ...await load<typeof import('../source-access.js')>(), authorizeCsrSourceProgram: auth }));
-import { readSavedClinicalTables } from '../saved-clinical-tables.js';
+import { readRetainedStudyForAssembly, readSavedClinicalTables } from '../saved-clinical-tables.js';
 import { orchestratorInputDigest } from '../../submission-orchestrator-inputs.js';
 import { sealSignPayloadDigest } from '../../ectd/sign-payload-seal.js';
 import { sourceFixture } from './source-input-fixture.js';
@@ -69,5 +69,31 @@ describe('verified retained CSR aggregate reconstruction', () => {
   it('refuses an ambiguous study identity even in a correctly sealed input receipt', async () => {
     const f = fixture(); f.input.clinicalStudyData.push(sourceFixture().studyData); f.reseal();
     await expect(readSavedClinicalTables({ query: f.query }, scope, RUN)).rejects.toMatchObject({ code: 'CSR_RUN_INPUTS_INVALID' });
+  });
+});
+
+// CSR slice 8 (2026-10-29): the assembler's read of the same retained run, server side only.
+describe('the retained study the CSR assembler composes from', () => {
+  /** The current-approval reads an assembly makes, as release does (without its lock). */
+  const current = (f: ReturnType<typeof fixture>, approved = true) => vi.fn(async (sql: string, values?: unknown[]) => {
+    if (sql.includes('AS current')) return { rows: [{ current: true }] };
+    if (sql.includes('FROM canonical_documents')) return { rows: approved ? [{ stage: 'approved', content_hash: (f.input.clinicalSourceReceipts as CsrSourceReceipt[])[0].sha256 }] : [] };
+    if (/FOR SHARE|pg_advisory/.test(sql)) throw new Error('The assembly read takes no lock');
+    return f.query(sql, values);
+  });
+  it('returns the verified subject rows and their tables for the job’s study, through the same checks', async () => {
+    const f = fixture(); const query = current(f);
+    const result = await readRetainedStudyForAssembly({ query }, scope, RUN, 'SYN-001');
+    expect(result.study.demographics.map(d => d.subjectId)).toEqual(['synthetic-a', 'synthetic-b', 'synthetic-c']);
+    expect(result.tables.demographics.rows.length).toBeGreaterThan(0);
+    expect(result.source.documentId).toBe(SOURCE);
+    expect(auth).toHaveBeenCalledWith({ query }, scope);
+  });
+  it('refuses a study the run does not hold, a source no longer approved, and an altered run, rather than assembling from nothing', async () => {
+    const f = fixture();
+    await expect(readRetainedStudyForAssembly({ query: current(f) }, scope, RUN, 'OTHER-STUDY')).rejects.toMatchObject({ status: 409, code: 'CSR_RUN_STUDY_NOT_FOUND' });
+    await expect(readRetainedStudyForAssembly({ query: current(f, false) }, scope, RUN, 'SYN-001')).rejects.toMatchObject({ code: 'CSR_SOURCE_APPROVAL_REQUIRED' });
+    f.row.input_seal = 'forged';
+    await expect(readRetainedStudyForAssembly({ query: current(f) }, scope, RUN, 'SYN-001')).rejects.toMatchObject({ code: 'CSR_RUN_INPUTS_INVALID' });
   });
 });

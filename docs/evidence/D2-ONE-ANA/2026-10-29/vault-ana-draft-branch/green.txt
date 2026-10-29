@@ -1,0 +1,80 @@
+# GREEN on ca574ff80 + this change, 2026-10-29 (re-run after the PGlite fixture gained row 10; see mutations.txt, M1)
+# npx vitest run <the three new suites> <the moved suites> --reporter=verbose (ANSI stripped)
+
+ ✓ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an own project shows its code 27ms
+ ✓ server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows that project's code or name 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD sections, and nothing else 39ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > reads the signature on the current version in four states, and review of the current version 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > names the author through actor_name, and says nothing where none was recorded 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the organization reads its own 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > lists the branch in the tree, grouped by CTD module 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > states the branch’s status breakdown and signature and review counts 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > the header names governed artifacts beside authored documents 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > opens an artifact on its governance: kind, format, origin, model, author, signature, review, sources, hash 411ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > an artifact with no recorded origin or model says so, rather than naming one 188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a branch the server could not read is said as a failure, never as no artifacts 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a project with no artifacts says so plainly 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a window over a larger registry says the counts cover what is listed 43ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > does not carry the unbacked retention subtitle 40ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > tells AnA what the branch holds, and what it could not read 63ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD section, grouped by CTD module 38ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > names an origin only where the row records one 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reports the status breakdown and the count, and the count joins documentCount 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the organization and the program, newest first, one past the window 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports a signature that covers the current version as not stale 17ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > REGRESSION: an artifact signed at an earlier version reports stale 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > says it cannot tell, rather than guessing, when the signed version is unresolvable 3ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports no staleness verdict for an unsigned artifact 3ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > reports persisted review and source counts without inventing either 4ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > scopes the read to the caller organization 2ms
+ ✓ server/routes/__tests__/artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > refuses without organization context 12ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection 356ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection 133ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null} 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0} 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero 104ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 52ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count when no project is open and nothing was read 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states the count once the read succeeds 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > an authored build with no files reads as one authored document and no uploads 46ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > a folder count says what it counts 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > names governed artifacts only when there are some, and claims no upload count it could not read 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 403 says access was refused, not that the store did not respond 19ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 5xx says the store did not respond, and offers a retry 174ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > names document types for a reader, not by wire token 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > with no project open, Upload is disabled and says why 20ms
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > draws the e-signed shield once: only for the signature that covers the current version 76ms
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > says in words that an earlier version is the one signed 35ms
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > does not claim the current version is signed when the covered version is unknown 24ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — one identity for the gate and the handler > a caller the gate admitted on req.userId alone is the same caller inside the handler 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists CMC-compiled Module 3 artifacts organized by CTD section (the Module 3 group of Governed artifacts) 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists what the Upload button ingested — the row really does appear in the tree, WHERE its filing says 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an unprovisioned store as unavailable — never as an empty branch 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an UNANCHORED program as unavailable, not as a missing artifacts branch 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > an ANCHORED program with nothing filed yet is an honest empty, not an unavailable 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > a real failure in a branch is still a failure — not silently degraded 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > denies export when the current persisted version has no approval 16ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > fails closed by default in production 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > exports only after a persisted approval and labels the bytes and headers as draft 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > reports a current-version signature as recorded human review 2ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > does not allow an approval of an older artifact version to authorize export 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: delivers nothing when the record does not persist 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 2ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: delivers nothing when the record does not persist 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > an authored document is one document, however many sections its rule pack has 25ms
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > uploads count the programme, not the page the tree carries 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > a branch that could not be read is unknown in the breakdown, not zero 5ms
+ Test Files  11 passed (11)
+      Tests  75 passed (75)

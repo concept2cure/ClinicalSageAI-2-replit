@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useId } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
@@ -9,6 +10,20 @@ import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
+import {
+  ARTIFACTS_BRANCH,
+  ArtifactAuditReport,
+  ArtifactGovernanceDetail,
+  ArtifactVersions,
+  GovernedArtifactsLane,
+  artifactAskPrompt,
+  artifactSelectionFacts,
+  fetchGovernedArtifactDocx,
+  governedArtifactManifestRows,
+  governedArtifactsFacts,
+  type GovernedArtifactsBlock,
+} from './VaultGovernedArtifacts';
+import { downloadArtifactManifest } from '../artifactManifest';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -148,12 +163,15 @@ interface VaultDisplayShape {
   spine: string;
   standard: string;
   /** Documents, counted by the server: authored documents (one each, however
-   *  many sections), CMC artifacts, and the programme's uploads — not the
-   *  leaves of the tree, and not the capped uploads page. */
+   *  many sections), the project's governed artifacts, and the programme's
+   *  uploads — not the leaves of the tree, and not the capped uploads page. */
   documentCount: number;
   /** What documentCount is made of; a branch that could not be read is null. */
-  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
+  documentCounts?: { authored: number; artifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
+  /** The "Governed artifacts" branch's counts (fold F3 slice A). Absent when
+   *  the branch could not be read, which `unavailable` says, or from an older server. */
+  artifacts?: GovernedArtifactsBlock;
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
@@ -222,7 +240,7 @@ function currentProjectId(): string | null {
  * The read-model nests every authored leaf inside `vaultdoc-<c2c_documents.id>`
  * whose `code` is that row's `doc_type` uppercased
  * (server/routes/c2c/project-vault.ts documentFolder). Branches with no
- * governed document above them — the Module 3 artifact branch, the filing
+ * governed document above them — the governed-artifacts branch, the filing
  * cabinet — inherit null, and null is reported as null: a family this cannot
  * see must never be guessed, because naming the wrong one turns a resolvable
  * section into a refusal in the editor.
@@ -247,6 +265,37 @@ export function vaultDocFamilyCode(
     if (hit !== undefined) return hit;
   }
   return undefined;
+}
+
+/**
+ * The one leaf of the tree a name picks out, for vault.focus-document: the
+ * title exactly (case and spacing aside), else the section code exactly, else
+ * the one title that contains it. More than one is a miss to be named, never a
+ * guess. `folder` is the leaf's own folder; `ancestors`, the folders above it.
+ */
+export function findNamedVaultDocument(
+  nodes: readonly (VaultFolder | VaultDoc)[],
+  name: string,
+):
+  | { kind: 'one'; doc: VaultDoc; folder: VaultFolder; ancestors: string[] }
+  | { kind: 'many'; count: number }
+  | { kind: 'none' } {
+  const leaves: Array<{ doc: VaultDoc; folder: VaultFolder; ancestors: string[] }> = [];
+  const walk = (folder: VaultFolder, ancestors: string[]) => {
+    for (const child of folder.children) {
+      if (isVaultDoc(child)) leaves.push({ doc: child, folder, ancestors });
+      else walk(child as VaultFolder, [...ancestors, folder.id]);
+    }
+  };
+  for (const n of nodes) if (!isVaultDoc(n)) walk(n as VaultFolder, []);
+  const norm = (t: string) => t.toLowerCase().replace(/\s+/g, ' ').trim();
+  const want = norm(name);
+  const exact = leaves.filter((l) => norm(l.doc.title) === want);
+  const byCode = exact.length ? exact : leaves.filter((l) => l.doc.num && l.doc.num !== '—' && norm(l.doc.num) === want);
+  const pool = byCode.length ? byCode : leaves.filter((l) => norm(l.doc.title).includes(want));
+  const distinct = [...new Map(pool.map((l) => [l.doc.id, l])).values()];
+  if (distinct.length === 1) return { kind: 'one', ...distinct[0] };
+  return distinct.length > 1 ? { kind: 'many', count: distinct.length } : { kind: 'none' };
 }
 
 /* ── File icon resolver (maps key to I[key]) ── */
@@ -292,7 +341,7 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
  * build the wizard scaffolds — an authored document, every section not started
  * — and a bare "1 document" reads as a file someone put here. The read names
  * its parts (`documentCounts`), so the header states them: authored documents,
- * Module 3 artifacts when there are any, and uploads when that branch was read.
+ * governed artifacts when there are any, and uploads when that branch was read.
  * A branch that could not be read (null) is left out rather than shown as 0;
  * the read's `unavailable` list says why. Without the parts (the pending-store
  * answer), the total stands as it was.
@@ -302,7 +351,7 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
   if (!parts) return plural(v.documentCount, 'document', 'documents');
   return [
     plural(parts.authored, 'authored document', 'authored documents'),
-    parts.cmcArtifacts ? plural(parts.cmcArtifacts, 'Module 3 artifact', 'Module 3 artifacts') : null,
+    parts.artifacts ? plural(parts.artifacts, 'governed artifact', 'governed artifacts') : null,
     parts.uploads == null ? null : plural(parts.uploads, 'uploaded file', 'uploaded files'),
   ]
     .filter(Boolean)
@@ -928,6 +977,26 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* A governed artifact's DOCX (fold F3 slice B): the Artifacts center's
+     governed export, recorded before it is delivered. A refusal is said in the
+     same banner as an upload's, with its reason. */
+  const downloadArtifact = async (doc: VaultDoc) => {
+    if (!doc.artifact || downloading) return;
+    setDownloading(doc.id);
+    setDownloadNote(null);
+    try {
+      const out = await fetchGovernedArtifactDocx(doc);
+      if (!out.ok) {
+        setDownloadNote({ text: out.text, tone: 'error' });
+        return;
+      }
+      const saved = downloadBlob(out.name, out.blob);
+      setDownloadNote(saved ? null : { text: `${doc.title} was fetched but the browser refused the download.`, tone: 'error' });
+    } finally {
+      setDownloading('');
+    }
+  };
+
   const fileDocument = async (
     docId: string,
     body: { confirm?: boolean; folderId?: string | null; ctdSection?: string; note?: string },
@@ -1039,6 +1108,24 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     setActiveFolder(folderId);
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
+  };
+  /* From the governed-artifacts lane: browse the branch in the tree. */
+  const openArtifacts = () => {
+    leaveFind();
+    setActiveFolder('artifacts');
+    setExpanded((e) => ({ ...e, artifacts: true }));
+  };
+  /* The branch's CSV manifest (slice B): the shared builder the Artifacts
+     center uses, over the rows the tree lists. */
+  const exportArtifactManifest = () => {
+    const branch = tree.find((f) => f.id === 'artifacts');
+    if (!branch) return;
+    const project = vault?.program || 'project';
+    const saved = downloadArtifactManifest(
+      `${safeFileName(project, 'project')}-governed-artifacts.csv`,
+      governedArtifactManifestRows(branch, project),
+    );
+    if (!saved) setDownloadNote({ text: 'The manifest was built but the browser refused the download.', tone: 'error' });
   };
   /* "Open in Vault" after File to Vault names the document it filed
      (vaultTarget.ts): open on that row, where "Place into filing…" is,
@@ -1171,6 +1258,31 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         return next;
       });
       return { ok: true, detail: `Opened ${target.folder.label}` };
+    },
+    /* Selects a named document, the state a person's click on its row drives
+       (slice B: the Vault's counterpart of artifacts-center.focus-artifact). */
+    'vault.focus-document': (params) => {
+      const wanted = (params.document ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No document named.' };
+      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
+      if (vaultState.loading)
+        return { ok: false, reason: 'The vault is still loading.', retry: true };
+      if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
+      const found = findNamedVaultDocument(tree, wanted);
+      if (found.kind === 'none') return { ok: false, reason: `No document named "${params.document}" in this vault.` };
+      if (found.kind === 'many') {
+        return { ok: false, reason: `"${params.document}" matches ${found.count} documents — name one exactly.` };
+      }
+      leaveFind();
+      setActiveFolder(found.folder.id);
+      setExpanded((e) => {
+        const next = { ...e };
+        for (const a of found.ancestors) next[a] = true;
+        next[found.folder.id] = true;
+        return next;
+      });
+      setSel(found.doc.id);
+      return { ok: true, detail: `Selected “${found.doc.title}” in ${found.folder.label}` };
     },
   });
   /* The ready signal for the retry contract above: when the read settles, a
@@ -1316,6 +1428,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
             : null,
+        // The project's governed artifacts (fold F3 slice A), or that they could not be read.
+        governedArtifacts: governedArtifactsFacts(vault?.artifacts, vault?.unavailable),
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
         searchQuery: trimmedQ || null,
@@ -1331,6 +1445,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
+              // A governed artifact's state, as the registry records it.
+              artifact: artifactSelectionFacts(sel),
             }
           : null,
       },
@@ -1341,6 +1457,11 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Browse a folder in the document tree',
         'Upload files into the vault, each with its own type, classification and folder (virus-scanned; a file given no folder is classified to a suggested one)',
         'Confirm or move an upload’s suggested filing (governed, audited)',
+        'Read a governed artifact’s kind, origin, signature on the current version and human review',
+        'Read a governed artifact’s versions and, on request, its audit report (reading the report is recorded in its provenance)',
+        'Download a governed artifact as DOCX (recorded; it needs a recorded human review or signature on the current version)',
+        'Export the governed artifacts’ manifest as CSV (their governance, not the files)',
+        'Select a named document in the tree, so its detail is shown',
       ],
     };
   }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault]);
@@ -1401,6 +1522,15 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       });
     }
     onNav && onNav('document-authoring');
+  };
+  /* A governed artifact opens in the editor the way the Artifacts center opens
+     one (slice B): the authoring.open-document directive, by title. The editor
+     resolves the title against its own list with honest misses; a title the
+     registry cannot address still lands on the editor, never on a guess. */
+  const openArtifactInEditor = (doc: VaultDoc) => {
+    const res = resolveSurfaceAction('authoring.open-document', { title: doc.title });
+    if (res.ok) applySurfaceAction(res.directive, (t) => onNav && onNav(t));
+    else onNav && onNav('document-authoring');
   };
 
   return (
@@ -1694,6 +1824,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               window={vault?.uploadsWindow}
               status={st}
               onOpen={openUpload}
+            />
+          )}
+          {/* The project's governed artifacts (fold F3 slice A): a breakdown of
+              the tree's branch, not a second list. Steps aside while a search
+              runs, like the uploads lane. */}
+          {!searching && (
+            <GovernedArtifactsLane
+              block={vault?.artifacts}
+              unavailableReason={vault?.unavailable?.find((u) => u.branch === ARTIFACTS_BRANCH)?.reason ?? null}
+              onOpen={openArtifacts}
+              onExportManifest={exportArtifactManifest}
             />
           )}
           {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
@@ -2199,6 +2340,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
+                ) : sel.src === 'artifact' && sel.artifact ? (
+                  /* A governed artifact: its governance as the registry records
+                     it, its versions, and its audit report on request (slice B:
+                     the reads c2c/artifacts.ts serves under the project). */
+                  <>
+                    <ArtifactGovernanceDetail doc={sel} />
+                    {projectId ? (
+                      <ArtifactVersions key={`artifact-versions-${sel.artifact.artifactId}-${vaultEpoch}`} projectId={projectId} doc={sel} />
+                    ) : null}
+                    {projectId ? (
+                      <ArtifactAuditReport key={`artifact-audit-${sel.artifact.artifactId}`} projectId={projectId} doc={sel} />
+                    ) : null}
+                  </>
                 ) : (
                   <>
                     {/* Corpus indexing / chunk counts are NOT part of the
@@ -2249,7 +2403,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-primary"
                       style={{ padding: '8px 12px' }}
-                      onClick={() => openDoc(sel)}
+                      onClick={() => (sel.src === 'artifact' ? openArtifactInEditor(sel) : openDoc(sel))}
                     >
                       {I.penLine || I.fileText} Open in editor
                     </button>
@@ -2258,9 +2412,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     className="sp-ask"
                     onClick={() =>
                       onAsk(
-                        'Summarize ' +
-                          sel.title +
-                          ' and list the claims that still need evidence.',
+                        sel.src === 'artifact' && sel.artifact
+                          ? artifactAskPrompt(sel)
+                          : 'Summarize ' + sel.title + ' and list the claims that still need evidence.',
                       )
                     }
                   >
@@ -2275,10 +2429,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       precisely so a content hash never describes bytes nobody
                       holds.
 
-                      Only an uploaded document HAS bytes: the other vault nodes
-                      are authored sections and governed artifacts, which are
-                      records rather than files. Those say so instead of
-                      offering a download that could not produce one. */}
+                      Only an uploaded document HAS bytes. A governed artifact
+                      is a record whose governed export renders its stored
+                      content (slice B, below). An authored section says so
+                      instead of offering a download that could not produce one. */}
                   {sel.src === 'upload' && sel.docId ? (
                     <button
                       className="sp-ask"
@@ -2287,6 +2441,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
                     >
                       {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
+                    </button>
+                  ) : sel.src === 'artifact' && sel.artifact ? (
+                    /* The governed export (slice B): rendered from the stored
+                       content, recorded before it is delivered, and refused
+                       without a recorded review or signature on the current
+                       version. A refusal says why, in the banner above. */
+                    <button
+                      className="sp-ask"
+                      onClick={() => void downloadArtifact(sel)}
+                      disabled={downloading === sel.id}
+                      title="The governed DOCX of the current version. Downloading it is recorded, and it needs a recorded human review or signature on that version."
+                    >
+                      {I.download} {downloading === sel.id ? 'Downloading…' : 'Download DOCX'}
                     </button>
                   ) : (
                     <button

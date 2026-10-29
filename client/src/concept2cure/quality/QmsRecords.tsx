@@ -26,6 +26,7 @@ import { Kpi } from './Kpi';
 import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { useCapasBySource } from './capaSources';
+import { useRegisterContext } from './registerContext';
 import type { QmsRecordTab } from './qmsRecordData';
 import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, plural } from './qmsRegisterKit';
 
@@ -49,6 +50,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const [version, setVersion] = React.useState(0);
   const today = new Date().toISOString().slice(0, 10);
   const capas = useCapasBySource(config.capaSourceKind);
+  const ctx = useRegisterContext(config.needs);
   /* The CAPAs raised from each row, from the CAPA register (capaSources.ts). */
   const columns: Column<R>[] = config.capaSourceKind
     ? [...config.columns, {
@@ -95,9 +97,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
     else onContext({
       ...base, state: 'ready', count: rows.length,
       counts: config.kpis(rows, today).map((k) => ({ label: k.label, val: k.val })),
-      records: rows.slice(0, MAX_FACT_ROWS).map(config.facts), truncated: rows.length > MAX_FACT_ROWS,
+      records: rows.slice(0, MAX_FACT_ROWS).map((r) => config.facts(r, ctx)), truncated: rows.length > MAX_FACT_ROWS,
     });
-  }, [onContext, config, failed, loaded, rows, today]);
+  }, [onContext, config, failed, loaded, rows, today, ctx]);
 
   return (
     <>
@@ -158,9 +160,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
               {columns.map((c, i) => (i === 0 && config.detail ? (
                 <button key={c.label} className="qms-cell qms-num" aria-expanded={openId === r.id} title={config.detail.label}
                   onClick={() => setOpenId(openId === r.id ? null : r.id)}>
-                  {c.cell(r)}
+                  {c.cell(r, ctx)}
                 </button>
-              ) : <div key={c.label} className="qms-cell">{c.cell(r)}</div>))}
+              ) : <div key={c.label} className="qms-cell">{c.cell(r, ctx)}</div>))}
               <div className="qms-cell qms-rowacts">
                 {config.rowActions?.filter((a) => a.show?.(r) ?? true).map((a) => (
                   <button key={a.label} className="qms-chip" title={a.title} onClick={() => open({ kind: 'row', row: r, action: a })}>
@@ -182,14 +184,14 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
       {drawer?.kind === 'create' && (
         <C2CForm
-          config={{ ...config.createForm, ...(refusal ? { notice: refusal } : {}) }}
+          config={{ ...(typeof config.createForm === 'function' ? config.createForm(ctx) : config.createForm), ...(refusal ? { notice: refusal } : {}) }}
           onCancel={() => setDrawer(null)}
           onSubmit={(v) => void run(() => config.create(v))}
         />
       )}
       {drawer?.kind === 'row' && (
         <C2CForm
-          config={{ ...drawer.action.form(drawer.row), ...(refusal ? { notice: refusal } : {}) }}
+          config={{ ...drawer.action.form(drawer.row, ctx), ...(refusal ? { notice: refusal } : {}) }}
           onCancel={() => setDrawer(null)}
           onSubmit={(v) => void run(() => drawer.action.submit(drawer.row, v))}
         />

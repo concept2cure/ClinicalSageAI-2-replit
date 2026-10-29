@@ -943,6 +943,16 @@ const supplierCreate = z.object({
 });
 const supplierPatch = supplierCreate.partial();
 
+/* A supplier's quality agreement names a controlled document. Until 2026-10-29
+   any integer was stored, including another organisation's document id; it is
+   now admitted only for a live document of this organisation. Null clears it. */
+async function qualityAgreementRefusal(req: Request, orgId: number, documentId: number | null | undefined): Promise<string | null> {
+  if (documentId == null) return null;
+  const { rows } = await qmsClient(req).query(
+    `SELECT id FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [documentId, orgId]);
+  return rows.length === 1 ? null : 'qualityAgreementId must name a controlled document of this organization.';
+}
+
 router.get('/qms/suppliers', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -974,6 +984,8 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
+    const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
+    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
     const { rows } = await qmsClient(req).query(`INSERT INTO qms_suppliers (
          organization_id, supplier_name, supplier_code, scope, criticality,
          approval_status, approval_date, reapproval_date, quality_agreement_id,
@@ -1020,6 +1032,8 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
+    const agreementRefusal = await qualityAgreementRefusal(req, orgId, parsed.data.qualityAgreementId);
+    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
     const { rows } = await qmsClient(req).query(`UPDATE qms_suppliers SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
         RETURNING *`,

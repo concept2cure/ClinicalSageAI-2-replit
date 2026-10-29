@@ -15,7 +15,26 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import AdmZip from 'adm-zip';
+import { readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
+
+/* The chained writer, real unless a case asks the next archive row to fail. */
+const failArchiveAudit = vi.hoisted(() => ({ on: false }));
+vi.mock('../../server/services/auditService', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../server/services/auditService')>();
+  return {
+    ...real,
+    writeChainedAuditRow: async (...args: Parameters<typeof real.writeChainedAuditRow>) => {
+      if (failArchiveAudit.on && args[1]?.action === 'vault.data_room.archive') {
+        failArchiveAudit.on = false;
+        throw new Error('injected audit write failure');
+      }
+      return real.writeChainedAuditRow(...args);
+    },
+  };
+});
 
 vi.mock('../../server/middleware/signing-attempt-limiter', () => ({
   signingAttemptLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next(),
@@ -70,6 +89,21 @@ const seals = async (t: Tenant, actor: Actor = signer) =>
   request(await appFor(t, actor)).get(`/api/c2c/project-vault/${t.programId}/seals`);
 const verify = async (t: Tenant, id: string, query = '', actor: Actor = signer) =>
   request(await appFor(t, actor)).get(`/api/c2c/project-vault/${t.programId}/seals/${id}/verify${query}`);
+
+/** The seal's closing archive, as bytes (VR-20). */
+const archive = async (t: Tenant, id: string, actor: Actor = signer) =>
+  request(await appFor(t, actor)).get(`/api/c2c/project-vault/${t.programId}/seals/${id}/archive`)
+    .buffer(true).parse((res, done) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () => done(null, Buffer.concat(chunks)));
+    });
+const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
+/** Staging directories the archive route left behind, beyond those present before. */
+const stagedBefore = new Set(readdirSync(tmpdir()).filter((n) => n.startsWith('vault-archive-')));
+const leftovers = () => readdirSync(tmpdir()).filter((n) => n.startsWith('vault-archive-') && !stagedBefore.has(n));
+const archiveRows = async (id: string) => (await owner.query(
+  `SELECT new_values FROM audit_logs WHERE action = 'vault.data_room.archive' AND record_id = $1 ORDER BY created_at`, [id])).rows;
 
 async function tenant(slug: string, userId: number): Promise<Tenant> {
   const org = await owner.query(
@@ -205,6 +239,101 @@ describe('what a seal refuses, and what nobody can do to one', () => {
   });
 });
 
+describe("a seal's closing archive (VR-20)", () => {
+  it('holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending', async () => {
+    const res = await archive(mine, sealId);
+    expect(res.status, res.headers['content-type']).toBe(200);
+    const body = res.body as Buffer;
+    expect(res.headers['x-content-sha256']).toBe(sha256(body));
+    const zip = new AdmZip(body);
+    const names = zip.getEntries().map((e) => e.entryName).sort();
+    expect(names.filter((n) => n.startsWith('documents/'))).toHaveLength(3);
+    expect(names).toEqual(expect.arrayContaining(['manifest.json', 'INDEX.txt', 'SHA256SUMS', 'audit/audit-trail.json']));
+
+    // SHA256SUMS verifies every other file.
+    const sums = zip.readAsText('SHA256SUMS').trim().split('\n').map((l) => l.split(/\s+/));
+    expect(sums.map(([, name]) => name).sort()).toEqual(names.filter((n) => n !== 'SHA256SUMS').sort());
+    for (const [digest, name] of sums) expect(sha256(zip.readFile(name)!), name).toBe(digest);
+
+    // Each document's bytes are the sealed bytes; the embedded manifest is the one signed.
+    const manifest = JSON.parse(zip.readAsText('manifest.json'));
+    const row = (await owner.query('SELECT manifest, manifest_sha256 FROM public.vault_data_room_seals WHERE id = $1', [sealId])).rows[0];
+    expect(manifest.seal).toMatchObject({ id: sealId, manifestSha256: row.manifest_sha256 });
+    expect(manifest.sealManifest).toEqual(row.manifest);
+    const { stableStringify } = await import('../../shared/canonical-json');
+    expect(sha256(stableStringify(manifest.sealManifest))).toBe(row.manifest_sha256);
+    for (const f of manifest.files as Array<{ path: string; id: string; sha256: string }>) {
+      const sealed = row.manifest.documents.find((d: { id: string }) => d.id === f.id);
+      expect(sha256(zip.readFile(f.path)!)).toBe(sealed.contentHash);
+    }
+    expect(zip.readAsText('INDEX.txt')).toMatch(/Stability protocol/);
+    // The audit extract: each sealed version's rows and the seal's, oldest first, with the chain's verdict.
+    const trail = JSON.parse(zip.readAsText('audit/audit-trail.json'));
+    const targets = (trail.entries as Array<{ target: string; event: string }>).map((e) => e.target);
+    for (const d of docs) expect(targets.some((t) => t.endsWith(d)), d).toBe(true);
+    const sealAt = targets.findIndex((t) => t.endsWith(sealId));
+    expect(sealAt).toBeGreaterThan(targets.findIndex((t) => t.endsWith(docs[0])));
+    expect(trail.chain).toBeTruthy();
+
+    const rows = await archiveRows(sealId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].new_values).toMatchObject({ archiveSha256: sha256(body), documentCount: 3 });
+    await vi.waitFor(() => expect(leftovers()).toEqual([]));
+  });
+
+  it("another organisation's seal is not found, and nothing is recorded", async () => {
+    const before = (await archiveRows(sealId)).length;
+    expect((await archive(theirs, sealId)).status).toBe(404);
+    expect((await archiveRows(sealId)).length).toBe(before);
+  });
+
+  it('a viewer the project admits may download it', async () => {
+    expect((await archive(mine, sealId, viewer)).status).toBe(200);
+  });
+
+  it('sends nothing when the archive cannot be recorded in the audit trail', async () => {
+    const before = (await archiveRows(sealId)).length;
+    failArchiveAudit.on = true;
+    const res = await request(await appFor(mine, signer)).get(`/api/c2c/project-vault/${mine.programId}/seals/${sealId}/archive`);
+    expect(failArchiveAudit.on).toBe(false);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('AUDIT_WRITE_FAILED');
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.headers['x-content-sha256']).toBeUndefined();
+    expect((await archiveRows(sealId)).length).toBe(before);
+    await vi.waitFor(() => expect(leftovers()).toEqual([]));
+  });
+});
+
+describe('a sealed document whose original file a data disposition removed', () => {
+  it('is listed as withheld, with its sealed hash and why, and its file is neither read nor archived', async () => {
+    const kept = docs[2];
+    const hash = (await owner.query('SELECT content_hash FROM vault.documents WHERE id = $1', [kept])).rows[0].content_hash as string;
+    // Keep the extracted data, remove the original file: the download refuses it from here on.
+    await owner.query(
+      `INSERT INTO public.document_data_dispositions (organization_id, program_id, vault_document_id, choice, reason, actor_id,
+         source_sha256, preview_hash, linked_ids, impact_snapshot, audit_receipt)
+       VALUES ($1, $2, $3, 'keep_data', 'Fixture: the original file is removed, the data is kept.', $4, $5, $5, $6::jsonb, '{}'::jsonb, $7::jsonb)`,
+      [mine.orgId, mine.programId, kept, signer.userId, hash,
+        JSON.stringify({ capturedSourceIds: [], vaultDocumentIds: [kept], artifactIds: [], uploadIds: [] }),
+        JSON.stringify({ id: randomUUID(), sha256Chain: 'f'.repeat(64) })],
+    );
+    const before = (await archiveRows(sealId)).length;
+    const res = await archive(mine, sealId);
+    expect(res.status, res.headers['content-type']).toBe(200);
+    expect(res.headers['x-archive-withheld']).toBe('1');
+    const zip = new AdmZip(res.body as Buffer);
+    const manifest = JSON.parse(zip.readAsText('manifest.json'));
+    expect(manifest.files.map((f: { id: string }) => f.id).sort()).toEqual([docs[0], docs[1]].sort());
+    expect(manifest.withheld).toEqual([expect.objectContaining({ id: kept, sha256: hash, why: expect.stringMatching(/data disposition/) })]);
+    expect(zip.getEntries().filter((e) => e.entryName.startsWith('documents/'))).toHaveLength(2);
+    expect(zip.readAsText('INDEX.txt')).toMatch(/Withheld[\s\S]*Investigator brochure/);
+    const rows = await archiveRows(sealId);
+    expect(rows).toHaveLength(before + 1);
+    expect(rows[rows.length - 1].new_values).toMatchObject({ documentCount: 2, withheldCount: 1 });
+  });
+});
+
 describe('a seal says when the Vault no longer matches it', () => {
   it('could not verify, never intact, when a sealed file can no longer be read', async () => {
     const { getStorageProvider } = await import('../../server/services/storage/index');
@@ -217,6 +346,16 @@ describe('a seal says when the Vault no longer matches it', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.verification.verdict).toBe('could_not_verify');
     expect(res.body.data.verification.unreadable.map((u: { id: string }) => u.id)).toEqual([target]);
+  });
+
+  it('builds no archive for a seal that does not verify, sends nothing and records nothing', async () => {
+    const before = (await archiveRows(sealId)).length;
+    const res = await request(await appFor(mine, signer)).get(`/api/c2c/project-vault/${mine.programId}/seals/${sealId}/archive`);
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toBe('SEAL_NOT_INTACT');
+    expect(res.body.verification.unreadable.map((u: { id: string }) => u.id)).toEqual([docs[1]]);
+    expect((await archiveRows(sealId)).length).toBe(before);
+    await vi.waitFor(() => expect(leftovers()).toEqual([]));
   });
 });
 

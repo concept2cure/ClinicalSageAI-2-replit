@@ -1,0 +1,77 @@
+// Gate mutations: each is applied to a fresh COPY of the gate's modules in its own
+// scratch directory (server/ symlinked so the declared-status reads resolve); the
+// copy's selftest is run, and for some the copy's scan over the real tree. The
+// repository's own files are never written.
+// Usage: node gate-mutations.mjs <repo root> <work dir>
+import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+
+const [ROOT, WORK] = process.argv.slice(2);
+const FILES = ['check-sign-ceremony.mjs', 'check-sign-ceremony-source.mjs', 'check-sign-ceremony-status-acts.mjs', 'check-sign-ceremony.selftest.mjs', 'sign-ceremony-baseline.json'];
+const GATE = 'check-sign-ceremony.mjs';
+const ACTS = 'check-sign-ceremony-status-acts.mjs';
+
+const mutations = [
+  ['G1', 'scanSource drops status acts (the gate as it was)', GATE,
+    'const sites = [...findSignSites(code), ...statusActs]', 'const sites = [...findSignSites(code)]'],
+  ['G2', 'source 1 off: nothing a ceremony writes becomes a signed pair', ACTS,
+    'if (isGovernable(a) && inCeremony(a.index)) pairs.add(pairKey(a));', 'if (isGovernable(a) && inCeremony(a.index) && false) pairs.add(pairKey(a));'],
+  ['G3', 'source 2 off: the declared signed statuses are not read', ACTS,
+    'for (const v of values) if (!Object.hasOwn(TABLE_SCOPED_SIGNED_STATUSES, v)) statuses.add(v);', 'for (const v of values) if (false) statuses.add(v);'],
+  ['G4', 'no table-scoped exclusions: superseded and locked governed on every table', ACTS,
+    'if (!Object.hasOwn(TABLE_SCOPED_SIGNED_STATUSES, v)) statuses.add(v);', 'statuses.add(v);', { repo: true }],
+  ['G5', "a value is any quoted literal in the expression (the prototype's reading): a CASE test reads as a write", ACTS,
+    "const lit = /^'([^']*)'(?:\\s*::\\s*\\w+)?$/.exec(e);", "const lit = /'([^']*)'/.exec(e);", { repo: true }],
+  ['G6', "writeMutation of any command counts as the status act's ceremony", ACTS,
+    "|signGovernedAct)\\s*\\(|\\bwriteMutation\\s*\\(\\s*(['\"`])sign\\1/;", '|signGovernedAct|writeMutation)\\s*\\(/;'],
+  ['G7', 'the ratchet off: a newly signed pair is never reported unrecorded', ACTS,
+    'unrecorded: [...derived].filter(([p]) => !record.has(p))', 'unrecorded: [...derived].filter(() => false)'],
+  ['G8', 'a `$n` is never read from the inline parameter array', ACTS,
+    'return p === undefined ? null : paramValue(p);', 'return null;'],
+  ['G9', 'a statement that stamps an approval is also a status-act site', ACTS,
+    'if (a.stamped || seen.has(a.statement) || !isGovernable(a)) continue;', 'if (seen.has(a.statement) || !isGovernable(a)) continue;'],
+  ['G10', 'a status act passes without any ceremony in its handler', GATE,
+    "(s.kind === 'status-act' ? STATUS_CEREMONY : SIGNATURE_ROW).test(body.text)", "(s.kind === 'status-act' ? /(?:)/ : SIGNATURE_ROW).test(body.text)"],
+];
+
+/** The copy's scan over the real tree: the failures its verdict would add. */
+const REPO_PROBE = `
+const real = await import(process.argv[2]);
+const mut = await import(process.argv[3]);
+const sources = real.repoSources();
+const baseline = JSON.parse((await import('node:fs')).readFileSync(process.argv[4], 'utf8'));
+const scan = mut.scanRepo({ sources, signedPairs: new Set([...mut.repoSignedPairs(sources).keys(), ...(baseline.signedPairs?.pairs ?? [])]) });
+for (const f of mut.evaluate(scan, baseline).failures) for (const s of f.sites) console.log('FAIL ' + f.file + ':' + s.line + ' ' + s.kind + (s.act ? ' ' + s.act : ''));
+`;
+
+let red = 0;
+for (const [id, desc, file, find, replace, opts = {}] of mutations) {
+  const dir = path.join(WORK, `mut-${id}`);
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(path.join(dir, 'scripts/ci'), { recursive: true });
+  symlinkSync(path.join(ROOT, 'server'), path.join(dir, 'server'));
+  for (const f of FILES) cpSync(path.join(ROOT, 'scripts/ci', f), path.join(dir, 'scripts/ci', f));
+  const target = path.join(dir, 'scripts/ci', file);
+  const src = readFileSync(target, 'utf8');
+  if (src.split(find).length !== 2) throw new Error(`${id}: anchor not found exactly once in ${file}`);
+  writeFileSync(target, src.replace(find, replace));
+  const run = spawnSync('node', [path.join(dir, 'scripts/ci/check-sign-ceremony.selftest.mjs')], { encoding: 'utf8' });
+  const passed = (run.stdout.match(/^ {2}✓ /gm) ?? []).length;
+  const failedAt = /AssertionError[^\n]*\n(?:[^\n]*\n){0,6}?\s+at file:[^\n]*selftest\.mjs:(\d+)/.exec(run.stderr);
+  const lastPassed = run.stdout.trim().split('\n').filter((l) => l.startsWith('  ✓ ')).pop() ?? '(none)';
+  const isRed = run.status !== 0;
+  if (isRed) red += 1;
+  console.log(`\n${id}  ${desc}\n  ${file}: \`${find.slice(0, 90)}\`\n        -> \`${replace.slice(0, 90)}\``);
+  console.log(`  selftest: ${isRed ? 'RED' : 'green'} (exit ${run.status}; ${passed} passed before the first failure${failedAt ? `, failing assertion at selftest line ${failedAt[1]}` : ''})`);
+  if (isRed) console.log(`  last passing case: ${lastPassed.replace('  ✓ ', '')}`);
+  if (opts.repo) {
+    const probe = spawnSync('node', ['--input-type=module', '-e', REPO_PROBE, 'probe', path.join(ROOT, 'scripts/ci', GATE), path.join(dir, 'scripts/ci', GATE), path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json')], { encoding: 'utf8', cwd: ROOT });
+    const lines = probe.stdout.trim().split('\n').filter((l) => l.startsWith('FAIL '));
+    console.log(`  over the real tree: ${lines.length} new failure(s)${probe.status ? ` (probe exit ${probe.status}: ${probe.stderr.slice(0, 200)})` : ''}`);
+    for (const l of lines) console.log(`    ${l}`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+}
+console.log(`\n${red} of ${mutations.length} gate mutations red on the selftest. The repository's gate files were not written.`);
+process.exit(red === mutations.length ? 0 : 1);

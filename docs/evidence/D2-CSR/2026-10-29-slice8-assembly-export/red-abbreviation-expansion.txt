@@ -1,0 +1,25 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > keeps only the words the abbreviation stands for, not the sentence before them (CSR slice 8, 2026-10-29)
+AssertionError: expected 'The Clinical Study Report' to be 'Clinical Study Report' // Object.is equality
+
+Expected: "Clinical Study Report"
+Received: "The Clinical Study Report"
+
+ ❯ server/services/ana/__tests__/medical-writing-qc.test.ts:69:42
+     67|     const r = buildAbbreviationList('The Clinical Study Report (CSR) s…
+     68|     const byAbbr = new Map(r.abbreviations.map(a => [a.abbreviation, a…
+     69|     expect(byAbbr.get('CSR')?.expansion).toBe('Clinical Study Report');
+       |                                          ^
+     70|     expect(byAbbr.get('IMP')?.expansion).toBe('Investigational Medicin…
+     71|     expect(byAbbr.get('AEs')?.expansion).toBe('Adverse events');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  09:27:38
+   Duration  636ms (transform 145ms, setup 143ms, import 38ms, tests 30ms, environment 0ms)
+

@@ -1,0 +1,269 @@
+# GREEN 2026-10-29T09:37:37Z — slice 7 tests and neighbours (SYNTHETIC data)
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 33ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 28ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 6ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 21ms
+ × server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > keeps genuine organization-wide builds when no target was supplied 19ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 22ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 23ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content ("") 14ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content (" \n\t ") 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > preserves valid partial outputs and counts only requested rows through an explicit resume 13ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > repairs a retained blank row only on explicit resume while preserving valid saved text 9ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "999" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "13" without drafting or continuation 1ms
+ × server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > retains the existing placeholder refusal for saved target text without redrafting it 22ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > does not let unrelated retained placeholder rows block an otherwise covered explicit subset 23ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > preserves the existing full-build meaning of an empty retained selection 17ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > drafts a duplicate supported subset only once 9ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > resets stale progress before retrying targets when retained rows are unrelated or blank 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > rejects an altered retained hash without overwriting the source section 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > does not turn a cancelled job into failed when a late AI call rejects 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > cannot complete or continue a job cancelled during an AI call 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > does not relabel completed CSR work as failed when dependent continuation is unavailable 5ms
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap far below the bytes written 11005ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > 20260628_csr_job_state.sql on the deploy path > replays over tables pushed without the 2026-10-29 columns and keeps their rows 3068ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > 20260628_csr_job_state.sql on the deploy path > records the bound evidence run from the job snapshot and refuses an unknown review state 15ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > moves draft → in review → approved, with the reviewer and the text the approval binds 17ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > refuses a send-back without a reason, then records the reason 6ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > never carries an approval onto redrafted text, and refuses a decision on text the reviewer did not see 16ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > refuses tampered text, a foreign tenant and a missing section 7ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 13ms
+stdout | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed
+[SYNTHETIC scale, PGlite] subjects=1000 narratives=200 firstRunMs=580 resumeMs=106
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 161ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 14ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 7ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed 689ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > composes from the bound run’s ADaM bundle, as the user, and lands §14.3.3 and §12.3.2 193ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run 17ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a hand-built source by name, as the Vault reader states it 15ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses an ADAE row that does not establish seriousness, naming the row 19ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 696ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 474ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 928ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 362ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 102ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 119ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 401ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 20ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 357ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 324ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 350ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 463ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 856ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > persists exact partial coverage and resumes only the missing section without changing retained output 118ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 66ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 40ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 34ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 73ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 71ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 46ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 38ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 32ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 17ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 23ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 23ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 27ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 24ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 38ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 14ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 45ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 8ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties 41ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > retains all historical generations and their section records 21ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 405ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 26ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 106ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 204ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 56ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 133ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds
+[SYNTHETIC scale] subjects=1000 narratives=200 facts=3660 ms=63 section14_3_3_chars=135019 counts={"death":10,"serious":110,"discontinuation":60,"aesi":40}
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > composes every selected subject and lands §14.3.3 and the §12.3.2 cross-reference 32ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > resumes per subject: a stopped run keeps its saved subjects and the rerun composes only the rest 36ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > never overwrites a saved narrative that fails its hash: the run fails and preserves it 12ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > lands no section while a selected subject is refused, and lists it 7ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5)
+[SYNTHETIC scale target] subjects=5000 narratives=1000 ms=589 section14_3_3_chars=673113
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds 149ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5) 590ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 520ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 61ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 70ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded 46ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify 24ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility 97ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis 66ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > builds the narratives and shows the QC list with missing fields, prose source, refusals and review state 320ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 61ms
+ ✓ server/services/csr/__tests__/lmn201-synthetic-tables.integration.test.ts > LMN-201-like 500-subject synthetic CSR table journey > generates and reconciles source-backed ICH E3 tables with no invented statistical inference 238ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 30ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 23ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 6ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent ADAE row whose subject is outside the ADSL safety population 7ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE subject that ADSL does not list, and never adds it as a participant 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unmapped planned treatment 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a reassigned actual treatment 6ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a subject still ongoing at the data cut 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unknown sex 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a severity outside MILD/MODERATE/SEVERE 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an uncoded treatment-emergent event 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a dataset in the wrong slot 9ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a different STUDYID 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a safety subject without exposure 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a missing variable by name, and an efficacy file for another protocol 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE that cannot establish fatal outcomes or AE discontinuations, rather than counting them 0 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH and AEOUT both blank rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH blank and AEOUT UNKNOWN rather than counting it 0 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN blank rather than counting it 0 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN UNKNOWN rather than counting it 0 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > accepts AESDTH = N with no AEOUT: the event is recorded as not fatal 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a last on-treatment value it cannot order, and two baselines 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > lists every ADSL subject once and no other, with populations from the flags 6ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > derives the same source from SAS transport as from Dataset-JSON 22ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.2 / §12.3 count TEAE subjects, the SAE and the fatal event against the safety population 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.1 exposure, §12.4 lab shifts and the Bayesian primary result come through 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §11.2 concomitant medications count subjects, and say when a class was not coded 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.5 is available from the vital-sign table, and its figures reconcile to their cells 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.2 reconciles the TEAE, SAE and fatal-event figures 1ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > previews engine tables derived from the datasets, bound to the manifest digest, with no subject identifier 26ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a run while any named file is unapproved, and previews it as not approved 22ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a dataset whose current bytes are not the version the manifest pins 2ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > carries the derivation’s typed refusal out of the Vault path 4ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 26ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 17ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 16ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 16ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows 20ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers 5ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails 5ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run 6ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run 7ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list 6ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > lists metadata only and requires the exact approval hash 3ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 22ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 1ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 14ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 5ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 9ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 12ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 7ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 2ms
+ ✓ server/routes/__tests__/csr-workflow-headings.test.ts > csr-workflow board headings > lists every heading of the canonical tree as not drafted when no build exists 38ms
+ ✓ server/routes/__tests__/csr-workflow-headings.test.ts > csr-workflow board headings > shows each saved heading with its review state, and a redrafted approval as a draft 13ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows 11ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt 5ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > returns the verified subject rows and their tables for the job’s study, through the same checks 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > refuses a study the run does not hold, a source no longer approved, and an altered run, rather than assembling from nothing 2ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > returns the bundle and its subject-level datasets, ADMH included, and commits 18ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses while any dataset is not approved at its pinned version, and rolls back 5ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses a hand-built csr-source.v1 file by name 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > accepts exact recorded values without deriving efficacy or changing source observations 14ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate participant 2ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unknown arm 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong protocol 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong randomized count 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong safety population 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong sample size 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing disposition 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate demographics 8ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing demographics 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong completion flag 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses foreign AE subject 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses wrong AE arm 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses unrecorded primary endpoint 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate efficacy result 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses reversed confidence interval 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid p value 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses nonfinite observed result 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses invalid date 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses missing domain declaration 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses lab counts above denominator 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > refuses duplicate exposure 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires optional population flags and counts together, retaining unknown when neither is recorded 1ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > requires complete-domain declaration even for an explicitly empty adverse-event listing 5ms
+ ✓ shared/__tests__/csr-source-input.test.ts > explicit CSR supporting source input > generates field documentation from the actual schema and states semantic and qualification limits 10ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts 4ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders statuses no record uses, and the source did not declare, as "not recorded" 3ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a recorded zero as 0: a status used in one arm is a recorded classification in every arm 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a declared category with no subject as a recorded 0 0ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders a source that records every status byte-identically to the previous builder 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > labels completion by the basis the source declares, and keeps the previous label when it declares none 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > leaves every other table unchanged by the declarations 3ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > accepts declared categories and a basis 5ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > refuses a disposition record whose status the declared categories omit, and a repeated category 2ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > IBM floating point > decodes the published constants 1.0, 0.1 and -118.625, and SAS missing values 3ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads Dataset-JSON v1.1 rows by column name, numeric strings left for the derivation 4ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads NDJSON and v1.0 item-group files 2ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a row whose length differs from the columns, a non-dataset JSON, and a two-dataset file 1ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > decodes SAS transport v5 observations: text, IBM numerics and missing values 2ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a malformed transport file instead of reading past it 0ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > does not reserve or consume quota for a foreign project in either launch path 9ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > refuses conflicting tenant, actor or malformed target before billing 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > accepts only exactly matched, nonblank saved content 4ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > refuses a changed section even when the row exists and has prose 2ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > treats absent and blank outputs as missing 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > refuses duplicate target output rows 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > never claims completion from empty or duplicate target selection 2ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > requires a persisted hash, not an invented hash at read time 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > does not count an incomplete saved subset as complete coverage 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > does not allow unrelated saved sections to satisfy requested coverage 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > assembles a complete serious-AE narrative in order with no missing fields 3ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > flags missing required fields and never fabricates them 1ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > uses onset date when day-on-study is absent and closes with causality vs study drug 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 30 passed (32)
+      Tests  2 failed | 257 passed (259)

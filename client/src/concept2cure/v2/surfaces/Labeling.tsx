@@ -1,8 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect';
+import { readRefusalOf } from '../../mdx/hooks/useFetchJson';
+import { ReadRefused, unreadContext, unreadSentence } from '../projectScopedRead';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
-import { TranslationApprovalDialog, TranslationStepControl, translationStepActions } from './LabelingTranslationApproval';
+import { TranslationApprovalDialog, translationStepActions } from './LabelingTranslationApproval';
+import { LabelingDocumentSignature, TranslationRow, useLabelingSignatures, withLabelingSignatures } from './LabelingSignatures';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -143,6 +146,11 @@ function noProjectContext(projectOpen: boolean) {
   };
 }
 
+/* The symbol and translation reads are asked of the labeling document, so a
+   404 there is that document, not the project. */
+const ON_DOCUMENT = { subject: 'this labeling document' };
+
+
 /* Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, the `labeling`
    row): GET /api/mdx/labeling was read with no project key. The route returns
    every labeling document in the organization ordered by device name
@@ -173,10 +181,20 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   // REAL — GET /api/mdx/labeling?program_id= queries labeling_documents (org-
   // and project-scoped). The first row drives the header + is the parent id
   // for translations / symbols.
+  /* Bumped by Try again on a refusal a retry can change (the ownership check
+     that could not run); every read below follows it. */
+  const [reads, setReads] = useState(0);
   const docsLive = useLiveRows<LabelDocRow>(
     programId ? '/api/mdx/labeling?program_id=' + encodeURIComponent(programId) : null,
-    [programId],
+    [programId, reads],
   );
+  /* A refused read is said as what it is, not as a failed one (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/): the route
+     refuses a project the organization does not own (404), an ownership check
+     that could not run (503), a feature the organization does not have (403)
+     and more, and each was drawn as "Couldn't load". Null for a genuine
+     failure, which still is. */
+  const docsRefusal = docsLive.error ? readRefusalOf(docsLive) : null;
   /* Only a settled read names the document. While the next project's read is
      in flight the list still holds the previous project's rows, and the
      eyebrow would title the new project with the old project's label. */
@@ -191,7 +209,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   // Idle until a document id is known; honest empty / error otherwise.
   const symbolsLive = useLiveRows<LabelSymbolRow>(
     docId ? `/api/mdx/labeling/${docId}/symbols` : null,
-    [docId],
+    [docId, reads],
   );
 
   // Translations — REAL (GET /api/mdx/labeling/:id/translations →
@@ -200,8 +218,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   // closed to null → honest empty, never a fixture).
   const transState = useLiveData<unknown>(
     docId ? `/api/mdx/labeling/${docId}/translations` : null,
-    [docId],
+    [docId, reads],
   );
+  /* The symbol and translation reads, refused, are said as refusals too. */
+  const [symbolsRefusal, transRefusal] = [symbolsLive, transState].map((r) => (r.error ? readRefusalOf(r) : null));
+  const retryReads = () => setReads((n) => n + 1);
   const liveTransRows = useMemo(
     () => (!transState.loading && !transState.error ? mapLabelTranslations(transState.data) : null),
     [transState.loading, transState.error, transState.data],
@@ -218,6 +239,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       setTrans(seedTrans);
     }
   }, [seedTrans]);
+  /* Whether each signature still binds the label it signed, and whether the
+     signed-in user may sign each translation's approval: GET
+     /api/mdx/labeling/:id, read again after a translation is added or an
+     approval signed here (LabelingSignatures.tsx; D5, 2026-10-29). */
+  const sigs = useLabelingSignatures(docId, reads);
 
   const [tForm, setTForm] = useState(false);
   /** The translation in review whose signed approval is open, if any. */
@@ -255,6 +281,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       const adopted = mapLabelTranslations([envRow(json)])?.[0];
       if (!adopted) { fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
       setTrans(ts => [...ts.filter(t => t.id !== adopted.id && t.language !== adopted.language), { ...adopted, _new: true }]);
+      sigs.refresh();
       setTForm(false);
       fire('Translation ' + language + ' saved · status Pending');
     } catch (e) {
@@ -304,8 +331,6 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
-
   /* What AnA can see of this screen.
      The three reads here are chained — no labeling document means no symbols and
      no translations — so "there is no document" has to be published as itself.
@@ -317,14 +342,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
     if (docsLive.loading) {
       return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
     }
-    if (docsLive.error) {
-      return {
-        summary:
-          'The labeling store could not be read, so this screen is showing no label because of a failure, ' +
-          'not because none exists.',
-        availableActions: ['Retry the labeling document read'],
-      };
-    }
+    /* AnA is told a refusal as itself; only a genuine failure is "because of a failure". */
+    if (docsLive.error) return unreadContext(docsRefusal, 'the labeling document', 'Labeling: ', 'Retry the labeling document read', 'The labeling store could not be read, so this screen is showing no label because of a failure, not because none exists.');
     if (!docRow) {
       return {
         summary:
@@ -337,7 +356,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       acc[t.status] = (acc[t.status] ?? 0) + 1;
       return acc;
     }, {});
-    return {
+    return withLabelingSignatures({
       summary:
         `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
         (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
@@ -349,7 +368,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         (transState.loading
           ? 'Translations are still loading. '
           : transState.error
-            ? 'The translation set could not be read — its coverage is unknown, not zero. '
+            ? unreadSentence(transRefusal, 'the translation set', 'The translation set could not be read — its coverage is unknown, not zero. ', { ...ON_DOCUMENT, after: ' Its coverage is unknown, not zero. ' })
             : `${trans.length} translation(s) — ` +
               (Object.keys(byStatus).length
                 ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
@@ -358,7 +377,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         (symbolsLive.loading
           ? 'Symbols are still loading.'
           : symbolsLive.error
-            ? 'The symbol list could not be read.'
+            ? unreadSentence(symbolsRefusal, 'the symbol glossary', 'The symbol list could not be read.', ON_DOCUMENT)
             : `${symbolsLive.rows.length} symbol(s) recorded.`),
       facts: {
         document: {
@@ -380,8 +399,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
       },
       availableActions: [...translationStepActions(canWrite), 'Read the symbol set and what each symbol is required by'],
-    };
-  }, [programId, openProject, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows, canWrite]);
+    }, { sigs, docStatus: docRow.status, trans, canWrite });
+  }, [programId, openProject, docsLive.loading, docsLive.error, docsRefusal, docRow, kindLabel, trans, transState.loading, transState.error, transRefusal, symbolsLive.loading, symbolsLive.error, symbolsRefusal, symbolsLive.rows, canWrite, sigs]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
@@ -511,7 +530,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         </>
       ) : docsLive.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
-      ) : docsLive.error ? (
+      ) : docsRefusal ? <ReadRefused refusal={docsRefusal} what="the labeling document" retry={retryReads} testId="labeling-refused" />
+      : docsLive.error ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
@@ -526,6 +546,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         />
       ) : (
         <>
+          <LabelingDocumentSignature status={docRow.status} sigs={sigs} />
           <AnswerLead
             tone={cov.total > 0 && cov.approved === cov.total ? 'good' : 'calm'}
             eyebrow="Where the label package stands right now"
@@ -539,7 +560,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
             headline={transState.loading
               ? <>Reading this label's translation coverage…</>
               : transState.error
-              ? <>Couldn't read this label's translation coverage, so nothing is claimed about it here.</>
+              ? <>{unreadSentence(transRefusal, "this label's translation coverage", "Couldn't read this label's translation coverage, so nothing is claimed about it here.", ON_DOCUMENT)}</>
               : cov.total === 0
               ? <>No translations are recorded for this label yet.</>
               : cov.approved < cov.total
@@ -569,7 +590,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
               </div>
               {symbolsLive.loading ? (
                 <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading symbols…</div>
-              ) : symbolsLive.error ? (
+              ) : symbolsRefusal ? <ReadRefused refusal={symbolsRefusal} what="the symbol glossary" {...ON_DOCUMENT} retry={retryReads} testId="labeling-symbols-refused" />
+              : symbolsLive.error ? (
                 <EmptyState
                   tone="error"
                   icon={I.alertTriangle}
@@ -637,7 +659,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
             <div className="ctable" style={{ marginTop: 10 }}>
               {transState.loading && trans.length === 0 ? (
                 <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>
-              ) : transState.error && trans.length === 0 ? (
+              ) : transRefusal && trans.length === 0 ? <ReadRefused refusal={transRefusal} what="the translation set" {...ON_DOCUMENT} retry={retryReads} testId="labeling-translations-refused" />
+              : transState.error && trans.length === 0 ? (
                 <EmptyState
                   tone="error"
                   icon={I.alertTriangle}
@@ -652,17 +675,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
                 />
               ) : (
                 trans.map(t => (
-                  <div key={t.id} className="ct-row" style={{ gridTemplateColumns: '1.4fr 1fr 0.9fr 120px', alignItems: 'center' }} data-fresh={t._new || undefined}>
-                    <div className="vn"><span className="ct-strong">{t.name}</span> <span className="mono" style={{ fontSize: 11, color: 'var(--text-400)' }}>{t.language}</span></div>
-                    <div style={{ fontSize: 12, color: 'var(--text-300)' }}>
-                      {(EN.method.find(m => m[0] === t.method) || [])[1] || t.method}
-                      {t.btv && <span className="rd-chip tone-ok" style={{ marginLeft: 6, fontSize: 9 }}>back-trans verified</span>}
-                    </div>
-                    <div><span className={`rd-chip tone-${tTone[t.status] || 'idle'}`}>{(EN.transStatus.find(s => s[0] === t.status) || [])[1] || t.status}</span></div>
-                    <div style={{ textAlign: 'right' }}>
-                      <TranslationStepControl status={t.status} canWrite={canWrite} onApprove={() => setApproving(t)} onAdvance={() => advTrans(t.id)} />
-                    </div>
-                  </div>
+                  <TranslationRow key={t.id} t={t} sigs={sigs} canWrite={canWrite} onApprove={() => setApproving(t)} onAdvance={() => advTrans(t.id)} />
                 ))
               )}
             </div>
@@ -677,6 +690,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
               onSigned={(row) => {
                 const adopted = mapLabelTranslations([row])?.[0];
                 setTrans(ts => ts.map(t => (t.id === approving.id ? (adopted ?? { ...t, status: 'approved' }) : t)));
+                sigs.refresh();
                 fire('Translation ' + approving.language + ' approved and signed');
               }}
             />

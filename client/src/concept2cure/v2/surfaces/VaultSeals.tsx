@@ -4,6 +4,7 @@
  * GET  /api/c2c/project-vault/:id/seals
  * POST /api/c2c/project-vault/:id/seals              (the one e-sign ceremony)
  * GET  /api/c2c/project-vault/:id/seals/:sealId/verify?bytes=1
+ * GET  /api/c2c/project-vault/:id/seals/:sealId/archive   (VR-20, the closing archive)
  *
  * Each seal is listed with when, who, why, how many documents and its hash. A
  * role that may write the Vault is offered "Seal this Vault" through the
@@ -11,12 +12,19 @@
  * re-reads every sealed file and says the verdict in words: intact, changed
  * (naming the documents) or could not verify. A list that could not be read
  * says so, and is never shown as "no seals".
+ *
+ * Once a seal verifies intact, its closing archive can be downloaded: one ZIP
+ * of the sealed files, the manifest as signed, an index, SHA256SUMS and the
+ * audit extract (docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md). The file
+ * received is checked against the SHA-256 the server recorded before it is
+ * saved, and that hash is stated.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { useAuthUser } from '@/services/portal/authService';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { useVaultCanWrite } from './VaultViewOnly';
+import { downloadBlob } from '../download';
 
 export interface VaultSealShape {
   id: string;
@@ -39,6 +47,7 @@ export interface SealVerificationShape {
 const READ_FAILED = 'The seals could not be read.';
 const VERIFY_FAILED = 'The seal could not be verified. This is not a verdict.';
 const SEAL_UNCONFIRMED = 'The server did not confirm the seal. Reload the Vault and check its seals before you seal again.';
+const ARCHIVE_FAILED = 'The closing archive was not downloaded.';
 
 const base = (projectId: string) => `/api/c2c/project-vault/${encodeURIComponent(projectId)}`;
 
@@ -107,9 +116,85 @@ async function postSeal(projectId: string, input: { meaning: string; reason: str
     ...(typeof json.sha256Chain === 'string' ? { hash: json.sha256Chain } : {}) };
 }
 
+async function sha256Hex(buf: ArrayBuffer): Promise<string | null> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) return null;
+  const digest = await subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+type ArchiveOutcome = { text: string; saved: boolean };
+
+/** A refused archive request in words: the seal's verdict when the server sent one. */
+function archiveRefusal(e: unknown): ArchiveOutcome {
+  const payload = e instanceof ApiRequestError ? (e.payload as { verification?: unknown } | undefined) : undefined;
+  const verification = payload ? payload.verification : undefined;
+  if (isVerification(verification)) return { text: `${ARCHIVE_FAILED} ${verdictSentence(verification)}`, saved: false };
+  return { text: redactInternals(e instanceof ApiRequestError ? serverMessage(e.payload) : null, `${ARCHIVE_FAILED} Nothing was saved.`), saved: false };
+}
+
+/** Save a received archive only when it hashes to what the server recorded for it. */
+async function saveArchive(res: Response, sealId: string): Promise<ArchiveOutcome> {
+  const header = (name: string) => (res.headers && typeof res.headers.get === 'function' ? res.headers.get(name) : null);
+  const recorded = (header('X-Content-SHA256') ?? '').toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(recorded)) {
+    return { text: `${ARCHIVE_FAILED} The server did not state the archive's SHA-256, so it was not saved.`, saved: false };
+  }
+  const bytes = await res.arrayBuffer();
+  const received = await sha256Hex(bytes);
+  if (received !== null && received !== recorded) {
+    return { text: `${ARCHIVE_FAILED} The file received does not match the SHA-256 the server recorded for it, so it was not saved.`, saved: false };
+  }
+  const named = /filename="?([^";]+)"?/.exec(header('Content-Disposition') ?? '');
+  const name = named ? named[1] : `vault-seal-${sealId.slice(0, 8)}-closing-archive.zip`;
+  if (!downloadBlob(name, new Blob([bytes], { type: 'application/zip' }))) {
+    return { text: 'The closing archive was received, but the browser refused to save it.', saved: false };
+  }
+  const withheld = Number(header('X-Archive-Withheld') ?? '0');
+  const saved = received === null
+    ? `Closing archive saved. SHA-256 recorded by the server: ${recorded}. This browser could not check it; sha256sum will.`
+    : `Closing archive saved. Its SHA-256, checked on receipt against the server's record: ${recorded}.`;
+  return {
+    text: withheld > 0
+      ? `${saved} ${withheld === 1
+        ? '1 sealed document’s original file was removed under a data disposition and is not in it; the index lists it.'
+        : `${withheld} sealed documents’ original files were removed under a data disposition and are not in it; the index lists them.`}`
+      : saved,
+    saved: true,
+  };
+}
+
+/**
+ * Fetch a seal's closing archive, check it against the hash the server
+ * recorded for it, and save it. The outcome in words, and whether it was saved.
+ */
+export async function downloadSealArchive(projectId: string, sealId: string): Promise<ArchiveOutcome> {
+  let res: Response;
+  try {
+    res = await apiRequest('GET', `${base(projectId)}/seals/${encodeURIComponent(sealId)}/archive`);
+  } catch (e) {
+    return archiveRefusal(e);
+  }
+  if (!res.ok) return { text: redactInternals(serverMessage(await readJson(res)), `${ARCHIVE_FAILED} (HTTP ${res.status})`), saved: false };
+  return saveArchive(res, sealId);
+}
+
 function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape }) {
   const [verifying, setVerifying] = useState(false);
   const [result, setResult] = useState<{ text: string; verdict: SealVerificationShape['verdict'] | 'failed' } | null>(null);
+  const [archiving, setArchiving] = useState(false);
+  const [archiveNote, setArchiveNote] = useState<{ text: string; saved: boolean } | null>(null);
+  const archive = async () => {
+    setArchiving(true);
+    setArchiveNote(null);
+    try {
+      setArchiveNote(await downloadSealArchive(projectId, seal.id));
+    } catch (e) {
+      setArchiveNote({ text: e instanceof Error && e.message ? `${ARCHIVE_FAILED} ${e.message}` : ARCHIVE_FAILED, saved: false });
+    } finally {
+      setArchiving(false);
+    }
+  };
   const verify = async () => {
     setVerifying(true);
     setResult(null);
@@ -141,6 +226,19 @@ function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape 
       {result && (
         <div className="vd-seal-verdict" role={result.verdict === 'intact' ? 'status' : 'alert'} data-testid="vault-seal-verdict">
           {result.text}
+        </div>
+      )}
+      {result?.verdict === 'intact' && (
+        <div className="vd-seal-archive">
+          <button type="button" className="sp-ask" disabled={archiving} onClick={() => void archive()} data-testid="vault-seal-archive">
+            {archiving ? 'Building the archive…' : 'Download closing archive'}
+          </button>
+          <span className="vd-seals-note">The sealed files, the record as signed, an index, SHA256SUMS and the audit trail, in one ZIP.</span>
+        </div>
+      )}
+      {archiveNote && (
+        <div className="vd-seal-verdict vd-seal-archive-note" role={archiveNote.saved ? 'status' : 'alert'} data-testid="vault-seal-archive-note">
+          {archiveNote.text}
         </div>
       )}
     </li>

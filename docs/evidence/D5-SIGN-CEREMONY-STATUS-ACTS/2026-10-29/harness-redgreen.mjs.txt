@@ -1,0 +1,58 @@
+// Red/green harness: the cases the status-act widening exists for, run against a
+// given gate module (the pre-change gate, or the current one). Exit 1 on any miss.
+// Usage: node redgreen.mjs <path to check-sign-ceremony.mjs>
+import { pathToFileURL } from 'node:url';
+
+const gate = await import(pathToFileURL(process.argv[2]).href);
+const opts = { decisionStatuses: new Set(['approved', 'effective', 'signed', 'finalized', 'frozen', 'dispatched']) };
+const scan = (src, extra = {}) => gate.scanSource(src, { ...opts, ...extra });
+const failures = (src, extra) => gate.evaluate({ 'server/routes/x.ts': scan(src, extra) }, { files: {} }).failures;
+
+// The residual-risk acceptance as routes/mdx-risk-management.ts writes it (acceptResidualSigned).
+const SIGNED = `async function acceptResidualSigned(req, res, id) {
+  await signGovernedAct(req, res, { domain: 'risk', target, meanings: DECISION_ACT_MEANINGS, codeStatus, run: async (client, orgId) => {
+    const updated = await client.query(
+      \`UPDATE risk_items SET status = 'accepted', acceptable = TRUE, updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        RETURNING *\`,
+      [id, orgId],
+    );
+    return { target, body: { data: updated.rows[0] } };
+  } });
+}
+`;
+// The same write from a session alone: the PATCH as it stood before 2026-10-29.
+const PLAIN = `router.patch('/risk-items/:id', requireEditorAccess, async (req, res) => {
+  await pool.query(\`UPDATE risk_items SET status = 'accepted', acceptable = TRUE, updated_at = NOW() WHERE id = $1 AND organization_id = $2\`, [id, orgId]);
+});
+`;
+const NON_GOVERNED = PLAIN.replace("status = 'accepted', acceptable = TRUE", "status = 'mitigating'");
+const RECORDED = ['risk_items.status=accepted', 'risk_items.acceptable=true'];
+
+const cases = [
+  ['A. the signed status-only act is a site, and passes', () => {
+    const s = scan(SIGNED).filter((x) => x.kind === 'status-act');
+    return s.length === 1 && s[0].ok === true ? 'seen, ok' : `not seen (${scan(SIGNED).length} site(s) of any kind)`;
+  }, 'seen, ok'],
+  ['B. the same write without the ceremony fails (same file as the signed one)', () => {
+    const f = failures(SIGNED + PLAIN);
+    return f.length === 1 ? 'fails' : 'passes';
+  }, 'fails'],
+  ['C. a non-governed status (mitigating) is not an act', () => (scan(NON_GOVERNED, { signedPairs: RECORDED }).length === 0 ? 'no site' : 'site'), 'no site'],
+  ['D. the plain PATCH alone, the acceptance pair recorded (M11: the ceremony removed)', () => (failures(PLAIN, { signedPairs: RECORDED }).length === 1 ? 'fails' : 'passes'), 'fails'],
+  ['E. an IRB approval written outside its ceremony (a declared signed status)', () => {
+    const src = "export async function recordReviewTx(client, id) { await client.query(`UPDATE irb_submissions SET status = 'approved' WHERE id = $1`, [id]); }";
+    return failures(src).length === 1 ? 'fails' : 'passes';
+  }, 'fails'],
+];
+
+let missed = 0;
+console.log(`gate: ${process.argv[2]}`);
+for (const [name, run, expected] of cases) {
+  const got = run();
+  const ok = got === expected;
+  if (!ok) missed += 1;
+  console.log(`  ${ok ? 'PASS' : 'MISS'}  ${name}: expected "${expected}", got "${got}"`);
+}
+console.log(missed ? `RED: ${missed} of ${cases.length} cases missed.` : `GREEN: ${cases.length} of ${cases.length} cases as expected.`);
+process.exit(missed ? 1 : 0);

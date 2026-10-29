@@ -1,0 +1,16 @@
+# RED: no fact gate (sabotage: reconcileNarrative accepts any non-empty text), 2026-10-29T09:23:20Z
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 13ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 1ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 6ms
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 9ms
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 6ms
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 12ms
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 12ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 7ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to include 'NARRATIVE_ONSET_MISMATCH'
+AssertionError: expected [] to include 'NARRATIVE_ONSET_MISMATCH'
+AssertionError: expected [] to include 'NARRATIVE_AGE_MISMATCH'
+AssertionError: expected 'model' to be 'template' // Object.is equality
+      Tests  4 failed | 5 passed (9)

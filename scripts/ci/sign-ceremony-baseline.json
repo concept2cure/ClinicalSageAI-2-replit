@@ -1,9 +1,9 @@
 {
-  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / reverifySigner) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
+  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / reverifySigner) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so. Since 2026-10-29 (D5) a governed status act counts as a site too (a SQL write of a status the product declares only a signed act sets, or of a status or flag a ceremony signs on that table); its reason starts 'Status act'.",
   "files": {
     "server/routes/authoring.router.ts": {
-      "count": 1,
-      "reason": "Approval stamp (2026-10-01): approveAndFreezeDocument sets authoring_documents.approved_at. Its only caller is POST /docs/:docId/sign, which re-verifies the signer through reverifyAuthoringSigner and writes the authoring_signatures row in the same transaction. The proof is one function boundary away, which this scanner cannot follow."
+      "count": 3,
+      "reason": "Approval stamp (2026-10-01): approveAndFreezeDocument sets authoring_documents.approved_at. Its only caller is POST /docs/:docId/sign, which re-verifies the signer through reverifyAuthoringSigner and writes the authoring_signatures row in the same transaction. The proof is one function boundary away, which this scanner cannot follow. Status acts (2026-10-29, D5), two, the same shape: approveBoundFilingSections sets c2c_document_sections.status = 'approved' and is reached only through filingApprovalForSignature, from POST /docs/:docId/e-sign and POST /docs/:docId/sign; advanceWorkflowForSignature sets authoring_workflow_steps.status = 'APPROVED' and is called only from POST /docs/:docId/sign. Each of those handlers asks checkSigningAuthority, re-verifies through reverifyAuthoringSigner and writes the authoring_signatures row on the REPEATABLE READ transaction it hands the helper. PROOF ACROSS A BOUNDARY, verified 2026-10-29."
     },
     "server/routes/ivdr-binder-routes.ts": {
       "count": 1,
@@ -21,9 +21,17 @@
       "count": 2,
       "reason": "Approval stamp (2026-10-01): authoring_plans.approved_at/approved_by. An authoring plan is a pre-drafting worksheet (sources, cross-references, risks, an outline) and its approval releases it for drafting. It is not a signature over a regulated record. PATCH /api/ana/authoring-plan/:planId/approve has no client caller at this head. Noted, not fixed here: that route has no role gate and can stamp a null approver."
     },
+    "server/services/audit/compliance-reviews.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): signReviewAct sets compliance_review_records.status = 'signed'. It returns the domain write that signGovernedAct (routes/governed-signed-act.ts) runs for POST /api/audit/reviews/:id/sign (routes/audit-compliance-reviews.ts sign(), its only caller): signing authority, re-verification, then the write, the ledger pair and the electronic_signatures row on one transaction. PROOF ACROSS A BOUNDARY, verified 2026-10-29: the write is a callback built in another file, which this scanner cannot follow."
+    },
     "server/services/cognitive-ecosystem/global-dossier.service.ts": {
       "count": 2,
       "reason": "Approval stamp (2026-10-01): global dossier approvals in the cognitive ecosystem. Outside the launch catalog; RULE 2 names these engines as getting no sessions. Recorded so it cannot grow, not reviewed."
+    },
+    "server/services/coverage-analysis/coverage-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): finalizeAnalysisTx sets coverage_analyses.status = 'finalized'. Its only caller is the run of signGovernedAct in POST /analyses/:id/finalize (routes/coverage-analysis.ts), on the ceremony's transaction client. PROOF ACROSS A BOUNDARY, verified 2026-10-29. Coverage analysis is not in shared/constants/launch-scope.ts."
     },
     "server/services/decision-record-service.ts": {
       "count": 1,
@@ -33,13 +41,41 @@
       "count": 1,
       "reason": "PROOF ACROSS A BOUNDARY, by contract, 2026-10-01 (W5/D7, sweep F19). signRejection writes the ledger pair AND the electronic_signatures row (persistGovernedActionSignature, bound to the agency notice's vault.documents content hash) on the package-lock transaction. recordFiledSequenceRejection throws before any query unless the caller hands in `reauthVerifiedAt`; its one caller, POST /api/mdx/gateways/transmittals/:id/technical-rejection (server/routes/mdx-submission-gateway.ts), runs verifyReauth before anything is read and captures it there. Re-verifying inside would spend a second credential attempt. Pinned by tests/mdx-submission-gateway-technical-rejection.test.ts (no re-auth => 401, nothing read) and server/services/ectd/__tests__/filed-sequence-rejection.test.ts (no proof => refused before any query)."
     },
+    "server/services/financial-disclosures/fcoi-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): certifyDisclosureTx sets financial_disclosures.status = 'signed'. Its only caller, POST /disclosures/:id/certify (routes/financial-disclosures.ts), asks checkSigningAuthority, runs verifyReauth, then on one transaction calls it with its client, writes the sign ledger pair and persistGovernedActionSignature, and commits. PROOF ACROSS A BOUNDARY, verified 2026-10-29. Financial disclosures are not in shared/constants/launch-scope.ts."
+    },
     "server/services/grants/grants-service.ts": {
       "count": 1,
       "reason": "Approval stamp (2026-10-01): approveNceTx, the no-cost-extension approval. Its only caller is POST /api/grants/nce/:id/approve, which runs the signing ceremony (routes/governed-signed-act.ts since ae36f2c8: re-verification, a declared meaning, the electronic_signatures row in the same transaction); the proof is one function boundary away, which this scanner cannot follow. The AnA door refuses (35794a160, 'AnA cannot sign'). Grants are outside the launch catalog. Reason corrected 2026-10-01 (it said the HTTP door had no ceremony)."
     },
+    "server/services/iacuc/iacuc-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): recordReviewTx sets iacuc_protocols.status = 'approved' only when the outcome is 'approved'. POST /protocols/:id/reviews (routes/iacuc.ts) sends exactly that outcome through signGovernedAct (meanings DECISION_ACT_MEANINGS, run on the ceremony's client); every other outcome goes to governed('resolve'), which reaches no 'approved' write. PROOF ACROSS A BOUNDARY, verified 2026-10-29. IACUC is not in shared/constants/launch-scope.ts."
+    },
+    "server/services/ibc/ibc-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): recordReviewTx sets ibc_registrations.status = 'approved' only when the outcome is 'approved'. POST /registrations/:id/reviews (routes/ibc.ts) sends exactly that outcome through signGovernedAct (run on the ceremony's client); every other outcome goes to governed('resolve'), which reaches no 'approved' write. PROOF ACROSS A BOUNDARY, verified 2026-10-29. IBC is not in shared/constants/launch-scope.ts."
+    },
+    "server/services/irb/irb-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): recordReviewTx sets irb_submissions.status = 'approved' only when the outcome is 'approved'. POST /submissions/:id/reviews (routes/irb.ts) sends exactly that outcome through signGovernedAct (run on the ceremony's client); every other outcome goes to governed('resolve'), which reaches no 'approved' write. PROOF ACROSS A BOUNDARY, verified 2026-10-29. IRB is not in shared/constants/launch-scope.ts."
+    },
+    "server/services/labeling/labeling-pi-service.ts": {
+      "count": 1,
+      "reason": "DEFECT, status act (2026-10-29, D5), found by this widening: acceptAgencyText adopts the agency's proposed label text and sets labeling_pi_sections.status = 'approved' on a session and a reason for change alone. POST /api/labeling-pi/:sectionNo/accept-agency-text (routes/labeling-pi.routes.ts, mounted behind authMiddleware alone) has no editor gate, no signing-authority check, no re-authentication and writes no electronic_signatures row; its client caller is LabelingPi.tsx. The labeling-pi surface is not in shared/constants/launch-scope.ts, so RULE 2 records it here and does not fix it. Follow-up: run the accept through signGovernedAct, as the labeling translation approval does (routes/mdx-labeling-approvals.ts), or adopt the text without marking the section approved."
+    },
     "server/services/pathway-engines/estar/estar-submission-service.ts": {
       "count": 1,
       "reason": "PROOF ACROSS A BOUNDARY, verified 2026-09-23. applySignedFiling writes the ledger pair and the signature row on the caller's client; the route that calls it (server/routes/510k-estar-routes.ts ~2031) runs verifyReauth first. The gate measures one top-level function and cannot see the route's check."
+    },
+    "server/services/protocol-consent/protocol-consent-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): approveConsentFormTx sets consent_forms.status = 'approved'. Its only caller is the run of signGovernedAct in POST /forms/:id/approve (routes/protocol-consent.ts), on the ceremony's transaction client. PROOF ACROSS A BOUNDARY, verified 2026-10-29. Protocol consent is not in shared/constants/launch-scope.ts."
+    },
+    "server/services/protocol-development/protocol-development-service.ts": {
+      "count": 1,
+      "reason": "Status act (2026-10-29, D5): finalizeProtocolTx sets protocol_documents.status = 'finalized'. Its only caller is the `write` of signProtocolAct (services/protocol-development/protocol-signature.ts, a thin wrapper of the service ceremony signGovernedAct in services/part11/governed-signature-ceremony.ts) in POST /documents/:id/finalize (routes/protocol-development.ts): meaning, signing authority, verifyReauth, separation of duties, then the write, the ledger pair and the signature row on one transaction. PROOF ACROSS A BOUNDARY, verified 2026-10-29. Protocol development is in the launch catalog (Authoring)."
     },
     "server/services/qms/document-approval-signature.ts": {
       "count": 2,
@@ -74,5 +110,24 @@
         "reason": "PUT /:region/:gateway/:environment changes whose gateway account submissions go out under. Admin/owner only (requireRole), re-authenticated, audited; it writes no signature and records no signed act."
       }
     }
+  },
+  "signedPairs": {
+    "$note": "Every status (and every flag set TRUE) that a signature ceremony writes in its own handler, as table.column=value, recorded 2026-10-29 (D5) from the ceremonies at that head. A recorded pair is governed on its table wherever it is written, even after the ceremony that signs it is removed: that is what makes removing a ceremony fail instead of teaching the gate to stop looking. The gate fails on a newly signed pair until it is recorded here (--write-baseline adds it). Remove a pair only when the status itself leaves the product, and say so in the commit.",
+    "pairs": [
+      "authoring_documents.status=approved",
+      "authoring_documents.status=frozen",
+      "c2c_bla_assessments.status=signed",
+      "cmc_module3_section_versions.state=approved",
+      "cmc_module3_sections.approval_state=approved",
+      "estar_submissions.status=filed",
+      "labeling_documents.status=approved",
+      "labeling_documents.status=effective",
+      "labeling_documents.status=superseded",
+      "labeling_translations.status=approved",
+      "qms_change_controls.status=approved",
+      "quality_specifications.approval_status=approved",
+      "risk_items.acceptable=true",
+      "risk_items.status=accepted"
+    ]
   }
 }
