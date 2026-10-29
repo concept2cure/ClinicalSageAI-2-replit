@@ -6,7 +6,7 @@
  * validates and derives. Every failure is typed and names no uploaded value.
  */
 import {
-  ADAM_DATASET_NAMES, CSR_ADAM_BUNDLE_FORMAT, CsrAdamBundleSchema, CsrEfficacyResultsSchema,
+  ADAM_DATASET_NAMES, CSR_ADAM_BUNDLE_FORMAT, CsrAdamBundleSchema, CsrEfficacyResultsSchema, type CsrAdamBundle,
 } from '../../../shared/csr-adam-bundle.js';
 import type { CsrSourceEnvelope, CsrSourceSelection } from '../../../shared/csr-source-input.js';
 import { readAdamDataset } from './adam-dataset-reader.js';
@@ -40,8 +40,13 @@ async function readEfficacy(component: AdamComponent) {
   return parsed.data;
 }
 
-/** The derived source, and whether every file the manifest names is lifecycle-approved at its pinned version. */
-export async function loadAdamBundleEnvelope(raw: unknown, loadComponent: LoadComponent): Promise<{ envelope: CsrSourceEnvelope; componentsApproved: boolean }> {
+/**
+ * The manifest and its ADaM datasets, each read and checked against the
+ * manifest's name, and whether every dataset is lifecycle-approved. Shared by
+ * the source derivation below and the slice-7 narrative job, which reads the
+ * subject-level rows the derived source summarises.
+ */
+export async function loadAdamBundleDatasets(raw: unknown, loadComponent: LoadComponent): Promise<{ bundle: CsrAdamBundle; datasets: AdamDatasets; componentsApproved: boolean }> {
   const bundle = parseBundle(raw);
   const datasets: Partial<AdamDatasets> = {};
   let componentsApproved = true;
@@ -54,8 +59,14 @@ export async function loadAdamBundleEnvelope(raw: unknown, loadComponent: LoadCo
     if (!read.ok) throw new CsrSourceInputError(422, 'CSR_ADAM_DATASET_UNREADABLE', `The ${name} file could not be read as one ADaM dataset (${read.reason}).`, [{ path: `datasets.${name}`, message: read.reason }]);
     datasets[name] = read.dataset;
   }
+  return { bundle, datasets: datasets as AdamDatasets, componentsApproved };
+}
+
+/** The derived source, and whether every file the manifest names is lifecycle-approved at its pinned version. */
+export async function loadAdamBundleEnvelope(raw: unknown, loadComponent: LoadComponent): Promise<{ envelope: CsrSourceEnvelope; componentsApproved: boolean }> {
+  const { bundle, datasets, componentsApproved: datasetsApproved } = await loadAdamBundleDatasets(raw, loadComponent);
   const efficacyFile = await loadComponent(bundle.efficacyResults);
-  componentsApproved &&= efficacyFile.approved;
-  const envelope = deriveCsrSourceFromAdam(bundle, datasets as AdamDatasets, await readEfficacy(efficacyFile));
+  const componentsApproved = datasetsApproved && efficacyFile.approved;
+  const envelope = deriveCsrSourceFromAdam(bundle, datasets, await readEfficacy(efficacyFile));
   return { envelope, componentsApproved };
 }

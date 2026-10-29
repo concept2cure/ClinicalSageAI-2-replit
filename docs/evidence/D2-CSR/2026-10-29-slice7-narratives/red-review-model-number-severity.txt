@@ -1,0 +1,19 @@
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 17ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 2ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 9ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 18ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 5ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 10ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 7ms
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form 19ms
+   → expected { status: 'composed', …(6) } to match object { status: 'composed', …(1) }
+ × server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none 14ms
+   → expected [] to include 'NARRATIVE_SEVERITY_MISMATCH'
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 29ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form
+AssertionError: expected { status: 'composed', …(6) } to match object { status: 'composed', …(1) }
+ FAIL  server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none
+AssertionError: expected [] to include 'NARRATIVE_SEVERITY_MISMATCH'
+      Tests  2 failed | 9 passed (11)

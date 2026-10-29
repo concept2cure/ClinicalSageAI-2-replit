@@ -37,6 +37,20 @@
 --     stale, which server/services/csr/csr-section-review.ts reports as a
 --     draft). Written only by csr-section-review.ts.
 --   Nothing is dropped; no file in the set re-creates or removes these.
+--
+-- AMENDED IN PLACE 2026-10-29 (D2, CSR end to end, slice 7 of
+-- docs/design/CSR_END_TO_END_2026-10-29.md; RULE 1 of CLAUDE.md):
+--   * Table 3, csr_narrative_outputs: one row per subject the E3 §12.3.2 rule
+--     selects for a patient safety narrative in a CSR build
+--     (server/services/csr/csr-narrative-job.ts, its only writer). Each composed
+--     narrative carries its SHA-256 and the digest of the ADaM facts it was
+--     composed from, so a resumed build skips exactly the subjects whose
+--     verified narrative still matches its facts and preserves a damaged row
+--     rather than overwriting it. A refused subject is recorded with its
+--     reason and no text. Public, organization_id INTEGER NOT NULL, so the
+--     final tenant sweep polices it. CREATE ... IF NOT EXISTS only, with its
+--     constraints inside the CREATE; nothing is dropped and no other file in
+--     the set creates or removes it.
 -- ============================================================================
 
 BEGIN;
@@ -213,5 +227,32 @@ BEGIN
              OR review_decided_at IS NOT NULL AND reviewed_content_hash IS NOT NULL);
   END IF;
 END $$;
+
+-- ----------------------------------------------------------------------------
+-- Table 3 (2026-10-29 amendment, slice 7): csr_narrative_outputs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_narrative_outputs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  -- ADSL USUBJID, and the subject's place in treatment-group and subject order
+  subject_id        text NOT NULL,
+  sequence          integer NOT NULL CHECK (sequence >= 0),
+  status            text NOT NULL CHECK (status IN ('composed', 'refused')),
+  content           text,
+  content_hash      text,                   -- SHA-256 lowercase hex of content
+  facts_digest      text NOT NULL,          -- SHA-256 of the ADaM facts composed from
+  qc                jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at        timestamp NOT NULL DEFAULT now(),
+  updated_at        timestamp NOT NULL DEFAULT now(),
+  CONSTRAINT csr_narrative_outputs_job_subject_unique UNIQUE (job_id, subject_id),
+  CONSTRAINT csr_narrative_outputs_content_check
+    CHECK (status = 'composed' AND content IS NOT NULL AND content_hash IS NOT NULL
+           OR status = 'refused' AND content IS NULL AND content_hash IS NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_narrative_outputs_org_job_idx
+  ON csr_narrative_outputs (organization_id, job_id, sequence);
 
 COMMIT;

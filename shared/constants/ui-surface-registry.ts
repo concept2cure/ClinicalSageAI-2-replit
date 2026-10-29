@@ -458,7 +458,11 @@ export const UI_SURFACES: UiSurface[] = [
     // standalone CSR/Module 2 content builders retain their launch fences.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
-      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
+      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract',
+      // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
+      // build bound to the run, read its sections, triage them, build narratives. Exactly the
+      // jobs router, not the /api/csr builder prefix.
+      '/api/csr/jobs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,

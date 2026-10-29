@@ -19,7 +19,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
-import { CsrHeadingReview, type CsrBoardHeading } from './CsrBuildProgress';
+import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -558,10 +558,11 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
         })}
       </div>
 
-      {canImport && Array.isArray(board?.headings) && (
+      {canImport && Array.isArray(board?.headings) && (<>
         <CsrHeadingReview jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)}
           onImport={(sectionNumbers) => setImportSource({ kind: 'csr', jobId, sectionNumbers })} />
-      )}
+        <CsrNarrativeBuild jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)} />
+      </>)}
 
       {graphOn && (
         <RegulatoryPanel
