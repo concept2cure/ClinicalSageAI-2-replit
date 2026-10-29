@@ -1,0 +1,8 @@
+M20: the signed acceptance sends no password
+file: client/src/concept2cure/v2/surfaces/Risk.tsx
+test: client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > sends the acceptance and the signature components to the signed route 101ms
+      Tests  1 failed | 7 passed (8)

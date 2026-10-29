@@ -1,0 +1,15 @@
+M19: Accept residual opens no dialog
+file: client/src/concept2cure/v2/surfaces/Risk.tsx
+test: client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > Accept residual opens the signature dialog > opens the dialog for what is signed, with the acceptance meanings, and sends nothing yet 614ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > Accept residual opens the signature dialog > closing the dialog sends nothing and leaves the hazard unaccepted 314ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > sends the acceptance and the signature components to the signed route 271ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > shows the hazard accepted once the server confirms it 251ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > a refusal keeps the dialog open with the server's sentence, and the hazard stays unaccepted 304ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > a password the ceremony did not accept (401) is said once, ending "Nothing was signed." 242ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > a dropped connection says the outcome is unconfirmed, not that nothing was signed 240ms
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > an answer that carries no signature is not shown as accepted 239ms
+      Tests  8 failed (8)

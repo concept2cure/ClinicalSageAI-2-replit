@@ -3553,6 +3553,18 @@ export const C2C_MIGRATION_FILES = [
   // organization_id INTEGER NOT NULL; creates no table; guarded; no DROP.
   'migrations/20261029_hf_engineering_files_program_key.sql',
 
+  // A design input names its project, by key, and a design input or a risk item
+  // names only its own organization's project (D2, fold F1 slice A, 2026-10-29):
+  // c2c_design_controls.program_id UUID, nullable (existing inputs stay the
+  // organization's unscoped inputs), a NOT VALID composite key ON DELETE SET NULL
+  // (program_id) and an index for the project read; and a NOT VALID composite key
+  // on risk_items (program_id, organization_id) whose delete action is the one its
+  // existing program key has (NO ACTION on the 20260507 lineage, SET NULL
+  // (program_id) where drizzle push left none). After 20260717 and 20260507 (the
+  // tables) and 20260926b (regulatory_programs_id_org_uq, created here too when
+  // absent). Public with organization_id INTEGER NOT NULL; creates no table;
+  // guarded; no DROP.
+  'migrations/20261029c_design_controls_and_risk_items_program_keys.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

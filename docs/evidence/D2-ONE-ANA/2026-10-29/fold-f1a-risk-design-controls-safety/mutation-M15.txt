@@ -1,0 +1,10 @@
+M15: the signed acceptance runs off the signing transaction (pool)
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > re-verifies the signer, then sets the status, records the sign ledger pair and the signature row, then commits 9ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > sets the status on the organization's live row only 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > answers with the accepted row and the signature 5ms
+      Tests  3 failed | 30 passed (33)

@@ -1,0 +1,12 @@
+M26: the migration adds no risk_items key
+file: migrations/20261029c_design_controls_and_risk_items_program_keys.sql
+test: tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts
+exit: 1
+restored byte for byte: True
+
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the 20260507 lineage (risk_items.program_id already keyed, NO ACTION) > a replay adds nothing: one nullable uuid column, two NOT VALID key
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the 20260507 lineage (risk_items.program_id already keyed, NO ACTION) > an input or a risk naming another organization's project, or a mis
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the drizzle lineage (risk_items.program_id with no key) > the new key is the only program key, and it nulls only the program 6ms
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the drizzle lineage (risk_items.program_id with no key) > a risk naming another organization's project is refused here too 3ms
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the drizzle lineage (risk_items.program_id with no key) > deleting a project unbinds its risks and keeps their organization, as it left th
+      Tests  5 failed | 7 passed (12)

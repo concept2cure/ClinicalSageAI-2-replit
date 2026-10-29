@@ -1,0 +1,8 @@
+M3: design-controls POST drops the editor gate
+file: server/routes/design-controls.routes.ts
+test: server/routes/__tests__/design-controls-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses a viewer with the editor gate's 403, and sends nothing 14ms
+      Tests  1 failed | 17 passed (18)

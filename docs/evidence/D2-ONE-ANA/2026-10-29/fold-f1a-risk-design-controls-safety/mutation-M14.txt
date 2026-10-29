@@ -1,0 +1,8 @@
+M14: the signed acceptance stops setting acceptable
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > sets the status on the organization's live row only 7ms
+      Tests  1 failed | 32 passed (33)

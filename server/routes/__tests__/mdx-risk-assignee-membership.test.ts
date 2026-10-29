@@ -20,7 +20,10 @@ import request from 'supertest';
 const query = vi.fn();
 const checkOrgMembership = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
-vi.mock('../../middleware/orgMembership', () => ({
+// The real requireEditorAccess (the risk writes take it since D2 fold F1 slice A,
+// 2026-10-29); only the membership lookup is a double.
+vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
   checkOrgMembership: (...a: unknown[]) => checkOrgMembership(...a),
 }));
 
@@ -32,7 +35,7 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 1 };
+    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 1, role: 'member' };
     next();
   });
   a.use('/api/mdx', riskRouter);

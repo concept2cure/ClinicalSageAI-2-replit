@@ -1,0 +1,8 @@
+M27: the risk key always nulls the program (ignores the existing key)
+file: migrations/20261029c_design_controls_and_risk_items_program_keys.sql
+test: tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts
+exit: 1
+restored byte for byte: True
+
+ × tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts > the 20260507 lineage (risk_items.program_id already keyed, NO ACTION) > a replay adds nothing: one nullable uuid column, two NOT VALID key
+      Tests  1 failed | 11 passed (12)

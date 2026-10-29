@@ -1,0 +1,9 @@
+M28: the migration adds no design-controls column
+file: migrations/20261029c_design_controls_and_risk_items_program_keys.sql
+test: tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts
+exit: 1
+restored byte for byte: True
+
+      Tests  1 passed | 11 skipped (12)
+
+M28 detail: the beforeAll hook fails with 42703 (column "program_id" does not exist) in CREATE INDEX idx_c2c_design_controls_org_program, so both lineage suites fail.

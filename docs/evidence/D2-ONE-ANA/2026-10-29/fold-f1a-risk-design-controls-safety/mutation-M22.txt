@@ -1,0 +1,8 @@
+M22: DesignControls reads the organization with a project open
+file: client/src/concept2cure/v2/surfaces/DesignControls.tsx
+test: client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx > with a project open > reads that project's design inputs, by its id 52ms
+      Tests  1 failed | 6 passed (7)

@@ -1,0 +1,8 @@
+M24: a new design input names no project
+file: client/src/concept2cure/v2/surfaces/DesignControls.tsx
+test: client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx > with a project open > a new design input names the project 171ms
+      Tests  1 failed | 6 passed (7)

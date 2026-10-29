@@ -1,0 +1,3 @@
+# npm run -s typecheck:fast (tsc --noEmit -p tsconfig.check.json), whole tree, after the slice
+exit 0
+(no diagnostics printed)
