@@ -1,6 +1,8 @@
 /**
  * Pivotal studies: the sponsor declares, per study, whether it is pivotal
- * (D5, founder's decision of 2026-10-29). Shown on the CSR workflow board.
+ * (D5, founder's decision of 2026-10-29). Shown on the Submission Center's CSR
+ * card (CsrSourceInputControls), which production serves, and on the CSR
+ * workflow board, which it does not (not a launch surface).
  *
  *   GET  /api/csr-workflow/pivotal?programId= | ?projectId=
  *   POST /api/csr-workflow/pivotal { programId | projectId, studyId, pivotal, reason }
