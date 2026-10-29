@@ -84,6 +84,8 @@ beforeAll(async () => {
              ('${PUBLIC_DOC}','${PUBLIC}',7,'Stability public evidence','public.pdf','REPORT','Public stability results',now()-interval '1 day');
   `);
   await h.pg.exec(fs.readFileSync('migrations/20260906_vault_documents_fulltext.sql', 'utf8'));
+  // The search counts versions still being read (MR-08 Stage 3) from the catalog.
+  await h.pg.exec(fs.readFileSync('migrations/20260905_document_catalog.sql', 'utf8'));
   // A search hit carries its lifecycle stage (VR-18), read from canonical_documents.
   await h.pg.exec(fs.readFileSync('migrations/20260731c_canonical_documents.sql', 'utf8'));
 });

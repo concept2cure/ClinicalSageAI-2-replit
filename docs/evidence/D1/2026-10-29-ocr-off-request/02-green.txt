@@ -1,0 +1,33 @@
+# Green on real PostgreSQL 16 (RLS_ENFORCE=on, app_service): the sweep suite
+
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > returns a scanned PDF without running OCR, and records it as still being read
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > still reads a born-digital file in the request
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > search says how many versions are not searched yet
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > does nothing more on the next run
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once
+ ✓ tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+
+# The 34 dbtests that touch ingest, extraction, search or the catalog, after the last edit
+ Test Files  34 passed (34)
+      Tests  346 passed (346)
+
+# The touched unit suites after the last edit (inline extraction, catalog eligibility, chunk backfill, ingest storage)
+ Test Files  4 passed (4)
+      Tests  49 passed (49)
+
+# The 161 unit and client suites that touch them
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 157 passed (161)
+      Tests  27 failed | 2402 passed (2429)
+Failing files, each failing without this change too (docs/evidence/D6/2026-10-29-archive-limits/04-baseline.txt; authoringFromDraft is the authoring lane's, handed on in VR-19's README):
+      1  FAIL  server/__tests__/routes/smoke.test.ts
+      3  FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+     15  FAIL  server/services/report-os/pdf/__tests__/run-pdf.test.ts
+      8  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+
+# tsc --noEmit -p tsconfig.json, after the last edit
+EXIT 0

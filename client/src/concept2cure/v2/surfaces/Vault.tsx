@@ -65,7 +65,7 @@ import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } fro
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultSeals } from './VaultSeals';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults, facetCounts, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
+import { VaultLibraryResults, facetCounts, isVaultSearchShape, pendingSearchNote, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -2094,6 +2094,11 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
                 The vault search could not be verified — this is not a result of zero matches.
                 {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
+              </div>
+            )}
+            {searching && !libraryMode && verifiedSearch && pendingSearchNote(searchState.data?.pendingCount) && (
+              <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }} data-testid="vault-search-pending">
+                {pendingSearchNote(searchState.data?.pendingCount)}
               </div>
             )}
             {searching && !libraryMode && searchState.loading && (

@@ -1,0 +1,82 @@
+# mocked-suites.txt — the suites that stub project access, with the admission double and without it
+#
+# Run on HEAD 46db6c762 + this change, in a scratch extraction outside the shared tree.
+# The double (server/routes/c2c/__tests__/support/admission-double.ts) is decided by each suite's own
+# verifyProjectAccess stub. 'Pass-through' replaces it with next() and nothing else.
+# artifacts-center-export-governance.test.ts does not use the double: it stubs the export's own
+# admission (readCurrentProgramActor, canAccessReportProject), agreed with main.
+
+## The 11 suites that use the double
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts
+server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+server/routes/c2c/__tests__/governed-decision-transition-refusal-and-failure-statuses.test.ts
+server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+tests/artifact-routes-invalidate-bundles.test.ts
+tests/artifact-routes-project-scope.test.ts
+tests/artifact-status-audit-outcome.test.ts
+tests/artifact-status-lock-covers-approval.test.ts
+tests/artifact-status-project-scope.test.ts
+
+## With the double, plus the export-governance suite (12 files)
+Test Files  12 passed (12)
+Tests  127 passed (127)
+
+## The 11, with a plain pass-through in the double's place (scratch only)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Test Files  1 failed | 10 passed (11)
+Tests  1 failed | 117 passed (118)
+× tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a project lookup that could not complete is a 503 PROJECT_ACCESS_UNAVAILABLE, never a "not found" — and it is asked strictly
+
+# Reading: the one case that goes red without the double is the one the middleware decides first
+# (a lookup that could not complete: the admission's 503, the handler's 500 without it). Every 404
+# denial case in these suites stays green without it, because the handler's own authorizedProjectId
+# (the same stub), loadProjectArtifact and the uuid translation still refuse after the middleware.
+# The refusals only the middleware makes are proven on PGlite in project-write-gates.pglite.test.ts,
+# and mutations.txt shows each one red without its gate.
+
+## The 43 suites run with the new one for green.txt
+server/__tests__/routes/smoke.test.ts
+server/routes/__tests__/ana-skills-project-routes.test.ts
+server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+server/routes/__tests__/artifacts-center-export-governance.test.ts
+server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+server/routes/__tests__/audit-services-figure-failures-are-not-all-422.test.ts
+server/routes/__tests__/audit-services-figures-call-the-engine.test.ts
+server/routes/__tests__/audit-services-keywords-call-the-engine.test.ts
+server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts
+server/routes/__tests__/ind-generation-fail-closed.test.ts
+server/routes/__tests__/safety-narrative-cases.test.ts
+server/routes/__tests__/safety-narrative-save.test.ts
+server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts
+server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts
+server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts
+server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+server/routes/c2c/__tests__/c2c-router.parity.test.ts
+server/routes/c2c/__tests__/communication-center.test.ts
+server/routes/c2c/__tests__/exports-recorded.test.ts
+server/routes/c2c/__tests__/governed-decision-transition-refusal-and-failure-statuses.test.ts
+server/routes/c2c/__tests__/knowledge-upload-client-track-is-recorded-or-not-stated.test.ts
+server/routes/c2c/__tests__/knowledge-upload-module3-map-uses-only-a-recorded-track.test.ts
+server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+server/routes/c2c/__tests__/reviews-my-queue-program.test.ts
+server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+tests/artifact-routes-invalidate-bundles.test.ts
+tests/artifact-routes-project-scope.test.ts
+tests/artifact-status-audit-outcome.test.ts
+tests/artifact-status-lock-covers-approval.test.ts
+tests/artifact-status-project-scope.test.ts
+tests/routes/cerv2-literature-screening.test.ts
+tests/routes/concept2cure-governed-upload.test.ts
+tests/routes/concept2cure-project-collaborators.test.ts
+tests/routes/concept2cure.test.ts
+tests/routes/estar-registration-correspondent.test.ts
+tests/routes/estar-submission-filing.test.ts
+tests/unit/concept2cure-artifact-source-evidence.test.ts
