@@ -1,0 +1,11 @@
+# item 2 red at head bbe7971e: projectDocumentDisposition.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies keep_data eligibility to both local and handed-off pins 814ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies remove_data eligibility to both local and handed-off pins 390ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > superseded data remains visible as history and cannot be pinned 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > selected Vault upload exposes the preview decision control 135ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained Vault data has no download promise for unavailable original bytes 199ms
+ × client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state 5096ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state
+TestingLibraryElementError: Unable to find role="button" and name "Review removal of Retained search record"
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

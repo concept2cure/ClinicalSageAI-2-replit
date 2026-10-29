@@ -1,0 +1,23 @@
+# item 6 red at head ceea6843: client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > offers Build in editor on the selected real Vault upload beside the actual document 540ms
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false) 5403ms
+   → expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true) 5400ms
+   → expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > preserves current source selection and dirty text on Stay, then adopts only after an explicit guarded leave 5539ms
+   → expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas 5283ms
+   → expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited 5265ms
+   → expected 1 to be 3 // Object.is equality
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > holds the current canvas when its rail project differs from the current shell project 397ms
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes 5267ms
+   → expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity 5640ms
+   → expected 1 to be 3 // Object.is equality
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity
