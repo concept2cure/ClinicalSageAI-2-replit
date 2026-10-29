@@ -370,7 +370,9 @@ describe('T4 — archiving demands the reason the UI promises to record', () => 
 
     expect(res.status).toBe(200);
     expect(res.body.archived).toBe(true);
-    expect(h.log).toEqual(['BEGIN', 'tx:update', 'tx:execute', 'COMMIT']);
+    // The row is read under its lock first, so a review route member is
+    // refused before any write (RR1a, B1); then the archive and its row.
+    expect(h.log).toEqual(['BEGIN', 'tx:select', 'tx:update', 'tx:execute', 'COMMIT']);
     expect(h.audits[0]).toMatchObject({ command: 'task.delete', reason: 'Superseded by TASK-2' });
   });
 });

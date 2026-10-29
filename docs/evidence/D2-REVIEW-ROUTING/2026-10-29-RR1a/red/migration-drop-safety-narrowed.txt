@@ -1,0 +1,17 @@
+[ci:migration-drop-safety] FAIL — 1 replay-unsafe DROP(s) or replacement(s).
+
+  constraint:public.review_routes.review_routes_status_check
+    replaced by : migrations/20261023z_scratch_narrow.sql  (unconditionally)
+    redefined by: migrations/20261023_review_routes.sql  (later in the set)
+    effect      : NARROWED — every deploy re-imposes this file's definition before the
+                  later one, and ADD CONSTRAINT validates every existing row. From the
+                  first row only the later definition admits, every deploy fails here.
+    fix         : amend this file in place (RULE 1) so the replacement runs only while
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass
+                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')
+
+[ci:migration-drop-safety] The applier re-runs every file on every deploy, so a DROP cannot remove
+  something another file in the set re-creates. Amend the creating migration in
+  place (CLAUDE.md RULE 1) instead of appending a DROP. If a pairing is genuinely
+  safe, record it in scripts/ci/migration-drop-safety-baseline.json with a reason.
+exit=1

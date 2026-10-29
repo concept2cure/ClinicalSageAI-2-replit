@@ -1,0 +1,63 @@
+# RR1a gates — 2026-10-29T06:06:54Z, HEAD 7b388ee8d on concept2cure-v2 (base 6457e3f4b)
+
+$ npm run --silent ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since 6457e3f4b63e80f0f1104b58439cf345beec2d5c (6457e3f4b) -- 52 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 6457e3f4b63e80f0f1104b58439cf345beec2d5c.
+exit=0
+
+$ npm run --silent ci:pushed-lint-errors
+[ci:pushed-lint-errors] OK — no ESLint errors in 52 changed file(s) against origin/concept2cure-v2.
+exit=0
+
+$ npm run --silent ci:sql-interpolation
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-search.ts:186:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1066 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+exit=0
+
+$ npm run --silent ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 52 file(s) resolves to a tracked file.
+exit=0
+
+$ npm run --silent ci:tenant-isolation:no-regression
+    L176  tables=[documents]
+      const counted = await db.query(`SELECT count(*)::int AS total
+Total: 5 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 5 NEW finding(s) above baseline of 0:
+  server/routes/__tests__/_coauthor-current-source-fixture.ts#973ea652c7b8:users
+  server/routes/__tests__/_task-management-governed-harness.ts#f1984e690702:users
+  server/routes/__tests__/_task-management-governed-harness.ts#0242b76354ca:audit_logs
+  server/services/vault/vault-search.ts#863c89fb3907:documents
+  server/services/vault/vault-search.ts#b5c94cc181a1:documents
+exit=1
+
+$ npm run --silent ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit=0
+
+$ npm run --silent ci:migration-set-order
+[ci:migration-set-order] OK — 431 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+
+$ npm run --silent ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 431 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+$ NODE_OPTIONS=--max-old-space-size=10240 npx tsc --noEmit -p tsconfig.check.json
+exit=0
+
+# ci:tenant-isolation:no-regression — the 5 findings are in files RR1a does not touch:
+  server/routes/__tests__/_coauthor-current-source-fixture.ts#973ea652c7b8:users
+  server/routes/__tests__/_task-management-governed-harness.ts#f1984e690702:users
+  server/routes/__tests__/_task-management-governed-harness.ts#0242b76354ca:audit_logs
+  server/services/vault/vault-search.ts#863c89fb3907:documents
+  server/services/vault/vault-search.ts#b5c94cc181a1:documents
+$ git diff --stat 6457e3f4b HEAD -- server/routes/__tests__/_coauthor-current-source-fixture.ts server/routes/__tests__/_task-management-governed-harness.ts server/services/vault/vault-search.ts
+(empty: unchanged by RR1a; the sixth finding, task-assignment.ts's users read, predates RR1a and now carries a tenant-isolation-safe justification)

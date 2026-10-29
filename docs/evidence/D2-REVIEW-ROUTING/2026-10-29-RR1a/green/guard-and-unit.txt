@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:02.205Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T05:53:02.207Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:02.207Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:03.003Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written
+[AnA Command] Executed update_task: FAILED — This task belongs to a review route. Use the route’s actions on the document. Nothing was changed.
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row
+[AnA Command] Executed create_task: FAILED — Review route fields are set only by sending a document for review. Nothing was created.
+
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written 32ms
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row 7ms
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a rule's create_task action naming review_route_id: the action fails, nothing inserted 23ms
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > the same rule action without a route column still creates its task (the refusal is the route column's) 4ms
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a blueprint milestone naming reviewRouteId: nothing seeded 25ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a) 484ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 6ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 5ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 6ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 41ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 20ms
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:53:18.202Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:53:18.206Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:53:18.208Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 73ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task 394ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage 18ms
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:24.122Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:24.243Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T05:53:24.244Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:53:24.244Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH status: 409, the task and the ledger unchanged 94ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged 62ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned 44ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > DELETE (archive): 409, not archived 32ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the predecessor: 409, no edge, nothing blocked 32ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the successor: 409, no edge, nothing blocked 32ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the completion cascade skips a route member as a dependent 67ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the remind route, which writes nothing on the row, still serves a route member 43ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks with reviewRouteId: 400, no row 33ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/bulk-create with a task naming review_route_id: 400, nothing created 25ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created 21ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata 44ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > PATCH /:id/status: 409, unchanged, no ledger row 87ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link from the route member: 409, no link, neither blocking array written 56ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link to the route member: 409, no link, neither blocking array written 44ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > POST /unified naming reviewRouteId: 400, no task, no ledger row 26ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > createUnifiedTask, called directly with a route column, refuses and inserts nothing 24ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > a module sync (insert-only) leaves the route member as it was 36ms
+ ✓ server/services/review/__tests__/route-writer-setting.gate.test.ts > the route-writer setting has one setter > is set only by server/services/review/review-route.ts 383ms
+ ✓ server/services/review/__tests__/route-writer-setting.gate.test.ts > the route-writer setting has one setter > fails when another server file sets it (the gate seen failing) 347ms
+
+ Test Files  6 passed (6)
+      Tests  35 passed (35)
+   Start at  05:52:54
+   Duration  40.17s (transform 10.05s, setup 233ms, import 4.91s, tests 33.57s, environment 1ms)
+

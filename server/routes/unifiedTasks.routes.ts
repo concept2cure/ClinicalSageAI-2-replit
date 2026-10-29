@@ -17,10 +17,8 @@ import { requireEditorAccess } from '../middleware/orgMembership';
 import { auditTaskActionInTx, TaskAuditNotRecordedError } from '../services/tasking/task-audit';
 import { governedWriter, auditWriteFailed, outcomeUnknown } from '../services/tasking/governed-task-write';
 import {
-  TASK_STATUSES,
-  TASK_TRANSITIONS,
-  isLegalTransition,
-  type TaskStatus,
+  TASK_STATUSES, TASK_TRANSITIONS, isLegalTransition, type TaskStatus,
+  refuseRouteColumnsInInput, refuseRouteTaskWrite, RouteTaskWriteRefused,
 } from '../services/tasking/task-state-machine';
 import { requireTaskSignoff } from '../services/tasking/task-signoff';
 import {
@@ -53,6 +51,7 @@ const logger = createScopedLogger('unified-tasks');
  *  (unknown — never "failed", never "saved"), or a store failure (rolled back,
  *  its text kept in the log). */
 function writeFailed(res: Response, error: unknown, commitInFlight: boolean, what: string, where: string) {
+  if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(error.body); // RR1a: before any write
   if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
   if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, what);
   if (commitInFlight) {
@@ -129,7 +128,7 @@ router.post('/unified', requireEditorAccess, async (req: Request, res: Response)
     const ctx = governedWriter(req, res);
     if (!ctx) return;
     const { organizationId: org, actorUserId } = ctx;
-    const validatedData = createTaskSchema.parse(req.body);
+    const validatedData = createTaskSchema.parse(refuseRouteColumnsInInput(req.body, 'task.create')); // RR1a, M9
 
     // Convert dueDate string to Date object if present. The org id is the
     // verified one, never the client-supplied body value; the creator is the
@@ -484,6 +483,7 @@ router.patch('/:id/status', requireEditorAccess, async (req: Request, res: Respo
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
+    refuseRouteTaskWrite(existing, 'task.transition'); // RR1a, B1: a route member's status is its route's
 
     // Same gates as /api/tasks — this router previously accepted any string
     // and completed approval-gated tasks with no signature, so the ceremony
