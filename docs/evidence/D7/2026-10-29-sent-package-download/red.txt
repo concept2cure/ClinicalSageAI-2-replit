@@ -1,0 +1,30 @@
+# Red runs (2026-10-29).
+
+## 1. sent-package-download.test.ts before the route existed: 10 of 10 fail (404, the route is absent)
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > hands back the exact bytes sent, recorded first with their digest 40ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > is read under the project’s own access 7ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses another organization’s transmittal, and hands back no file 6ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a transmittal sent before packages were kept, and hands back no file 5ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a transmittal that names no project, and hands back no file 7ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a record naming another package than the one sent, and hands back no file 4ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a copy missing from storage, and hands back no file 5ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a copy whose bytes changed, and hands back no file 4ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > refuses a copy the store reports altered, and hands back no file 7ms
+ × server/services/submission-gateways/__tests__/sent-package-download.test.ts > GET /gateways/transmittals/:id/sent-package > delivers nothing when its record cannot be written 5ms
+AssertionError: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 403 // Object.is equality
+SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+AssertionError: expected 404 to be 409 // Object.is equality
+
+## 2. gatewayTransmittals.test.tsx against the surface as pushed (3738bb6cd): the three new cases fail (no Package action)
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the transmittal log > downloads the exact package a transmittal sent, when it was kept 180ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the transmittal log > offers no package for a transmittal sent before packages were kept, and says why 154ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the transmittal log > shows the server’s refusal when the package cannot be handed back 148ms
+      Tests  3 failed | 13 passed (16)
+
+## 3. tests/mdx-submission-gateway-routes.test.ts as pushed: slice 1 (3cab286e1) broke it
+# The suite replaces the gateway module; the new SentPackageNotArchivedError was undefined there, so
+# transmitFailure's instanceof threw and a GatewayError answered 500, not 502.
+      Tests  1 failed | 40 passed (41)
+ × tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps GatewayError to 502 12ms
+AssertionError: expected 500 to be 502 // Object.is equality

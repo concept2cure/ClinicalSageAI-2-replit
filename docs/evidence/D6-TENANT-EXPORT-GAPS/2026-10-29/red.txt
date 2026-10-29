@@ -1,0 +1,145 @@
+# Red at HEAD (e2cf417ba), 2026-10-29
+
+One private PostgreSQL 16.15 + pgvector 0.6.0, built from blank by node scripts/db/install-fresh.mjs then node scripts/db/deploy-migrate.mjs at HEAD (439/439 files, APP_SERVICE_DB_PASSWORD set): the pair the CI real-database lane runs. Each suite run starts from a fresh copy of that database.
+
+## §1 What the purge erases that the export does not read, on the live catalog (HEAD code, HEAD schema)
+Every table the purge deletes (PURGE_CHILD_TABLES + PURGE_PARENT_SCOPED, and their ON DELETE CASCADE closure) that carries no organization_id / org_id / tenant_id, with whether the shared predicate map names it (purged-closure.mts). The closure reaches no schema but public and vault.
+```
+public.ai_ml_modifications                 rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_correspondence_issues           rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_document_section_evidence       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_document_section_versions       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_document_sections               rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_milestone_sections              rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.c2c_secure_attachments              rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_clinical_evidence               rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_compliance_checks               rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_essential_requirements          rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_exports                         rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_faers_data                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_literature                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_sections                        rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_version_history                 rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.cer_workflows                       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_adverse_events                  rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_biomarkers                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_details                         rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_dose_response                   rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_eligibility_criteria            rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_endpoint_results                rls=on force=on policies=0  ERASED, NOT EXPORTED
+public.csr_endpoints                       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_knowledge_edges                 rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_pharmacokinetics                rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_populations                     rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_references                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_safety_summaries                rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_sections                        rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_statistical_analyses            rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_tables_and_figures              rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.csr_treatment_arms                  rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_cross_references                rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_documents                       rls=on force=on policies=0  ERASED, NOT EXPORTED
+public.ctd_module_sections                 rls=on force=on policies=0  ERASED, NOT EXPORTED
+public.ctd_nonclinical_studies             rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_quality_data                    rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_submissions                     rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.document_comments                   rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.document_locks                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.document_versions                   rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.fda_510k_stage_progress             rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ind_package_plan_documents          rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ind_package_plan_modalities         rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ind_package_plan_regions            rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ind_package_plan_requirements       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ind_package_plan_timelines          rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.obligation_updates                  rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.pdev_program_activities             rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.pdev_readiness_snapshots            rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.program_milestones                  rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.project_predictions                 rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.report_details                      rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.risk_detections                     rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.section_patches                     rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.section_propagations                rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+vault.document_catalog                     rls=on force=off policies=4  ERASED, NOT EXPORTED
+vault.document_chunks                      rls=on force=off policies=4  derived (not exported as rows)
+vault.document_read_receipts               rls=on force=off policies=4  ERASED, NOT EXPORTED
+vault.evidence_citations                   rls=on force=off policies=4  ERASED, NOT EXPORTED
+
+60 erased tables without a tenant column; 6 erased and not exported
+```
+
+## §2 ci:purge-coverage at HEAD: NEW residue csr_narrative_outputs (3b576cab9)
+```
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_narrative_outputs
+```
+One narrative row for tenant A and one for B, then the real purge of A as the route runs it (runtime role, platform scope; narrative-probe.mts):
+```
+listed in PURGE_CHILD_TABLES: false
+purge of A: purged; csr_narrative_outputs rows deleted: (not attempted)
+  A's narrative row {"id":"1"} still there: true
+  B's narrative row {"id":"2"} still there: true
+```
+
+## §3 This change's tests, with HEAD's product files (purge-parent-scope.ts, vault-tenancy.ts, purge-referrers.ts, 20260813) on the HEAD database
+Two tenants, one row each in all 183 tables (the six included), A's export in A's scope (runtime role, RLS enforced) and as the owner.
+```
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] 183 tables seeded for each of A and B (404 rows with their parents); 18 held tables for C
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > capa_records: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_submissions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_sub_questions: each tenant sees its own row and not the other's
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: csr_endpoint_results has no tenant_isolation_policy: expected false to be true // Object.is equality
+AssertionError: ctd_documents: tenant A cannot see its OWN row: expected +0 to be 1 // Object.is equality
+AssertionError: tables the purge erases that the export does not read: expected [ 'public.csr_endpoint_results', …(5) ] to deeply equal []
++   "public.csr_endpoint_results",
++   "public.ctd_documents",
++   "public.ctd_module_sections",
++   "vault.document_catalog",
++   "vault.document_read_receipts",
++   "vault.evidence_citations",
+AssertionError: A's rows the purge erases, missing from A's export: expected [ Array(9) ] to deeply equal []
++   "scoped: csr_endpoint_results",
++   "owner: csr_endpoint_results",
++   "scoped: ctd_module_sections",
++   "owner: ctd_module_sections",
++   "scoped: ctd_documents",
++   "owner: ctd_documents",
++   "owner: vault.document_catalog",
++   "owner: vault.document_read_receipts",
++   "owner: vault.evidence_citations",
+ Test Files  2 failed (2)
+      Tests  4 failed | 18 passed (22)
+vitest exit 1
+```
+
+## §4 ci:unkeyed-request-tables with the new predicates and without the csr_endpoints baseline entry
+(the same failure named csr_endpoints and ctd_submissions before either entry existed)
+```
+[ci:unkeyed-request-tables] 1095 tables created; 602 read by a per-request path; 91 of those carry NO tenant column; 90 baselined, 0 still unreviewed
+🚫 Table(s) a per-request path reads with NO tenant column:
+  csr_endpoints
+      created in : migrations/0005_csr_knowledge_database.sql
+      read by    : server/services/tenant/purge-parent-scope.ts
+  Every RLS sweep here keys off organization_id / org_id / tenant_id, so a
+```
