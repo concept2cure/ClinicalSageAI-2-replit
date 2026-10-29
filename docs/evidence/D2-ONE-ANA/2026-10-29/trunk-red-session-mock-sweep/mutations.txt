@@ -1,0 +1,64 @@
+MUTATION: applied to all 15 fixed suites at once, run one file at a time, then the 15 files restored from byte copies.
+Run at 86610174. Nothing on the crash path has changed since: authService.tsx, CanvasDocumentList.tsx,
+ConversationThread.tsx and authoringCurrentRead.ts are the same at 316909f5 and 8b01885a.
+
+M1. Remove the session mock (the 15 files return to HEAD's bytes).
+    While mutated, 'git diff --stat' of the 15 was empty, and none of them names services/portal/authService.
+    Expected: RED with the trunk error. Result:
+
+    conversationArtifactPanel.test.tsx: 5 failed | 3 passed (8), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    conversationAuthoringOrigin.test.tsx: 8 failed | 1 passed (9), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    authoringConversationScope.test.tsx: 6 failed | 2 passed (8), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaContinueHosts.test.tsx: 3 failed | 2 passed (5), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaRunControlStrip.test.tsx: 5 failed | 7 passed (12), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    emptyStateBatchA.test.tsx: 3 failed | 5 passed (8), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaAnswerCaveats.test.tsx: 7 failed (7), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    composerAttachmentChip.test.tsx: 4 failed | 4 passed (8), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    composerAttachWorks.test.tsx: 4 failed | 4 passed (8), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    conversationRailTwins.test.tsx: 32 failed | 1 passed (33), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaInterruptedHosts.test.tsx: 19 failed (19), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaMessageWarnings.test.tsx: 2 failed (2), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    conversationProjectMismatch.test.tsx: 5 failed (5), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaRunControl.test.tsx: 12 failed (12), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+    anaSkillsInUse.test.tsx: 4 failed | 11 passed (15), same as trunk
+      -> Error: useAuth must be used within an AuthProvider
+
+    First app frames, in every file:
+     ❯ useAuth client/src/services/portal/authService.tsx:1379
+     ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:124
+     ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1386
+
+    RED: 15 of 15 files, 119 of 119 cases that failed at trunk. The same error, frames and per-file counts as trunk.
+
+Restore. The 15 files were copied back from the fixed bytes, then checked two ways:
+  $ sha256sum -c fixed15.sha256
+    __tests__/conversationArtifactPanel.test.tsx: OK
+    editor/__tests__/conversationAuthoringOrigin.test.tsx: OK
+    editor/__tests__/authoringConversationScope.test.tsx: OK
+    __tests__/anaContinueHosts.test.tsx: OK
+    __tests__/anaRunControlStrip.test.tsx: OK
+    __tests__/emptyStateBatchA.test.tsx: OK
+    __tests__/anaAnswerCaveats.test.tsx: OK
+    __tests__/composerAttachmentChip.test.tsx: OK
+    __tests__/composerAttachWorks.test.tsx: OK
+    __tests__/conversationRailTwins.test.tsx: OK
+    __tests__/anaInterruptedHosts.test.tsx: OK
+    __tests__/anaMessageWarnings.test.tsx: OK
+    __tests__/conversationProjectMismatch.test.tsx: OK
+    __tests__/anaRunControl.test.tsx: OK
+    __tests__/anaSkillsInUse.test.tsx: OK
+  $ cmp <(git diff) <diff taken before the mutation>: identical
