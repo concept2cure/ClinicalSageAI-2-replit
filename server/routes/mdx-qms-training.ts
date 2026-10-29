@@ -1,8 +1,11 @@
 /**
  * QMS training routes under /api/mdx/qms, mounted by mdx-qms.ts
- * (docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.8). Slice 1: the
- * organization's job roles and who holds them (P-49).
+ * (docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.8): the training reads,
+ * and the organization's job roles and who holds them (P-49).
  *
+ *   GET    /api/mdx/qms/training                         list training records
+ *   GET    /api/mdx/qms/training/expiring                periodic refresh due
+ *   GET    /api/mdx/qms/training/compliance              read-and-understood per procedure
  *   GET    /api/mdx/qms/job-roles                        roles, members, roster
  *   POST   /api/mdx/qms/job-roles                        create a role
  *   PATCH  /api/mdx/qms/job-roles/:id                    rename / describe it
@@ -40,7 +43,9 @@ import {
   GovernedRefusal, governedQmsActor, governedQmsReason, governedQmsWrite,
   type GovernedQmsCommand, type GovernedQmsSubject,
 } from '../services/qms/governed-qms-write';
-import { currentStanding, QmsTrainingRefused, type TrainingSqlClient } from '../services/qms/training';
+import {
+  currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, type TrainingSqlClient,
+} from '../services/qms/training';
 import {
   addQmsJobRoleMember, createQmsJobRole, deleteQmsJobRole, readQmsJobRoles, removeQmsJobRoleMember, updateQmsJobRole,
   type JobRoleChange,
@@ -48,7 +53,7 @@ import {
 import {
   qmsGovernedRemovalSchema, qmsJobRoleCreateSchema, qmsJobRoleMemberSchema, qmsJobRoleUpdateSchema,
 } from '../../shared/qms/training';
-import { getOrgId, getUserId, positiveId } from './mdx-qms-context';
+import { getOrgId, getUserId, positiveId, qmsClient } from './mdx-qms-context';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms-training');
@@ -145,6 +150,49 @@ async function jobRoleWrite<T>(req: Request, res: Response, spec: JobRoleWrite<T
     return { target: change.target, payload: change.payload, status: spec.status, body: { data: change.data } };
   });
 }
+
+/* ─── Training records, expiry and compliance (moved unchanged from mdx-qms.ts) ─── */
+
+router.get('/qms/training', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1
+        ORDER BY acknowledged_at DESC LIMIT 500`,
+      [orgId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'training-list', err); }
+});
+
+router.get('/qms/training/expiring', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
+  /* G10 (2026-10-29). Each active member whose current training on a release in
+     force lapses within the window, read as coverage reads it. This listed every
+     record with an expiry inside the window: a superseded version, a receipt
+     its member had renewed, a departed member's. No client called it. */
+  try {
+    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
+    return ok(res, rows, { count: rows.length, withinDays });
+  } catch (err) { return serverError(res, log, 'training-expiring', err); }
+});
+
+/* Read-and-understood compliance per controlled procedure. The denominator is
+   the org roster (organization_users); the numerator is the distinct users with
+   a current (non-expired) acknowledgment. Only effective, trainable doc types
+   are counted — forms and specifications don't carry read-and-understood. */
+router.get('/qms/training/compliance', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId);
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'training-compliance', err); }
+});
+
+/* ─── Job roles and who holds them (P-49) ─── */
 
 router.get('/qms/job-roles', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
