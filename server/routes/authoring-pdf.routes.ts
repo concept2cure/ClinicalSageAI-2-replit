@@ -15,7 +15,6 @@ import { Router, Response } from 'express';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { renderM2SummaryPdf } from '../services/authoring/m2-summary-renderer';
-import { runM2SummaryQc } from '../services/authoring/m2-summary-qc';
 import { runM4NonclinicalQc } from '../services/authoring/m4-nonclinical-qc';
 import { runM5ClinicalQc } from '../services/authoring/m5-clinical-qc';
 import { aggregateCtdAuthoringReadiness, CtdQcInputError } from '../services/authoring/ctd-authoring-readiness';
@@ -60,27 +59,17 @@ router.post('/m2-summary/pdf', limiter, requireRole(AUTHOR), async (req, res) =>
 });
 
 /**
- * Cross-summary Module 2 QC over a set of built M2 summaries (ICH M4).
- * Body: { summaries: M2Summary[], expectedSummaries?, minCompleteness?,
- * availableUpstreamKeys? }. Returns the verdict + findings.
+ * Cross-summary Module 2 QC: retired 2026-10-29 (slice G5). It graded M2
+ * summaries supplied in the body, so its verdict could describe summaries no
+ * run would build (Rule 2), and nothing called it. The reachable replacement is
+ * GET /api/submissions/:id/module2-qc (services/authoring/module2-saved-qc.ts),
+ * which builds the summaries from the project's saved records as a package run
+ * does and grades them with the same runM2SummaryQc, shown by
+ * SubmissionModule2Qc.tsx in Submission Center.
  */
-router.post('/m2-summary/qc', limiter, requireRole(AUTHOR), (req, res) => {
-  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
-  if (!Array.isArray(b.summaries)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'summaries[] (built M2Summary objects) is required.' } });
-  }
-  try {
-    res.json(
-      runM2SummaryQc({
-        summaries: b.summaries,
-        expectedSummaries: b.expectedSummaries,
-        minCompleteness: b.minCompleteness,
-        availableUpstreamKeys: b.availableUpstreamKeys,
-      }),
-    );
-  } catch (err) {
-    fail(res, err);
-  }
+router.post('/m2-summary/qc', limiter, requireRole(AUTHOR), (_req, res) => {
+  res.status(410).json({ error: { code: 'M2_QC_READS_SAVED_CONTENT', message:
+    'Module 2 QC no longer grades supplied summaries. Read GET /api/submissions/:id/module2-qc, which builds them from the project\'s saved records.' } });
 });
 
 /**

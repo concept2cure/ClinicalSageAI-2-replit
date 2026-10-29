@@ -1381,6 +1381,34 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
     fail(res, err);
   }
 });
+/* Module 2 QC over what a package run would build now, from the project's
+   saved records (slice G5). The cross-summary QC was reachable only over
+   caller-supplied summaries (POST /api/authoring-pdf/m2-summary/qc, unmapped);
+   this reads and builds server-side, after the caller's read of the
+   submission and its project. Nothing is written. */
+router.get('/:id/module2-qc', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    const q = requestPgClient(req);
+    const sub = await getSubmissionForRequest(q, ctx, id, readSelection(req));
+    if (!sub.programId) {
+      return res.status(409).json({ error: { code: 'UNANCHORED_SUBMISSION', message: 'This submission needs a verified project anchor before its Module 2 can be checked.' } });
+    }
+    const { requireCurrentProgramAccess } = await import('../services/c2c/current-program-access.js');
+    const access = await requireCurrentProgramAccess(q, { organizationId: ctx.organizationId, userId: ctx.userId, programId: sub.programId });
+    const { readSavedModule2Qc } = await import('../services/authoring/module2-saved-qc.js');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await readSavedModule2Qc({
+      organizationId: ctx.organizationId, userId: ctx.userId, programId: sub.programId,
+      projectId: access.projectId ?? null, applicationType: sub.applicationType, primaryRegion: sub.primaryRegion,
+    }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 router.get('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
