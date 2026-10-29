@@ -241,6 +241,26 @@ const qmsDocumentContentBinding: ContentBinder = async (client, rest, orgId, led
   };
 };
 
+/**
+ * vault-data-room-seal:<uuid>: the seal written on this client a moment ago
+ * (VR-19). The signature binds the seal's recorded manifest hash, the record of
+ * every document it sealed; a seal not readable here has nothing to bind.
+ */
+const vaultDataRoomSealBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rest)) return ledgerFallback('malformed Vault seal pointer');
+  const { rows } = await client.query(
+    'SELECT manifest_sha256 FROM public.vault_data_room_seals WHERE id = $1::uuid AND organization_id = $2',
+    [rest, orgId],
+  );
+  const digest = rows[0]?.manifest_sha256;
+  if (typeof digest !== 'string' || !/^[0-9a-f]{64}$/.test(digest)) return ledgerFallback('the Vault seal is not readable at signing time');
+  return {
+    digest,
+    basis: BINDING_BASIS.VAULT_DATA_ROOM_SEAL_MANIFEST,
+    note: `sha256 (stableStringify) over seal ${rest}'s manifest: every current document's identity, version, content hash, filing and lifecycle stage as it was sealed.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -252,4 +272,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'agency-question': agencyResponseBinding,
   'regulatory-commitment': commitmentFulfilmentBinding,
   'qms-document': qmsDocumentContentBinding,
+  'vault-data-room-seal': vaultDataRoomSealBinding,
 };

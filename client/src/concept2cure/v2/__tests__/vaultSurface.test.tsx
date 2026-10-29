@@ -382,6 +382,8 @@ describe('Vault — search', () => {
       if (url.endsWith('/relationships')) return ok({ success: true, data: { relationships: [] } });
       // And for review annotations, whose failed read is an alert too.
       if (url.endsWith('/annotations')) return ok({ success: true, data: { annotations: [], openByVersion: [] } });
+      // And for the Vault's seals (VR-19), whose failed read is an alert too.
+      if (url.endsWith('/seals')) return ok({ success: true, data: { seals: [] } });
       return ok({});
     });
   }

@@ -1,0 +1,21 @@
+# RED at 1586f81ae (trunk plus the tests only: no table, no routes), 2026-10-29. Real PostgreSQL 16, RLS_ENFORCE=on, app_service.
+ × tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > records every current document, hashes the record, and binds the signature and the audit row to that hash
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > lists the seal with who sealed it and why
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > verifies intact when nothing changed, its stored files included
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a seal with no reason, and writes nothing
+   → relation "public.vault_data_room_seals" does not exist
+ × tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a wrong password, and a viewer
+   → expected 404 to be 401 // Object.is equality
+ × tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses another organisation's project, and shows that organisation nothing
+   → Cannot read properties of undefined (reading 'seals')
+ × tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > the runtime role can neither change nor remove a seal
+   → expected [Function] to throw error matching /VAULT_SEAL_IMMUTABLE/ but got 'relation "public.vault_data_room_seal…'
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > could not verify, never intact, when a sealed file can no longer be read
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-data-room-seal.dbtest.ts > the tenant purge removes seals through its door > refuses while the organisation is not pending deletion, then removes them
+   → expected [Function] to throw error matching /not pending deletion/ but got 'function public.purge_tenant_vault_se…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed (9)

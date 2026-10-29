@@ -435,6 +435,8 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
 
 ### VR-19 — Seal the data room: a hash-verified snapshot nobody can alter  `[M]`
 
+**Done 2026-10-29** (`docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md`, `docs/evidence/D5/2026-10-29-data-room-seal/`). Three departures from the slice as written, each recorded there: the meaning is approval or responsibility, from the closed vocabulary; who may seal is Vault write access plus the one signing-authority policy, leaving a narrower seal role as FD9's open half; the purge erases seals through a door of their own.
+
 - **Launch row:** No D row names this. It is nearest to D5 (tamper-evident records), plus a new URS-VAULT requirement for D4. Under Rule 2 it needs the founder's scheduling decision (FD8). Evidence: docs/evidence/D5/<date>-data-room-seal/.
 - **Veeva capability:** Binder or submission-archive snapshot with pinned versions; a data room's closing snapshot.
 - **User outcome:** A user with the role named in FD9 seals a program's data room with a reason, and an e-signature if FD9 says so. The server records every document's id, version, content hash, folder, section, index number, filing status and lifecycle stage as they stand, hashes that manifest, and writes the seal to an append-only table and to the audit chain. Later, anyone in the tenant can Verify seal. The server recomputes the manifest hash, checks each document still exists with the same hash, and optionally re-hashes stored bytes. The answer is intact, changed (naming documents), or could not verify, and never intact when anything was unreadable.
