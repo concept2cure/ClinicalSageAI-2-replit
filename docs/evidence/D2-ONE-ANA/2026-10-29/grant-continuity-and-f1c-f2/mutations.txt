@@ -1,0 +1,89 @@
+# Item 1 mutations. Each applied alone to the real file, the pin run, the file restored from the bytes read before
+# (sha256 checked after each restore, and sha256sum -c over the three files after the run: all OK).
+
+M1: the licence read derives no carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (6 failed | 13 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M2: canAccessModule ignores the carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (3 failed | 16 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M3: the carried grant is read before the target's own revocation
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M4: the Apps catalogue ignores the carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M5: the catalogue carries over the target's own revocation
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M6: a lapsed grant of the folded module carries
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M7: the operator console ignores the carried grant
+  file: server/routes/admin/master-licensing.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 bd41bf1162b600b9)
+
+M8: canAccessModule consults the mapping a second time (same answer)
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M9: the mapping drops ectd-publishing
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (7 failed | 12 passed (19))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 6fcdaa0090171d74)
+
+M10: the mapping carries billing, which never had a catalogue row
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+  restored byte for byte: yes (sha256 6fcdaa0090171d74)
+

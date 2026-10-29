@@ -1,0 +1,52 @@
+# Catalogue rows on a fresh database replaying every catalogue writer of C2C_MIGRATION_FILES, in deploy order, at each ref (tools/catalog-at.mjs.txt).
+# ref 2168fd56^: 13 catalogue writers replayed on a fresh database
+device-tasks: row, tiers ["standard"], industries [], deprecated false
+tasks: row, tiers ["free"], industries [], deprecated false
+
+# ref b9de04c62^: 13 catalogue writers replayed on a fresh database
+device-vault: row, tiers ["standard"], industries [], deprecated false
+artifacts-center: row, tiers ["free"], industries [], deprecated false
+vault: row, tiers ["free"], industries [], deprecated false
+
+# ref 66efa6179^: 13 catalogue writers replayed on a fresh database
+part11-console: no row
+audit-trail: no row
+
+# ref 78877084f^: 13 catalogue writers replayed on a fresh database
+ana-memory: no row
+conversation-thread: no row
+
+# ref beede0408^: 13 catalogue writers replayed on a fresh database
+setup: no row
+admin-console: no row
+
+# ref 302d632db^: 13 catalogue writers replayed on a fresh database
+ectd-publishing: row, tiers ["standard"], industries [], deprecated false
+ectd-compile: row, tiers ["standard"], industries [], deprecated false
+
+# ref d140aefa5^: 13 catalogue writers replayed on a fresh database
+billing: no row
+licensing: no row
+
+# ref d140aefa5: 13 catalogue writers replayed on a fresh database
+device-tasks: no row
+tasks: row, tiers ["free"], industries [], deprecated false
+device-vault: no row
+artifacts-center: no row
+vault: row, tiers ["free"], industries [], deprecated false
+part11-console: no row
+audit-trail: no row
+ana-memory: no row
+conversation-thread: no row
+setup: no row
+admin-console: no row
+ectd-publishing: no row
+ectd-compile: row, tiers ["standard"], industries [], deprecated false
+billing: no row
+licensing: no row
+risk: row, tiers ["standard"], industries [], deprecated false
+design-controls: row, tiers ["standard"], industries [], deprecated false
+device-engineering: row, tiers ["standard"], industries [], deprecated false
+ivd-completeness: row, tiers ["standard"], industries [], deprecated false
+device-diagnostics: row, tiers ["standard"], industries [], deprecated false
+
