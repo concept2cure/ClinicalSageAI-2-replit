@@ -35,13 +35,13 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { isLaunchSurface } from '@shared/constants/launch-scope';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-const authRoles = vi.hoisted(() => ({ current: ['admin'] }));
+const authRoles = vi.hoisted(() => ({ current: ['admin'], permissions: ['governed:write', 'billing:admin'] as string[] }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current }, logout: vi.fn() }),
+  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
@@ -77,6 +77,7 @@ const TASK_ROWS = [
 
 beforeEach(() => {
   authRoles.current = ['admin'];
+  authRoles.permissions = ['governed:write', 'billing:admin'];
   apiRequest.mockReset();
   /* Every destination entitled: what the rail lists is then the nav model
      itself, not a licence verdict hiding part of it. */
@@ -332,12 +333,22 @@ describe('the account menu holds Subscription & features and the client type', (
 
   it('names each subscription entry by its surface\'s registry label, as the breadcrumb and ⌘K do', async () => {
     // One screen, one name (section 9 of .design/client-journey/INFORMATION_ARCHITECTURE.md).
+    // Licensing is named by its registry label for a member; a billing
+    // administrator's one entry to it is "Subscription & billing" (decision P-68).
+    authRoles.permissions = ['governed:write'];
     for (const id of ['apps', 'licensing']) {
       const { menu, onNav } = await openMenu();
       fireEvent.click(within(menu).getByRole('menuitem', { name: getSurfaceMeta(id).label }));
       expect(onNav).toHaveBeenCalledWith(id);
       cleanup();
     }
+  });
+
+  it("gives a billing administrator one entry to Licensing, Subscription & billing (P-68)", async () => {
+    const { menu, onNav } = await openMenu();
+    expect(within(menu).queryByRole('menuitem', { name: getSurfaceMeta('licensing').label })).toBeNull();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Subscription & billing' }));
+    expect(onNav).toHaveBeenCalledWith('licensing');
   });
 
   it('offers every client type once, the current one checked, by more than colour', async () => {

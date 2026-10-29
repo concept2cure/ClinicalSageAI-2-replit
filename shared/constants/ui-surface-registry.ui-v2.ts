@@ -1133,7 +1133,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes:
-      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile and ectd-publishing own that.',
+      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile owns that.',
   },
   {
     id: 'pdev-contradictions',
@@ -1268,7 +1268,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Plan tiers, seat licensing, module entitlements, upgrade/downgrade.',
+    notes: 'Plan tiers and the current subscription; for billing administrators, the invoices, checkout and the billing portal.',
   },
   {
     /* Routable but unregistered until now: the account menu's "Licensing"
@@ -1453,7 +1453,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Plan usage limits, weekly caps, usage credits and rate limits by tier.',
+    notes: 'Plan usage limits, weekly caps, and the rate limits the platform enforces, the same for every subscription.',
     engineering: 'billing-dashboard.ts router, mounted at /api/billing (verified against register-inline-routes 2026-07-05).',
   },
   {

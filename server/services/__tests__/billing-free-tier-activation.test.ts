@@ -10,10 +10,16 @@
  * route's zod enum refused the word 'free'.
  *
  * Widening that enum is one line, and on its own it is a hole:
- * POST /api/billing/dtc-checkout carries `authenticateToken` and NO role check,
+ * POST /api/billing/dtc-checkout carried `authenticateToken` and NO role check,
  * so any member of a paying organization could have posted `{ tier: 'free' }`
  * and rewritten their tenant's tier and payment_status — a silent downgrade of
  * a paid plan, by one request, with no decision recorded anywhere.
+ *
+ * Since the billing fold (2026-10-29, Part 1b) the route takes
+ * requireRole(...BILLING_ADMIN_ROLES), so a member is refused before the
+ * service runs (server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts).
+ * The service's own refusal below stays: an administrator must not downgrade a
+ * paid plan through the activation path either.
  *
  * ── What this asserts ────────────────────────────────────────────────────────
  * Both halves, because either alone is wrong: a tenant with nothing to lose IS

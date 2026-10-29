@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Apply each mutation to product code, run its tests, restore, check sha256.
+
+Usage: python3 -I mutate.py <out.txt> [--check]
+Run from the repository root. --check only verifies each old string occurs once.
+
+Each mutation is an exact replacement whose old string occurs once. The restore
+reverses that one replacement on the file as it then stands (so a concurrent
+edit by another session elsewhere in a shared file is kept), and the file's
+sha256 is then compared with its value before the mutation.
+"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+
+ROOT = os.getcwd()
+OUT = sys.argv[1]
+CHECK = '--check' in sys.argv
+TMP = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/signed-content-locks/mut-result.json'
+
+BND = 'server/services/part11/governed-target-binders.ts'
+LOCK = 'server/services/part11/signed-content-lock.ts'
+SCS = 'server/services/part11/signed-content-state.ts'
+LAB = 'server/routes/mdx-labeling.ts'
+APR = 'server/routes/mdx-labeling-approvals.ts'
+RISK = 'server/routes/mdx-risk-management.ts'
+RLOCK = 'server/routes/mdx-risk-acceptance-lock.ts'
+ANA = 'server/services/ana/AnaToolExecutor.ts'
+CSC = 'client/src/concept2cure/v2/SignedContentState.tsx'
+
+T_LAB = 'server/__tests__/routes/signed-content-locked.pglite.test.ts'
+T_RISK = 'server/__tests__/routes/risk-acceptance-locked.pglite.test.ts'
+T_UNIT = 'server/services/part11/__tests__/signed-content-lock.test.ts'
+T_CDB = 'server/__tests__/routes/content-digest-binders.pglite.test.ts'
+T_LRB = 'server/services/part11/__tests__/labeling-risk-content-binders.test.ts'
+T_CTRL = 'server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts'
+T_CSC = 'client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx'
+T_CLAB = 'client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx'
+SERVER = [T_LAB, T_RISK, T_UNIT, T_CDB, T_LRB, T_CTRL]
+CLIENT = [T_CSC, T_CLAB]
+
+M = [
+    # P-63: one list for the digest and the refusal
+    ('M1', 'The label recipe drops the UDI-DI from its list: the digest and the refusal lose it together', BND,
+     "text('region'), text('udiDi', 'udi_di'), text('expiresAt', 'expires_at'),", "text('region'), text('expiresAt', 'expires_at'),", SERVER),
+    ('M2', "The refusal drops the signed act's own field (a label's effective date)", LOCK,
+     "    actFields: ['effectiveDate'],", "    actFields: [],", SERVER),
+    ('M3', 'The refusal drops the text artifact the recipe digests', LOCK,
+     "    ...(attestation.textField ? [attestation.textField] : []),\n", "", SERVER),
+    ('M4', 'A label edit naming a bound field is written whatever the status (the guard keyed on status alone)', APR,
+     "if (locked.length > 0 || patch.status !== undefined) where.push(", "if (patch.status !== undefined) where.push(", [T_LAB, T_CTRL]),
+    ('M5', 'A move out of a signed status sent with an unbound field is written (the status no longer guards)', APR,
+     "if (locked.length > 0 || patch.status !== undefined) where.push(", "if (locked.length > 0) where.push(", [T_LAB, T_CTRL]),
+    ('M6', 'A symbol is added to a label that carries a signature', LOCK,
+     "      WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL\n        AND d.status NOT IN ('approved', 'effective', 'superseded')\n        FOR SHARE",
+     "      WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL\n        FOR SHARE", [T_LAB, T_CDB]),
+    ('M7', 'A symbol is removed from a label that carries a signature', LOCK,
+     "           WHERE d.id = s.labeling_document_id AND d.organization_id = s.organization_id\n             AND d.status NOT IN ('approved', 'effective', 'superseded')\n",
+     "           WHERE d.id = s.labeling_document_id AND d.organization_id = s.organization_id\n", [T_LAB]),
+    ('M8', 'An approved translation takes an edit', LAB,
+     "AND organization_id = $${args.length} AND status <> 'approved'", "AND organization_id = $${args.length}", [T_LAB, T_CTRL]),
+    ('M9', "A hazard edit of a field the acceptance binds is not guarded", RLOCK,
+     "    locked: lockedFieldsIn('risk-item', patch),", "    locked: [],", [T_RISK, T_CDB]),
+    ('M10', 'A plain PATCH takes the acceptance off (status back, or acceptable false)', RLOCK,
+     "    takesOff: (patch.status !== undefined && patch.status !== 'closed') || patch.acceptable !== undefined,", "    takesOff: false,", [T_RISK]),
+    ('M11', 'Closing an accepted hazard is refused as if it took the acceptance off', RLOCK,
+     "(patch.status !== undefined && patch.status !== 'closed')", "(patch.status !== undefined)", [T_RISK]),
+    ('M12', 'The hazard lock reads the status only: acceptable true (closed, or recorded before the signed act) is not held', RLOCK,
+     "export const HAZARD_CARRIES_NO_ACCEPTANCE = \"status IS DISTINCT FROM 'accepted' AND acceptable IS NOT TRUE\";",
+     "export const HAZARD_CARRIES_NO_ACCEPTANCE = \"status IS DISTINCT FROM 'accepted'\";", [T_RISK]),
+    ('M13', 'A control is added to an accepted hazard (route and AnA)', LOCK,
+     "        AND r.status IS DISTINCT FROM 'accepted' AND r.acceptable IS NOT TRUE\n        FOR SHARE", "        FOR SHARE", [T_RISK]),
+    ('M14', "A control of an accepted hazard is edited", RISK,
+     "               AND r.status IS DISTINCT FROM 'accepted' AND r.acceptable IS NOT TRUE\n               FOR SHARE)",
+     "               FOR SHARE)", [T_RISK, T_CDB]),
+    ('M15', "AnA's symbol tool reports a refused write as done", ANA,
+     "    if (written.outcome !== 'written') return childWriteRefusal(written, `Labeling document ${docId} not found.`);",
+     "    if (written.outcome === 'not-found') return childWriteRefusal(written, `Labeling document ${docId} not found.`);", [T_LAB]),
+    ('M16', "AnA's control tool reports a refused write as done", ANA,
+     "    if (written.outcome !== 'written') return childWriteRefusal(written, `risk_item ${itemId} not found in this organization.`);",
+     "    if (written.outcome === 'not-found') return childWriteRefusal(written, `risk_item ${itemId} not found in this organization.`);", [T_RISK]),
+    # P-63: the signed reopen
+    ('M17', 'The reopen leaves the hazard recorded acceptable', RLOCK,
+     "SET status = $3, acceptable = NULL, updated_at = NOW()", "SET status = $3, updated_at = NOW()", [T_RISK]),
+    ('M18', 'The reopen ignores the status the acceptance recorded, and invents one', RLOCK,
+     "const to = parsed.data.status ?? acceptance.from;", "const to = parsed.data.status ?? 'open';", [T_RISK]),
+    ('M19', 'A hazard that is not accepted is "reopened" and signed', RLOCK,
+     "      if (current.status !== 'accepted' && current.acceptable !== true) {\n        throw reopenRefused(",
+     "      if (false) {\n        throw reopenRefused(", [T_RISK]),
+    ('M20', 'The reopen reads a withdrawn acceptance as in force', RLOCK,
+     "const live = rows.find((r) => !isSignatureWithdrawn(r));", "const live = rows[0];", [T_RISK]),
+    ('M21', 'The reopen takes no editor gate', RISK,
+     "router.post('/risk-items/:id/reopen', requireEditorAccess, signedActAttempts,", "router.post('/risk-items/:id/reopen', signedActAttempts,", [T_RISK]),
+    # P-64: the translation binds its source
+    ('M22', 'v2 does not bind the source', BND,
+     "digest: sha256CanonicalJson({ ...own, source: { version: source.version, contentDigest: source.contentDigest } }),",
+     "digest: sha256CanonicalJson(own),", SERVER),
+    ('M23', "v2 binds the source's digest but not its version", BND,
+     "digest: sha256CanonicalJson({ ...own, source: { version: source.version, contentDigest: source.contentDigest } }),",
+     "digest: sha256CanonicalJson({ ...own, source: { contentDigest: source.contentDigest } }),", SERVER),
+    ('M24', 'The translation approval still signs v1', BND,
+     "export const LABELING_TRANSLATION_DIGEST_RECIPE = 'labeling-translation/v2' as const;",
+     "export const LABELING_TRANSLATION_DIGEST_RECIPE = 'labeling-translation/v1' as const;", SERVER),
+    ('M25', 'A source that cannot be bound is signed anyway, as empty', BND,
+     "  if (typeof read === 'string') return `the source document it translates cannot be bound: ${read}`;",
+     "  if (typeof read === 'string') return { target, version: '', contentDigest: '' };", SERVER),
+    ('M26', 'The read derives every signature by the current recipe, not the one it recorded', SCS,
+     "  const recipe = recipeOf(manifestOf(row));", "  const recipe = undefined as string | undefined;", [T_LAB, T_CDB]),
+    ('M27', 'The read takes the recipe from bindingRecipe only, not from a v1 note', SCS,
+     "  return typeof m?.bindingNote === 'string' ? RECIPE_IN_NOTE.exec(m.bindingNote)?.[1] : undefined;", "  return undefined;", [T_LAB]),
+    ('M28', 'No "source-changed": a moved source reads "changed"', SCS,
+     "  if (!signedSource || !nowSource || signedSource.contentDigest === nowSource.contentDigest) return changed;", "  return changed;", [T_LAB]),
+    ('M29', '"source-changed" claimed when the translation itself changed too', SCS,
+     "  if (asSigned.digest !== row.bound_payload_digest) return changed;\n", "", [T_LAB]),
+    ('M30', 'The binder ignores the recorded source it is asked to derive as of', BND,
+     "  if (options?.asOfSource) return options.asOfSource.target === target ? options.asOfSource : `the recorded source is ${options.asOfSource.target}, not ${target}`;\n",
+     "", [T_LAB, T_UNIT]),
+    # P-64 on screen
+    ('M31', "The client cannot read 'source-changed' (shown as could not be read)", CSC,
+     "new Set(['matches', 'changed', 'source-changed', 'unverified',", "new Set(['matches', 'changed', 'unverified',", CLIENT),
+    ('M32', "'source-changed' is said as \"Changed since it was signed\"", CSC,
+     "    case 'source-changed': return 'Source changed since it was signed';", "    case 'source-changed': return 'Changed since it was signed';", CLIENT),
+    ('M33', "'source-changed' is shown without the server's reason", CSC,
+     "  if (f.state === 'changed' || f.state === 'source-changed') return f.reason;", "  if (f.state === 'changed') return f.reason;", CLIENT),
+    ('M34', "'source-changed' is not a signature on record (no line for a translation back in review)", CSC,
+     "f.state === 'changed' || f.state === 'source-changed' || f.state === 'unverified'", "f.state === 'changed' || f.state === 'unverified'", CLIENT),
+]
+
+
+def sha(path):
+    with open(path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def run(tests):
+    if os.path.exists(TMP):
+        os.remove(TMP)
+    cmd = ['timeout', '500', 'npx', 'vitest', 'run', *tests, '--reporter=json', '--outputFile=' + TMP]
+    subprocess.run(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        with open(TMP) as f:
+            r = json.load(f)
+    except (OSError, ValueError):
+        return None
+    failed = []
+    for file in r.get('testResults', []):
+        name = os.path.relpath(file.get('name', ''), ROOT)
+        assertions = file.get('assertionResults', [])
+        if not assertions and file.get('status') == 'failed':
+            failed.append(f'{name}: the file failed to load')
+        for a in assertions:
+            if a.get('status') == 'failed':
+                failed.append(f"{os.path.basename(name)} > {a.get('fullName') or a.get('title')}")
+    return r.get('numFailedTests', 0), r.get('numTotalTests', 0), failed
+
+
+def read(path):
+    with open(path, 'rb') as f:
+        return f.read().decode('utf8')
+
+
+def write(path, text):
+    with open(path, 'wb') as f:
+        f.write(text.encode('utf8'))
+
+
+files = sorted({m[2] for m in M})
+problems = [f'{m[0]}: old string occurs {read(m[2]).count(m[3])} times in {m[2]}' for m in M if read(m[2]).count(m[3]) != 1]
+if CHECK:
+    print('\n'.join(problems) or f'all {len(M)} old strings occur once')
+    sys.exit(1 if problems else 0)
+
+before = {p: sha(p) for p in files}
+head = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
+lines = ['# Mutations: each an exact replacement in product code (its old string occurs once), the named tests run',
+         '# (npx vitest run <tests> --reporter=json), then the replacement reversed on the file as it then stands, and its sha256 checked.',
+         f'# Working tree at {head} + this change; {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}.',
+         '# sha256 before:'] + [f'#   {before[p]}  {p}' for p in files] + ['']
+red = 0
+for mid, desc, path, old, new, tests in M:
+    start = sha(path)
+    text = read(path)
+    if text.count(old) != 1:
+        lines.append(f'{mid}  NOT APPLIED: the old string occurs {text.count(old)} times in {path}')
+        continue
+    write(path, text.replace(old, new, 1))
+    try:
+        result = run(tests)
+    finally:
+        now = read(path)
+        if new and now.count(new) == 1 and now.count(old) == 0:
+            write(path, now.replace(new, old, 1))
+        else:
+            # An empty or repeated replacement cannot be found to reverse: put back the bytes read before it.
+            write(path, text)
+    restored = sha(path) == start
+    if result is None:
+        lines.append(f'{mid}  {desc}\n     {path}\n     NO RESULT (the run produced no report); restored: {restored}')
+        continue
+    nf, nt, failed = result
+    red += 1 if nf > 0 or any('failed to load' in x for x in failed) else 0
+    lines.append(f'{mid}  {desc}\n     {path}\n     tests: {", ".join(os.path.basename(t) for t in tests)}\n'
+                 f'     RED {nf} of {nt}; restored and sha256 equal: {restored}')
+    for x in failed[:6]:
+        lines.append(f'       - {x}')
+    if len(failed) > 6:
+        lines.append(f'       - … and {len(failed) - 6} more')
+    lines.append('')
+    print(mid, nf, nt, restored, flush=True)
+
+after = {p: sha(p) for p in files}
+lines += [f'# {red} of {len(M)} mutations turned a test red.', '# sha256 after (each equal to before):']
+lines += [f'#   {after[p]}  {p}  {"equal" if after[p] == before[p] else "DIFFERENT"}' for p in files]
+with open(OUT, 'w') as f:
+    f.write('\n'.join(lines) + '\n')
+print('done', red, len(M))

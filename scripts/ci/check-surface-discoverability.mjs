@@ -59,7 +59,7 @@ const CONTEXTUAL = {
   'admin-console': 'platform administration, reached from the admin area not subscribed to',
   onboarding: 'first-run flow, entered automatically',
   'onboarding-ingest': 'step within the onboarding flow',
-  billing: 'account administration, not a subscribable capability',
+  // billing folded into licensing (D2, 2026-10-29); usage and licensing stay.
   usage: 'account administration, not a subscribable capability',
   licensing: 'account administration — it is what grants catalog entries',
   /* Both reached from the org-admin nav (Shell.tsx: `isOrgAdmin ? [{ to:

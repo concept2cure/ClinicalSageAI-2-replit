@@ -1,0 +1,70 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5201/api/c2c/project-vault/b80112f2-5d11-4284-bbe5-a909d26e77e2/search?q=OQ-002%20Protocol%2020261029182624&includeSuperseded=true",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 69,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "OQ-002 Protocol 20261029182624",
+        "mode": "search",
+        "filters": {},
+        "total": 2,
+        "pendingCount": 0,
+        "limit": 25,
+        "offset": 0,
+        "includeSuperseded": true,
+        "results": [
+          {
+            "id": "32177516-3ced-4f81-9202-eb7a3d5e7ae0",
+            "title": "OQ-002 Protocol 20261029182624",
+            "fileName": "next-version.pdf",
+            "documentType": "PROTOCOL",
+            "size": "622 B",
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "confirmed",
+            "evidenceKind": "protocol",
+            "classification": "INTERNAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-10-29T18:26:49.860Z",
+            "version": "2.0",
+            "current": true,
+            "contentHash": "0a329b5d8c0d86a8a0c47ebd4fc5202e129631e14f2b05d2f6aa2b773be2e758",
+            "originalFileAvailable": true,
+            "disposition": null,
+            "snippet": "<b>OQ</b><b>-002</b> <b>Protocol</b> <b>20261029182624</b> revision"
+          },
+          {
+            "id": "5d0e2c82-f197-430a-b420-d5369e6eedcf",
+            "title": "OQ-002 Protocol 20261029182624",
+            "fileName": "OQ-002-Protocol-20261029182624.pdf",
+            "documentType": "PROTOCOL",
+            "size": "611 B",
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "confirmed",
+            "evidenceKind": "protocol",
+            "classification": "INTERNAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-10-29T18:26:31.041Z",
+            "version": "1.0",
+            "current": false,
+            "contentHash": "77701a929ee70b88dd2c86d630d86caa002ab27ba888e788535a5def4b7c64a7",
+            "originalFileAvailable": true,
+            "disposition": null,
+            "snippet": "<b>OQ</b><b>-002</b> <b>Protocol</b> <b>20261029182624</b>"
+          }
+        ]
+      }
+    }
+  }
+}

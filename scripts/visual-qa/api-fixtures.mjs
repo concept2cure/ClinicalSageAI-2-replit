@@ -38,7 +38,14 @@ export const FIXTURES = [
     balanceCents: 0, ledger: [],
     autoReload: { enabled: false, thresholdCents: 0, topupCents: 0 },
   }],
-  [/\/api\/billing\/invoices/, { invoices: [], hasMore: false, total: 0 }],
+  // The invoice page as GET /invoices answers it since the billing fold (2026-10-29).
+  [/\/api\/billing\/invoices/, { billingSetUp: true, invoices: [], hasMore: false, nextCursor: null }],
+  // GET /rate-limits: the enforced limits, the same for every subscription (P-68).
+  [/\/api\/billing\/rate-limits/, {
+    tier: 'standard', tierRecorded: true, sameForEverySubscription: true,
+    limits: [{ category: 'api', label: 'General requests', windowSeconds: 60, perSignedInUser: 600, perAddress: 100, exemptRoles: [] }],
+    sharedRouteLimits: { appliesTo: [], limits: [] },
+  }],
   [/\/api\/billing\/usage\/limits/, {
     plan: 'standard', planLabel: 'Standard',
     session: { pctUsed: 0, resetsAt: null, windowHours: 5 },

@@ -19,6 +19,12 @@
  *     gives an unsigned member's assignment to another person; a member
  *     returns their own assignment to the sender. Each a governed act with a
  *     reason, on its own transaction under the record's lock.
+ *   - RR2: reviewers one after another and several approvers. Every
+ *     reviewer's signature opens whatever step is now due (openReadySteps). The
+ *     review sign-off is written once, by the signature that completes the
+ *     review, and the approval advances only on the last named approver's
+ *     signature. Adding a reviewer (POST /:id/review-route/members) is the
+ *     sender's or an administrator's, with a reason and a due date.
  *
  * @module server/routes/document-lifecycle-review-route
  */
@@ -38,8 +44,9 @@ import {
   closeReviewRoute,
   closeRouteTaskOnSignature,
   handBackMember,
+  addRouteReviewer,
   isOrgAdmin,
-  openApproverStep,
+  openReadySteps,
   parseRouteRequest,
   reassignMember,
   ReviewRouteRefusal,
@@ -112,7 +119,7 @@ function memberRefusal(standing: RouteStanding, userId: number, role: 'reviewer'
 /** What the record itself refuses for this sign-off, asked before any credential. */
 async function recordRefusal(client: SignatureDbClient, doc: ProjectionInput, meaning: 'reviewed' | 'approved', userId: number): Promise<Outcome | null> {
   if (meaning === 'reviewed') {
-    const refusal = reviewSignatureRefusal(doc);
+    const refusal = reviewSignatureRefusal(doc, { routed: true });
     return refusal ? refuse(409, refusal.code, refusal.message) : null;
   }
   const gate = canAdvanceDocument(projectCanonicalDocument(doc).state, 'approved');
@@ -120,15 +127,23 @@ async function recordRefusal(client: SignatureDbClient, doc: ProjectionInput, me
   return vaultApprovalRefusal(client, doc, userId);
 }
 
-/** The review is complete: its completing signature becomes review_signature, and the approver's step opens. */
-async function completeReview(
+/**
+ * After a reviewer's signature: when it completes the review, it becomes
+ * review_signature, unless the round's sign-off is already recorded (a
+ * reviewer added after the review first completed, RR2). Either way, the steps
+ * whose turn has now come open: the next reviewer one after another, or the
+ * approvers.
+ */
+async function afterReview(
   tx: CanonicalStoreHandle,
   { doc, after, signature, userId, notices }: { doc: ProjectionInput; after: RouteStanding; signature: ApprovalSignature; userId: number; notices: TaskEventNotice[] },
 ) {
-  // The sign-off every reader of review_signature (and the approval gate) already understands.
-  const event = await recordReviewSignature(tx, doc.canonicalId, doc.organizationId, signature);
-  if (!event) throw new Error(`Canonical document ${doc.canonicalId} disappeared while its review was completed`);
-  notices.push(...await openApproverStep(asTx(tx), { organizationId: doc.organizationId, standing: after, actorUserId: userId, subjectTitle: doc.title }));
+  if (after.reviewComplete && !doc.reviewSignature) {
+    // The sign-off every reader of review_signature (and the approval gate) already understands.
+    const event = await recordReviewSignature(tx, doc.canonicalId, doc.organizationId, signature);
+    if (!event) throw new Error(`Canonical document ${doc.canonicalId} disappeared while its review was completed`);
+  }
+  notices.push(...await openReadySteps(asTx(tx), { organizationId: doc.organizationId, standing: after, actorUserId: userId, subjectTitle: doc.title }));
 }
 
 /** The last approval: the server advances in_review → approved on this transaction, citing the signature just recorded. */
@@ -188,7 +203,7 @@ export async function routedSignOff(
   const after = await lockedStanding(tx, doc);
   const base = { ok: true, signature, routeId: after.route!.id };
   if (meaning === 'reviewed') {
-    if (after.reviewComplete) await completeReview(tx, { doc, after, signature, userId, notices: p.notices });
+    await afterReview(tx, { doc, after, signature, userId, notices: p.notices });
     return { status: 200, body: { ...base, reviewComplete: after.reviewComplete, stage: doc.stage } };
   }
   if (!after.approvalComplete) return { status: 200, body: { ...base, approvalComplete: false, stage: doc.stage } };
@@ -325,6 +340,23 @@ export async function handBackAct(req: Request, tx: CanonicalStoreHandle, p: { d
   return { status: 200, body: { ok: true, routeId: standing.route!.id, taskId: done.member.taskId, role: done.member.role, actId: done.actId } };
 }
 
+/** POST /:id/review-route/members {assigneeId, dueDate, reason}: the sender or an administrator adds a reviewer (RR2, §2.10). */
+export async function addReviewerAct(req: Request, tx: CanonicalStoreHandle, p: { doc: ProjectionInput; notices: TaskEventNotice[] }): Promise<Outcome> {
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) return refuse(400, 'REASON_REQUIRED', `${reason.error} Nothing was changed.`);
+  const userId = resolveUserId(req);
+  if (userId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
+  const assigneeId = positiveId(req.body?.assigneeId);
+  if (assigneeId === null) return refuse(400, 'ROUTE_INVALID', 'Name the reviewer to add (assigneeId). Nothing was changed.');
+  const standing = await lockedStanding(tx, p.doc);
+  if (standing.state !== 'live') return refuse(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+  const done = await addRouteReviewer(asTx(tx), {
+    organizationId: p.doc.organizationId, actorUserId: userId, reason: reason.reason, subject: actSubject(p.doc), standing, assigneeId, dueDate: req.body?.dueDate,
+  });
+  p.notices.push(...done.notices);
+  return { status: 200, body: { ok: true, routeId: standing.route!.id, taskId: done.taskId, role: 'reviewer', step: done.step, to: done.to.userId, actId: done.actId } };
+}
+
 // ── The router's hooks: what /sign and /advance ask, and the route acts ─────
 
 /**
@@ -457,7 +489,10 @@ export function mountReviewRouteActs(m: ReviewRouteActMount): void {
     const vaultId = String(req.params.vaultId);
     if (!UUID.test(vaultId)) return res.status(404).json({ ok: false, error: 'not_found' });
     const read = await (await m.getDb()).transaction((tx) =>
-      readRouteCandidates(queryableFromDrizzle(tx as never), { organizationId, vaultId, readerId, forReassign: req.query.for === 'reassign' }));
+      readRouteCandidates(queryableFromDrizzle(tx as never), {
+        // Adding a reviewer (RR2) asks the validator as a reassignment does: the route's sender, the reader as actor, everyone named.
+        organizationId, vaultId, readerId, forReassign: req.query.for === 'reassign' || req.query.for === 'add',
+      }));
     if (!read) return res.status(404).json({ ok: false, error: 'not_found' });
     return res.json({ ok: true, ...read });
   }));
@@ -487,4 +522,6 @@ export function mountReviewRouteActs(m: ReviewRouteActMount): void {
     onRecord(m, req, res, (tx, doc, notices) => reassignAct(req, tx, { doc, notices }))));
   m.router.post('/:id/review-route/hand-back', m.guard, m.wrap((req, res) =>
     onRecord(m, req, res, (tx, doc, notices) => handBackAct(req, tx, { doc, notices }))));
+  m.router.post('/:id/review-route/members', m.guard, m.wrap((req, res) =>
+    onRecord(m, req, res, (tx, doc, notices) => addReviewerAct(req, tx, { doc, notices }))));
 }

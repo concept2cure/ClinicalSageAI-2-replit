@@ -193,6 +193,10 @@ function mockApi(extra: Handler = () => undefined) {
     if (method === 'GET' && url === '/api/submissions/7/sequences') {
       return { ok: true, status: 200, json: async () => SEQS } as Response;
     }
+    // Nothing declared filed outside the platform (D7, 2026-10-29).
+    if (method === 'GET' && url === '/api/submissions/7/filed-baseline') {
+      return { ok: true, status: 200, json: async () => ({ baseline: null }) } as Response;
+    }
     if (method === 'GET' && url === '/api/510k/estar/submissions') {
       return { ok: true, status: 200, json: async () => ({ submissions: [] }) } as Response;
     }

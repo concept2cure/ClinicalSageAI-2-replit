@@ -1,0 +1,154 @@
+[
+ {
+  "id": "M1",
+  "what": "eCTD Compile opens the panel at v4.0, not the version it assembles",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "useEctdReference(COMPILED_ECTD_VERSION, COMPILED_ECTD_VERSION)",
+  "new": "useEctdReference('v4.0', COMPILED_ECTD_VERSION)",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M2",
+  "what": "the reference cards are not rendered on the compile surface",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "      {/* ── The specifications the findings are read against, and the eCTD reference ── */}\n      <EctdReferenceCards reference={reference} />\n",
+  "new": "\n",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M3",
+  "what": "the reference cards are not rendered with no project open",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "        />\n        <EctdReferenceCards reference={reference} />\n      </div>",
+  "new": "        />\n      </div>",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M4",
+  "what": "a 200 in the wrong shape is accepted as data",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "if (!res.ok || !isShape(body)) return { ok: false, body: null };",
+  "new": "if (!res.ok) return { ok: false, body: null };",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M5",
+  "what": "a failed listing falls through to the vocabulary tables (an empty list over a failed read)",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": ") : state === 'error' ? (\n          <EmptyState tone=\"error\" icon={I.alertTriangle} title=\"Couldn’t load the controlled vocabulary\"",
+  "new": ") : state === 'never' ? (\n          <EmptyState tone=\"error\" icon={I.alertTriangle} title=\"Couldn’t load the controlled vocabulary\"",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M6",
+  "what": "the listing error loses Try again",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "            retry={ref.retry} />",
+  "new": "            />",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M7",
+  "what": "the code-list error loses Try again",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "retry={ref.retryList} />",
+  "new": "/>",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M8",
+  "what": "the spec table error loses Try again",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx",
+  "old": "This is a failed read, not an empty register.\" retry={onRetry} />",
+  "new": "This is a failed read, not an empty register.\" />",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M9",
+  "what": "the browser reads the old default id whatever the listing supplied",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": ": v4Ids.includes(DEFAULT_V4_LIST) ? DEFAULT_V4_LIST : (v4Ids[0] ?? null);",
+  "new": ": DEFAULT_V4_LIST;",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M10",
+  "what": "the browser opens at the listing's first list, not the CTD sections",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": ": v4Ids.includes(DEFAULT_V4_LIST) ? DEFAULT_V4_LIST : (v4Ids[0] ?? null);",
+  "new": ": (v4Ids[0] ?? null);",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M11",
+  "what": "an older code-list answer paints over a later pick",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "if (!mounted.current || listRevision.current !== request) return;",
+  "new": "if (!mounted.current) return;",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M12",
+  "what": "the filter is ignored",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "if (!q) return list.codes;",
+  "new": "return list.codes;",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M13",
+  "what": "an empty register renders an empty table, not its answer",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx",
+  "old": ") : rows.length === 0 ? (",
+  "new": ") : rows.length < 0 ? (",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M14",
+  "what": "the panel no longer says v4.0 is reference only",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "              : `Reference only. This compile assembles eCTD ${ref.compiledVersion}, not ${ref.version}.`}",
+  "new": "              : ''}",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M15",
+  "what": "AnA is given the spec versions after a failed read",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "    ...(readState === 'ready'\n",
+  "new": "    ...(readState !== 'loading'\n",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M16",
+  "what": "AnA's facts on eCTD Compile carry no reference",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "        reference: ectdReferenceFacts(reference),\n",
+  "new": "",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M17",
+  "what": "AnA's summary on eCTD Compile omits the reference",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "        ` ${ectdReferenceSummary(reference)}`,",
+  "new": "        '',",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M18",
+  "what": "AnA's context is not recomputed when the reference changes",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "orchAuditErr, orchAudit.length, reference,",
+  "new": "orchAuditErr, orchAudit.length,",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ },
+ {
+  "id": "M19",
+  "what": "the code-list read starts before the listing has answered",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx",
+  "old": "if (version === 'v4.0' && loadState === 'ready' && selectedList) void loadList(selectedList);",
+  "new": "if (version === 'v4.0') void loadList(selectedList ?? DEFAULT_V4_LIST);",
+  "suite": "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+ }
+]

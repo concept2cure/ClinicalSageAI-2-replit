@@ -233,7 +233,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
   { id: 'dispatch-readiness', label: 'Readiness', description: 'The deterministic dispatch gate for each market of the open project: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
-  { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
+  /* The publishing reference folded into eCTD Compile (D2, 2026-10-29); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'ectd-publishing', label: 'eCTD reference', description: 'eCTD Compile\'s eCTD reference: the spec versions each eCTD version is qualified against, the FDA Regional IG OID and the controlled vocabularies, read-only, with or without a project open (the publishing reference folded into it). Nothing there publishes, transmits or freezes a sequence.', scope: 'global', group: 'module' },
   { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
   { id: 'labeling-pi', label: 'Prescribing information', description: 'The USPI / EU SmPC / SPL labeling workspace.', scope: 'global', group: 'module' },
@@ -243,7 +244,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },
   { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
-  { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
+  // Kept for AnA after the fold (D2, 2026-10-29): `billing` is an alias of `licensing`, where the invoices are.
+  { id: 'billing', label: 'Billing', description: 'The organization\'s invoices, checkout and Stripe billing portal, on Licensing under the plan status — for billing administrators (admins and owners).', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 

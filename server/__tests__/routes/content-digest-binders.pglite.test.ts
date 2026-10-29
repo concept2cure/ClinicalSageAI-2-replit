@@ -153,13 +153,14 @@ async function seedTranslation(): Promise<{ docId: number; id: number }> {
   return { docId, id: r.id };
 }
 
-/** labeling-translation/v1. */
+/** labeling-translation/v2 (P-64, 2026-10-29): v1's fields, and the source document's version and labeling-document/v1 digest. */
 async function expectedTranslationDigest(id: number): Promise<string> {
   const t = await one(
     `SELECT labeling_document_id, language, translator, translation_method, back_translation_verified
        FROM labeling_translations WHERE id = $1`, [id]);
+  const source = await one('SELECT version FROM labeling_documents WHERE id = $1', [t.labeling_document_id]);
   return digestOf({
-    recipe: 'labeling-translation/v1',
+    recipe: 'labeling-translation/v2',
     translationId: id,
     labelingDocumentId: t.labeling_document_id,
     language: t.language,
@@ -167,6 +168,7 @@ async function expectedTranslationDigest(id: number): Promise<string> {
     translationMethod: t.translation_method,
     backTranslationVerified: t.back_translation_verified,
     artifact: null,
+    source: { version: source.version, contentDigest: await expectedDocDigest(t.labeling_document_id) },
   });
 }
 
@@ -293,8 +295,12 @@ describe('a labeling document approval binds the label it approves', () => {
     const id = await seedDoc();
     await patchDoc(id, { status: 'approved', ...SIGNATURE });
     const signed = (await signaturesOn(`labeling-document:${id}`))[0].bound_payload_digest;
+    /* Since P-63 the route refuses it (signed-content-locked.pglite.test.ts);
+       the detector stays for a symbol added before that rule, here written
+       straight to the table. */
     const added = await request(app()).post(`/api/mdx/labeling/${id}/symbols`).send({ symbolCode: '5.1.1', symbolName: 'Manufacturer' });
-    expect(added.status).toBe(201);
+    expect(added.status).toBe(409);
+    await h.pg.query(`INSERT INTO labeling_symbols (labeling_document_id, organization_id, symbol_code, symbol_name) VALUES ($1, $2, '5.1.1', 'Manufacturer')`, [id, ORG]);
     const res = await getDoc(id);
     expect(res.body.data.signedContent).toMatchObject({ state: 'changed', signedDigest: signed, currentDigest: await expectedDocDigest(id) });
     expect(res.body.data.signedContent.currentDigest).not.toBe(signed);
@@ -367,7 +373,9 @@ describe('accepting a residual risk binds the hazard as it was accepted', () => 
     const id = await seedHazard();
     await patchRisk(id, { status: 'accepted', ...SIGNATURE });
     expect((await getRisk(id)).body.data.signedContent.state).toBe('matches');
-    expect((await patchRisk(id, { benefitRiskRationale: 'Accepted on commercial grounds' })).status).toBe(200);
+    // Refused since P-63; the detector stays for a rationale rewritten before that rule.
+    expect((await patchRisk(id, { benefitRiskRationale: 'Accepted on commercial grounds' })).status).toBe(409);
+    await h.pg.query(`UPDATE risk_items SET benefit_risk_rationale = 'Accepted on commercial grounds' WHERE id = $1`, [id]);
     expect((await getRisk(id)).body.data.signedContent).toMatchObject({ state: 'changed', currentDigest: await expectedHazardDigest(id) });
   });
 
@@ -375,7 +383,9 @@ describe('accepting a residual risk binds the hazard as it was accepted', () => 
     const id = await seedHazard();
     await patchRisk(id, { status: 'accepted', ...SIGNATURE });
     const ctl = await one('SELECT id FROM risk_controls WHERE risk_item_id = $1', [id]);
-    expect((await request(app()).patch(`/api/mdx/risk-controls/${ctl.id}`).send({ verificationEvidence: 'none' })).status).toBe(200);
+    // Refused since P-63; the detector stays for a control changed before that rule.
+    expect((await request(app()).patch(`/api/mdx/risk-controls/${ctl.id}`).send({ verificationEvidence: 'none' })).status).toBe(409);
+    await h.pg.query(`UPDATE risk_controls SET verification_evidence = 'none' WHERE id = $1`, [ctl.id]);
     expect((await getRisk(id)).body.data.signedContent.state).toBe('changed');
   });
 });

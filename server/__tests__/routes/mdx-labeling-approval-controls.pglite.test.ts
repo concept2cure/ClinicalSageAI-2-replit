@@ -180,7 +180,7 @@ describe('the migration', () => {
   });
 });
 
-const SUPERSEDE = { ...SIGNATURE, meaning: 'APPROVED' };
+const SUPERSEDE = { ...SIGNATURE, meaning: 'retirement' };
 const WITHDRAWAL_REASON = 'The German artwork changed after review; re-review it';
 const ledgerRows = () => h.signed.filter((s) => s.kind === 'ledger');
 const signatures = () => h.signed.filter((s) => s.kind === 'signature');
@@ -333,13 +333,13 @@ describe('2. the record\'s creator cannot approve it, and a record with none rec
 });
 
 describe('superseding a document is its retirement: signed, with the QMS meaning', () => {
-  it('signed APPROVED: superseded, the approval and effective date kept, no two-person rule', async () => {
+  it('signed as a retirement: superseded, the approval and effective date kept, no two-person rule', async () => {
     const id = await seedDoc({ status: 'effective', created_by: SIGNER, approved_by: COLLEAGUE, approved_at: APPROVED_EARLIER, effective_date: '2026-10-02' });
     const res = await patchDoc(id, { status: 'superseded', ...SUPERSEDE });
     expect(res.status).toBe(201);
     expect(await doc(id)).toMatchObject({ status: 'superseded', approved_by: COLLEAGUE, effective_date: '2026-10-02' });
     expect(h.signed.map((s) => `${s.kind}:${s.target}`)).toEqual([`ledger:labeling-document:${id}`, `signature:labeling-document:${id}`]);
-    expect(h.signed[1].payload).toMatchObject({ previousStatus: 'effective', status: 'superseded', meaning: 'APPROVED' });
+    expect(h.signed[1].payload).toMatchObject({ previousStatus: 'effective', status: 'superseded', meaning: 'retirement' });
     expect(h.signed[1].payload).not.toHaveProperty('twoPersonRule');
     expect(h.limited).toBe(1);
   });
@@ -364,7 +364,8 @@ describe('3. an approval never outlives what it signed', () => {
     const res = await patchTrans(id, edit);
     expect(await trans(id)).toMatchObject({ status: 'approved', approved_by: COLLEAGUE, language: 'de' });
     expect(res.status).toBe(409);
-    expect(res.body.details.code).toBe('TRANSLATION_APPROVED_LOCKED');
+    // The one refusal of signed content since P-63 (services/part11/signed-content-lock.ts).
+    expect(res.body.details.code).toBe('SIGNED_CONTENT_LOCKED');
   });
 
   it('moving an approved translation back with no reason: 400, it stays approved, and no ledger row is written', async () => {
@@ -403,7 +404,8 @@ describe('3. an approval never outlives what it signed', () => {
     const res = await patchDoc(id, { version: '2.0' });
     expect(await doc(id)).toMatchObject({ status, version: '1.0', approved_by: COLLEAGUE });
     expect(res.status).toBe(409);
-    expect(res.body.details.code).toBe('LABELING_DOCUMENT_CONTROLLED');
+    // The one refusal of signed content since P-63 (services/part11/signed-content-lock.ts).
+    expect(res.body.details.code).toBe('SIGNED_CONTENT_LOCKED');
   });
 
   it.each(['approved', 'effective', 'superseded'])('moving a %s document back to draft with no reason: 400, and it stays as signed', async (status) => {

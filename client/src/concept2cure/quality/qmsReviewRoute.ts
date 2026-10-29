@@ -7,16 +7,18 @@
  * The round is the Vault's own shape (RouteRoundView, read by
  * review-route-standing.ts readRouteRounds), so the register says it with the
  * Vault round's words (memberLine, routeHeadline in
- * v2/surfaces/VaultReviewRoute.tsx) rather than a copy of them. What is QMS
- * here is the rule (one QMS approver, reviewers optional, NEW-4) and the
- * endpoints. Every refusal is thrown as the server's own sentence.
+ * v2/reviewRoute/routeRound.ts) rather than a copy of them. What is QMS
+ * here is the rule (one or more QMS approvers, reviewers optional, NEW-4) and the
+ * endpoints. Every refusal is thrown as the server's own sentence. RR2: the
+ * shape (reviewers one after another, several QMS approvers) is the shared
+ * v2/reviewRoute/routeShape.ts, as the Vault's form uses it.
  *
  * @module client/src/concept2cure/quality/qmsReviewRoute
  */
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
-import type { RouteMemberView, RouteRoundView } from '../v2/surfaces/VaultReviewRoute';
-import { reviewReasonProblem } from '../v2/editor/reviewFields';
+import type { RouteMemberView, RouteRoundView } from '../v2/reviewRoute/routeRound';
+import { routeShapeBody, routeShapeMissing, withReason, type RouteShapeInput } from '../v2/reviewRoute/routeShape';
 
 export type { RouteRoundView, RouteMemberView };
 
@@ -49,35 +51,31 @@ export function myTurn(view: QmsRouteView, meId: number | null): RouteMemberView
 
 // ── The form ─────────────────────────────────────────────────────────────────
 
-export interface QmsRouteFormInput {
-  reviewers: string[];
-  approver: string | null;
-  reviewDue: string;
-  approvalDue: string;
+export interface QmsRouteFormInput extends RouteShapeInput {
   reason: string;
 }
 
 /** What Send is waiting for, in words; empty when it can be sent. Reviewers are optional on a QMS route (NEW-4). */
 export function qmsRouteFormMissing(f: QmsRouteFormInput): string[] {
-  const missing: string[] = [];
-  if (!f.approver) missing.push('Choose the QMS approver.');
-  if (f.reviewers.length > 0 && !f.reviewDue) missing.push('Give the date the reviews are due.');
-  if (!f.approvalDue) missing.push('Give the date the approval is due.');
-  if (f.reviewers.length > 0 && f.reviewDue && f.approvalDue && f.approvalDue < f.reviewDue) missing.push('The approval is due on or after the reviews.');
-  const reason = reviewReasonProblem(f.reason);
-  if (reason) missing.push(reason);
-  return missing;
+  return withReason(routeShapeMissing(f, { reviewersOptional: true, approverMissing: 'Choose the QMS approver.' }), f.reason);
 }
 
-/** The route the server takes: one approver, parallel reviewers (none at all is a QMS route too). */
+/** The route the server takes: one or more QMS approvers, reviewers (none is a QMS route too) at the same time or one after another (RR2). */
 export function qmsRouteBody(f: QmsRouteFormInput): Record<string, unknown> {
-  return {
-    reviewers: f.reviewers.map(Number),
-    approvers: f.approver ? [Number(f.approver)] : [],
-    order: 'parallel',
-    ...(f.reviewers.length > 0 ? { reviewDueDate: f.reviewDue } : {}),
-    approvalDueDate: f.approvalDue,
-  };
+  return routeShapeBody(f);
+}
+
+/**
+ * What the approval dialog says (RR2, NEW-4): which approval the reader's is,
+ * when other named QMS approvers are still to sign; else that the version
+ * becomes effective when they sign.
+ */
+export function qmsApprovalMeta(version: string, share: { k: number; n: number } | null): string {
+  const tail = 'The author cannot approve their own document.';
+  if (share && share.k < share.n) {
+    return `Your approval is ${share.k} of ${share.n} required: v${version} becomes effective once every named QMS approver has signed. ${tail}`;
+  }
+  return `v${version} becomes effective when you sign. ${tail}`;
 }
 
 const UNKNOWN_OUTCOME = 'The connection dropped, so it is not known whether this was recorded. Reload the register and check the document before trying again.';
@@ -122,6 +120,11 @@ const ACT_FAILED: Record<QmsRouteAct, string> = {
 /** Return for revision, withdraw, or hand back: each a governed act with the actor's reason. */
 export function postQmsRouteAct(act: QmsRouteAct, id: number, reason: string) {
   return qmsRequest('POST', ACT_URL[act](id), { reason: reason.trim() }, ACT_FAILED[act]);
+}
+
+/** Add a reviewer to the open route (the sender or an administrator, RR2): the approvers wait again. */
+export function addQmsReviewer(id: number, body: { assigneeId: number; dueDate: string; reason: string }) {
+  return qmsRequest('POST', `/api/mdx/qms/documents/${id}/review-route/members`, body, 'The reviewer was not added.');
 }
 
 /** Give an unsigned member's assignment to another person (the sender or an administrator). */

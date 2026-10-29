@@ -3,7 +3,7 @@
  * holds (2026-10-29).
  *
  * A link was a free-text reference, so a change's "deviation" or "CAPA" link
- * named a record the platform could not resolve. The nonconformance, CAPA and
+ * named a record the platform could not resolve. The deviation (P-57), CAPA and
  * supplier registers are in Quality now (P-48), so for those types the drawer
  * lists the organisation's own records: the reference and its description are
  * taken from the pick (C2CForm `derive`), shown read-only, and are what is sent.
@@ -18,14 +18,14 @@ import { C2CForm } from '../v2/C2CForm';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { listOf } from './qmsList';
 import { LINK_TYPE_LABEL, RELATIONSHIP_LABEL, type LinkType } from './changeData';
-import type { CapaRow, NonconformanceRow, SupplierRow } from './qmsRecordData';
+import type { CapaRow, DeviationRow, SupplierRow } from './qmsRecordData';
 
 export interface LinkPick { value: string; label: string }
 type Registered = 'deviation' | 'capa' | 'supplier';
 
 /** The registers a link type is chosen from. */
 const REGISTERS: Record<Registered, { path: string; name: string }> = {
-  deviation: { path: '/api/mdx/qms/nonconforming', name: 'nonconformance' },
+  deviation: { path: '/api/mdx/qms/deviations', name: 'deviation' },
   capa: { path: '/api/capa-mdr/capa', name: 'CAPA' },
   supplier: { path: '/api/mdx/qms/suppliers', name: 'supplier' },
 };
@@ -33,7 +33,7 @@ const REGISTERS: Record<Registered, { path: string; name: string }> = {
 /** How a register row reads as a pick: its own number, and what it is. */
 function toPick(type: Registered, row: unknown): LinkPick {
   switch (type) {
-    case 'deviation': { const r = row as NonconformanceRow; return { value: r.nc_number, label: r.description }; }
+    case 'deviation': { const r = row as DeviationRow; return { value: r.deviation_number, label: r.title }; }
     case 'capa': { const r = row as CapaRow; return { value: r.capaCode, label: r.title }; }
     case 'supplier': { const r = row as SupplierRow; return { value: r.supplier_code || r.supplier_name, label: r.supplier_name }; }
   }

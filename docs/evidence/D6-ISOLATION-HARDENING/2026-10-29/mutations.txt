@@ -1,0 +1,138 @@
+# Mutations: 18, each against the finished checks, each restored byte for byte (sha256 compared)
+Runner: one exact replacement per edit, run, then the edit reversed and the file's sha256 compared with the one taken before. Database mutations run on a fresh copy of the database built at HEAD; the suite applies the (mutated) files itself.
+
+## M1: citation INSERT checks the source end only (HEAD shape)
+files: migrations/20260911_vault_evidence_citations.sql
+command exit 1 -> RED (killed)
+   red: B cannot cite A's document as evidence for its own claim
+   red: a delegate that may read A's program still cannot cite A's document
+   red: a replay replaces no citation policy (the replacement is conditional on the policy text)
+restored migrations/20260911_vault_evidence_citations.sql: sha256 identical
+
+## M2: both ends, but access instead of organization (no get_program_org_id equality)
+files: migrations/20260911_vault_evidence_citations.sql, migrations/20260911_vault_evidence_citations.sql
+command exit 1 -> RED (killed)
+   red: a delegate that may read A's program still cannot cite A's document
+restored migrations/20260911_vault_evidence_citations.sql: sha256 identical
+
+## M3: UPDATE keeps no WITH CHECK (USING doubles as the check: source only)
+files: migrations/20260911_vault_evidence_citations.sql
+command exit 1 -> RED (killed)
+   red: B cannot re-point its own citation at A's document
+   red: a replay replaces no citation policy (the replacement is conditional on the policy text)
+   red: the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+restored migrations/20260911_vault_evidence_citations.sql: sha256 identical
+
+## M4: policy replacement unconditional (every replay drops and re-creates)
+files: migrations/20260911_vault_evidence_citations.sql
+command exit 1 -> RED (killed)
+   red: a replay replaces no citation policy (the replacement is conditional on the policy text)
+restored migrations/20260911_vault_evidence_citations.sql: sha256 identical
+
+## M5: app writer loses its organization predicate
+files: server/services/advancedRAGPipeline.ts
+command exit 1 -> RED (killed)
+   red: the application writer refuses a foreign document before the database is asked
+restored server/services/advancedRAGPipeline.ts: sha256 identical
+
+## M6: document_chunks not FORCEd
+files: migrations/20260905b_vault_document_chunks.sql
+command exit 1 -> RED (killed)
+   red: every Vault table with row-level security FORCEs it
+   red: the table owner, not a superuser, reads only its own tenant's rows
+restored migrations/20260905b_vault_document_chunks.sql: sha256 identical
+
+## M7: evidence_citations not FORCEd
+files: migrations/20260911_vault_evidence_citations.sql
+command exit 1 -> RED (killed)
+   red: every Vault table with row-level security FORCEs it
+   red: the table owner, not a superuser, reads only its own tenant's rows
+restored migrations/20260911_vault_evidence_citations.sql: sha256 identical
+
+## M8: purge door opens no scope of its own (deletes as a FORCEd owner)
+files: migrations/20260926_vault_documents_record_immutability.sql
+command exit 1 -> RED (killed)
+   red: the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+restored migrations/20260926_vault_documents_record_immutability.sql: sha256 identical
+
+## M9: purge door leaves the purged tenant's scope on the caller's transaction
+files: migrations/20260926_vault_documents_record_immutability.sql
+command exit 1 -> RED (killed)
+   red: the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+restored migrations/20260926_vault_documents_record_immutability.sql: sha256 identical
+
+## M10: v2 seed does not retire version 1
+files: scripts/cre/prepare-public-reference-seed.mjs
+command exit 1 -> RED (killed)
+   red: real CRE migrations: version 2 supersedes version 1 on every replay, keeps tenant data and every withdrawal
+   red: 0 THEN\n    RAISE EXCEPTION \'P-66: % current public reference(s) carry a fit naming a study\', fit_count;\n  END IF;\nEND\n$cdi_reference_seed$;\n', params: undefined, queryOptions: undefined }
+   raised: CDI seed integrity/count mismatch
+   raised: CDI seed supersession incomplete
+   raised: P-66: % current public reference
+restored migrations/20261029_cdi_public_reference_seed_v2.sql: sha256 identical
+restored scripts/cre/prepare-public-reference-seed.mjs: sha256 identical
+
+## M11: v2 seed mints a successor for a withdrawn version 1 source
+files: scripts/cre/prepare-public-reference-seed.mjs
+command exit 1 -> RED (killed)
+   red: real CRE migrations: version 2 supersedes version 1 on every replay, keeps tenant data and every withdrawal
+restored migrations/20261029_cdi_public_reference_seed_v2.sql: sha256 identical
+restored scripts/cre/prepare-public-reference-seed.mjs: sha256 identical
+
+## M12: v2 carries the fit again (generator passes the field through, manifest restores it)
+files: scripts/cre/prepare-public-reference-seed.mjs, scripts/cre/prepare-public-reference-seed.mjs
+command exit 1 -> RED (killed)
+   red: version 2 names no tenant study, and the compiler refuses one that does (P-66)
+   red: real CRE migrations: version 2 supersedes version 1 on every replay, keeps tenant data and every withdrawal
+   red: 0 THEN\n    RAISE EXCEPTION \'P-66: % current public reference(s) carry a fit naming a study\', fit_count;\n  END IF;\nEND\n$cdi_reference_seed$;\n', params: undefined, queryOptions: undefined }
+   raised: CDI seed integrity/count mismatch
+   raised: CDI seed supersession incomplete
+   raised: P-66: % current public reference
+restored migrations/20261029_cdi_public_reference_seed_v2.sql: sha256 identical
+restored scripts/cre/prepare-public-reference-seed.mjs: sha256 identical
+
+## M13: version 1 corrected in place (one comment line appended)
+files: migrations/20261027_cdi_public_reference_seed.sql
+command exit 1 -> RED (killed)
+   red: version 1 is frozen as the deploy set applied it: a seed is never corrected in place
+restored migrations/20261027_cdi_public_reference_seed.sql: sha256 identical
+
+## M14: reader returns a stored fit again
+files: server/services/clinical-regulatory-evidence/public-reference-sources.ts, server/services/clinical-regulatory-evidence/public-reference-sources.ts
+command exit 1 -> RED (killed)
+   red: never returns or searches a stored fit: a public reference names no tenant study (P-66)
+restored server/services/clinical-regulatory-evidence/public-reference-sources.ts: sha256 identical
+
+## M15: chain verdict without the audit reader gate (HEAD shape)
+files: server/routes/part11-compliance.ts
+command exit 1 -> RED (killed)
+   red: member is refused with the ledger's 403, and nothing is read
+   red: user is refused with the ledger's 403, and nothing is read
+   red: viewer is refused with the ledger's 403, and nothing is read
+   red: editor is refused with the ledger's 403, and nothing is read
+   red: reviewer is refused with the ledger's 403, and nothing is read
+restored server/routes/part11-compliance.ts: sha256 identical
+
+## M16: Client Review Room without admitProject
+files: server/routes/mdx-client-review.ts
+command exit 1 -> RED (killed)
+   red: refuses another organization's project with 404, and reads no task
+   red: refuses a project that does not exist with 404, and reads no task
+   red: refuses the organization's own deleted project with 404, and reads no task
+   red: answers 503 when ownership cannot be checked, and reads no task
+restored server/routes/mdx-client-review.ts: sha256 identical
+
+## M17: Client Review Room admits the program but does not narrow to it
+files: server/routes/mdx-client-review.ts
+command exit 1 -> RED (killed)
+   red: shares the admitted project's client-visible tasks only, and says the scope is that project
+restored server/routes/mdx-client-review.ts: sha256 identical
+
+## M18: Client Review Room trusts project_id without its organization
+files: server/routes/mdx-client-review.ts
+command exit 1 -> RED (killed)
+   red: refuses another organization's project id with 404, and reads no task
+restored server/routes/mdx-client-review.ts: sha256 identical
+
+M3 also turned the door case red: the re-pointed citation it let B write (evidence = A's document) was deleted by A's purge, so B lost a row. That is the harm P-66 names, reproduced.
+After the run: sha256 -c over every file of this change: all OK.

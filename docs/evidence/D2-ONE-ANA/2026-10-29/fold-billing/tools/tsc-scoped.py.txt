@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Scoped tsc over the fold's changed files (the full-repo typecheck OOMs under parallel load).
+Reports every error, and the count in the changed files themselves. Errors in untouched files come
+from ambient declarations a scoped program does not pull in (css modules, express augmentation)."""
+import json, os, subprocess, sys
+R = '/home/user/ClinicalSageAI-2-replit'
+D = os.path.dirname(os.path.abspath(__file__))
+files = [l.strip() for l in open(sys.argv[1]) if l.strip() and not l.startswith('#')]
+dts = ["client/src/types/global.d.ts", "client/src/types/api.d.ts", "server/types/global.d.ts", "server/types/index.d.ts",
+       "shared/types/express.d.ts", "shared/types/third-party.d.ts", "shared/types/jsx-modules.d.ts", "shared/types/common.d.ts"]
+cfg = {"extends": R + "/tsconfig.json", "compilerOptions": {"noEmit": True, "incremental": False}, "include": [],
+       "files": [os.path.join(R, f) for f in files + dts if os.path.exists(os.path.join(R, f))] + [R + "/node_modules/vite/client.d.ts"]}
+json.dump(cfg, open(D + "/tsconfig.scoped.json", "w"), indent=1)
+env = dict(os.environ, NODE_OPTIONS="--max-old-space-size=8192")
+p = subprocess.run(["npx", "tsc", "-p", D + "/tsconfig.scoped.json"], cwd=R, capture_output=True, text=True, env=env)
+lines = [l for l in p.stdout.splitlines() if 'error TS' in l]
+mine = [l for l in lines if any(l.startswith(f + '(') for f in files)]
+print(f"scoped tsc: {len(files)} changed files; errors in them: {len(mine)}; errors elsewhere (ambient, untouched): {len(lines) - len(mine)}")
+for l in mine: print('  ' + l)
+sys.exit(1 if mine else 0)

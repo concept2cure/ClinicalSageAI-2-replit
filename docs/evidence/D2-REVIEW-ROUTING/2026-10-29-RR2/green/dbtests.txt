@@ -1,0 +1,2226 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T17:49:04.966Z","pid":6692,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:04.969Z","pid":6692,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:04.969Z","pid":6692,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:49:13.659Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:49:14.080Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+{
+  "timestamp": "2026-10-29T17:49:14.081Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+{
+  "timestamp": "2026-10-29T17:49:14.390Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dfff6312-e26d-449f-b669-97049834f8f8",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-SEND",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told 10428ms
+{"level":40,"time":"2026-10-29T17:49:15.503Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:15.517Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+{
+  "timestamp": "2026-10-29T17:49:15.517Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+{
+  "timestamp": "2026-10-29T17:49:15.538Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1e550e85-2657-4f5f-a751-9c0b0a54040b",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-WAIT",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone 244ms
+{"level":40,"time":"2026-10-29T17:49:15.759Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:15.773Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+{
+  "timestamp": "2026-10-29T17:49:15.773Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+{
+  "timestamp": "2026-10-29T17:49:15.814Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a02ae8a8-1fbb-4ba9-8ec6-5a49424dcc80",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-OPEN",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last 1200ms
+{"level":40,"time":"2026-10-29T17:49:16.950Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:16.967Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:16.967Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 107
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:16.997Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "456eff2e-cdc1-4480-b17d-44b3475d8cef",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-BAD-ROUTE_DUE_DATES_REQUIRED-13",
+    "type": "OTHER",
+    "size": 107,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.065Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.087Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 107
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.087Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.115Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8e9d7d6e-e944-453e-bcd4-5256adc28688",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-BAD-ROUTE_DUE_DATES_REQUIRED-22",
+    "type": "OTHER",
+    "size": 107,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.200Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:17.220Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.221Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 98
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.251Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d69b50eb-3def-4a98-986d-02ebf00e1929",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-BAD-ROUTE_DUE_ORDER-19",
+    "type": "OTHER",
+    "size": 98,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.305Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:17.321Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.322Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 98
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.350Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5ffceb63-bbcd-4ae7-baa2-77e3227ce307",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-BAD-ROUTE_DUE_ORDER-29",
+    "type": "OTHER",
+    "size": 98,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.471Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:17.490Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.490Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 100
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:49:17.513Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8895a803-d49f-4912-a5dc-da05cf7e33e4",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-SEQ-BAD-ROUTE_DUE_IN_PAST-19",
+    "type": "OTHER",
+    "size": 100,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written 662ms
+{"level":40,"time":"2026-10-29T17:49:17.609Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:17.619Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:49:17.620Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:49:17.637Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3d5e33bf-6802-4f62-a1e7-90321e4f8fb0",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-MULTI-V1",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:17.856Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:17.891Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:49:17.891Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:49:17.927Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e23a6f6b-e373-44b9-b3f8-d5201aaf53fe",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-MULTI-V1",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes 939ms
+{"level":40,"time":"2026-10-29T17:49:18.554Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:18.567Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+{
+  "timestamp": "2026-10-29T17:49:18.568Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 75
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+{
+  "timestamp": "2026-10-29T17:49:18.591Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2ec42574-78a0-40bc-978f-aab389be349c",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-ADD",
+    "type": "OTHER",
+    "size": 75,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves 492ms
+{"level":40,"time":"2026-10-29T17:49:19.047Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:19.059Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+{
+  "timestamp": "2026-10-29T17:49:19.060Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 79
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+{
+  "timestamp": "2026-10-29T17:49:19.078Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fec618ec-dd28-4aa5-ae1a-7ad9e01a9a69",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-ADD-SEQ",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it 978ms
+{"level":40,"time":"2026-10-29T17:49:20.019Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:20.039Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+{
+  "timestamp": "2026-10-29T17:49:20.039Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+{
+  "timestamp": "2026-10-29T17:49:20.059Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "21de16d3-e52f-4137-bfd1-69fd9a6cf220",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-ADD-REFUSE",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed 431ms
+{"level":40,"time":"2026-10-29T17:49:20.448Z","pid":6692,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:20.459Z","pid":6692,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+{
+  "timestamp": "2026-10-29T17:49:20.459Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+{
+  "timestamp": "2026-10-29T17:49:20.478Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5de81a47-efc9-4d66-b6e7-9d4933f1d09e",
+    "code": "DBTEST-RR2-mvtu7zlo_7c15dc06-ADD-PICKER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused 304ms
+{"level":30,"time":"2026-10-29T17:49:22.410Z","pid":6722,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:22.412Z","pid":6722,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:22.412Z","pid":6722,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:49:24.976Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:49:25.288Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+{
+  "timestamp": "2026-10-29T17:49:25.288Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+{
+  "timestamp": "2026-10-29T17:49:25.376Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5042493e-68b8-4d1c-a0d0-41952e62403c",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-NOREASON",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED) 2970ms
+{"level":40,"time":"2026-10-29T17:49:25.463Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:25.483Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+{
+  "timestamp": "2026-10-29T17:49:25.483Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+{
+  "timestamp": "2026-10-29T17:49:25.512Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cc127d1a-2bf0-49a0-b21d-925b3120e6cd",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-NOAPPROVER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED) 121ms
+{"level":40,"time":"2026-10-29T17:49:25.585Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:25.605Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+{
+  "timestamp": "2026-10-29T17:49:25.606Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 105
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+{
+  "timestamp": "2026-10-29T17:49:25.634Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d2793201-5d86-4a2f-95a0-da59642914f7",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_NOT_IN_ORGANIZATION",
+    "type": "OTHER",
+    "size": 105,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user 128ms
+{"level":40,"time":"2026-10-29T17:49:25.712Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:25.728Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+{
+  "timestamp": "2026-10-29T17:49:25.728Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 97
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+{
+  "timestamp": "2026-10-29T17:49:25.751Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d9823860-4084-4423-b675-b9ccf2e9b706",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_CANNOT_SIGN",
+    "type": "OTHER",
+    "size": 97,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:25.824Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:25.839Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+{
+  "timestamp": "2026-10-29T17:49:25.840Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 103
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+{
+  "timestamp": "2026-10-29T17:49:25.871Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "26487f93-23eb-448c-a2fc-a4c642aaca00",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_NO_PROJECT_ACCESS",
+    "type": "OTHER",
+    "size": 103,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority 115ms
+{"level":40,"time":"2026-10-29T17:49:25.953Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:25.971Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+{
+  "timestamp": "2026-10-29T17:49:25.972Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 95
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+{
+  "timestamp": "2026-10-29T17:49:25.996Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b20784c5-6566-45ed-897b-e0e4b43203ef",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_IS_AUTHOR",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project 129ms
+{"level":40,"time":"2026-10-29T17:49:26.057Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:26.079Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+{
+  "timestamp": "2026-10-29T17:49:26.079Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 95
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+{
+  "timestamp": "2026-10-29T17:49:26.108Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "17a241f4-b88d-4ca6-95c5-e859a3f0fb16",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_IS_SENDER",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author) 105ms
+{"level":40,"time":"2026-10-29T17:49:26.186Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:26.205Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+{
+  "timestamp": "2026-10-29T17:49:26.205Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 99
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+{
+  "timestamp": "2026-10-29T17:49:26.226Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "154a98af-89d6-4bb4-8433-33e3d41fb192",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-REFUSE-MEMBER_ALREADY_NAMED",
+    "type": "OTHER",
+    "size": 99,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender 127ms
+{"level":40,"time":"2026-10-29T17:49:26.310Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:26.323Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+{
+  "timestamp": "2026-10-29T17:49:26.323Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+{
+  "timestamp": "2026-10-29T17:49:26.343Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4df7f334-d3d1-456c-b681-c9dc3b5b26c6",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-STAGEROUND",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice 126ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT) 321ms
+{"level":40,"time":"2026-10-29T17:49:26.629Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:26.641Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+{
+  "timestamp": "2026-10-29T17:49:26.641Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 76
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+{
+  "timestamp": "2026-10-29T17:49:26.672Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4ac45068-90e5-494f-9b4d-664c7ba0e976",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-FLOW",
+    "type": "OTHER",
+    "size": 76,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete 627ms
+{"level":40,"time":"2026-10-29T17:49:27.255Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:27.267Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+{
+  "timestamp": "2026-10-29T17:49:27.267Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 77
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+{
+  "timestamp": "2026-10-29T17:49:27.286Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "01c81b5d-5158-4c4e-aff5-4577723dfef9",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-BOUND",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one 398ms
+{"level":40,"time":"2026-10-29T17:49:27.652Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:27.662Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+{
+  "timestamp": "2026-10-29T17:49:27.662Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 84
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+{
+  "timestamp": "2026-10-29T17:49:27.678Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "20f75b90-c5c8-4caa-a86b-e1c012c15722",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-WITHDRAWDONE",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED 443ms
+{"level":40,"time":"2026-10-29T17:49:28.096Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:28.105Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+{
+  "timestamp": "2026-10-29T17:49:28.105Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+{
+  "timestamp": "2026-10-29T17:49:28.122Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "228f2522-b67a-472b-8533-6ff07b85badf",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-WITHDRAWN",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN) 238ms
+{"level":40,"time":"2026-10-29T17:49:28.346Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:28.359Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+{
+  "timestamp": "2026-10-29T17:49:28.359Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 78
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+{
+  "timestamp": "2026-10-29T17:49:28.406Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f9fcc2ce-2e79-4cef-9e6a-e332056b1101",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-RETURN",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled 249ms
+{"level":40,"time":"2026-10-29T17:49:28.587Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:28.604Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T17:49:28.604Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 86
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T17:49:28.627Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8daaf0ff-411e-41ca-9285-bb9c84cb71ce",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-EXIT-authoring",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:28.783Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:28.797Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T17:49:28.797Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 86
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T17:49:28.818Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "30a5e9b8-1f2b-497e-b69a-c4b2c0e7d1eb",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-EXIT-withdrawn",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one) 200ms
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one) 206ms
+{"level":40,"time":"2026-10-29T17:49:28.989Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:28.998Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T17:49:28.998Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 79
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T17:49:29.016Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a1a370d5-904c-489a-97d7-fa686f787177",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-CHECKIN",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:29.136Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:29.157Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T17:49:29.158Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T17:49:29.199Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4dd8d414-49cc-4dd6-9a42-3d2a13d7947a",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-CHECKIN",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0" 242ms
+{"level":40,"time":"2026-10-29T17:49:29.238Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:29.252Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+{
+  "timestamp": "2026-10-29T17:49:29.252Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+{
+  "timestamp": "2026-10-29T17:49:29.282Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c4edee6d-01ca-4dab-ab58-83e59fa9fc05",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-CONCURRENT",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > routeStanding throws on a failed read, never "none" 3ms
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once 267ms
+{"level":40,"time":"2026-10-29T17:49:29.506Z","pid":6722,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:29.517Z","pid":6722,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+{
+  "timestamp": "2026-10-29T17:49:29.517Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 77
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+{
+  "timestamp": "2026-10-29T17:49:29.537Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "08cc33bd-0004-496b-9c45-3592f08515d6",
+    "code": "DBTEST-RR1A-mvtu8drl_52e25211-CROSS",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed) 186ms
+{"level":30,"time":"2026-10-29T17:49:31.585Z","pid":6745,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:31.587Z","pid":6745,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:31.587Z","pid":6745,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/review-route-qms-rr4.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-qms-rr4.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > until anyone is designated, the Approver role stands in; a reviewer is not a QMS approver 299ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > is refused, with nothing written, without a reason, to a non-administrator, for oneself, and for a member who cannot sign 85ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > designates with a reason as a governed, chained ledger row; the stand-in then ends; removal is recorded the same way 142ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > a send without a route is refused, REVIEW_ROUTE_REQUIRED, with nothing written 17ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > refuses no approver, the author, a contributor, and another organization’s account, each with nothing written 148ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > with zero reviewers, the one designated approver is asked at once and makes the document effective 167ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > a refusal the route decides is given before the credential: no password is checked or counted 88ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > approval is refused until both reviewers have signed; each review closes its task citing esig:<id> 265ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > the approver approves through the existing approve; the review digest equals the approval digest and the route’s 98ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > Return for revision by a named reviewer: in_review → draft, the route returned, others cancelled, the sender told 302ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > the controlled-text save is refused while the route is open, and demotes once it is returned 150ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > a revision is refused while the route is open 83ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > retiring a document in review withdraws its route on the same transaction 126ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a withdrawn route signs nothing until a new one is sent; re-sending names it afresh 357ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a document already in review with no route keeps today’s rule, until someone names reviewers on it 114ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > a reviewer hands back; the sender reassigns to another reviewer, who signs; a non-designated approver is refused 349ms
+{"level":30,"time":"2026-10-29T17:49:38.972Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:38.978Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:38.985Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:38.992Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:38.998Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:39.005Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:39.011Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:39.017Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+{"level":30,"time":"2026-10-29T17:49:39.022Z","pid":6745,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 12e66ea0-1a4b-4092-8d7e-c2798e7d0651 by unknown"}
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > another organization cannot read or act on the document 115ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > a document authored in the canonical editor (§2.8, §2.9) > its sections cannot change under the route; the members get access to it; the review and the approval bind the same authored content 346ms
+{"level":30,"time":"2026-10-29T17:49:41.242Z","pid":6767,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:41.244Z","pid":6767,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:41.244Z","pid":6767,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:49:44.250Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:49:44.649Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+{
+  "timestamp": "2026-10-29T17:49:44.649Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 79
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+{
+  "timestamp": "2026-10-29T17:49:44.763Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a4769dfd-25f3-4e9f-859b-a05db82d7c58",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-NOROUTE",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring 3522ms
+{"level":40,"time":"2026-10-29T17:49:44.863Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:44.880Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it
+{
+  "timestamp": "2026-10-29T17:49:44.880Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it
+{
+  "timestamp": "2026-10-29T17:49:44.903Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0f4158b1-c157-4598-806f-09162bc6d0f2",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-WITHROUTE",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it 188ms
+{"level":40,"time":"2026-10-29T17:49:45.086Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:45.104Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written
+{
+  "timestamp": "2026-10-29T17:49:45.104Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 78
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written
+{
+  "timestamp": "2026-10-29T17:49:45.151Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a6bee796-4fb6-4002-995b-bd4fd729344a",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-PICKER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written 279ms
+{"level":40,"time":"2026-10-29T17:49:45.338Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author
+{
+  "timestamp": "2026-10-29T17:49:45.359Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 86
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:45.358Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author
+{
+  "timestamp": "2026-10-29T17:49:45.388Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "abdf03c9-8240-4fb9-9af1-9330a5a717e0",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-PICKER-STARTED",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author 293ms
+{"level":40,"time":"2026-10-29T17:49:45.630Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:45.652Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve
+{
+  "timestamp": "2026-10-29T17:49:45.652Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 87
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve
+{
+  "timestamp": "2026-10-29T17:49:45.713Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a5ac789c-f85a-41e4-9fb8-9c17c5699ed8",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-PICKER-REVIEWED",
+    "type": "OTHER",
+    "size": 87,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve 556ms
+{"level":40,"time":"2026-10-29T17:49:46.179Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:46.191Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused
+{
+  "timestamp": "2026-10-29T17:49:46.191Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 84
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused
+{
+  "timestamp": "2026-10-29T17:49:46.224Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1f835028-a03f-4983-9e67-2a6ae350a386",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-PICKER-CROSS",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:49:46.257Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused 81ms
+{"level":40,"time":"2026-10-29T17:49:46.287Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project
+{
+  "timestamp": "2026-10-29T17:49:46.287Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 78
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project
+{
+  "timestamp": "2026-10-29T17:49:46.311Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "633d81c5-4bdd-45a1-b34b-a0463b64db2b",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-NOTICE",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project 342ms
+{"level":40,"time":"2026-10-29T17:49:46.603Z","pid":6767,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:46.618Z","pid":6767,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome
+{
+  "timestamp": "2026-10-29T17:49:46.618Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 77
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome
+{
+  "timestamp": "2026-10-29T17:49:46.647Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "66183d19-2e77-4d4d-8a7d-52d45351c037",
+    "code": "DBTEST-RR1B-mvtu8sa5_dadb9920-BOARD",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome 541ms
+{"level":30,"time":"2026-10-29T17:49:48.810Z","pid":6790,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:48.813Z","pid":6790,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:48.813Z","pid":6790,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:49:51.564Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:49:52.023Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+{
+  "timestamp": "2026-10-29T17:49:52.023Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+{
+  "timestamp": "2026-10-29T17:49:52.110Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "37101654-bec5-4b19-ac96-bc7dff2ceda4",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-REASSIGN",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names 3596ms
+{"level":40,"time":"2026-10-29T17:49:52.524Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:52.550Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot
+{
+  "timestamp": "2026-10-29T17:49:52.550Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 85
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot
+{
+  "timestamp": "2026-10-29T17:49:52.618Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0fbb6e93-5c7f-4a34-8d8e-6696bebc93b5",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-REASSIGN-TRAY",
+    "type": "OTHER",
+    "size": 85,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot 550ms
+{"level":40,"time":"2026-10-29T17:49:53.070Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:53.089Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete
+{
+  "timestamp": "2026-10-29T17:49:53.089Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 89
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete
+{
+  "timestamp": "2026-10-29T17:49:53.148Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a8d7395c-4dee-4ac9-8c80-b583e371e779",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-REASSIGN-APPROVER",
+    "type": "OTHER",
+    "size": 89,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete 631ms
+{"level":40,"time":"2026-10-29T17:49:53.684Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:53.699Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered
+{
+  "timestamp": "2026-10-29T17:49:53.699Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 87
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered
+{
+  "timestamp": "2026-10-29T17:49:53.719Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9b77fbca-ec08-4a78-aec0-b1dd7d8d99a3",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-PICKER-REASSIGN",
+    "type": "OTHER",
+    "size": 87,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered 356ms
+{"level":40,"time":"2026-10-29T17:49:54.040Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:54.058Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2)
+{
+  "timestamp": "2026-10-29T17:49:54.058Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2)
+{
+  "timestamp": "2026-10-29T17:49:54.079Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1eb50620-1e4f-4650-a623-97ac8a5611a6",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-REFUSALS",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > without a reason (REASON_REQUIRED) 22ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > by someone who is neither the sender nor an administrator 13ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a member who has signed 12ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a task that is not on this route 12ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > the reassigning actor naming themselves 51ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > an author of the version 27ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > a reviewer of this content named as the approver 30ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > someone already named on this route 22ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > another organization's account 16ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > from another organization: the version is not found 11ms
+{"level":40,"time":"2026-10-29T17:49:54.466Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:54.480Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned
+{
+  "timestamp": "2026-10-29T17:49:54.480Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 89
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned
+{
+  "timestamp": "2026-10-29T17:49:54.504Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "50941930-7c84-48f1-b4f8-27b157d5e8b1",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-REFUSALS-RETURNED",
+    "type": "OTHER",
+    "size": 89,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned 211ms
+{"level":40,"time":"2026-10-29T17:49:54.679Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:54.689Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs
+{
+  "timestamp": "2026-10-29T17:49:54.689Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs
+{
+  "timestamp": "2026-10-29T17:49:54.712Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b45ce8bd-b920-4e6b-91bd-7753837440d3",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-HANDBACK",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs 616ms
+{"level":40,"time":"2026-10-29T17:49:55.292Z","pid":6790,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:49:55.304Z","pid":6790,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization
+{
+  "timestamp": "2026-10-29T17:49:55.304Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 88
+  }
+}
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization
+{
+  "timestamp": "2026-10-29T17:49:55.321Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4cb107c9-8053-40cd-9da0-70f5bf78f6d8",
+    "code": "DBTEST-RR3-mvtu8y51_1fac9e32-HANDBACK-REFUSED",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization 224ms
+{"level":30,"time":"2026-10-29T17:49:57.203Z","pid":6815,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:49:57.205Z","pid":6815,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:49:57.205Z","pid":6815,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:50:00.260Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:50:00.629Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-29T17:50:00.629Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 77
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-29T17:50:00.735Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "32aac279-db7f-470e-a268-a7dbe354f044",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-START",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 3534ms
+{"level":40,"time":"2026-10-29T17:50:00.831Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:00.847Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-29T17:50:00.848Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 78
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-29T17:50:00.876Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6a915cce-e010-42d8-99b7-3ee644eccfa9",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 97ms
+{"level":40,"time":"2026-10-29T17:50:00.932Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:00.948Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-29T17:50:00.949Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 78
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-29T17:50:00.983Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6f1e74e8-4f11-49f4-9570-fb090ec1f87e",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-POLICY",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 180ms
+{"level":40,"time":"2026-10-29T17:50:01.104Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:01.116Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T17:50:01.116Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T17:50:01.135Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5843a8a6-82b8-47e5-860d-624cdd9800af",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:50:01.409Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:01.443Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T17:50:01.443Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T17:50:01.486Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b6c39938-6cbb-4228-9e06-3a595ff81920",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 1071ms
+{"level":40,"time":"2026-10-29T17:50:02.174Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:02.190Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T17:50:02.190Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T17:50:02.218Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8e729d14-1e5d-4c69-8c9d-36c8838721aa",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:50:02.306Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:02.339Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T17:50:02.339Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T17:50:02.372Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5ad0a632-3f70-4a0c-be0f-1a8b2cfbec76",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 271ms
+{"level":40,"time":"2026-10-29T17:50:02.445Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:02.456Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T17:50:02.457Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T17:50:02.476Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4ee32bc6-d357-4d96-8644-0291492ee7d5",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:50:02.593Z","pid":6815,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:50:02.627Z","pid":6815,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T17:50:02.628Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 81
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T17:50:02.656Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cec57e46-a25d-4f83-a789-01124905d0e5",
+    "code": "DBTEST-VR13-mvtu94nn_263d1768-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":50,"time":"2026-10-29T17:50:02.752Z","pid":6815,"hostname":"vm","context":{"err":"injected: the superseded audit row could not be written","correlationId":null,"code":null},"msg":"[document-lifecycle] handling the document lifecycle request failed"}
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 328ms
+{"level":30,"time":"2026-10-29T17:50:04.455Z","pid":6838,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:04.459Z","pid":6838,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:04.459Z","pid":6838,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/review-route-qms-rr2.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-qms-rr2.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > QMS reviewers one after another (RR2, §3) > opens the second reviewer on the first one’s signature, telling them only then 750ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > two QMS approvers (RR2, NEW-4: every named approver) > the first approval leaves the document in review; the last makes it effective; one digest throughout 454ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > re-blocks the approver, who then waits for the new reviewer 339ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > is refused once an approval is signed, with nothing written 156ms
+{"level":30,"time":"2026-10-29T17:50:10.212Z","pid":6858,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:10.214Z","pid":6858,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:10.214Z","pid":6858,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-periodic-review-signed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-periodic-review-signed.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 196ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 8ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is in the controlled document register report beside the date its approval signed 268ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review that finds a revision is required > is recorded, and the document stays due 108ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a next review date that has passed 15ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > "remains current" with no next date 19ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a viewer, who has no signing authority 21ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a wrong password 38ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a version whose approval signature no longer stands 48ms
+{"level":30,"time":"2026-10-29T17:50:14.035Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.043Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.049Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.055Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.061Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.067Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.077Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.082Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:14.089Z","pid":6858,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e2b5312a-a8ba-4055-99a8-cf881ab13bf9 by unknown"}
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 554ms
+(node:6858) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 187ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a later review of the same version > records the due date the earlier review set, beside the date the approval signed, and supersedes it 115ms
+{"level":30,"time":"2026-10-29T17:50:16.577Z","pid":6876,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:16.580Z","pid":6876,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:16.580Z","pid":6876,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-in-force-during-revision.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-in-force-during-revision.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-29T17:50:19.362Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.372Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.379Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.399Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.407Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.414Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.420Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.425Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:19.434Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e09c057a-95d2-4773-8026-b08ebaec9075 by unknown"}
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 36ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 30ms
+(node:6876) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 59ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 58ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft 51ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 325ms
+{"level":30,"time":"2026-10-29T17:50:20.047Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.055Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.063Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.075Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.083Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.091Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.099Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.106Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:20.113Z","pid":6876,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 28fdb003-ff5a-4f71-8647-e6a738d72015 by unknown"}
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective 320ms
+{"level":30,"time":"2026-10-29T17:50:22.313Z","pid":6894,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:22.316Z","pid":6894,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:22.316Z","pid":6894,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-29T17:50:24.717Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.723Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.729Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.734Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.739Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.746Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.752Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.758Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:24.764Z","pid":6894,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc788036-6ec0-445e-b438-b123fc0a9b39 by unknown"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 250ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 41ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 8ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 254ms
+(node:6894) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training 164ms
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback 86ms
+{"level":50,"time":"2026-10-29T17:50:25.383Z","pid":6894,"hostname":"vm","context":{"err":"Synthetic post-commit audit-write fault","correlationId":null,"code":"42501"},"msg":"[mdx-qms] training-ack failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request 118ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose 90ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim 82ms
+{"level":50,"time":"2026-10-29T17:50:25.636Z","pid":6894,"hostname":"vm","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-editor failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 6ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection 71ms
+{"level":30,"time":"2026-10-29T17:50:27.361Z","pid":6917,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:27.363Z","pid":6917,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:27.363Z","pid":6917,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-current-signing-and-training-admission.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-current-signing-and-training-admission.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 19ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 275ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 231ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 69ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 80ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 82ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 88ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 60ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 92ms
+{"level":30,"time":"2026-10-29T17:50:32.349Z","pid":6935,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:32.351Z","pid":6935,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:32.351Z","pid":6935,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-periodic-review-reminders.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-periodic-review-reminders.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > approval puts the next periodic review on the owner’s task list > writes one Quality task to the author, due on the next review, 30 days’ notice; approving the same date again writes nothing 235ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "remains current" completes the task and writes the next one, for the date the reviewer set 123ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "revision required" makes it a task to revise, due when the document is due 103ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 107ms
+{"level":30,"time":"2026-10-29T17:50:35.126Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.138Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.145Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.151Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.157Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.164Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.171Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.181Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:35.194Z","pid":6935,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f2524431-040e-4751-945a-1b87b978dac1 by unknown"}
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > a new version’s approval completes the old task and writes one for the new version 463ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the due-date sweep reads the lead the task carries > notifies a review task due in 20 days once, and not a task without a lead 107ms
+{"level":30,"time":"2026-10-29T17:50:37.080Z","pid":6954,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:37.081Z","pid":6954,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:37.081Z","pid":6954,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-document-signature-required.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 7ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 19ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 19ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 23ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 16ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 128ms
+{"level":30,"time":"2026-10-29T17:50:39.599Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.607Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.613Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.621Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.629Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.636Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.643Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.649Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+{"level":30,"time":"2026-10-29T17:50:39.660Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619788c3-1def-433a-92d5-d019567a93e2 by unknown"}
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 327ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 100ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 127ms
+{"level":30,"time":"2026-10-29T17:50:40.015Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.023Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.029Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.035Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.043Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.049Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.057Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.063Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+{"level":30,"time":"2026-10-29T17:50:40.069Z","pid":6954,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 72e1596f-e06c-40e3-a735-bee5c22e0b4c by unknown"}
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 252ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 28ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 16ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 12ms
+{"level":30,"time":"2026-10-29T17:50:41.675Z","pid":6977,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:41.677Z","pid":6977,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:41.677Z","pid":6977,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+{"level":40,"time":"2026-10-29T17:50:43.444Z","pid":6977,"hostname":"vm","context":{"userId":355,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-10-29T17:50:43.445Z","pid":6977,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 134ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 44ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 8ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 14ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 11ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 5ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-29T17:50:44.016Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 92,
+    "granted": 12
+  }
+}
+
+{"level":30,"time":"2026-10-29T17:50:44.022Z","pid":6977,"hostname":"vm","context":{"userId":361,"tenantId":92,"resourceId":"361"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 898ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 27ms
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-29T17:50:44.526Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-10-29T17:50:44.527Z","pid":6977,"hostname":"vm","context":{"userId":360,"tenantId":90302,"resourceId":"362"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-10-29T17:50:44.535Z","pid":6977,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:120:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:537:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-29T17:50:44.537Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+{"level":50,"time":"2026-10-29T17:50:44.537Z","pid":6977,"hostname":"vm","context":{"error":"retrieval refused: tenant 90302 was requested inside tenant 90301's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 90302 was requested inside tenant 90301's session\n    at assertTenantIsCurrent (/home/user/ClinicalSageAI-2-replit/server/db/currentTenant.ts:106:11)\n    at resolveAuditOrganization (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:324:9)\n    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:470:34)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:120:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:537:22"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 293ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 30ms
+{"level":30,"time":"2026-10-29T17:50:46.514Z","pid":6996,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:46.516Z","pid":6996,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:46.516Z","pid":6996,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-filing-home.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > uses canonical auth, async tenant scope and a lazy pinned non-superuser request connection 128ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refreshes the exact retained record and separates its real integer project from its actual programme UUID 103ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > retains unattached, unanchored and deleted-programme records without guessing a programme 96ms
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.504Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.531Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ID_INVALID",
+    "status": 400
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.564Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.597Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.624Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+{
+  "timestamp": "2026-10-29T17:50:47.657Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_NOT_FOUND",
+    "status": 404
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership 184ms
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-29T17:50:47.687Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+{
+  "timestamp": "2026-10-29T17:50:47.757Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+stderr | tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-29T17:50:47.817Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member 132ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration 57ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > resolves actual task and saved-report notifications through both programme helper callers with fresh sharing 226ms
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration
+{
+  "timestamp": "2026-10-29T17:50:48.172Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_ACCESS_DENIED",
+    "status": 403
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > keeps the existing populated task board connected to the same canonical programme bridge 62ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration 900ms
+stderr | tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record
+{
+  "timestamp": "2026-10-29T17:50:49.072Z",
+  "level": "warn",
+  "message": "[task-board-routes] tracked filing handoff refused",
+  "context": {
+    "code": "FILING_READ_UNAVAILABLE",
+    "status": 503
+  }
+}
+
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record 65ms
+{"level":30,"time":"2026-10-29T17:50:50.649Z","pid":7013,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:50.651Z","pid":7013,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:50.651Z","pid":7013,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/canonical-documents-append-only.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/canonical-documents-append-only.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 857ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > the runtime role (non-superuser, real PostgreSQL) > cannot DELETE or TRUNCATE a lifecycle record, even holding both privileges 442ms
+{"level":30,"time":"2026-10-29T17:50:54.766Z","pid":7034,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:50:54.768Z","pid":7034,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:50:54.768Z","pid":7034,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 141ms
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+{
+  "timestamp": "2026-10-29T17:50:55.567Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+{
+  "timestamp": "2026-10-29T17:50:55.624Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 30ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 36ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 20ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 189ms
+{"level":50,"time":"2026-10-29T17:50:55.888Z","pid":7034,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/admin-change-audit.dbtest.ts:28:36)\n    at writeTenantSettings (/home/user/ClinicalSageAI-2-replit/server/services/tenant/tenant-settings-writer.ts:203:11)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-config.ts:427:22"},"msg":"[tenant-config-api] Error updating security settings for tenant 90301"}
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 74ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 54ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 52ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 67ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s status 11ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s assignee 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s archive 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s blockers 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s due date 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s dependencies 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s route columns 5ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a DELETE of a route row 7ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT naming a route column 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into task_dependencies naming a route member 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into cross_module_task_links naming a route member 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker) 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member 5ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > the route writer’s own transaction 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task 4ms
+
+ Test Files  18 passed (18)
+      Tests  187 passed (187)
+   Start at  17:49:02
+   Duration  114.90s (transform 12.20s, setup 906ms, import 10.62s, tests 98.96s, environment 3ms)
+

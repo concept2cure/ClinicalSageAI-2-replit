@@ -1,0 +1,25 @@
+# MR-08 Stage 3 step 5, red: the final tests against HEAD (178a90552) server code
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on. tests/db/vault-processing-sweep.dbtest.ts
+# server/services/vault/vault-placement.service.ts and server/jobs/vaultProcessingSweep.ts at HEAD; the test file as committed.
+
+ ✓ the upload request reads a text layer only > returns a scanned PDF without running OCR, and records it as still being read
+ ✓ the upload request reads a text layer only > still reads a born-digital file in the request
+ ✓ the upload request reads a text layer only > search says how many versions are not searched yet
+ ✓ the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it
+ ✓ the processing sweep > does nothing more on the next run
+ ✓ the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again
+ ✓ the processing sweep > two sweeps at once read a pending version once
+ ✓ the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason
+ × a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+   → expected { folder_id: null, …(4) } to match object { placement_status: 'suggested', …(3) }
+ × a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+   → expected { …(8) } to match object { outcome: 'extracted', …(1) }
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)

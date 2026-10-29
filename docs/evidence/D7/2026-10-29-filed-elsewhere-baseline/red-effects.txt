@@ -1,0 +1,19 @@
+# Red: filed-baseline-effects.pglite.test.ts against slice 1's sequence-spine-fda-identity.ts and submission-service.ts (85f299020)
+
+ × the FDA submission-id names the declared Original Application > an amendment after sequences filed elsewhere names their Original Application (0000) 75ms
+   → Sequence 0042 is an amendment to this application's Original Application, and this submission holds no Original Application sequence the agency has not rejected. Its submission-id would have to be guessed. Nothing was packaged.
+ × the FDA submission-id names the declared Original Application > names the sequence the sponsor declared opened it, when that was not 0000 18ms
+   → Sequence 0010 is an amendment to this application's Original Application, and this submission holds no Original Application sequence the agency has not rejected. Its submission-id would have to be guessed. Nothing was packaged.
+ × the FDA submission-id names the declared Original Application > the latest declaration is the one in force 23ms
+   → expected 'Sequence 0020 is an amendment to this…' to match /0000–0030 of this application were fi…/
+ × the FDA submission-id names the declared Original Application > a sequence numbered within the ones filed elsewhere is refused at assembly 22ms
+   → expected 'Sequence 0040 is an amendment to this…' to match /sequence 0040 is taken\. Nothing was …/
+ × the FDA submission-id names the declared Original Application > without a declaration, the amendment is refused and the refusal says how to declare one 19ms
+   → expected 'Sequence 0042 is an amendment to this…' to match /declare them on the submission first/
+ × creating a sequence under a declaration > refuses a number already filed elsewhere, and names the next 4ms
+   → expected a refusal
+ × creating a sequence under a declaration > refuses a second Original Application, typed or by default 3ms
+   → expected a refusal
+ ✓ creating a sequence under a declaration > creates the next amendment 3ms
+ ✓ creating a sequence under a declaration > a submission with nothing declared still opens at 0000 4ms
+      Tests  7 failed | 2 passed (9)

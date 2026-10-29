@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5201/api/regulatory/documents/42707490-0433-427c-b01d-0ffde2c8b221/advance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "to": "in_review"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": false,
+      "error": "REVIEW_ROUTE_REQUIRED",
+      "message": "Name the reviewers and the approver to send this version for review. Nothing was sent."
+    }
+  }
+}

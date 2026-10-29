@@ -1,0 +1,316 @@
+# Mutations: each an exact replacement in product code (its old string occurs once), the named tests run
+# (npx vitest run <tests> --reporter=json), then the replacement reversed on the file as it then stands, and its sha256 checked.
+# Working tree at d140aefa5 + this change; 2026-10-29T19:04:19Z.
+# sha256 before:
+#   9b9db26815aa651817d55e5b405634f4de6d017cc02150ff0a8a63fbfa714171  client/src/concept2cure/v2/SignedContentState.tsx
+#   d69da3b28e2e57c06cdf4f8c82f342d6d34f61de8f0724fd9f3d12b38f64d998  server/routes/mdx-labeling-approvals.ts
+#   072185d3e353efa1dbad173ef8e2644fd7ff93265caf02183bda47562f18ce83  server/routes/mdx-labeling.ts
+#   4304aeef70b2c731b3e3ba9ac7d1b7d47ab80538510f57bb2f95144d19db9695  server/routes/mdx-risk-acceptance-lock.ts
+#   299ab17db7c4e7f5be8d170dacffbbd2f810f55d758205e8d465cbb5ad36aff9  server/routes/mdx-risk-management.ts
+#   c1cb3e36d55b0227a568d3bb65f29789b16b5894e7303ff7a934e5c85e89c88e  server/services/ana/AnaToolExecutor.ts
+#   6763687897e27d77c1f9f2a630b855c0db4bdbb0c256229aaf25bec80da7ea93  server/services/part11/governed-target-binders.ts
+#   de577030cefc12b3a15e0d7fcb814727f4aed8c038768207f143328903f3ea32  server/services/part11/signed-content-lock.ts
+#   2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7  server/services/part11/signed-content-state.ts
+
+M1  The label recipe drops the UDI-DI from its list: the digest and the refusal lose it together
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 16 of 292; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves a symbol added to the approved label after signing is detected
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves a field edited after the approval is withdrawn is detected against the signature
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves moving to effective changes no attested field: both signatures bind the digest the signer reviewed
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves the label text it names is bound, and an edit of that text after signing is detected
+       - content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves the signature row carries the translation content digest
+       - … and 10 more
+
+M2  The refusal drops the signed act's own field (a label's effective date)
+     server/services/part11/signed-content-lock.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 6 of 293; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds effective effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds superseded effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-lock.test.ts > 'labeling-document': the list the digest and the refusal both read the refusal refuses exactly the listed fields, the named text, and the signed act's own
+       - signed-content-lock.test.ts > the lists, as the binder README names them (an inspector's copy) a label: device, kind, version, language, region, UDI-DI, expiry, its text, its symbols; and its effective date
+       - signed-content-lock.test.ts > lockedFieldsIn and the refusal names the bound fields a patch sets, in the list's order, and nothing it leaves unset or does not bind
+
+M3  The refusal drops the text artifact the recipe digests
+     server/services/part11/signed-content-lock.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 8 of 293; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds effective artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds superseded artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-lock.test.ts > 'labeling-document': the list the digest and the refusal both read the refusal refuses exactly the listed fields, the named text, and the signed act's own
+       - signed-content-lock.test.ts > 'labeling-translation': the list the digest and the refusal both read the refusal refuses exactly the listed fields, the named text, and the signed act's own
+       - … and 2 more
+
+M4  A label edit naming a bound field is written whatever the status (the guard keyed on status alone)
+     server/routes/mdx-labeling-approvals.ts
+     tests: signed-content-locked.pglite.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 31 of 108; restored and sha256 equal: True
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing a approved document: 409, and it stays as signed
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing a effective document: 409, and it stays as signed
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing a superseded document: 409, and it stays as signed
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - … and 25 more
+
+M5  A move out of a signed status sent with an unbound field is written (the status no longer guards)
+     server/routes/mdx-labeling-approvals.ts
+     tests: signed-content-locked.pglite.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 1 of 108; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds a move out of approved sent with an unbound field is refused whole: the move is made on its own, with a reason
+
+M6  A symbol is added to a label that carries a signature
+     server/services/part11/signed-content-lock.ts
+     tests: signed-content-locked.pglite.test.ts, content-digest-binders.pglite.test.ts
+     RED 6 of 70; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves a symbol added to the approved label after signing is detected
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved adding a symbol: 409, naming the symbols, and none is added
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds effective adding a symbol: 409, naming the symbols, and none is added
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds superseded adding a symbol: 409, naming the symbols, and none is added
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds a symbol refused after a signed approval leaves the signature matching the label
+       - signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way add_labeling_symbol on an approved label: the one refusal, and no symbol
+
+M7  A symbol is removed from a label that carries a signature
+     server/services/part11/signed-content-lock.ts
+     tests: signed-content-locked.pglite.test.ts
+     RED 3 of 54; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds approved removing a symbol: 409, and it stays
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds effective removing a symbol: 409, and it stays
+       - signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds superseded removing a symbol: 409, and it stays
+
+M8  An approved translation takes an edit
+     server/routes/mdx-labeling.ts
+     tests: signed-content-locked.pglite.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 8 of 108; restored and sha256 equal: True
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing an approved translation (language): 409, and it stays as signed
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing an approved translation (translator): 409, and it stays as signed
+       - mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed editing an approved translation (method): 409, and it stays as signed
+       - signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds translator: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds translationMethod: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+       - … and 2 more
+
+M9  A hazard edit of a field the acceptance binds is not guarded
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts, content-digest-binders.pglite.test.ts
+     RED 17 of 55; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds refCode: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds hazard: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds hazardousSituation: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds harm: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds sequenceOfEvents: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+       - … and 11 more
+
+M10  A plain PATCH takes the acceptance off (status back, or acceptable false)
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 5 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds taking the acceptance off without a signature ({"status":"open"}): 409, the reopen named, nothing saved
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds taking the acceptance off without a signature ({"status":"mitigating"}): 409, the reopen named, nothing saved
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds taking the acceptance off without a signature ({"status":"verified"}): 409, the reopen named, nothing saved
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds taking the acceptance off without a signature ({"acceptable":false}): 409, the reopen named, nothing saved
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds taking the acceptance off without a signature ({"acceptable":null}): 409, the reopen named, nothing saved
+
+M11  Closing an accepted hazard is refused as if it took the acceptance off
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 1 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds fields the acceptance does not bind stay editable: the assignee, the project, and closing it
+
+M12  The hazard lock reads the status only: acceptable true (closed, or recorded before the signed act) is not held
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 2 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds fields the acceptance does not bind stay editable: the assignee, the project, and closing it
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds a hazard recorded acceptable before the signed acceptance (acceptable true, status verified) is held the same way
+
+M13  A control is added to an accepted hazard (route and AnA)
+     server/services/part11/signed-content-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 3 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds adding a control: 409, naming the controls, and none is added
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds a hazard recorded acceptable before the signed acceptance (acceptable true, status verified) is held the same way
+       - risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way add_risk_control on an accepted hazard: the one refusal, and no control
+
+M14  A control of an accepted hazard is edited
+     server/routes/mdx-risk-management.ts
+     tests: risk-acceptance-locked.pglite.test.ts, content-digest-binders.pglite.test.ts
+     RED 5 of 55; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted detects a risk control changed after the acceptance
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds editing a control's description: 409, and it is as it was
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds editing a control's verificationEvidence: 409, and it is as it was
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds editing a control's status: 409, and it is as it was
+       - risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds editing a control's newRiskItemId: 409, and it is as it was
+
+M15  AnA's symbol tool reports a refused write as done
+     server/services/ana/AnaToolExecutor.ts
+     tests: signed-content-locked.pglite.test.ts
+     RED 1 of 54; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way add_labeling_symbol on an approved label: the one refusal, and no symbol
+
+M16  AnA's control tool reports a refused write as done
+     server/services/ana/AnaToolExecutor.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 1 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way add_risk_control on an accepted hazard: the one refusal, and no control
+
+M17  The reopen leaves the hazard recorded acceptable
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 3 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act returns it to the status it had before acceptance, clears the acceptability, and signs the hazard as it stood
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act then the hazard takes edits, and its residual risk is accepted and signed again
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act a hazard accepted with no signed acceptance on record must be told the status: 409, nothing signed; then it reopens
+
+M18  The reopen ignores the status the acceptance recorded, and invents one
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 3 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act returns it to the status it had before acceptance, clears the acceptability, and signs the hazard as it stood
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act a hazard accepted with no signed acceptance on record must be told the status: 409, nothing signed; then it reopens
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act an acceptance withdrawn from force records no status to return to: the reopen must be told it
+
+M19  A hazard that is not accepted is "reopened" and signed
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 1 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act a hazard not accepted has nothing to reopen: 409, nothing signed, nothing changed
+
+M20  The reopen reads a withdrawn acceptance as in force
+     server/routes/mdx-risk-acceptance-lock.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 1 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act an acceptance withdrawn from force records no status to return to: the reopen must be told it
+
+M21  The reopen takes no editor gate
+     server/routes/mdx-risk-management.ts
+     tests: risk-acceptance-locked.pglite.test.ts
+     RED 1 of 39; restored and sha256 equal: True
+       - risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act a viewer is refused by the editor gate, and a hazard the organization does not hold is a 404
+
+M22  v2 does not bind the source
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 8 of 293; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves the signature row carries the translation content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates the signature binds labeling-translation/v2: the translation, and the source document version and content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that moves on after the approval reads "source-changed", naming both versions
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a symbol added to the source reads "source-changed" too: it is the source content
+       - signed-content-lock.test.ts > labeling-translation/v2 (P-64) digests the translation and its source: the document version and its labeling-document/v1 digest
+       - signed-content-lock.test.ts > labeling-translation/v2 (P-64) a source edit of the version moves it
+       - … and 2 more
+
+M23  v2 binds the source's digest but not its version
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 4 of 293; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves the signature row carries the translation content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates the signature binds labeling-translation/v2: the translation, and the source document version and content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that moves on after the approval reads "source-changed", naming both versions
+       - signed-content-lock.test.ts > labeling-translation/v2 (P-64) digests the translation and its source: the document version and its labeling-document/v1 digest
+
+M24  The translation approval still signs v1
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 11 of 293; restored and sha256 equal: True
+       - content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves the signature row carries the translation content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates the signature binds labeling-translation/v2: the translation, and the source document version and content digest
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that moves on after the approval reads "source-changed", naming both versions
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a symbol added to the source reads "source-changed" too: it is the source content
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that cannot be bound refuses the approval: 409 SIGNATURE_CONTENT_UNBOUND, nothing signed
+       - signed-content-lock.test.ts > the lists, as the binder README names them (an inspector's copy) a translation: language, translator, method, back-translation check, its text; v2 also binds its source
+       - … and 5 more
+
+M25  A source that cannot be bound is signed anyway, as empty
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, risk-acceptance-locked.pglite.test.ts, signed-content-lock.test.ts, content-digest-binders.pglite.test.ts, labeling-risk-content-binders.test.ts, mdx-labeling-approval-controls.pglite.test.ts
+     RED 2 of 293; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that cannot be bound refuses the approval: 409 SIGNATURE_CONTENT_UNBOUND, nothing signed
+       - signed-content-lock.test.ts > labeling-translation/v2 (P-64) a source that cannot be bound falls back with its reason, so the approval refuses
+
+M26  The read derives every signature by the current recipe, not the one it recorded
+     server/services/part11/signed-content-state.ts
+     tests: signed-content-locked.pglite.test.ts, content-digest-binders.pglite.test.ts
+     RED 1 of 70; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates an approval signed by v1 is still verified by v1, the recipe its signature records it matches, and a source that moves on does not change that: v1 never bound the source
+
+M27  The read takes the recipe from bindingRecipe only, not from a v1 note
+     server/services/part11/signed-content-state.ts
+     tests: signed-content-locked.pglite.test.ts
+     RED 1 of 54; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates an approval signed by v1 is still verified by v1, the recipe its signature records it matches, and a source that moves on does not change that: v1 never bound the source
+
+M28  No "source-changed": a moved source reads "changed"
+     server/services/part11/signed-content-state.ts
+     tests: signed-content-locked.pglite.test.ts
+     RED 2 of 54; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that moves on after the approval reads "source-changed", naming both versions
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a symbol added to the source reads "source-changed" too: it is the source content
+
+M29  "source-changed" claimed when the translation itself changed too
+     server/services/part11/signed-content-state.ts
+     tests: signed-content-locked.pglite.test.ts
+     RED 1 of 54; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates the translation itself edited after a withdrawal reads "changed", not "source-changed"
+
+M30  The binder ignores the recorded source it is asked to derive as of
+     server/services/part11/governed-target-binders.ts
+     tests: signed-content-locked.pglite.test.ts, signed-content-lock.test.ts
+     RED 3 of 110; restored and sha256 equal: True
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a source that moves on after the approval reads "source-changed", naming both versions
+       - signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates a symbol added to the source reads "source-changed" too: it is the source content
+       - signed-content-lock.test.ts > labeling-translation/v2 (P-64) as of a recorded source, it is the digest signed then, whatever the source says now
+
+M31  The client cannot read 'source-changed' (shown as could not be read)
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentSourceChanged.test.tsx, labelingSignedContentOnScreen.test.tsx
+     RED 6 of 34; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64)
+       - signedContentSourceChanged.test.tsx > source-changed is a state this client reads, not "could not be read"
+       - signedContentSourceChanged.test.tsx > source-changed has its own words
+       - signedContentSourceChanged.test.tsx > source-changed carries a signature: a line is drawn even for a translation back in review
+       - signedContentSourceChanged.test.tsx > source-changed says the words beside its tone, who signed and when, and the server's reason
+       - signedContentSourceChanged.test.tsx > source-changed AnA is told the same, with the signer and the reason
+
+M32  'source-changed' is said as "Changed since it was signed"
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentSourceChanged.test.tsx, labelingSignedContentOnScreen.test.tsx
+     RED 4 of 34; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64)
+       - signedContentSourceChanged.test.tsx > source-changed has its own words
+       - signedContentSourceChanged.test.tsx > source-changed says the words beside its tone, who signed and when, and the server's reason
+       - signedContentSourceChanged.test.tsx > source-changed AnA is told the same, with the signer and the reason
+
+M33  'source-changed' is shown without the server's reason
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentSourceChanged.test.tsx, labelingSignedContentOnScreen.test.tsx
+     RED 2 of 34; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64)
+       - signedContentSourceChanged.test.tsx > source-changed says the words beside its tone, who signed and when, and the server's reason
+
+M34  'source-changed' is not a signature on record (no line for a translation back in review)
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentSourceChanged.test.tsx, labelingSignedContentOnScreen.test.tsx
+     RED 3 of 34; restored and sha256 equal: True
+       - signedContentSourceChanged.test.tsx > source-changed carries a signature: a line is drawn even for a translation back in review
+       - signedContentSourceChanged.test.tsx > source-changed says the words beside its tone, who signed and when, and the server's reason
+       - signedContentSourceChanged.test.tsx > source-changed AnA is told the same, with the signer and the reason
+
+# 34 of 34 mutations turned a test red.
+# sha256 after (each equal to before):
+#   9b9db26815aa651817d55e5b405634f4de6d017cc02150ff0a8a63fbfa714171  client/src/concept2cure/v2/SignedContentState.tsx  equal
+#   d69da3b28e2e57c06cdf4f8c82f342d6d34f61de8f0724fd9f3d12b38f64d998  server/routes/mdx-labeling-approvals.ts  equal
+#   072185d3e353efa1dbad173ef8e2644fd7ff93265caf02183bda47562f18ce83  server/routes/mdx-labeling.ts  equal
+#   4304aeef70b2c731b3e3ba9ac7d1b7d47ab80538510f57bb2f95144d19db9695  server/routes/mdx-risk-acceptance-lock.ts  equal
+#   299ab17db7c4e7f5be8d170dacffbbd2f810f55d758205e8d465cbb5ad36aff9  server/routes/mdx-risk-management.ts  equal
+#   c1cb3e36d55b0227a568d3bb65f29789b16b5894e7303ff7a934e5c85e89c88e  server/services/ana/AnaToolExecutor.ts  equal
+#   6763687897e27d77c1f9f2a630b855c0db4bdbb0c256229aaf25bec80da7ea93  server/services/part11/governed-target-binders.ts  equal
+#   de577030cefc12b3a15e0d7fcb814727f4aed8c038768207f143328903f3ea32  server/services/part11/signed-content-lock.ts  equal
+#   2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7  server/services/part11/signed-content-state.ts  equal

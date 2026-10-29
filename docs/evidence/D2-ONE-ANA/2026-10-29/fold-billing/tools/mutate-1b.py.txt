@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Mutations for the billing fold, Part 1. Each mutation replaces one exact string in one file, runs
+the named suites, expects at least one failure (killed), and restores the file by replacement,
+checked with md5. Usage: mutate.py [ids...]"""
+import hashlib, subprocess, sys, os
+R = '/home/user/ClinicalSageAI-2-replit'
+SRV = ['server/routes/__tests__/billing-invoices-admin-gate.test.ts', 'server/middleware/__tests__/session-permissions.test.ts']
+INV = ['client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx']
+MENU = ['client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx']
+USE = ['client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx']
+BD = 'server/routes/billing-dashboard.ts'
+LI = 'client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx'
+LS = 'client/src/concept2cure/v2/surfaces/LicensingSurface.tsx'
+UB = 'client/src/concept2cure/v2/surfaces/UsageBilling.tsx'
+SH = 'client/src/concept2cure/v2/Shell.tsx'
+OB = 'client/src/concept2cure/v2/surfaces/Onboarding.tsx'
+GATE = ['server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts']
+CTRL = ['client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx']
+OBT = ['client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx']
+M = [
+  ('B1 /checkout loses the billing-admin guard', 'server/routes/billing.ts',
+   "router.post('/checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async",
+   "router.post('/checkout', authenticateToken, async", GATE),
+  ('B2 /dtc-checkout loses the billing-admin guard', 'server/routes/billing.ts',
+   "router.post('/dtc-checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async",
+   "router.post('/dtc-checkout', authenticateToken, async", GATE),
+  ('B3 /portal loses the billing-admin guard', 'server/routes/billing.ts',
+   "router.post('/portal', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async",
+   "router.post('/portal', authenticateToken, async", GATE),
+  ('B4 Manage billing is offered to every member', LS,
+   "{status && billingAdmin && (", "{status && (", CTRL),
+  ('B5 a member is offered checkout on the plan cards', LS,
+   "  if (!billingAdmin) return null;\n", "", CTRL),
+  ('B6 a member loses Ask AnA about Enterprise', LS,
+   "  if (tier === 'enterprise' && !cur) {", "  if (billingAdmin && tier === 'enterprise' && !cur) {", CTRL),
+  ('B7 AnA is told a member may buy', LS,
+   "        subscriptionActions: billingAdmin\n          ? 'offered'", "        subscriptionActions: true\n          ? 'offered'", CTRL),
+  ('B8 AnA is offered checkout for a member', LS,
+   "          billingAdmin\n            ? 'Choosing a subscription opens Stripe checkout;", "          true\n            ? 'Choosing a subscription opens Stripe checkout;", CTRL),
+  ('B9 a member is not told who chooses the subscription', LS,
+   "          Invoices and subscription changes are for billing administrators: your organization&rsquo;s admins and owners.",
+   "          ", CTRL),
+  ('B10 onboarding sends checkout without the permission', OB,
+   "    } else if (!billingAdmin) {\n      checkout = 'unavailable';\n      checkoutNote = CHECKOUT_NOT_YOURS;\n    } else {",
+   "    } else {", OBT),
+  ('B11 onboarding reports a 403 as a missing link', OB,
+   "        if (res.status === 403) {", "        if (false) {", OBT),
+  ('B12 onboarding points to the retired Usage & Billing', OB,
+   "no plan was provisioned. Retry from ${getSurfaceMeta('licensing').label}.`;\n        }",
+   "no plan was provisioned. Retry from Usage & Billing.`;\n        }", OBT),
+]
+
+def md5(p): return hashlib.md5(open(p, 'rb').read()).hexdigest()
+
+def run(ids):
+  out = []
+  for (name, f, old, new, tests) in M:
+    mid = name.split()[0]
+    if ids and mid not in ids: continue
+    p = os.path.join(R, f)
+    src = open(p).read()
+    olds, news = (old, new) if isinstance(old, list) else ([old], [new])
+    if any(src.count(o) != 1 for o in olds):
+      out.append(f'{name}: SKIP (anchor counts {[src.count(o) for o in olds]})'); print(out[-1], flush=True); continue
+    before = md5(p)
+    mutated = src
+    for o, n in zip(olds, news): mutated = mutated.replace(o, n)
+    open(p, 'w').write(mutated)
+    try:
+      r = subprocess.run(['npx', 'vitest', 'run', *tests], cwd=R, capture_output=True, text=True, timeout=600)
+      tail = [l for l in r.stdout.splitlines() if 'Tests ' in l]
+      verdict = 'KILLED' if r.returncode != 0 else 'SURVIVED'
+    finally:
+      open(p, 'w').write(src)
+    assert md5(p) == before, f'restore failed for {f}'
+    out.append(f'{name}: {verdict} ({tail[-1].strip() if tail else "no summary"}) [{f} restored, md5 {before}]')
+    print(out[-1], flush=True)
+  return out
+
+if __name__ == '__main__':
+  res = run(set(sys.argv[1:]))
+  killed = sum('KILLED' in l for l in res)
+  print(f'{killed}/{len(res)} killed')

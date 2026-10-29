@@ -1,0 +1,28 @@
+# Red: server/__tests__/routes/submission-filed-baseline.pglite.test.ts, one mutation at a time, each restored after its run
+
+## M1 the COMMIT-time signature guard is not created (migrations/20261029g_submission_filed_baselines.sql)
+ × the database holds a declaration to its signature > refuses a declaration written without its signature, at COMMIT 13ms
+ × the database holds a declaration to its signature > the migration replays 13ms
+      Tests  2 failed | 16 passed (18)
+
+## M2 the content binder is not registered (server/services/part11/governed-target-binders.ts)
+ × declaring the sequences filed outside the platform > is signed, and the signature binds what was declared and its evidence 65ms
+ × declaring the sequences filed outside the platform > is read back with who signed it, the meaning and the next sequence 25ms
+ × declaring the sequences filed outside the platform > removes an empty "Start sequence 0000" draft, and the signed record names it 21ms
+ × declaring the sequences filed outside the platform > a change is a new declaration; the earlier one stays 24ms
+ × refused, with nothing declared or signed > the same declaration again 26ms
+ × the database holds a declaration to its signature > refuses UPDATE and TRUNCATE 15ms
+      Tests  6 failed | 12 passed (18)
+
+## M3 the lead-or-manager gate is removed (server/services/submission-service/filed-sequence-baseline.ts)
+ × refused, with nothing declared or signed > when 'the signer is not the project\'s lead…' 14ms
+ × refused, with nothing declared or signed > the signer's standing is asked before the password 9ms
+      Tests  2 failed | 16 passed (18)
+
+## M4 a frozen sequence does not fix the declaration (server/services/submission-service/filed-sequence-baseline.ts)
+ × refused, with nothing declared or signed > when 'a US sequence is frozen' 20ms
+      Tests  1 failed | 17 passed (18)
+
+## M5 the project-access read is skipped (server/routes/submission-filed-baseline.ts)
+ × refused, with nothing declared or signed > when 'the project access read refuses' 23ms
+      Tests  1 failed | 17 passed (18)

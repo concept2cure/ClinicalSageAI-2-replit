@@ -1,6 +1,14 @@
-/** Existing eCTD Compile package/history DTD evidence, extracted without changing behavior. */
+/**
+ * eCTD Compile's validation evidence: the package's DTD execution proof and its
+ * history (extracted without changing behavior), and the specifications the
+ * package is qualified against (QualifiedSpecVersions, moved from the retired
+ * ectd-publishing screen by the D2 fold of 2026-10-29; its read is
+ * EctdCompileReference.tsx's).
+ */
 import React from 'react';
 import type { DtdValidationEvidence } from '@shared/regulatory/ectd-dtd-validation';
+import { I } from '../icons';
+import { EmptyState } from '../dataConnect';
 
 export interface PackageDtdStatus {
   required: string[];
@@ -143,3 +151,42 @@ export function RegionalPackageFact({ pkg }: { pkg: { sha256?: string | null; dt
   </li>;
 }
 
+
+/**
+ * The specifications the selected eCTD version is qualified against, from the
+ * spec-version register (server/services/ectd/qualification/qualify.ts
+ * SPEC_VERSIONS). Placed beside the validation findings, because these are the
+ * specifications those findings are read against. A failed read is an error
+ * with Try again; an answer with no versions says it is the register's answer.
+ */
+export function QualifiedSpecVersions({ state, version, compiledVersion, rows, onRetry }: {
+  state: 'idle' | 'loading' | 'ready' | 'error';
+  version: string;
+  compiledVersion?: string | null;
+  rows: Array<[string, string]>;
+  onRetry: () => void;
+}) {
+  const note = !compiledVersion ? '' : version === compiledVersion ? ' · the version this compile assembles' : ` · reference only; this compile assembles ${compiledVersion}`;
+  return (
+    <section className="pj-card" aria-label="Qualified against">
+      <div className="pj-card-h">
+        <span className="t">Qualified against</span>
+        <span className="s">{version}{note}</span>
+      </div>
+      <div className="pj-card-b" style={{ padding: 0 }}>
+        {state === 'loading' || state === 'idle' ? (
+          <div style={{ padding: 16 }}><EmptyState icon={I.book} title="Loading spec versions…" busy /></div>
+        ) : state === 'error' ? (
+          <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="The specification-version register didn’t respond, or answered in a shape this panel can’t read — this panel cannot tell which. This is a failed read, not an empty register." retry={onRetry} /></div>
+        ) : rows.length === 0 ? (
+          <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" hint={`The specification-version register answered and lists no versions qualified for ${version}. This is what the service returned, not a failed read.`} /></div>
+        ) : (
+          <table className="reg-tbl"><thead><tr><th>Specification</th><th>Version qualified against</th></tr></thead>
+            <tbody>{rows.map(([label, value]) => (
+              <tr key={label}><td style={{ fontWeight: 600 }}>{label}</td><td>{value}</td></tr>
+            ))}</tbody></table>
+        )}
+      </div>
+    </section>
+  );
+}

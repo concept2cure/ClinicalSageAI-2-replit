@@ -223,10 +223,12 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
    - make `retireBody` (`mdx-qms.ts:528`, today `approveBody.omit(...)` with `z.literal('APPROVED')`) accept only that literal;
    - change `meanings={['approval']}` at `SopRegister.tsx:617` to the retirement meaning.
    Stored retirements keep the meaning they were signed with; do not rewrite them.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-retirement-meaning/`). The word is in `GOVERNED_SIGN_MEANINGS`, not `TASK_SIGNATURE_MEANINGS`, because the task board shares that list and a task checkpoint is never a retirement. Labeling supersession, which declares itself the QMS retirement's meaning, follows.
 4. Signature manifestation (§11.50):
    - extend `GET /qms/documents` (`mdx-qms.ts:340`) and `GET /qms/documents/:id` (`:433`) with a `LEFT JOIN LATERAL` to the standing approval and retirement signature, reusing the STANDING predicate from `server/services/audit/compliance-reports/queries/controlled-documents.ts:24-26` (`signer_name`, `signed_at`, `signature_meaning`, `bound_payload_digest`); once Stage 2 has landed, join through the snapshot's `approval_signature_id`;
    - add "Approved by", "Signed (UTC)" and "Meaning" to the row grid in `SopRegister.tsx:377-470` and a detail panel. The toast in `quality/qmsApproval.ts:40-54` stays as confirmation, not as the record.
    - A printable record of a version with its signature block is delivered by Stage 8's controlled copy; do not build a second renderer here.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-signature-block/`). The block is read through the exact approval reader that training uses, batched (`readQmsReleaseApprovals`), not a second join, and shown under each row's title and on `GET /:id`.
 5. PATCH audit: move the audit write of `PATCH /qms/documents/:id` (`mdx-qms.ts:448-510`, after-commit at `:496-506`) into the same transaction as the UPDATE through `recordGovernedAction(client, …)`, with before and after values. Apply the same change to the create route (`:361-399`).
 6. Go green. File red and green output under `docs/evidence/MR-12/<date>/`.
 
@@ -309,9 +311,9 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
 - **F-12 — signing roles and segregation of duties.** Author ≠ approver and the `approver`/`qa` roles set who may sign in Stages 2, 3, 5 and 7. Training acknowledgment (Stage 1) is signed by the trainee and needs no signing authority.
 - **F-13 — second factor for signers.** Sets whether `mfaToken` is required in the Stage 1, 3, 5 and 7 signing ceremonies.
 - **NEW-1: system of record for SOP body text** — the linked Authoring artifact (recommended) or a body stored on the QMS version. Blocks Stage 2 step 4 and Stage 3 step 4; it also decides what Stage 8 renders.
-- **NEW-2: training assignment model** — role-based or curriculum-based. Blocks Stage 4 step 4.
-- **NEW-3: training before the effective date** — may a user acknowledge an approved-pending version before D? Blocks Stage 4 step 6.
-- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7).
+- **NEW-2: training assignment model** — role-based or curriculum-based. Blocks Stage 4 step 4. **Decided 2026-10-29 (P-49):** job roles (an organisation-managed list of job functions) and named people per document; a document assigned to nobody reads "not assigned"; curricula later.
+- **NEW-3: training before the effective date** — may a user acknowledge an approved-pending version before D? Blocks Stage 4 step 6. **Decided 2026-10-29 (P-49):** yes, once approved; the acknowledgment counts once that version is in force.
+- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7). **Decided 2026-10-29:** the quorum is `docs/design/REVIEW_ROUTING_2026-10-23.md` §4 (a designated QMS approver who is not the author or a contributor; optional reviewers; sending is not a signature), carried by RR4. Retirement's meaning is `retirement` (P-51).
 
 ## Do not
 

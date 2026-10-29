@@ -27,7 +27,7 @@ import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
 import { verifyChainHead } from '../services/audit/chain-anchor';
 import { requestPgClient } from '../db/requestDb';
-import { clientEventRefusal, requireAuditRecorder } from '../services/audit/audit-api-authority';
+import { clientEventRefusal, requireAuditReader, requireAuditRecorder } from '../services/audit/audit-api-authority';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
@@ -818,6 +818,10 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
   if (orgId == null) {
     return res.status(403).json({ error: 'Tenant context required' });
   }
+  // P-65 (2026-10-29): the verdict is for those who may review the audit trail,
+  // the gate the ledger's verdict takes (audit-trail-ledger.routes.ts): owners,
+  // admins and managers, or a platform administrator. Refused before any read.
+  if (!requireAuditReader(req, res)) return;
   /* Connected. This is the one route of the five whose predicate was already
      mandatory and unconditional, and the only one with a live client caller
      (Part11Console then; Audit trail's chain banner since the console folded

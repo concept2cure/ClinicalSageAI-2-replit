@@ -35,6 +35,14 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+/* The signed-in user, for the billing-administration permission. Null (no
+   provider) is "unknown", which offers checkout, as every case above assumes. */
+const auth = vi.hoisted(() => ({ user: null as { permissions?: string[] } | null }));
+vi.mock('@/services/portal/authService', async (original) => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
+  useAuthUser: () => auth.user,
+}));
+
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { completeDiscovery } from './onboardingDiscoveryFixtures';
@@ -89,6 +97,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  auth.user = null;
 });
 
 /** Walk the wizard to the review step with `tierName` selected. */
@@ -207,5 +216,53 @@ describe('Onboarding — the free tier activates a plan', () => {
       ),
     );
     expect(assigned).toEqual([]);
+  });
+});
+
+/* Part 1b of the billing fold (docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/):
+   POST /api/billing/checkout and /dtc-checkout refuse anyone the billing guard
+   does not admit. Activation already needs an administrator (its discovery save
+   admits admin and owner); the wizard now also reads the session's billing:admin
+   permission where the checkout is sent: without it, no checkout is sent and the
+   summary says who chooses the subscription; a refusal (a stale session) says
+   the same, never "did not return a checkout link". */
+describe('Onboarding — choosing the subscription is for billing administrators', () => {
+  it('a session without the billing permission sends no checkout, and the summary says who chooses', async () => {
+    auth.user = { permissions: ['governed:write'] };
+    await toReview('Researcher');
+    fireEvent.click(screen.getByText(/Activate workspace/));
+    await waitFor(() =>
+      expect(document.body.textContent).toMatch(
+        /Choosing the subscription is for billing administrators: your organization’s admins and owners\. No plan was provisioned\./,
+      ),
+    );
+    expect(sent.filter((s) => /\/api\/billing\/(dtc-)?checkout$/.test(s.url))).toEqual([]);
+    expect(assigned).toEqual([]);
+  });
+
+  it('a 403 from checkout is reported as the role answer, not as a missing link', async () => {
+    auth.user = { permissions: ['governed:write', 'billing:admin'] };
+    responder = (url) =>
+      url === '/api/billing/dtc-checkout'
+        ? { ok: false, status: 403, body: { error: { code: 'AUTH_004', message: 'Insufficient permissions' } } }
+        : { ok: true, status: 200, body: {} };
+    await toReview('Researcher');
+    fireEvent.click(screen.getByText(/Activate workspace/));
+    await waitFor(() => expect(bodyFor('/api/billing/dtc-checkout')).toBeTruthy());
+    await waitFor(() =>
+      expect(document.body.textContent).toMatch(/Choosing the subscription is for billing administrators/),
+    );
+    expect(document.body.textContent).not.toMatch(/did not return a checkout link/);
+  });
+
+  it('a failed checkout points to the screen that has checkout now, not "Usage & Billing"', async () => {
+    responder = (url) =>
+      url === '/api/billing/dtc-checkout'
+        ? { ok: false, status: 409, body: { error: 'This organization is already on the professional plan.' } }
+        : { ok: true, status: 200, body: {} };
+    await toReview('Researcher');
+    fireEvent.click(screen.getByText(/Activate workspace/));
+    await waitFor(() => expect(document.body.textContent).toMatch(/no plan was provisioned\. Retry from Compare subscriptions\./));
+    expect(document.body.textContent).not.toMatch(/Usage & Billing/);
   });
 });

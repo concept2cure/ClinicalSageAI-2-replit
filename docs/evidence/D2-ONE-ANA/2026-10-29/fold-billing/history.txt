@@ -1,0 +1,57 @@
+# git log --all --diff-filter=D --name-only (shallow clone: 1321 commits back to 892739bb7 2026-10-22)
+# deleted paths in all: 82
+# filtered for billing|invoice|licens|usage|stripe|subscription|plan-?status|rate-?limit:
+(no deleted paths)
+
+# GitHub API, repos/concept2cure/ClinicalSageAI-2-replit/commits?path=… (newest, oldest, count)
+== client/src/concept2cure/v2/surfaces/UsageBilling.tsx
+4626be1f9 2026-10-26 Slice A.1, names a client reads; decision 12's server half; slice A.2's discovery
+a32a0067c 2026-07-13 feat(ui-v2): phases 3-7 full UI replacement + backend gap closures (#1012)
+17
+== client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+4626be1f9 2026-10-26 Slice A.1, names a client reads; decision 12's server half; slice A.2's discovery
+a32a0067c 2026-07-13 feat(ui-v2): phases 3-7 full UI replacement + backend gap closures (#1012)
+15
+== server/routes/billing-dashboard.ts
+e1f3fd425 2026-10-17 Land audited service, governance, and UI integration remedies
+1ae2b44d3 2026-03-19 feat: redesign sales landing page and add Anthropic-style billing dashboard
+13
+
+# commit 1ae2b44d3 (2026-03-19): files
+modified client/src/App.jsx
+modified client/src/concept2cure/router/ZenRouter.tsx
+added client/src/pages/SalesLandingPage.tsx
+added client/src/pages/billing/BillingDashboard.tsx
+added db/migrations/20260319_billing_usage_budgets_alerts.sql
+modified server/index.ts
+added server/routes/billing-dashboard.ts
+added server/services/billingEmailService.ts
+modified shared/schema.ts
+gone: client/src/pages/SalesLandingPage.tsx
+gone: client/src/pages/billing/BillingDashboard.tsx
+
+== history of client/src/pages/billing/BillingDashboard.tsx (GitHub API, branch concept2cure-v2)
+bb243dfad 2026-04-28 chore(ui): delete every surface not built by Claude Design
+2c85ae327 2026-04-07 feat: restore pre-purge UI surfaces from 263cc484 + preserve post-April-2 additions
+cad82b186 2026-04-06 refactor: complete blue→stone Tailwind migration across 456 legacy files
+32a02d690 2026-04-06 refactor: enforce stone-only palette per design principles — no branded blue
+988f7cd69 2026-04-06 refactor: complete terracotta-to-blue color migration across 56 files
+4b2442a9f 2026-04-05 fix: repair stone-1000 artifacts, strip remaining colors, reduce shadows
+2b7062fe6 2026-04-05 refactor: complete monochrome UI conversion — strip ALL colors to stone/black/white
+da7e9a069 2026-03-19 feat: comprehensive warm color sweep across 123 files
+10b79ee6a 2026-03-19 Revert "refactor: split BillingDashboard (1214 lines) into 7 focused modules"
+8dcf40fd2 2026-03-19 refactor: split BillingDashboard (1214 lines) into 7 focused modules
+a56a7e595 2026-03-19 fix: audit fixes - security, schema alignment, and performance
+1ae2b44d3 2026-03-19 feat: redesign sales landing page and add Anthropic-style billing dashboard
+
+# Part 2 — git log --all --diff-filter=D --name-only (shallow, 1357 commits), filtered for rate.?limit|ratelimit|usage|billing|licens|invoice:
+(no deleted paths)
+
+# The per-tier grid's history (git log -S on its module keys, shallow window):
+c04ed02be 2026-10-23 Retain October 21 qualification before current upstream integration
+
+# GitHub API: history of server/routes/billing-dashboard.ts (newest, oldest)
+9c2fdec74 2026-10-29 Invoices are for billing administrators, and live in Licensing (D2 / D6, fold billing part 1)
+e1f3fd425 2026-10-17 Land audited service, governance, and UI integration remedies
+87905b9d1 2026-09-30 Server errors: 25 five-hundreds stop shipping the caught error's text
+1ae2b44d3 2026-03-19 feat: redesign sales landing page and add Anthropic-style billing dashboard

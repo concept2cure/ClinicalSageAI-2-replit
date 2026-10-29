@@ -70,6 +70,16 @@
 -- tests/db/vault-catalog-tenant-isolation.dbtest.ts;
 -- evidence docs/evidence/D3/2026-09-24-vault-catalog/.
 
+-- ── AMENDED IN PLACE 2026-10-29 (P-66, D6 tenant isolation) ─────────────────
+-- Both tables now FORCE row-level security, so the table OWNER is held to the
+-- policies too. Without FORCE a NOSUPERUSER owner (a managed Postgres's
+-- migration role) read every tenant's catalog and receipts, which is what
+-- vault.documents' own FORCE (20260905_vault_documents_organization_id.sql)
+-- had already closed for the parent. FORCE is set only where it is not yet set,
+-- so a replay takes no lock for it. Nothing else changes. Proof:
+-- tests/db/vault-isolation-hardening.dbtest.ts;
+-- evidence docs/evidence/D6-ISOLATION-HARDENING/2026-10-29/.
+
 DO $document_catalog$
 BEGIN
   IF to_regclass('vault.documents') IS NULL THEN
@@ -126,6 +136,13 @@ BEGIN
   -- layer (the PGlite schema contract) legitimately lacks.
   EXECUTE 'ALTER TABLE vault.document_catalog ENABLE ROW LEVEL SECURITY';
   EXECUTE 'ALTER TABLE vault.document_read_receipts ENABLE ROW LEVEL SECURITY';
+  -- FORCE (amended 2026-10-29, P-66): the owner is no exception.
+  IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid = 'vault.document_catalog'::regclass) THEN
+    EXECUTE 'ALTER TABLE vault.document_catalog FORCE ROW LEVEL SECURITY';
+  END IF;
+  IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid = 'vault.document_read_receipts'::regclass) THEN
+    EXECUTE 'ALTER TABLE vault.document_read_receipts FORCE ROW LEVEL SECURITY';
+  END IF;
   IF EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
               WHERE n.nspname = 'core' AND p.proname = 'can_access_program') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_vault_catalog_select ON vault.document_catalog';

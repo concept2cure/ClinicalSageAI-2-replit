@@ -20,11 +20,18 @@
  * module decides only the submission-id, through the resolver, and refuses what
  * the resolver refuses.
  *
+ * 2026-10-29 (slice 2, docs/design/FILED_ELSEWHERE_BASELINE_2026-10-29.md). An
+ * application whose earlier sequences were filed outside the platform names
+ * its Original Application by the sponsor's signed declaration
+ * (submission-service/filed-sequence-baseline.ts): the declared opener joins
+ * the platform's, and a sequence numbered within the declared ones is refused.
+ *
  * @module server/services/ectd/sequence-spine-fda-identity
  */
 import { resolveSubmissionSubTypeCode, resolveSubmissionTypeCode } from './controlled-vocab';
 import { resolveFdaSequenceIdentity } from './fda-sequence-identity';
 import { SequenceLifecycleRefusal, type FiledSequence } from './package-sequence-lifecycle';
+import { readCurrentFiledBaseline } from '../submission-service/filed-sequence-baseline-content';
 
 export interface SpineQueryable {
   query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
@@ -62,12 +69,20 @@ export async function sequenceSpineFdaSubmissionId(q: SpineQueryable, args: {
       ORDER BY sequence_number`,
     [args.organizationId, args.submissionId, args.sequenceNumber, args.region],
   );
+  // Sequences filed outside the platform, as the sponsor declared and signed
+  // them (filed-sequence-baseline.ts): their numbers are taken, and one of
+  // them opened the Original Application.
+  const baseline = await readCurrentFiledBaseline(q, args.organizationId, args.submissionId);
+  if (baseline && args.sequenceNumber <= baseline.lastFiledSequence) {
+    throw new FdaSubmissionIdentityRefusal('SEQUENCE_FILED_ELSEWHERE',
+      `Sequences 0000–${baseline.lastFiledSequence} of this application were filed outside the platform, so sequence ` +
+      `${args.sequenceNumber} is taken. Nothing was packaged.`);
+  }
   // Each is the opening sequence of the Original Application.
-  const filed: FiledSequence[] = rows.map(r => {
-    const sequence = String(r.sequence_number);
-    return { sequence, submissionType: 'Original Application', submissionTypeCode: 'fdast1', submissionSubTypeCode: 'fdasst1',
-      submissionId: sequence, sha256: '', filedAt: '', leaves: [] };
-  });
+  const openers = [...(baseline ? [baseline.originalSequence] : []), ...rows.map(r => String(r.sequence_number))];
+  const filed: FiledSequence[] = openers.map(sequence => (
+    { sequence, submissionType: 'Original Application', submissionTypeCode: 'fdast1', submissionSubTypeCode: 'fdasst1',
+      submissionId: sequence, sha256: '', filedAt: '', leaves: [] }));
   // A sub-type that continues an activity continues this one: the submission's
   // Original Application, when exactly one is on file. Otherwise the resolver
   // refuses, and says which.
@@ -84,6 +99,7 @@ export async function sequenceSpineFdaSubmissionId(q: SpineQueryable, args: {
       throw new FdaSubmissionIdentityRefusal(err.code,
         `Sequence ${args.sequenceNumber} is an amendment to this application's Original Application, and this submission ` +
         'holds no Original Application sequence the agency has not rejected. Its submission-id would have to be guessed. ' +
+        "If the application's earlier sequences were filed outside the platform, declare them on the submission first. " +
         'Nothing was packaged.');
     }
     throw new FdaSubmissionIdentityRefusal(err.code, `${err.message} Nothing was packaged.`);

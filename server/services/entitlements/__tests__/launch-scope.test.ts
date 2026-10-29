@@ -242,6 +242,36 @@ describe('the folded setup', () => {
   });
 });
 
+describe('the folded eCTD publishing reference', () => {
+  it('is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/. It left the
+       Submission Center app on 2026-10-08 ('is out of the submission-center app'
+       above); its spec versions, Regional IG OID and vocabularies are eCTD
+       Compile's now, which is in that app, so a bought ectd-publishing row can
+       buy nothing and the reference needs no grant of its own. */
+    const submit = LAUNCH_APPS.find((app) => app.id === 'submission-center')!;
+    expect(isLaunchSurface('ectd-publishing')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ectd-publishing');
+    expect(submit.surfaces).toContain('ectd-compile');
+    expect(submit.modules).toContain('ectd-compile');
+  });
+});
+
+describe('the folded billing screen', () => {
+  it('is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/. It was a shell surface
+       (account administration), never a catalogue module: the second id of the
+       usage screen, opening its invoice tab. The invoices are on Licensing for
+       billing administrators; usage keeps the session window, weekly caps and
+       the enforced rate limits (P-68). Both stay shell surfaces. */
+    expect(LAUNCH_SURFACE_IDS.has('billing')).toBe(false);
+    expect(isLaunchSurface('billing')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('billing');
+    expect(isLaunchSurface('licensing')).toBe(true);
+    expect(isLaunchSurface('usage')).toBe(true);
+  });
+});
+
 describe('the folded AnA memory', () => {
   it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
     /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on

@@ -21,6 +21,9 @@ const MEANING_LABEL: Record<string, string> = {
   APPROVED: 'Approval',
   // A disposition recorded for a reviewer with no account (protocol reviews).
   RESPONSIBILITY: 'Responsibility',
+  RELEASE: 'Release',
+  // A QMS controlled document withdrawn from use (P-51).
+  RETIREMENT: 'Retirement',
 };
 
 export function signatureMeaningLabel(m: string | null | undefined): string {
