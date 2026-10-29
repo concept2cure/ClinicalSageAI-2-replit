@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5211/api/mdx/qms/documents/1",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "in_review",
+      "reason": "OQ-006 step 04b: a send names its route"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Name the QMS approver, and any reviewers, to send this document for review. Nothing was sent.",
+      "details": {
+        "code": "REVIEW_ROUTE_REQUIRED"
+      }
+    }
+  }
+}

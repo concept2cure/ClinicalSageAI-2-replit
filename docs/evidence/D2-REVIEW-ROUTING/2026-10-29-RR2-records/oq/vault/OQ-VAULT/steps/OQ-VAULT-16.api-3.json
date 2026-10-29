@@ -1,0 +1,1506 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 747,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "program": "OQ-002 Vault program 20261029202031",
+        "spine": "IND · 21 CFR 312",
+        "standard": "pharma",
+        "documentCount": 6,
+        "documentCounts": {
+          "authored": 1,
+          "artifacts": 0,
+          "uploads": 5
+        },
+        "tree": [
+          {
+            "id": "vaultdoc-doc_38ac3214a81b4593b31e0633eccd80ab",
+            "code": "IND",
+            "label": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5",
+            "children": [
+              {
+                "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-M1",
+                "code": "M1",
+                "label": "Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3)",
+                "children": [
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.1",
+                    "code": "1.1",
+                    "label": "Forms",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.1.1",
+                        "num": "1.1.1",
+                        "title": "Form FDA 1571 — Investigational New Drug Application",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.1.1 · Form FDA 1571 — Investigational New Drug Application · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.1.2",
+                        "num": "1.1.2",
+                        "title": "Form FDA 1572 — Statement of Investigator",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.1.2 · Form FDA 1572 — Statement of Investigator · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.1.3",
+                        "num": "1.1.3",
+                        "title": "Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov)",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.1.3 · Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov) · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.2",
+                    "num": "1.2",
+                    "title": "Cover letter",
+                    "type": "Required",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.2 · Cover letter · mandatory section",
+                    "blocker": true,
+                    "flag": "Mandatory section — no content yet"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.3",
+                    "code": "1.3",
+                    "label": "Administrative information",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.3.1",
+                        "num": "1.3.1",
+                        "title": "Contact, sponsor and U.S. agent information",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.3.1 · Contact, sponsor and U.S. agent information"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.3.4",
+                        "num": "1.3.4",
+                        "title": "Financial certification and disclosure (Forms FDA 3454 / 3455)",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.3.4 · Financial certification and disclosure (Forms FDA 3454 / 3455)"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.4",
+                    "code": "1.4",
+                    "label": "References",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.4.1",
+                        "num": "1.4.1",
+                        "title": "Letters of authorization (DMF / cross-reference)",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.4.1 · Letters of authorization (DMF / cross-reference)"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.4.2",
+                        "num": "1.4.2",
+                        "title": "Statements of right of reference",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.4.2 · Statements of right of reference"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.12",
+                    "code": "1.12",
+                    "label": "Other correspondence",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.12.1",
+                        "num": "1.12.1",
+                        "title": "Pre-IND correspondence",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.12.1 · Pre-IND correspondence"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.12.14",
+                        "num": "1.12.14",
+                        "title": "Environmental analysis or claim of categorical exclusion (21 CFR 25.31)",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.12.14 · Environmental analysis or claim of categorical exclusion (21 CFR 25.31) · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.14",
+                    "code": "1.14",
+                    "label": "Labeling",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.14.4.1",
+                        "num": "1.14.4.1",
+                        "title": "Investigator's brochure",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.14.4.1 · Investigator's brochure · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.14.4.2",
+                        "num": "1.14.4.2",
+                        "title": "Investigational drug labeling (21 CFR 312.6)",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.14.4.2 · Investigational drug labeling (21 CFR 312.6) · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-1.20",
+                    "num": "1.20",
+                    "title": "Introductory statement and general investigational plan (21 CFR 312.23(a)(3))",
+                    "type": "Required",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 1.20 · Introductory statement and general investigational plan (21 CFR 312.23(a)(3)) · mandatory section",
+                    "blocker": true,
+                    "flag": "Mandatory section — no content yet"
+                  }
+                ]
+              },
+              {
+                "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-M2",
+                "code": "M2",
+                "label": "Module 2 · Summaries",
+                "children": [
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.2",
+                    "num": "2.2",
+                    "title": "Introduction",
+                    "type": "Required",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.2 · Introduction · mandatory section",
+                    "blocker": true,
+                    "flag": "Mandatory section — no content yet"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.3",
+                    "code": "2.3",
+                    "label": "Quality overall summary",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.3.S",
+                        "num": "2.3.S",
+                        "title": "Drug substance summary",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.3.S · Drug substance summary · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.3.P",
+                        "num": "2.3.P",
+                        "title": "Drug product summary",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.3.P · Drug product summary · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.4",
+                    "num": "2.4",
+                    "title": "Nonclinical overview",
+                    "type": "Required",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.4 · Nonclinical overview · mandatory section",
+                    "blocker": true,
+                    "flag": "Mandatory section — no content yet"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.5",
+                    "num": "2.5",
+                    "title": "Clinical overview",
+                    "type": "Required",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.5 · Clinical overview · mandatory section",
+                    "blocker": true,
+                    "flag": "Mandatory section — no content yet"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6",
+                    "code": "2.6",
+                    "label": "Nonclinical written and tabulated summaries",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.2",
+                        "num": "2.6.2",
+                        "title": "Pharmacology written summary",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.2 · Pharmacology written summary · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.3",
+                        "num": "2.6.3",
+                        "title": "Pharmacology tabulated summary",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.3 · Pharmacology tabulated summary"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.4",
+                        "num": "2.6.4",
+                        "title": "Pharmacokinetics written summary",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.4 · Pharmacokinetics written summary · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.5",
+                        "num": "2.6.5",
+                        "title": "Pharmacokinetics tabulated summary",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.5 · Pharmacokinetics tabulated summary"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.6",
+                        "num": "2.6.6",
+                        "title": "Toxicology written summary",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.6 · Toxicology written summary · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.6.7",
+                        "num": "2.6.7",
+                        "title": "Toxicology tabulated summary",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.6.7 · Toxicology tabulated summary"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-2.7",
+                    "num": "2.7",
+                    "title": "Clinical summary (abbreviated for an initial IND)",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 2.7 · Clinical summary (abbreviated for an initial IND)"
+                  }
+                ]
+              },
+              {
+                "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-M3",
+                "code": "M3",
+                "label": "Module 3 · Quality (CMC)",
+                "children": [
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S",
+                    "code": "3.2.S",
+                    "label": "Drug substance",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.1",
+                        "num": "3.2.S.1",
+                        "title": "General information",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.1 · General information · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.2",
+                        "num": "3.2.S.2",
+                        "title": "Manufacture",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.2 · Manufacture · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.3",
+                        "num": "3.2.S.3",
+                        "title": "Characterisation",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.3 · Characterisation · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.4",
+                        "num": "3.2.S.4",
+                        "title": "Control of drug substance",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.4 · Control of drug substance · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.5",
+                        "num": "3.2.S.5",
+                        "title": "Reference standards or materials",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.5 · Reference standards or materials"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.6",
+                        "num": "3.2.S.6",
+                        "title": "Container closure system",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.6 · Container closure system · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.S.7",
+                        "num": "3.2.S.7",
+                        "title": "Stability",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.S.7 · Stability · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P",
+                    "code": "3.2.P",
+                    "label": "Drug product",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.1",
+                        "num": "3.2.P.1",
+                        "title": "Description and composition",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.1 · Description and composition · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.2",
+                        "num": "3.2.P.2",
+                        "title": "Pharmaceutical development",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.2 · Pharmaceutical development"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.3",
+                        "num": "3.2.P.3",
+                        "title": "Manufacture",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.3 · Manufacture · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.4",
+                        "num": "3.2.P.4",
+                        "title": "Control of excipients",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.4 · Control of excipients · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.5",
+                        "num": "3.2.P.5",
+                        "title": "Control of drug product",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.5 · Control of drug product · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.6",
+                        "num": "3.2.P.6",
+                        "title": "Reference standards or materials",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.6 · Reference standards or materials"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.7",
+                        "num": "3.2.P.7",
+                        "title": "Container closure system",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.7 · Container closure system · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.P.8",
+                        "num": "3.2.P.8",
+                        "title": "Stability",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.P.8 · Stability · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.A",
+                    "code": "3.2.A",
+                    "label": "Appendices",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.A.1",
+                        "num": "3.2.A.1",
+                        "title": "Facilities and equipment",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.A.1 · Facilities and equipment"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.A.2",
+                        "num": "3.2.A.2",
+                        "title": "Adventitious agents safety evaluation",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.A.2 · Adventitious agents safety evaluation"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.A.3",
+                        "num": "3.2.A.3",
+                        "title": "Excipients (novel)",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.A.3 · Excipients (novel)"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.2.R",
+                    "num": "3.2.R",
+                    "title": "Regional information",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.2.R · Regional information"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-3.3",
+                    "num": "3.3",
+                    "title": "Literature references",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 3.3 · Literature references"
+                  }
+                ]
+              },
+              {
+                "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-M4",
+                "code": "M4",
+                "label": "Module 4 · Nonclinical study reports",
+                "children": [
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.1",
+                    "code": "4.2.1",
+                    "label": "Pharmacology",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.1.1",
+                        "num": "4.2.1.1",
+                        "title": "Primary pharmacodynamics",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.1.1 · Primary pharmacodynamics · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.1.2",
+                        "num": "4.2.1.2",
+                        "title": "Secondary pharmacodynamics",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.1.2 · Secondary pharmacodynamics"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.1.3",
+                        "num": "4.2.1.3",
+                        "title": "Safety pharmacology",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.1.3 · Safety pharmacology · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.1.4",
+                        "num": "4.2.1.4",
+                        "title": "Pharmacodynamic drug interactions",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.1.4 · Pharmacodynamic drug interactions"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2",
+                    "code": "4.2.2",
+                    "label": "Pharmacokinetics",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.1",
+                        "num": "4.2.2.1",
+                        "title": "Analytical methods and validation reports",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.1 · Analytical methods and validation reports"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.2",
+                        "num": "4.2.2.2",
+                        "title": "Absorption",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.2 · Absorption"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.3",
+                        "num": "4.2.2.3",
+                        "title": "Distribution",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.3 · Distribution"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.4",
+                        "num": "4.2.2.4",
+                        "title": "Metabolism",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.4 · Metabolism"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.5",
+                        "num": "4.2.2.5",
+                        "title": "Excretion",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.5 · Excretion"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.6",
+                        "num": "4.2.2.6",
+                        "title": "Pharmacokinetic drug interactions (nonclinical)",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.6 · Pharmacokinetic drug interactions (nonclinical)"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.2.7",
+                        "num": "4.2.2.7",
+                        "title": "Other pharmacokinetic studies",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.2.7 · Other pharmacokinetic studies"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3",
+                    "code": "4.2.3",
+                    "label": "Toxicology",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.1",
+                        "num": "4.2.3.1",
+                        "title": "Single-dose toxicity",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.1 · Single-dose toxicity · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.2",
+                        "num": "4.2.3.2",
+                        "title": "Repeat-dose toxicity",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.2 · Repeat-dose toxicity · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.3",
+                        "num": "4.2.3.3",
+                        "title": "Genotoxicity",
+                        "type": "Required",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.3 · Genotoxicity · mandatory section",
+                        "blocker": true,
+                        "flag": "Mandatory section — no content yet"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.4",
+                        "num": "4.2.3.4",
+                        "title": "Carcinogenicity",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.4 · Carcinogenicity"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.5",
+                        "num": "4.2.3.5",
+                        "title": "Reproductive and developmental toxicity",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.5 · Reproductive and developmental toxicity"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.6",
+                        "num": "4.2.3.6",
+                        "title": "Local tolerance",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.6 · Local tolerance"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.2.3.7",
+                        "num": "4.2.3.7",
+                        "title": "Other toxicity studies",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.2.3.7 · Other toxicity studies"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-4.3",
+                    "num": "4.3",
+                    "title": "Literature references",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 4.3 · Literature references"
+                  }
+                ]
+              },
+              {
+                "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-M5",
+                "code": "M5",
+                "label": "Module 5 · Clinical study reports",
+                "children": [
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.2",
+                    "num": "5.2",
+                    "title": "Tabular listing of all clinical studies",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.2 · Tabular listing of all clinical studies"
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3",
+                    "code": "5.3",
+                    "label": "Clinical study reports",
+                    "children": [
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.1",
+                        "num": "5.3.1",
+                        "title": "Reports of biopharmaceutic studies",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.1 · Reports of biopharmaceutic studies"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.3",
+                        "num": "5.3.3",
+                        "title": "Reports of human pharmacokinetic studies",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.3 · Reports of human pharmacokinetic studies"
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.5",
+                        "code": "5.3.5",
+                        "label": "Reports of efficacy and safety studies",
+                        "children": [
+                          {
+                            "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.5.1",
+                            "num": "5.3.5.1",
+                            "title": "Study reports of controlled clinical studies — includes the clinical protocol(s) and IRB information for an initial IND (21 CFR 312.23(a)(6))",
+                            "type": "Required",
+                            "status": "not_started",
+                            "pct": 0,
+                            "owner": "—",
+                            "ver": "v1",
+                            "updated": "3m ago",
+                            "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.5.1 · Study reports of controlled clinical studies — includes the clinical protocol(s) and IRB information for an initial IND (21 CFR 312.23(a)(6)) · mandatory section",
+                            "blocker": true,
+                            "flag": "Mandatory section — no content yet"
+                          },
+                          {
+                            "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.5.2",
+                            "num": "5.3.5.2",
+                            "title": "Study reports of uncontrolled clinical studies",
+                            "type": "Optional",
+                            "status": "not_started",
+                            "pct": 0,
+                            "owner": "—",
+                            "ver": "v1",
+                            "updated": "3m ago",
+                            "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.5.2 · Study reports of uncontrolled clinical studies"
+                          },
+                          {
+                            "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.5.4",
+                            "num": "5.3.5.4",
+                            "title": "Other study reports — previous human experience (21 CFR 312.23(a)(9))",
+                            "type": "Optional",
+                            "status": "not_started",
+                            "pct": 0,
+                            "owner": "—",
+                            "ver": "v1",
+                            "updated": "3m ago",
+                            "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.5.4 · Other study reports — previous human experience (21 CFR 312.23(a)(9))"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.3.7",
+                        "num": "5.3.7",
+                        "title": "Case report forms and individual patient listings",
+                        "type": "Optional",
+                        "status": "not_started",
+                        "pct": 0,
+                        "owner": "—",
+                        "ver": "v1",
+                        "updated": "3m ago",
+                        "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.3.7 · Case report forms and individual patient listings"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "sec-doc_38ac3214a81b4593b31e0633eccd80ab-5.4",
+                    "num": "5.4",
+                    "title": "Literature references",
+                    "type": "Optional",
+                    "status": "not_started",
+                    "pct": 0,
+                    "owner": "—",
+                    "ver": "v1",
+                    "updated": "3m ago",
+                    "preview": "OQ-002 Vault program 20261029202031 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · 5.4 · Literature references"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "cabinet",
+            "code": "",
+            "label": "Source files · filing cabinet",
+            "children": [
+              {
+                "id": "cab-unfiled",
+                "code": "",
+                "label": "Unfiled · needs review",
+                "children": [
+                  {
+                    "id": "up-8540fa37-bcb0-4d54-ba05-2bc1a512ea68",
+                    "num": "—",
+                    "title": "oq-002-data-room-20261029202031",
+                    "type": "File",
+                    "status": "unfiled",
+                    "pct": null,
+                    "owner": "Oona Runner",
+                    "ver": "v1.0",
+                    "updated": "just now",
+                    "preview": "oq-002-data-room-20261029202031.pdf · 620 B · SHA-256 f0085e309b2c…",
+                    "src": "upload",
+                    "docId": "8540fa37-bcb0-4d54-ba05-2bc1a512ea68",
+                    "originalFileAvailable": true,
+                    "disposition": null,
+                    "sizeLabel": "620 B",
+                    "hash": "f0085e309b2c9a8ff76719bb179a120b85d438f945b7fe29842222304e78142b",
+                    "mimeType": "application/pdf",
+                    "filing": {
+                      "folderId": null,
+                      "folderLabel": "",
+                      "evidenceKind": null,
+                      "ctdSection": null,
+                      "placementStatus": "unfiled",
+                      "confidence": "none",
+                      "rationale": "No filing rule matched the name, title, or document text — needs a person to file it.",
+                      "placedBy": null,
+                      "placedByRecorded": false,
+                      "placedAt": null
+                    },
+                    "details": {
+                      "documentTitle": "oq-002-data-room-20261029202031",
+                      "documentType": "OTHER",
+                      "classification": "INTERNAL"
+                    },
+                    "versionCount": 1,
+                    "documentCode": "oq-002-data-room-20261029202031.pdf",
+                    "lifecycleStage": null,
+                    "flag": "No filing rule matched the name, title, or document text — needs a person to file it."
+                  }
+                ]
+              },
+              {
+                "id": "cab-module-1",
+                "code": "",
+                "label": "Module 1 · Administrative",
+                "children": []
+              },
+              {
+                "id": "cab-module-2",
+                "code": "",
+                "label": "Module 2 · Summaries",
+                "children": []
+              },
+              {
+                "id": "cab-module-3",
+                "code": "",
+                "label": "Module 3 · Quality",
+                "children": []
+              },
+              {
+                "id": "cab-module-4",
+                "code": "",
+                "label": "Module 4 · Nonclinical",
+                "children": []
+              },
+              {
+                "id": "cab-module-5",
+                "code": "",
+                "label": "Module 5 · Clinical",
+                "children": [
+                  {
+                    "id": "up-31cf7b75-d4a3-49de-8981-9cba9469b8d2",
+                    "num": "—",
+                    "title": "OQ-002 Approval family 20261029202031",
+                    "type": "Protocol",
+                    "status": "suggested",
+                    "pct": null,
+                    "owner": "Oona Runner",
+                    "ver": "v2.0",
+                    "updated": "1m ago",
+                    "preview": "approval-v2.pdf · 629 B · SHA-256 b27d62d18363…",
+                    "src": "upload",
+                    "docId": "31cf7b75-d4a3-49de-8981-9cba9469b8d2",
+                    "originalFileAvailable": true,
+                    "disposition": null,
+                    "sizeLabel": "629 B",
+                    "hash": "b27d62d18363c12f69f01f6754343b40f9236de8ef7769535e0d46c55a4113c4",
+                    "mimeType": "application/pdf",
+                    "filing": {
+                      "folderId": "module-5",
+                      "folderLabel": "Module 5 · Clinical",
+                      "evidenceKind": "protocol",
+                      "ctdSection": null,
+                      "placementStatus": "suggested",
+                      "confidence": "medium",
+                      "rationale": "Kept from version 1.0 when this version was added.",
+                      "placedBy": null,
+                      "placedByRecorded": false,
+                      "placedAt": null
+                    },
+                    "details": {
+                      "documentTitle": "OQ-002 Approval family 20261029202031",
+                      "documentType": "PROTOCOL",
+                      "classification": "INTERNAL"
+                    },
+                    "versionCount": 2,
+                    "documentCode": "OQ-002 Approval family 20261029202031.pdf",
+                    "lifecycleStage": "approved"
+                  },
+                  {
+                    "id": "up-fd81aba1-d877-4585-be6b-41ab62185816",
+                    "num": "—",
+                    "title": "OQ-002 Confirm set A 20261029202031",
+                    "type": "Protocol",
+                    "status": "suggested",
+                    "pct": null,
+                    "owner": "Oona Runner",
+                    "ver": "v1.0",
+                    "updated": "just now",
+                    "preview": "OQ-002-Confirm-set-A-20261029202031.pdf · 616 B · SHA-256 455bea4baa0b…",
+                    "src": "upload",
+                    "docId": "fd81aba1-d877-4585-be6b-41ab62185816",
+                    "originalFileAvailable": true,
+                    "disposition": null,
+                    "sizeLabel": "616 B",
+                    "hash": "455bea4baa0b23658f2bbe1ce34cf5b4e25652a9e566227ab0a259aa356997fe",
+                    "mimeType": "application/pdf",
+                    "filing": {
+                      "folderId": "module-5",
+                      "folderLabel": "Module 5 · Clinical",
+                      "evidenceKind": "protocol",
+                      "ctdSection": null,
+                      "placementStatus": "suggested",
+                      "confidence": "medium",
+                      "rationale": "Uploaded as Protocol, so Module 5; the name did not identify a section.",
+                      "placedBy": null,
+                      "placedByRecorded": false,
+                      "placedAt": null
+                    },
+                    "details": {
+                      "documentTitle": "OQ-002 Confirm set A 20261029202031",
+                      "documentType": "PROTOCOL",
+                      "classification": "INTERNAL"
+                    },
+                    "versionCount": 1,
+                    "documentCode": "OQ-002 Confirm set A 20261029202031.pdf",
+                    "lifecycleStage": null
+                  },
+                  {
+                    "id": "up-5775b058-c3d7-4ea0-93f9-8d0daca8f46c",
+                    "num": "—",
+                    "title": "OQ-002 Confirm set B 20261029202031",
+                    "type": "Protocol",
+                    "status": "suggested",
+                    "pct": null,
+                    "owner": "Oona Runner",
+                    "ver": "v1.0",
+                    "updated": "just now",
+                    "preview": "OQ-002-Confirm-set-B-20261029202031.pdf · 616 B · SHA-256 da03fb7f6840…",
+                    "src": "upload",
+                    "docId": "5775b058-c3d7-4ea0-93f9-8d0daca8f46c",
+                    "originalFileAvailable": true,
+                    "disposition": null,
+                    "sizeLabel": "616 B",
+                    "hash": "da03fb7f68401f1da09d4755111c613640083e62e71486ae21c3bae82767e9d0",
+                    "mimeType": "application/pdf",
+                    "filing": {
+                      "folderId": "module-5",
+                      "folderLabel": "Module 5 · Clinical",
+                      "evidenceKind": "protocol",
+                      "ctdSection": null,
+                      "placementStatus": "suggested",
+                      "confidence": "medium",
+                      "rationale": "Uploaded as Protocol, so Module 5; the name did not identify a section.",
+                      "placedBy": null,
+                      "placedByRecorded": false,
+                      "placedAt": null
+                    },
+                    "details": {
+                      "documentTitle": "OQ-002 Confirm set B 20261029202031",
+                      "documentType": "PROTOCOL",
+                      "classification": "INTERNAL"
+                    },
+                    "versionCount": 1,
+                    "documentCode": "OQ-002 Confirm set B 20261029202031.pdf",
+                    "lifecycleStage": null
+                  },
+                  {
+                    "id": "up-c51c2bc6-4a70-4ed9-b0e7-ba9aa14b827e",
+                    "num": "—",
+                    "title": "OQ-002 Protocol 20261029202031",
+                    "type": "Protocol",
+                    "status": "confirmed",
+                    "pct": null,
+                    "owner": "Oona Runner",
+                    "ver": "v2.0",
+                    "updated": "2m ago",
+                    "preview": "next-version.pdf · 622 B · SHA-256 06ed30e644e1…",
+                    "src": "upload",
+                    "docId": "c51c2bc6-4a70-4ed9-b0e7-ba9aa14b827e",
+                    "originalFileAvailable": true,
+                    "disposition": null,
+                    "sizeLabel": "622 B",
+                    "hash": "06ed30e644e1789bb78fbb2cba12cc1f643f2e9c98fb21edec4ae5e953cc4ce3",
+                    "mimeType": "application/pdf",
+                    "filing": {
+                      "folderId": "module-5",
+                      "folderLabel": "Module 5 · Clinical",
+                      "evidenceKind": "protocol",
+                      "ctdSection": null,
+                      "placementStatus": "confirmed",
+                      "confidence": null,
+                      "rationale": "Kept from version 1.0 when this version was added.",
+                      "placedBy": "Oona Runner",
+                      "placedByRecorded": true,
+                      "placedAt": "2026-10-29T20:20:55.036Z"
+                    },
+                    "details": {
+                      "documentTitle": "OQ-002 Protocol 20261029202031",
+                      "documentType": "PROTOCOL",
+                      "classification": "INTERNAL"
+                    },
+                    "versionCount": 2,
+                    "documentCode": "OQ-002 Protocol 20261029202031.pdf",
+                    "lifecycleStage": "in_review"
+                  }
+                ]
+              },
+              {
+                "id": "cab-sequences",
+                "code": "",
+                "label": "eCTD sequences",
+                "children": []
+              },
+              {
+                "id": "cab-corresp",
+                "code": "",
+                "label": "Agency correspondence",
+                "children": []
+              },
+              {
+                "id": "cab-shared",
+                "code": "",
+                "label": "Shared · Templates",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "artifacts": {
+          "total": 0,
+          "byStatus": {},
+          "signatures": {
+            "none": 0,
+            "current": 0,
+            "stale": 0,
+            "unknown": 0
+          },
+          "reviewed": 0,
+          "window": {
+            "shown": 0,
+            "total": 0,
+            "truncated": false
+          }
+        },
+        "coverage": {
+          "state": "available",
+          "provenance": {
+            "source": "rule_pack",
+            "docType": "ind",
+            "agency": "fda",
+            "packVersion": "ich-m4-v2.2"
+          },
+          "modules": [
+            {
+              "code": "m1",
+              "name": "Administrative Information",
+              "covered": [],
+              "missing": [
+                "1.1.1",
+                "1.1.2",
+                "1.1.3",
+                "1.2",
+                "1.3",
+                "1.12.14",
+                "1.14.4.1",
+                "1.14.4.2",
+                "1.20"
+              ]
+            },
+            {
+              "code": "m2",
+              "name": "CTD Summaries",
+              "covered": [],
+              "missing": [
+                "2.2",
+                "2.3.P",
+                "2.3.S",
+                "2.4",
+                "2.5",
+                "2.6.2",
+                "2.6.4",
+                "2.6.6"
+              ]
+            },
+            {
+              "code": "m3",
+              "name": "Quality (CMC)",
+              "covered": [],
+              "missing": [
+                "3.2.P.1",
+                "3.2.P.3",
+                "3.2.P.4",
+                "3.2.P.5",
+                "3.2.P.7",
+                "3.2.P.8",
+                "3.2.S.1",
+                "3.2.S.2",
+                "3.2.S.3",
+                "3.2.S.4",
+                "3.2.S.6",
+                "3.2.S.7"
+              ]
+            },
+            {
+              "code": "m4",
+              "name": "Nonclinical Study Reports",
+              "covered": [],
+              "missing": [
+                "4.2.1.1",
+                "4.2.1.3",
+                "4.2.2",
+                "4.2.3.1",
+                "4.2.3.2",
+                "4.2.3.3"
+              ]
+            },
+            {
+              "code": "m5",
+              "name": "Clinical Study Reports",
+              "covered": [],
+              "missing": [
+                "5.3.5.1"
+              ]
+            }
+          ],
+          "required": 36,
+          "covered": 0
+        },
+        "unfiledCount": 1,
+        "awaitingConfirmationCount": 3,
+        "uploadsWindow": {
+          "shown": 5,
+          "total": 5,
+          "truncated": false
+        },
+        "dataRoom": {
+          "captured": 1,
+          "classified": 1,
+          "filed": 1,
+          "needsReview": 0,
+          "sources": [
+            {
+              "id": 79,
+              "title": "oq-002-data-room-20261029202031.pdf",
+              "kind": "PDF",
+              "sizeLabel": "620 B",
+              "addedAt": "just now",
+              "stage": "filed",
+              "readState": "Read",
+              "suggestedFolder": null,
+              "suggestedFolderLabel": "",
+              "evidenceKind": null,
+              "confidence": "none",
+              "needsReview": true,
+              "filedAs": {
+                "version": "1.0",
+                "supersededBy": null
+              }
+            }
+          ],
+          "window": {
+            "shown": 1,
+            "truncated": false
+          }
+        }
+      }
+    }
+  }
+}
