@@ -1,0 +1,33 @@
+RED — trunk HEAD 7d83530f, unchanged test files (git status clean for client/src/concept2cure/v2 and client/src/services/portal)
+$ npx vitest run client/src/concept2cure/v2/__tests__/conversationThread*.test.tsx
+(trimmed: per-file counts, first failure per file, distinct errors, summary)
+
+conversationThreadAdminFollow.test.tsx: 0 passed, 6 failed
+  first failure: 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer
+    → useAuth must be used within an AuthProvider
+conversationThreadCanvas.test.tsx: 21 passed, 0 failed
+conversationThreadInsertRefusals.test.tsx: 8 passed, 0 failed
+conversationThreadShellChat.test.tsx: 0 passed, 16 failed
+  first failure: arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen
+    → useAuth must be used within an AuthProvider
+conversationThreadSignoff.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+    → useAuth must be used within an AuthProvider
+conversationThreadStarters.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma)
+    → useAuth must be used within an AuthProvider
+conversationThreadStopped.test.tsx: 1 passed, 3 failed
+  first failure: a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark
+    → useAuth must be used within an AuthProvider
+conversationThreadUrl.test.tsx: 1 passed, 6 failed
+  first failure: a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation
+    → useAuth must be used within an AuthProvider
+
+Distinct error(s), first app frames:
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth client/src/services/portal/authService.tsx:1379:11
+ ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:124:20
+ ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1386:21
+
+ Test Files  6 failed | 2 passed (8)
+      Tests  39 failed | 31 passed (70)

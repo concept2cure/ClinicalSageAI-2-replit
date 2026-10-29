@@ -1,0 +1,77 @@
+HISTORY — the same 8 conversationThread suites run against exported source (git archive of client/ shared/ tests/
+and vitest.config.ts into a scratch directory, node_modules symlinked; the shared working tree was not touched).
+
+== c04ed02b (2026-10-23 15:00:59, trunk lane before the merge; useDocumentList does not call useAuth)
+conversationThreadAdminFollow.test.tsx: 2 passed, 0 failed
+conversationThreadCanvas.test.tsx: 21 passed, 0 failed
+conversationThreadInsertRefusals.test.tsx: 8 passed, 0 failed
+conversationThreadShellChat.test.tsx: 16 passed, 0 failed
+conversationThreadSignoff.test.tsx: 4 passed, 0 failed
+conversationThreadStarters.test.tsx: 4 passed, 0 failed
+conversationThreadStopped.test.tsx: 4 passed, 0 failed
+conversationThreadUrl.test.tsx: 7 passed, 0 failed
+
+ Test Files  8 passed (8)
+      Tests  66 passed (66)
+
+== b513b53e (2026-10-23 15:04:08, the merge that brought cc1607c3a's useAuth onto trunk)
+conversationThreadAdminFollow.test.tsx: 0 passed, 2 failed
+  first failure: 9. an admin following a colleague’s turn > has no Stop (until DT3 accepts it), no Pause, and a composer that says only the asker can steer
+    → useAuth must be used within an AuthProvider
+conversationThreadCanvas.test.tsx: 21 passed, 0 failed
+conversationThreadInsertRefusals.test.tsx: 8 passed, 0 failed
+conversationThreadShellChat.test.tsx: 0 passed, 16 failed
+  first failure: arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen
+    → useAuth must be used within an AuthProvider
+conversationThreadSignoff.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+    → useAuth must be used within an AuthProvider
+conversationThreadStarters.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma)
+    → useAuth must be used within an AuthProvider
+conversationThreadStopped.test.tsx: 1 passed, 3 failed
+  first failure: a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark
+    → useAuth must be used within an AuthProvider
+conversationThreadUrl.test.tsx: 1 passed, 6 failed
+  first failure: a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation
+    → useAuth must be used within an AuthProvider
+
+Distinct error(s), first app frames:
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth client/src/services/portal/authService.tsx:1393:11
+ ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:121:20
+ ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1340:21
+
+ Test Files  6 failed | 2 passed (8)
+      Tests  35 failed | 31 passed (66)
+
+== 142c133d (2026-10-28, parent of both F3 commits 55673579 and 96ce3798)
+conversationThreadAdminFollow.test.tsx: 0 passed, 6 failed
+  first failure: 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer
+    → useAuth must be used within an AuthProvider
+conversationThreadCanvas.test.tsx: 21 passed, 0 failed
+conversationThreadInsertRefusals.test.tsx: 8 passed, 0 failed
+conversationThreadShellChat.test.tsx: 0 passed, 16 failed
+  first failure: arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen
+    → useAuth must be used within an AuthProvider
+conversationThreadSignoff.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+    → useAuth must be used within an AuthProvider
+conversationThreadStarters.test.tsx: 0 passed, 4 failed
+  first failure: ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma)
+    → useAuth must be used within an AuthProvider
+conversationThreadStopped.test.tsx: 1 passed, 3 failed
+  first failure: a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark
+    → useAuth must be used within an AuthProvider
+conversationThreadUrl.test.tsx: 1 passed, 6 failed
+  first failure: a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation
+    → useAuth must be used within an AuthProvider
+
+Distinct error(s), first app frames:
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth client/src/services/portal/authService.tsx:1379:11
+ ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:121:20
+ ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1386:21
+
+ Test Files  6 failed | 2 passed (8)
+      Tests  39 failed | 31 passed (70)
