@@ -12,9 +12,12 @@ import { requireEditorAccess, sessionPermissions } from '../orgMembership';
 import {
   AUDIT_ATTEST_PERMISSION,
   AUDIT_ATTEST_ROLES,
+  BILLING_ADMIN_PERMISSION,
+  BILLING_ADMIN_ROLES,
   GOVERNED_WRITE_PERMISSION,
   REPORT_FINALIZE_PERMISSION,
   REPORT_FINALIZE_ROLES,
+  canAdministerBilling,
   canAttestAuditTrail,
   canFinalizeReport,
   canGovernedWrite,
@@ -74,10 +77,13 @@ describe('sessionPermissions', () => {
     // audit:attest joined on 2026-10-12 (coverage review C-24): an admin may
     // attest to the audit trail, and this exact-equality assertion is what
     // makes a silently added permission visible rather than tolerated.
+    // billing:admin joined on 2026-10-29 (fold billing into Licensing): an
+    // admin reads the invoice list and sets seats, weekly limits and reload.
     expect(sessionPermissions('admin')).toEqual([
       GOVERNED_WRITE_PERMISSION,
       REPORT_FINALIZE_PERMISSION,
       AUDIT_ATTEST_PERMISSION,
+      BILLING_ADMIN_PERMISSION,
     ]);
     // The server refuses a manager's finalize with ESIGNATURE_NO_AUTHORITY unless the
     // signing policy names managers, so the canvas must not offer it (P1-44b R2).
@@ -153,6 +159,60 @@ describe('audit:attest', () => {
       expect(canAttestAuditTrail({ permissions: perms }), `${role}`).toBe(
         AUDIT_ATTEST_ROLES.includes(role),
       );
+    }
+  });
+});
+
+/**
+ * The billing-administration permission and the billing routes' own guard agree,
+ * for every role (D2, fold billing into Licensing, 2026-10-29).
+ *
+ * GET /api/billing/invoices answered any member of the tenant, and the account
+ * menu offered every member a Billing entry. The route now takes
+ * requireRole(...BILLING_ADMIN_ROLES), as the seat, weekly-limit and auto-reload
+ * writes beside it do, and the session derives the permission from the same
+ * list, so Licensing shows the invoice list, and the menu its Billing entry, to
+ * exactly the roles the route admits.
+ */
+describe('billing:admin', () => {
+  const ROLES = ['owner', 'admin', 'manager', 'approver', 'reviewer', 'member', 'viewer', 'user', 'super_admin', 'Admin', ''];
+
+  function guardAllows(role: string): boolean {
+    let allowed = false;
+    const res = { status: () => ({ json: () => undefined }) };
+    requireRole(...BILLING_ADMIN_ROLES)({ user: { role, organizationId: 7 } } as never, res as never, () => { allowed = true; });
+    return allowed;
+  }
+
+  it('is the admin|owner set exactly — `withExtendingRoles` must not widen it', () => {
+    expect([...BILLING_ADMIN_ROLES].sort()).toEqual(['admin', 'owner']);
+  });
+
+  it.each(ROLES)('is granted to role %j exactly when the billing guard admits it', (role) => {
+    expect(sessionPermissions(role).includes(BILLING_ADMIN_PERMISSION)).toBe(guardAllows(role));
+    expect(canAdministerBilling({ permissions: sessionPermissions(role) })).toBe(guardAllows(role));
+  });
+
+  it('a manager writes governed records and does not administer billing', () => {
+    expect(sessionPermissions('manager')).toContain(GOVERNED_WRITE_PERMISSION);
+    expect(sessionPermissions('manager')).not.toContain(BILLING_ADMIN_PERMISSION);
+    expect(sessionPermissions('member')).not.toContain(BILLING_ADMIN_PERMISSION);
+  });
+
+  it('offers to a session with no permissions array, as the precedents do; an array is authoritative', () => {
+    expect(canAdministerBilling({})).toBe(true);
+    expect(canAdministerBilling(null)).toBe(true);
+    expect(canAdministerBilling({ permissions: [] })).toBe(false);
+    expect(canAdministerBilling({ permissions: [BILLING_ADMIN_PERMISSION] })).toBe(true);
+  });
+
+  it('every billing-administration guard in billing-dashboard.ts reads the one list', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '..', '..', 'routes', 'billing-dashboard.ts'), 'utf8');
+    expect(src).not.toMatch(/requireRole\(\s*'admin'\s*,\s*'owner'\s*\)/);
+    // The invoice read, and the three writes (GET /seats is every member's read of the count).
+    for (const route of ["get('/invoices'", "put('/seats'", "put('/weekly-limits/:metric'", "put('/credits/auto-reload'"]) {
+      const line = src.split('\n').find((l) => l.startsWith(`router.${route}`));
+      expect(line, route).toMatch(/requireRole\(\.\.\.BILLING_ADMIN_ROLES\)/);
     }
   });
 });

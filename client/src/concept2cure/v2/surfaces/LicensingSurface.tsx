@@ -24,6 +24,9 @@ import {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { getSurfaceMeta } from '../registryModel';
+import { useAuthUser } from '@/services/portal/authService';
+import { canAdministerBilling } from '@shared/constants/permissions';
+import { LicensingInvoices, invoiceContext, useInvoices } from './LicensingInvoices';
 
 /* -- Inline helpers -- */
 
@@ -94,6 +97,12 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const statusState = useLiveData<BillingStatus>('/api/billing/status');
   const status = statusState.data;
 
+  /* The organisation's invoices, under the plan status, for billing
+     administrators: the permission the session derives from the invoice
+     route's own role list (fold billing into Licensing, 2026-10-29). A member
+     is told who sees them, and the list is not read. */
+  const invoices = useInvoices(canAdministerBilling(useAuthUser()));
+
   const family = (LIC_ARCHETYPES.find((a) => a.id === arch) || { family: 'pharma' }).family;
   const b2bTiers: B2bTier[] = LIC_PRICING[family] || LIC_PRICING.pharma;
   const bundle = licBundle(seats);
@@ -146,65 +155,74 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
      to 'free' and the free card wears the Current tag — the error branch
      exists so that fallback is never reported as the organization's subscription.
      Payment status is the raw value, never dunning language; choosing a subscription
-     and the seats input are checkout acts and are never offered. */
+     and the seats input are checkout acts and are never offered. The invoice
+     facts (invoiceContext, LicensingInvoices.tsx) say which state the read is
+     in, every time: not read for a member, refused, failed, not set up, or the
+     page on screen. They moved here from the billing screen with the list. */
   const anaContext = useMemo(() => {
-    const lockLead = unlock
-      ? `The user arrived here from a lock on "${unlock.label}", which ${
-          unlock.requiredTier
-            ? `needs the ${unlock.requiredTier} subscription or above`
-            : 'has no subscription remedy — changing subscription may not resolve it on its own'
-        }. `
-      : '';
-    const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
-    const shared = {
-      pricingModel: model,
-      cycle,
-      ...(model === 'b2b' ? { archetype: arch } : {}),
-      arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
-    };
-    if (statusState.loading) {
-      return { summary: lockLead + 'The current subscription is still loading. ' + view, facts: shared };
-    }
-    if (statusState.error) {
+    const subscriptionContext = (): { summary: string; facts: Record<string, unknown>; availableActions?: string[] } => {
+      const lockLead = unlock
+        ? `The user arrived here from a lock on "${unlock.label}", which ${
+            unlock.requiredTier
+              ? `needs the ${unlock.requiredTier} subscription or above`
+              : 'has no subscription remedy — changing subscription may not resolve it on its own'
+          }. `
+        : '';
+      const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
+      const shared = {
+        pricingModel: model,
+        cycle,
+        ...(model === 'b2b' ? { archetype: arch } : {}),
+        arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
+      };
+      if (statusState.loading) {
+        return { summary: lockLead + 'The current subscription is still loading. ' + view, facts: shared };
+      }
+      if (statusState.error) {
+        return {
+          summary:
+            lockLead +
+            'The subscription status could not be read, so no current subscription is shown — any "Current" marker on the ' +
+            'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
+            'free tier. ' + view,
+          facts: { ...shared, planUnavailable: true },
+        };
+      }
+      if (!status) {
+        return {
+          summary: lockLead + 'No subscription record was returned for this organization. ' + view,
+          facts: { ...shared, planUnavailable: true },
+        };
+      }
       return {
         summary:
           lockLead +
-          'The subscription status could not be read, so no current subscription is shown — any "Current" marker on the ' +
-          'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
-          'free tier. ' + view,
-        facts: { ...shared, planUnavailable: true },
+          `Compare subscriptions: current subscription "${status.tier}", payment status "${status.paymentStatus}", ` +
+          `${status.seats} seat(s), billed ${status.billingCycle}` +
+          (status.currentPeriodEnd
+            ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
+            : '') +
+          '. ' + view,
+        facts: {
+          ...shared,
+          currentTier: status.tier,
+          paymentStatus: status.paymentStatus,
+          billingCycle: status.billingCycle,
+          seats: status.seats,
+          currentPeriodEnd: status.currentPeriodEnd ?? null,
+          planUnavailable: false,
+        },
+        availableActions: [
+          'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
+          'Choosing a subscription opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
+          'Billing administrators open an invoice on Stripe (hosted page or PDF) and page through older invoices — human acts',
+        ],
       };
-    }
-    if (!status) {
-      return {
-        summary: lockLead + 'No subscription record was returned for this organization. ' + view,
-        facts: { ...shared, planUnavailable: true },
-      };
-    }
-    return {
-      summary:
-        lockLead +
-        `Compare subscriptions: current subscription "${status.tier}", payment status "${status.paymentStatus}", ` +
-        `${status.seats} seat(s), billed ${status.billingCycle}` +
-        (status.currentPeriodEnd
-          ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
-          : '') +
-        '. ' + view,
-      facts: {
-        ...shared,
-        currentTier: status.tier,
-        paymentStatus: status.paymentStatus,
-        billingCycle: status.billingCycle,
-        seats: status.seats,
-        currentPeriodEnd: status.currentPeriodEnd ?? null,
-        planUnavailable: false,
-      },
-      availableActions: [
-        'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
-        'Choosing a subscription opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
-      ],
     };
-  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+    const ctx = subscriptionContext();
+    const inv = invoiceContext(invoices.view);
+    return { ...ctx, summary: ctx.summary + ' ' + inv.sentence, facts: { ...ctx.facts, ...inv.facts } };
+  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status, invoices.view]);
   /* AnA operates the pricing CATALOG view only. The seat count is a checkout
      body field and `checkout()` opens Stripe — neither is reachable from here;
      both stay the person's own click. */
@@ -310,6 +328,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
       ) : null}
+
+      <LicensingInvoices invoices={invoices} />
 
       <div className="lic-controls">
         <div className="cv-tiers">
@@ -527,9 +547,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           <b>Usage-based, capped, auditable</b>
           <span>
             Every subscription meters real usage — session and weekly windows,
-            per-engine buckets, overage caps you set yourself, and credits with
-            auto-reload. Changing a cap is a governed action: admin role,
-            reason-for-change, audit entry.
+            per-engine buckets and overage caps you set yourself. Changing a cap
+            is a governed action: admin role, reason-for-change, audit entry.
           </span>
         </div>
         <button

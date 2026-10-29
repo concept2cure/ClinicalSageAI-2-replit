@@ -1,0 +1,13 @@
+shared/constants/permissions.ts
+server/middleware/orgMembership.ts
+server/routes/billing-dashboard.ts
+server/routes/__tests__/billing-invoices-admin-gate.test.ts
+server/middleware/__tests__/session-permissions.test.ts
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+client/src/concept2cure/v2/surfaces/UsageBilling.tsx
+client/src/concept2cure/v2/Shell.tsx
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx
+client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx
+client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx
