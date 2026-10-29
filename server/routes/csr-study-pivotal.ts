@@ -11,9 +11,11 @@
  *                                    reason; a change is a new record
  *
  * Both read the project under the CSR scope (project access, as the board
- * does). A declaration is a regulatory claim Module 2 repeats, so it needs a
- * writing role (requireEditorAccessForWrites) on a project that is not
- * archived.
+ * does). A declaration is a regulatory claim Module 2 repeats, so it also
+ * passes the project's own write admission (c2c/project-access.ts
+ * requireProjectAdmission, write mode): the caller's current role writes, the
+ * project's sharing gives them edit permission, and it is not archived. Read
+ * access alone let a member with use but not edit declare (D6, 1446214b8).
  */
 import { Router, type Request, type Response } from 'express';
 import { db } from '../db';
@@ -21,6 +23,7 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { createScopedLogger } from '../utils/logger';
 import { CsrScopeError, resolveCsrScope } from '../services/csr/project-scope';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
 import {
   declareStudyPivotal, readProjectStudyPivotal, StudyPivotalDeclarationError,
 } from '../services/csr/study-pivotal-declaration';
@@ -49,8 +52,13 @@ async function projectOf(req: Request, source: Record<string, unknown>, forWrite
 }
 
 function failure(res: Response, err: unknown, action: string): Response {
-  if (err instanceof StudyPivotalDeclarationError || err instanceof CsrScopeError) {
+  if (err instanceof StudyPivotalDeclarationError || err instanceof CsrScopeError
+      || (err instanceof ProjectAdmissionRefusal && err.status !== 503)) {
     return res.status(err.status).json({ error: err.message, code: err.code });
+  }
+  if (err instanceof ProjectAdmissionRefusal) {
+    log.error('Project access could not be verified for a pivotal declaration', { code: err.code });
+    return res.status(503).json({ error: 'Project access could not be verified. Nothing was recorded.', code: err.code });
   }
   log.error(`Pivotal declaration ${action} failed`, { err: err instanceof Error ? err.message : String(err) });
   return res.status(500).json({ error: action === 'read' ? 'The pivotal declarations could not be read.' : 'The declaration was not recorded.' });
@@ -83,6 +91,7 @@ export default function csrStudyPivotalRouter(): Router {
     try {
       const projectId = await projectOf(req, body, true, organizationId, userId);
       if (projectId === null) return res.status(400).json({ error: 'Name the project. Nothing was recorded.', code: 'PROJECT_REQUIRED' });
+      await requireProjectAdmission(req, String(projectId), true);
       const declaration = await declareStudyPivotal(queryableFromDrizzle(db!), {
         organizationId, projectId, studyId: body.studyId, pivotal: body.pivotal, reason: body.reason, declaredBy: userId,
       });

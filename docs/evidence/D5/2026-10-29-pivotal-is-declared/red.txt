@@ -30,3 +30,11 @@ AssertionError: expected { 'LMN-201-PART-A': undefined, …(2) } to deeply equal
 ## mutation B: the write-permission gate removed
  × client/src/concept2cure/v2/__tests__/studyPivotalDeclarations.test.tsx > Pivotal studies > offers no declaration to someone without the write permission, and still shows what is declared 20ms
       Tests  1 failed | 4 passed (5)
+
+## 5. Follow-up (D6, 1446214b8): csr-study-pivotal.pglite.test.ts before the declaration passed the project's write admission
+# A member whose project sharing gives use but not edit could declare (201).
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > lists the project’s studies, undeclared until the sponsor declares, then with the declaration 150ms
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > refuses a member the project’s sharing does not let edit, and records nothing 11ms
+AssertionError: expected [] to deeply equal [ [ '11', true ] ]
+AssertionError: expected 201 to be 403 // Object.is equality
+      Tests  2 failed | 8 passed (10)
