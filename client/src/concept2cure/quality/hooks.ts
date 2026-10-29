@@ -99,3 +99,24 @@ export function useTrainingCompliance() {
   );
   return { rows, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), refresh };
 }
+
+export interface TrainingExpiryRow {
+  userId: number; userName: string | null; documentId: number; docNumber: string; title: string;
+  documentVersion: string; expiresAt: string; daysLeft: number;
+}
+const isExpiryRow = (r: unknown): r is TrainingExpiryRow => {
+  const o = r as Record<string, unknown> | null;
+  return !!o && Number.isInteger(o.userId) && Number.isInteger(o.documentId) && typeof o.docNumber === 'string' &&
+    typeof o.expiresAt === 'string' && typeof o.daysLeft === 'number' && (o.userName === null || typeof o.userName === 'string');
+};
+/** Each active member whose current training lapses within `withinDays` —
+ *  GET /api/mdx/qms/training/expiring (G10). A body that is not that list is a failure. */
+export function useTrainingExpiring(withinDays: number) {
+  const path = `/api/mdx/qms/training/expiring?within=${withinDays}`;
+  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
+  const raw = useMemo(() => listOf<unknown>(data), [data]);
+  const rows = useMemo(() => (raw && raw.every(isExpiryRow) ? raw : null), [raw]);
+  const unreadable = data != null && rows === null ? `unexpected response shape for ${path}` : null;
+  const failed = !loading && (error != null || unreadable != null);
+  return { rows: loading || failed ? null : rows, failed, error: error ?? unreadable, refresh };
+}

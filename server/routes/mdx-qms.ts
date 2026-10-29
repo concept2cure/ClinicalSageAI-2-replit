@@ -121,7 +121,7 @@ import type { CreateContext } from '../services/authoring/authoring-documents';
 import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
-  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance,
+  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance, readQmsTrainingExpiring,
   QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
 } from '../services/qms/training';
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
@@ -891,16 +891,12 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
+  /* G10 (2026-10-29). Each active member whose current training on a release in
+     force lapses within the window, read as coverage reads it. This listed every
+     record with an expiry inside the window: a superseded version, a receipt
+     its member had renewed, a departed member's. No client called it. */
   try {
-    const { rows } = await qmsClient(req).query(`SELECT t.*, d.title AS document_title, d.doc_number
-         FROM qms_training_records t
-         JOIN qms_documents d ON d.id = t.document_id
-        WHERE t.organization_id = $1
-          AND t.expires_at IS NOT NULL
-          AND t.expires_at < NOW() + ($2 || ' days')::interval
-        ORDER BY t.expires_at ASC LIMIT 500`,
-      [orgId, withinDays],
-    );
+    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
     return ok(res, rows, { count: rows.length, withinDays });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
