@@ -165,8 +165,10 @@ describe('one regulator source, one declaration, across ind/ctd', () => {
     expect(local).toEqual([]);
   });
 
-  it('csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis', () => {
-    expect(declaredNames('csr-e3-basis.ts').sort()).toEqual(['CDISC_CONVENTION', 'e3SectionBasis']);
+  // 2026-10-29 (CSR slice 4): E3's own recalled wording per heading joins them;
+  // it is E3-specific, not a regulator document shared with another record.
+  it('csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION, E3_RECALLED_WORDING and e3SectionBasis', () => {
+    expect(declaredNames('csr-e3-basis.ts').sort()).toEqual(['CDISC_CONVENTION', 'E3_RECALLED_WORDING', 'e3SectionBasis']);
   });
 });
 

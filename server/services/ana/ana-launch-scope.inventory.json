@@ -613,6 +613,7 @@
    "get_biotech_program_status",
    "get_client_journey",
    "get_cmc_requirements",
+   "get_csr_section_evidence",
    "get_csr_template",
    "get_ctd_module_home",
    "get_device_labeling",

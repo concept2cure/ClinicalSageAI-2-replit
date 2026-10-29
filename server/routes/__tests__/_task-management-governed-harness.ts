@@ -225,7 +225,7 @@ function pinnedAssignmentClient(role: string | null) {
     const task = assignmentTaskFixture(tasks, statement, params);
     if (task) return task;
     if (statement.includes('task-assignment:roster')) return { rows: [{ id: 9, name: 'Ana', email: 'ana@example.test', role: 'member' }] };
-    if (statement.startsWith('SELECT id,name,email FROM users')) return { rows: [{ id: params[0], name: 'Ana', email: 'ana@example.test' }] };
+    if (statement.includes('task-assignment:recipient')) return { rows: [{ id: params[1], name: 'Ana', email: 'ana@example.test' }] };
     if (statement.includes('task-assignment:update')) {
       h.log.push('tx:update');
       const error = h.fail?.('tx', 'update'); if (error) throw error;
@@ -235,6 +235,7 @@ function pinnedAssignmentClient(role: string | null) {
       h.sets.push(change);
       return { rows: [{ ...before, ...change }] };
     }
+    // tenant-isolation-safe: a test double's dispatch match on a recording mock client; no database, no table, no tenant data
     if (statement === 'INSERT INTO audit_logs') { h.log.push('tx:execute'); return { rows: [] }; }
     throw new Error(`Unexpected assignment fixture SQL: ${statement}`);
   } };

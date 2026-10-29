@@ -24,16 +24,18 @@
  *                           provenance). Presence of a row == the section has
  *                           been drafted. Read via the existing org-scoped
  *                           getCSRSectionOutputs(jobId, orgId).
- *   - ICH_E3_STRUCTURE    — the canonical ICH E3 section catalog (labels +
- *                           required flags) via getICHE3Structure().
+ *   - ICH_E3_GUIDANCE     — the canonical ICH E3 tree (server/services/ind/
+ *                           ctd/csr-e3-guidance.ts), labels + required flags,
+ *                           via getICHE3Structure(). Since 2026-10-29 the
+ *                           builder has no outline of its own.
  *
  * HONESTY (regulated product — see the surface's SampleTag contract):
  *   - `program.code` is the constant 'ICH E3'. The CSR build pipeline conforms
- *     to ICH E3 by construction (ICH_E3_STRUCTURE); this is a guideline label,
+ *     to ICH E3 by construction (ICH_E3_GUIDANCE); this is a guideline label,
  *     not a per-record DB value.
  *   - Section `status` is derived strictly from what is persisted:
- *       drafted (a csr_section_outputs row exists for the section or one of its
- *       children) → 'draft'; otherwise → 'idle' (not started).
+ *       drafted (a csr_section_outputs row exists for the section or any
+ *       heading beneath it, at any depth) → 'draft'; otherwise → 'idle'.
  *     The values 'review'/'complete'/'approved' are DELIBERATELY never emitted:
  *     csr_section_outputs has no review/approval status column, so those
  *     workflow states cannot be sourced honestly. See caveats.
@@ -59,7 +61,7 @@ import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '../db.js';
 import { csrBuildJobs } from '@shared/schema';
-import { getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
+import { flattenICHE3Sections, getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
 import { getCSRSectionOutputs } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, readCsrProjectActor, resolveCsrScope } from '../services/csr/project-scope';
@@ -159,17 +161,16 @@ function resolveStudyTitle(rawSnapshot: unknown, studyId: string): string {
 
 /**
  * Map the canonical ICH-E3 top-level structure to the surface's section rows.
- * A top-level section counts as drafted when it (or any of its child sections)
- * has a persisted csr_section_outputs row. `draftedSet` empty ⇒ all-not-started.
+ * A top-level section counts as drafted when it, or any heading beneath it at
+ * any depth (job outputs are keyed by the draftable leaves, e.g. 12.2.1), has a
+ * persisted csr_section_outputs row. `draftedSet` empty ⇒ all-not-started.
  */
 function buildSections(
   structure: CSRSection[],
   draftedSet: Set<string>,
 ): CsrWorkflowSection[] {
   return structure.map((section) => {
-    const drafted =
-      draftedSet.has(section.number) ||
-      (section.childSections?.some((c) => draftedSet.has(c.number)) ?? false);
+    const drafted = flattenICHE3Sections([section]).some((node) => draftedSet.has(node.number));
 
     const row: CsrWorkflowSection = {
       num: section.number,

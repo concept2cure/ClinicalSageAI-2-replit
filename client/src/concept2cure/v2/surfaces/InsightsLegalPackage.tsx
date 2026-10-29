@@ -16,15 +16,10 @@ function validSelection(ids: string[]) {
   return ids.length > 0 && ids.length <= 50 && new Set(ids).size === ids.length
     && ids.every(id => typeof id === 'string' && id.trim().length > 0);
 }
-async function reportArchiveBody(response: Response, current: () => boolean) {
-  if (!current()) return null;
-  if (!response.ok) {
-    const body = await response.json();
-    if (!current()) return null;
-    throw new Error(serverMessage(body) ?? 'The report package was refused.');
-  }
-  const blob = await response.blob();
-  return current() ? blob : null;
+/** Throws the refusal of a non-ok export; returns quietly when this visit is no longer current. */
+async function reportArchiveRefusal(response: Response, current: () => boolean) {
+  const body = await response.json();
+  if (current()) throw new Error(serverMessage(body) ?? 'The report package was refused.');
 }
 
 /** Selection and optional stationery belong to this exact bundle visit. */
@@ -60,8 +55,10 @@ function LegalPackageSelection({ bundleId, disabled, owner }: { bundleId: string
     setBusy(true); setNote(null);
     try {
       const response = await apiRequest('POST', `/api/report-os/bundles/${encodeURIComponent(bundleId)}/export.zip`, { legalDocumentIds: ids, ...(variant ? { variantId: variant } : {}) });
-      const blob = await reportArchiveBody(response, isCurrent);
-      if (!blob || !isCurrent()) return;
+      if (!isCurrent()) return;
+      if (!response.ok) { await reportArchiveRefusal(response, isCurrent); return; }
+      const blob = await response.blob();
+      if (!isCurrent()) return;
       const filename = `report-package-${bundleId.slice(0, 8)}.zip`;
       setNote(downloadBlob(filename, blob) ? `Saved ${filename}. Keep this ZIP and its manifest as your export record.` : 'No file saved — this browser refused the download.');
     } catch (error) {

@@ -1,0 +1,219 @@
+{
+  "date": "2026-10-29",
+  "reason": "17 US biotech lifecycle records appended to LIFECYCLE_DOCUMENT_TYPES; not-indexed answers list them in document_types",
+  "preserved": 640,
+  "changed": {
+    "{\"document\":\"1.99\"}": {
+      "before": "483963c5f159218d",
+      "after": "d1ee07905047abbb"
+    },
+    "{\"document\":\"1.1.99\"}": {
+      "before": "f8347c77f7c5c98b",
+      "after": "3f4bd5a1c980c343"
+    },
+    "{\"document\":\"1.12.99\"}": {
+      "before": "94dd679e2604a16d",
+      "after": "228fc0b6ec3dc3d0"
+    },
+    "{\"document\":\"1.14.99\"}": {
+      "before": "cd94a004136c2516",
+      "after": "80ea9f863e8d38c6"
+    },
+    "{\"document\":\"1.14.1.99\"}": {
+      "before": "016d7365cb367b55",
+      "after": "6e77145bcf90519e"
+    },
+    "{\"document\":\"1.14.4.99\"}": {
+      "before": "5b729183211d10e8",
+      "after": "14acdee00b729e0f"
+    },
+    "{\"document\":\"1.3.99\"}": {
+      "before": "d1b4b30175dbcbe8",
+      "after": "e80ca238bc935db9"
+    },
+    "{\"document\":\"1.3.5.99\"}": {
+      "before": "fbf31121746dd915",
+      "after": "960c86cef663a61f"
+    },
+    "{\"document\":\"2.99\"}": {
+      "before": "b32d44224d460ce7",
+      "after": "ac5a28eb3f929d5d"
+    },
+    "{\"document\":\"2.6.99\"}": {
+      "before": "9fde82f903caaadd",
+      "after": "46c2be1887ab6442"
+    },
+    "{\"document\":\"2.7.99\"}": {
+      "before": "0bea37f24563ef63",
+      "after": "b5c4a9ee73628bbc"
+    },
+    "{\"document\":\"3.99\"}": {
+      "before": "2105bbf3b68a785f",
+      "after": "89d390bf16ac0705"
+    },
+    "{\"document\":\"3.2.99\"}": {
+      "before": "a9188d84bd9f4e17",
+      "after": "0f4dbab82dd9c9d9"
+    },
+    "{\"document\":\"3.2.P.99\"}": {
+      "before": "22868f3ce7f99fd2",
+      "after": "991bd4a38d044b0b"
+    },
+    "{\"document\":\"3.2.S.99\"}": {
+      "before": "17c33fcc1d31be76",
+      "after": "843c480151d837ca"
+    },
+    "{\"document\":\"4.99\"}": {
+      "before": "cb81d1444f66f1b8",
+      "after": "6cc9231bf698858a"
+    },
+    "{\"document\":\"4.2.99\"}": {
+      "before": "4349c5b03aed5691",
+      "after": "9587b4c44b391d67"
+    },
+    "{\"document\":\"4.2.1.99\"}": {
+      "before": "a8e2432874141112",
+      "after": "a6eeeffbd8c657d1"
+    },
+    "{\"document\":\"4.2.2.99\"}": {
+      "before": "a1808812f2b3e436",
+      "after": "698a30dae2881e69"
+    },
+    "{\"document\":\"4.2.3.99\"}": {
+      "before": "469a7f9f5f40039a",
+      "after": "5ae70cb625d2b310"
+    },
+    "{\"document\":\"5.99\"}": {
+      "before": "26238edca657f19e",
+      "after": "8122d9b2538c3b63"
+    },
+    "{\"document\":\"5.3.99\"}": {
+      "before": "b4743d49f98a76eb",
+      "after": "a11e771283824702"
+    },
+    "{\"document\":\"5.3.5.99\"}": {
+      "before": "a374ce578d59d0e6",
+      "after": "592bfdfa5e0d8c10"
+    },
+    "{\"document\":\"9.9.9\"}": {
+      "before": "4985f523855f7582",
+      "after": "2edb580827a4ad4f"
+    },
+    "{\"document\":\"1.3.1\"}": {
+      "before": "c8ca5d92a8db8a2b",
+      "after": "02cbae3d340f255a"
+    },
+    "{\"document\":\"1.8\"}": {
+      "before": "24565ee2c08e646b",
+      "after": "4a7b88e7b2a831fe"
+    },
+    "{\"document\":\"1.8.2\"}": {
+      "before": "304a30c15dd178d5",
+      "after": "354109ebd3917f0e"
+    },
+    "{\"document\":\"1.10\"}": {
+      "before": "58511ddec2068606",
+      "after": "44eb297a5c0dae66"
+    },
+    "{\"document\":\"1.13\"}": {
+      "before": "b34053d2c03e34f7",
+      "after": "acabd1efd82843e8"
+    },
+    "{\"document\":\"maa\"}": {
+      "before": "3d6f0303e271c8db",
+      "after": "43facbea9cef5487"
+    },
+    "{\"document\":\"eu_maa\"}": {
+      "before": "d1e057f68596de2e",
+      "after": "4e2cf094836bdf42"
+    },
+    "{\"document\":\"EU_MAA\"}": {
+      "before": "b13ef653b9211557",
+      "after": "af87fb391604b8e9"
+    },
+    "{\"document\":\"jnda\"}": {
+      "before": "1b6c674353948888",
+      "after": "665f243873573cc5"
+    },
+    "{\"document\":\"510k\"}": {
+      "before": "26daa550015dd8b4",
+      "after": "fbe5618825ec6b9a"
+    },
+    "{\"document\":\"pma\"}": {
+      "before": "3fce6c0ed1a38194",
+      "after": "58d30c630ae0763d"
+    },
+    "{\"document\":\"cer\"}": {
+      "before": "9d6ebf8bb345d708",
+      "after": "c16672e802de2de0"
+    },
+    "{\"document\":\"per\"}": {
+      "before": "5a89235ff7bd9dfb",
+      "after": "246afc6648a04aa9"
+    },
+    "{\"document\":\"smpc\"}": {
+      "before": "f3cfbb2e7d6599e0",
+      "after": "8a4b446629f32eec"
+    },
+    "{\"document\":\"II.6.1\"}": {
+      "before": "dac1f91b5987f30e",
+      "after": "226adf707d6bc7d4"
+    },
+    "{\"document\":\"jp_shonin\"}": {
+      "before": "6aac75d417a06d5a",
+      "after": "f5e754bfaf04d704"
+    },
+    "{\"document\":\"Totally Fabricated Section 99\"}": {
+      "before": "697a765bb33b507b",
+      "after": "200ccc3606e94565"
+    },
+    "{\"document\":\"clinical-study-report\"}": {
+      "before": "c63ab4b951507fa4",
+      "after": "c74dff821f3b31c3"
+    },
+    "{\"document\":\"ich-e3\"}": {
+      "before": "1e72548c25606fe8",
+      "after": "48ca51b230370a51"
+    },
+    "{\"document\":\"m9\"}": {
+      "before": "b36291f307ffae23",
+      "after": "3769cfe421797856"
+    }
+  },
+  "added": {
+    "{\"document\":\"us_type_d_meeting\"}": "1b6cea057a6e1e1c",
+    "{\"document\":\"US_TYPE_D_MEETING\"}": "1b6cea057a6e1e1c",
+    "{\"document\":\"us_interact_meeting\"}": "6280d567c7f2db90",
+    "{\"document\":\"US_INTERACT_MEETING\"}": "6280d567c7f2db90",
+    "{\"document\":\"expanded_access_individual\"}": "5f385d0bec4bdba3",
+    "{\"document\":\"EXPANDED_ACCESS_INDIVIDUAL\"}": "5f385d0bec4bdba3",
+    "{\"document\":\"expanded_access_intermediate\"}": "464febf279a46a3f",
+    "{\"document\":\"EXPANDED_ACCESS_INTERMEDIATE\"}": "464febf279a46a3f",
+    "{\"document\":\"expanded_access_treatment\"}": "e737bae2006345ec",
+    "{\"document\":\"EXPANDED_ACCESS_TREATMENT\"}": "e737bae2006345ec",
+    "{\"document\":\"us_bla_annual_report\"}": "8f544ae468eebaa8",
+    "{\"document\":\"US_BLA_ANNUAL_REPORT\"}": "8f544ae468eebaa8",
+    "{\"document\":\"us_bla_pediatric_annual_report\"}": "de9f5aef52b81026",
+    "{\"document\":\"US_BLA_PEDIATRIC_ANNUAL_REPORT\"}": "de9f5aef52b81026",
+    "{\"document\":\"us_bla_pmr_status_report\"}": "fb7e2fa33a306323",
+    "{\"document\":\"US_BLA_PMR_STATUS_REPORT\"}": "fb7e2fa33a306323",
+    "{\"document\":\"us_bla_distribution_report\"}": "6fe5731264436cdc",
+    "{\"document\":\"US_BLA_DISTRIBUTION_REPORT\"}": "6fe5731264436cdc",
+    "{\"document\":\"us_bpdr\"}": "b00363d39e1e4d14",
+    "{\"document\":\"US_BPDR\"}": "b00363d39e1e4d14",
+    "{\"document\":\"us_bla_periodic_adverse_experience_report\"}": "50e0de66dacfc0cc",
+    "{\"document\":\"US_BLA_PERIODIC_ADVERSE_EXPERIENCE_REPORT\"}": "50e0de66dacfc0cc",
+    "{\"document\":\"us_bla_pas\"}": "7dcf28b876a2a50a",
+    "{\"document\":\"US_BLA_PAS\"}": "7dcf28b876a2a50a",
+    "{\"document\":\"us_bla_cbe_30\"}": "7acc47c4c2059050",
+    "{\"document\":\"US_BLA_CBE_30\"}": "7acc47c4c2059050",
+    "{\"document\":\"us_bla_cbe_0\"}": "b77e00eaaac3ae23",
+    "{\"document\":\"US_BLA_CBE_0\"}": "b77e00eaaac3ae23",
+    "{\"document\":\"us_cber_master_file\"}": "c7330e9d17a3e2ce",
+    "{\"document\":\"US_CBER_MASTER_FILE\"}": "c7330e9d17a3e2ce",
+    "{\"document\":\"us_cber_lot_release\"}": "0f7d9437f749a4dc",
+    "{\"document\":\"US_CBER_LOT_RELEASE\"}": "0f7d9437f749a4dc",
+    "{\"document\":\"us_eua_therapeutic\"}": "60fc65f9b343b055",
+    "{\"document\":\"US_EUA_THERAPEUTIC\"}": "60fc65f9b343b055"
+  }
+}

@@ -20,8 +20,7 @@
  *   1. a `device_audit_trail` row, via this class's own `logAuditTrail`;
  *   2. an `audit_logs` row, via the shared audit service.
  *
- * (`linkCERToDevice` writes only (2). `createWorkflow` and
- * `updateWorkflowStatus` write neither.)
+ * (`createWorkflow` and `updateWorkflowStatus` write neither.)
  *
  * `logAction` does not reject when no store accepts the row — deliberate
  * policy, an audit-trail outage must not break the action it records — it
@@ -57,7 +56,6 @@ import {
   deviceSubmissionWorkflows,
   deviceAuditTrail,
   fdaIntegrationLogs,
-  cerProjects,
   users,
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -1046,77 +1044,11 @@ class MedicalDeviceService {
     return hash.digest('hex');
   }
 
-  // ==================== CER INTEGRATION ====================
-
-  /**
-   * Link CER project to medical device
-   */
-  async linkCERToDevice(
-    organizationId: number,
-    cerProjectId: number,
-    deviceId: number,
-    userId: number
-  ) {
-    try {
-      const dbInstance = this.getDb();
-      const updated = await dbInstance
-        .update(cerProjects)
-        .set({
-          deviceId,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(eq(cerProjects.organizationId, organizationId), eq(cerProjects.id, cerProjectId))
-        )
-        .returning();
-
-      // WO-16C #133. The only audit record this mutation writes at all — it
-      // calls no logAuditTrail — and its outcome was discarded, so a CER
-      // project could be attached to a device with no §11.10(e) row and an
-      // identical return value. Rule-2 case: a log beside an already-committed
-      // write — the link is committed by the `.update(cerProjects) …
-      // .returning()` above.
-      //
-      // The entry fields are passed through unchanged, including the absence of
-      // a tenantId; what that costs the row is reported separately rather than
-      // altered here.
-      const auditLog = await recordAuditRow({
-        userId,
-        action: 'LINK_CER_TO_DEVICE',
-        resourceType: 'cer_projects',
-        details: { organizationId, cerProjectId, deviceId },
-      });
-
-      // Preserved exactly: a cerProjectId outside this organization matches no
-      // row, and `undefined` is what this returned before.
-      const linkedRow = updated[0];
-      return linkedRow === undefined ? undefined : { ...linkedRow, auditLog };
-    } catch (error) {
-      logger.error('Error linking CER to device:', { error: error });
-      throw error;
-    }
-  }
-
-  /**
-   * Get CER projects for a device
-   */
-  async getCERProjectsForDevice(organizationId: number, deviceId: number) {
-    try {
-      const dbInstance = this.getDb();
-      const projects = await dbInstance
-        .select()
-        .from(cerProjects)
-        .where(
-          and(eq(cerProjects.organizationId, organizationId), eq(cerProjects.deviceId, deviceId))
-        )
-        .orderBy(desc(cerProjects.createdAt));
-
-      return projects;
-    } catch (error) {
-      logger.error('Error fetching CER projects for device:', { error: error });
-      throw error;
-    }
-  }
+  // CER integration (`linkCERToDevice`, `getCERProjectsForDevice`) was removed
+  // 2026-10-29: neither had a caller, and since fb73f05f8 retired the last
+  // `INSERT INTO cer_projects` nothing creates a CER project, so the read
+  // returned an empty list that read as "no CER projects for this device" and
+  // the link could never match a row (ci:writerless-stores).
 }
 
 // Create singleton instance

@@ -86,6 +86,29 @@ export const filingClassPackMinted = (spec: FilingClassPackSpec): string => spec
 const RECORD = 'An advisory platform record that cites the rule; its headings are recalled, not transcribed.';
 const BLUEPRINT = 'A platform project blueprint: a reasoned construction against the obligation, not an enumerated structure.';
 
+const US_BIOTECH_RECORD = `${RECORD} Every basis is recall: eCFR and fda.gov were unreachable from the build environment on 2026-10-29, so no section was re-read for it.`;
+
+/** [docType, version, label] for the US biotech identity classes of 2026-10-29. */
+const US_BIOTECH_RECORD_CLASSES: readonly (readonly [string, string, string])[] = [
+  ['type_d_meeting', 'fda-type-d-meeting-v1.0', 'Type D Meeting Request and Package × FDA · formal-meetings guidance (Aug 2026)'],
+  ['interact_meeting', 'fda-interact-meeting-v1.0', 'INTERACT Meeting Request and Package × FDA · formal-meetings guidance (Aug 2026)'],
+  ['expanded_access_individual', 'fda-expanded-access-individual-v1.0', 'Individual Patient Expanded Access × FDA · 21 CFR 312.310'],
+  ['expanded_access_intermediate', 'fda-expanded-access-intermediate-v1.0', 'Intermediate-Size Population Expanded Access × FDA · 21 CFR 312.315'],
+  ['expanded_access_treatment', 'fda-expanded-access-treatment-v1.0', 'Treatment IND / Treatment Protocol × FDA · 21 CFR 312.320'],
+  ['bla_pas', 'fda-bla-pas-v1.0', 'BLA Prior Approval Supplement × FDA · 21 CFR 601.12(b)'],
+  ['bla_cbe30', 'fda-bla-cbe30-v1.0', 'BLA CBE-30 Supplement × FDA · 21 CFR 601.12(c)(1)'],
+  ['bla_cbe0', 'fda-bla-cbe0-v1.0', 'BLA CBE-0 Supplement × FDA · 21 CFR 601.12(c)(5), (f)(2)'],
+  ['bla_annual_report', 'fda-bla-annual-report-v1.0', 'BLA Annual Report of Minor Changes × FDA · 21 CFR 601.12(d)'],
+  ['bla_pediatric_report', 'fda-bla-pediatric-report-v1.0', 'BLA Pediatric Annual Report × FDA · 21 CFR 601.28'],
+  ['bla_pmr_status_report', 'fda-bla-pmr-status-report-v1.0', 'BLA PMR/PMC Status Report × FDA · 21 CFR 601.70'],
+  ['bla_distribution_report', 'fda-bla-distribution-report-v1.0', 'BLA Distribution Report × FDA · 21 CFR 600.81'],
+  ['bpdr', 'fda-bpdr-v1.0', 'Biological Product Deviation Report × FDA · 21 CFR 600.14'],
+  ['bla_pae_report', 'fda-bla-pae-report-v1.0', 'BLA Periodic Adverse Experience Report × FDA · 21 CFR 600.80(c)(2)'],
+  ['cber_master_file', 'fda-cber-master-file-v1.0', 'CBER Biologics Master File × FDA'],
+  ['cber_lot_release', 'fda-cber-lot-release-v1.0', 'CBER Lot Release Protocol × FDA · 21 CFR 610.2'],
+  ['eua_request', 'fda-eua-request-v1.0', 'Emergency Use Authorization Request (Drug or Biologic) × FDA · FD&C Act 564'],
+];
+
 export const FILING_CLASS_PACKS: readonly FilingClassPackSpec[] = [
   { docType: 'pas', agency: 'fda', version: 'fda-pas-lifecycle-v1.2', label: 'PAS × FDA · Prior Approval Supplement · 21 CFR 314.70(b) / 601.12(b), (f)(1)', sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: 'fda-pas-lifecycle-v1.1', basisNote: `${RECORD} A BLA supplement (21 CFR 601.12(b) for a manufacturing change, 601.12(f)(1) for a labeling change) shares the NDA record's parts; the BLA rule text was not re-read for it.`, changeNote: "Adds the patent-information part a supplement that changes the formulation, an indication or the strength carries: 21 CFR 314.53(d)(2), on Form FDA 3542a, or the no-relevant-patent statement, and any 314.50(j) exclusivity claim. It is conditional.", minted: '2026-10-19' },
   { docType: 'cbe', agency: 'fda', version: 'fda-cbe-lifecycle-v1.1', label: 'CBE × FDA · CBE-30 / CBE-0 Supplement · 21 CFR 314.70(c)', sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: 'fda-cbe-lifecycle-v1.0', basisNote: `${RECORD} One registry filing for two records: the shared parts are required, each variant's own parts are not.`, changeNote: 'The change description and its basis (314.70(c)(3)-(4)) and the environmental claim (21 CFR 25.15(a)) are now parts of both CBE-30 and CBE-0, so both are required. In v1.0 they were optional and named for CBE-30 alone.' },
@@ -108,6 +131,13 @@ export const FILING_CLASS_PACKS: readonly FilingClassPackSpec[] = [
   { docType: 'icf', agency: 'ich', version: 'c2c-icf-v1.2', label: 'Informed Consent Form × 21 CFR 50.25 / ICH E6(R3)', sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: 'c2c-icf-v1.1', basisNote: BLUEPRINT, changeNote: "The 50.25(c) and 50.25(b) parts (11, 12) move after the signatures (10), where their codes sort. A reader that orders sections by code had already put them there.", minted: '2026-10-19' },
   { docType: 'dsur', agency: 'ich', version: 'ich-e2f-v1.0', label: 'DSUR × ICH E2F', sourceBasis: 'harmonised_standard', confidence: 'medium', supersedes: null, basisNote: 'ICH E2F section headings, recalled from the guideline; not re-read against its text.' },
   { docType: 'psur', agency: 'ema', version: 'ich-e2c-r2-v2.1', label: 'PSUR / PBRER × EMA · ICH E2C(R2)', sourceBasis: 'harmonised_standard', confidence: 'medium', supersedes: 'ich-e2c-r2-v2.0', basisNote: 'ICH E2C(R2) title page, executive summary, §1–§20 and the numbered subsections of §5–§7 and §16–§18 (EU GVP Module VII), recalled; not re-read against the guideline text.', changeNote: 'The title page, executive summary and §20 appendices are added. §8-§12 are now required (state none if none), because GVP Module VII asks for every section. The numbered subsections of §5, §6, §7, §16, §17 and §18 are listed.' },
+  // 2026-10-29 · US biotech filing completion: each exact identity's own lifecycle
+  // record (ind/ctd/us-biotech-*-sources.ts), through lifecycle-record-outlines.ts.
+  // bla_pas is the first pack US_BLA_SUPP gets of its own; it read pas:fda before.
+  ...US_BIOTECH_RECORD_CLASSES.map(([docType, version, label]): FilingClassPackSpec => ({
+    docType, agency: 'fda', version, label, sourceBasis: 'reasoned_construction', confidence: 'low', supersedes: null,
+    minted: '2026-10-29', basisNote: US_BIOTECH_RECORD,
+  })),
   ...REGIONAL_DEVICE_APPLICATION_CLASSES.map((c): FilingClassPackSpec => ({
     docType: c.docType,
     agency: c.packAgency,

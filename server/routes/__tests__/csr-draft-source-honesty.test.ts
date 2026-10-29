@@ -2,7 +2,9 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, expect, it, vi } from 'vitest';
 const { complete } = vi.hoisted(() => ({ complete: vi.fn() }));
-vi.mock('../../lib/unified-ai-client.js', () => ({ ai: { complete } }));
+// The worker door reads the gateway's full reply (content + served model).
+const chat = async (...args: unknown[]) => ({ content: await complete(...args), model: 'test-model' });
+vi.mock('../../lib/unified-ai-client.js', () => ({ ai: { complete, chat } }));
 import router from '../csr-builder-routes';
 import { draftCSRSectionWithProvenance, generateCSRSections, getICHE3Structure, hasUnresolvedPlaceholders } from '../../services/csr-builder';
 const app = express();
@@ -30,7 +32,7 @@ it('empty model output has the same explicit template source as the provenance d
 });
 it('a refused unsupported statistical draft cannot be labelled as accepted AI output', async () => {
   complete.mockResolvedValue('Efficacy showed p=0.001 and 95% success among 120 participants.');
-  const response = await draft('11');
+  const response = await draft('11.4.1');
   expect(response.status).toBe(200);
   expect(response.body).toMatchObject({ isAI: false, provider: 'template' });
   expect(response.body.content).not.toContain('p=0.001');
@@ -48,31 +50,52 @@ it('an accepted gateway draft retains the verified actor/organization without in
 it.each(['refusal', 'empty'])('ethics template after %s retains unknown approval and consent rather than inventing them', async mode => {
   if (mode === 'refusal') complete.mockRejectedValue(new Error('Synthetic gateway refusal'));
   else complete.mockResolvedValue('');
-  const response = await draft('5');
-  expect(response.status).toBe(200);
-  expect(response.body).toMatchObject({ isAI: false, provider: 'template' });
-  const content = response.body.content as string;
-  expect(content).not.toContain('were reviewed and approved');
-  expect(content).not.toContain('consent was obtained');
-  expect(content).not.toContain('study was conducted in accordance');
-  expect(content).toMatch(/IRB|IEC/);
-  expect(content).toMatch(/consent/i);
-  expect(hasUnresolvedPlaceholders(content)).toBe(true);
+  // E3 §5 is drafted as §5.1 (IEC/IRB), §5.2 (ethical conduct), §5.3 (consent).
+  const bodies: string[] = [];
+  for (const n of ['5.1', '5.2', '5.3']) {
+    const response = await draft(n);
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ isAI: false, provider: 'template' });
+    bodies.push(response.body.content as string);
+  }
+  for (const content of bodies) {
+    expect(content).not.toContain('were reviewed and approved');
+    expect(content).not.toContain('consent was obtained');
+    expect(content).not.toContain('study was conducted in accordance');
+    expect(hasUnresolvedPlaceholders(content)).toBe(true);
+  }
+  expect(bodies[0]).toMatch(/IRB|IEC/);
+  expect(bodies[2]).toMatch(/consent/i);
 });
 
 it('the worker drafting door records ethics fallback as template content needing source records', async () => {
   complete.mockResolvedValue('');
-  const section = getICHE3Structure().find(row => row.number === '5')!;
+  const section = getICHE3Structure().find(row => row.number === '5')!.childSections!.find(row => row.number === '5.3')!;
   const drafted = await draftCSRSectionWithProvenance(section, { organizationId: 7, userId: 5, studyInfo });
-  expect(drafted).toMatchObject({ number: '5', source: 'template', model: null });
+  expect(drafted).toMatchObject({ number: '5.3', source: 'template', model: null });
   expect(hasUnresolvedPlaceholders(drafted.content)).toBe(true);
   expect(drafted.content).not.toContain('were reviewed and approved');
 });
 
 it('the synchronous drafting door classifies unknown ethics evidence as needs_data', async () => {
   complete.mockRejectedValue(new Error('Synthetic gateway refusal'));
-  const sections = await generateCSRSections(getICHE3Structure(), { organizationId: 7, userId: 5, studyInfo, sectionsToGenerate: ['5'] });
-  const ethics = sections.find(row => row.number === '5')!;
+  const sections = await generateCSRSections(getICHE3Structure(), { organizationId: 7, userId: 5, studyInfo, sectionsToGenerate: ['5.1'] });
+  const ethics = sections.find(row => row.number === '5')!.childSections!.find(row => row.number === '5.1')!;
   expect(ethics.status).toBe('needs_data');
   expect(ethics.needsData).toBe(true);
+});
+
+it('the on-demand route refuses a heading that is not a drafting target, by E3 number', async () => {
+  for (const sectionNumber of ['2.1', '5', '14', '16.2.7']) {
+    const response = await draft(sectionNumber);
+    expect(response.status, sectionNumber).toBe(400);
+  }
+  expect(complete).not.toHaveBeenCalled();
+});
+
+it('the build route refuses a manual heading and accepts an E3 heading the old list omitted', async () => {
+  const refused = await request(app).post('/api/csr-builder/build').send({ studyInfo, sectionsToGenerate: ['16'] });
+  expect(refused.status).toBe(400);
+  const structure = await request(app).get('/api/csr-builder/structure');
+  expect(structure.body.totalSections).toBeGreaterThanOrEqual(119);
 });

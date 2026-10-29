@@ -28,7 +28,7 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment, makeRequestDbClient, extractTableDdl } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
@@ -152,7 +152,10 @@ const PREREQ = `
   -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
   -- org-membership middleware LEFT JOINs it on every request and, without it,
   -- degrades to a membership-only decision with orgUuid = null (ledger L148).
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
+  -- \`status\` as migrations/0000_sweet_joseph.sql defines it: the current-access
+  -- checks admit a member only while the organization is active (o.status).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid(),
+    status TEXT NOT NULL DEFAULT 'active');
   -- users.id is INTEGER, standing in for the production serial. It was UUID for
   -- a history join that read u.id = r.created_by::uuid; that join was removed
   -- (Postgres rejects integer = uuid at parse time) and now compares as text,
@@ -216,7 +219,15 @@ function asUser(u: typeof AUTHOR) {
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    // The tracking project a document's program is admitted through. The read
+    // (GET /docs/:docId) admits the caller via current project access
+    // (c2c/current-program-access.ts, cc1607c3a), which reads projects and its
+    // client workspace; the review store's parent table rides along for the
+    // sharing/review migrations below. From the baseline, as the NDA and 510(k)
+    // journeys take them.
+    prereqSql: `${PREREQ}\n${extractTableDdl('migrations/0000_sweet_joseph.sql', [
+      'client_workspaces', 'projects', 'concept2cure_artifacts',
+    ])}`,
     migrations: [
       // The account columns the signing ceremony reads, from the file that adds
       // them rather than hand-mirrored in PREREQ: the account-standing read
@@ -242,6 +253,12 @@ beforeAll(async () => {
       // programInOrganization — this org, not soft-deleted), so the table is
       // built from its own migration rather than hand-mirrored.
       'migrations/20260524_program_workbench_schema.sql',
+      // projects.regulatory_program_id, and the sharing + review stores current
+      // project access reads (else 503 PROJECT_ACCESS_UNAVAILABLE): the same
+      // three files, in the same order, as the NDA and 510(k) journeys.
+      'migrations/20260814_projects_regulatory_program_anchor.sql',
+      'db/migrations/20260401_project_sharing_visibility.sql',
+      'db/migrations/20260314_phase12_multi_user_review.sql',
       // A create inside a project asks which governed filing it contributes to
       // (resolveGovernedDocument reads c2c_documents for an IND × FDA
       // project). The system-of-record table, with the c2c_ana_actions table
@@ -339,12 +356,31 @@ beforeAll(async () => {
      VALUES ($1, $2, 'IND 12345', 'IND-12345', 'ind', 'drug', 'FDA', 'C2C-001')`,
     [IND_PROGRAM, AUTHOR.organizationId],
   );
+  // Its one tracking record (the anchor current project access admits through).
+  await jdb.pool.query(
+    `INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES (1, $1, 'Journey Workspace', 'journey-ws')`,
+    [AUTHOR.organizationId],
+  );
+  await jdb.pool.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type, regulatory_program_id)
+     VALUES ($1, 1, 'IND 12345', 'ind', $2)`,
+    [AUTHOR.organizationId, IND_PROGRAM],
+  );
 
   for (const u of [AUTHOR, APPROVER, OUTSIDER]) tokens.set(u.id, await mint(u));
 
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
   app = express();
   app.use(express.json({ limit: '5mb' }));
+  // The request-scoped client production's requireTenantContext installs. The
+  // document read (GET /docs/:docId, cc1607c3a) runs on requestPgClient(req) and
+  // refuses without it, so without this the cross-tenant probe saw a 500 from a
+  // missing harness seam, not the read's own tenant-scoped 404. Identity is NOT
+  // set here: the router's own middleware still derives it from the token.
+  app.use((req, _res, next) => {
+    (req as unknown as { dbClient: unknown }).dbClient = makeRequestDbClient(jdb.pglite);
+    next();
+  });
   // No auth shim: the router's OWN jose middleware verifies these tokens.
   app.use('/api/authoring', authoringRouter);
 }, T);
