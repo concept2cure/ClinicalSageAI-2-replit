@@ -163,7 +163,9 @@ and are not used.
      each figure is as given.
 3. The study facts the draft states: enrolled vs planned N and the phase are
    done (`9b0a63be0`, `cb14dfc51`). Open: an NCT field, a Fast Track field,
-   and whether a Phase 2/3 study counts as pivotal (the founder's call).
+   and whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
+   the sponsor declares it per study, and Module 2 reads only the declaration
+   (`docs/evidence/D5/2026-10-29-pivotal-is-declared/`).
 4. ~~The amendment's Clinical identification~~: done (`b9dbaeff4`). Open:
    the 1571 contents box, and whether `study-report-body` is an STF file tag
    at all; both need the official specification, not recall.

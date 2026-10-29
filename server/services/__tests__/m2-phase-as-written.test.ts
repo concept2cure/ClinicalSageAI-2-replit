@@ -6,14 +6,18 @@
  * recorded as "Phase 3" or "III" was never pivotal, "Phase 1" was never
  * clinical pharmacology, and the text printed "Phase Phase 3". The phase is
  * now read by shared/clinical-phase.ts, the parser the CMC program stage
- * already used. "2/3" reads as it always did here, Phase 2 first.
+ * already used. "2/3" reads Phase 2 first.
+ *
+ * 2026-10-29: the phase no longer decides "pivotal". That is the sponsor's
+ * declaration (m2-pivotal-declared.test.ts); the phase decides what it still
+ * should: clinical pharmacology, the Phase 2–3 count and the labels.
  */
 import { describe, expect, it } from 'vitest';
 import { buildM25ClinicalOverview, buildM27ClinicalSummary, type CSRSummaryInput } from '../m2-summary-builders';
 import { phaseLabel, phaseNumber, phaseNumbers } from '../../../shared/clinical-phase';
 
-const study = (phase: string, protocolNumber: string): CSRSummaryInput => ({
-  studyId: protocolNumber, protocolNumber, phase,
+const study = (phase: string, protocolNumber: string, pivotal?: boolean): CSRSummaryInput => ({
+  studyId: protocolNumber, protocolNumber, phase, ...(pivotal === undefined ? {} : { pivotal }),
   studyDesign: 'randomized, double-blind, placebo-controlled',
   primaryEndpoint: 'global cure at week 8', primaryResult: 'recorded in §11.4',
   primaryEndpointMet: true, sampleSize: 120, saeCount: 2, deathCount: 0,
@@ -34,21 +38,23 @@ describe('shared/clinical-phase', () => {
 });
 
 describe('Module 2 reads the phase as written', () => {
-  it.each(['3', 'Phase 3', 'III', 'Phase IIIb'])('a study recorded as %j is a pivotal study', (phase) => {
-    const r = overview([study('1', 'X-101'), study(phase, 'X-301')]);
-    expect(r.gaps).not.toContain('pivotal (Phase 3) efficacy evidence');
+  it.each(['3', 'Phase 3', 'III', 'Phase IIIb', 'Phase 2/3'])('a study recorded as %j is a Phase 2–3 study', (phase) => {
+    const r = buildM27ClinicalSummary({ csrs: [study('1', 'X-101'), study(phase, 'X-301')],
+      indication: 'recurrent C. difficile infection', investigationalProduct: 'Drug X' });
+    expect(r.narrative).toMatch(/1 Phase 2–3 study\/ies are recorded/);
   });
 
-  it('a Phase 2/3 study is read as it always was here: controlled, not pivotal', () => {
-    const r = overview([study('1', 'X-101'), study('Phase 2/3', 'X-203')]);
-    expect(r.gaps).toContain('pivotal (Phase 3) efficacy evidence');
+  it('the phase never makes a study pivotal: an undeclared Phase 3 study is named as undeclared', () => {
+    const r = overview([study('1', 'X-101'), study('Phase 3', 'X-301')]);
+    expect(r.gaps).toContain('pivotal efficacy evidence (no study is declared pivotal)');
+    expect(r.gaps).toContain('pivotal status not declared for X-101, X-301');
   });
 
   it('a study recorded as "Phase 1" is clinical pharmacology, and no label reads "Phase Phase"', () => {
-    const r = buildM27ClinicalSummary({ csrs: [study('Phase 1', 'X-101'), study('Phase 3', 'X-301')],
+    const r = buildM27ClinicalSummary({ csrs: [study('Phase 1', 'X-101', false), study('Phase 3', 'X-301', true)],
       indication: 'recurrent C. difficile infection', investigationalProduct: 'Drug X' });
     expect(r.gaps).not.toContain('no Phase 1 (clinical pharmacology) studies');
-    expect(r.gaps).not.toContain('no Phase 3 (pivotal efficacy) studies');
+    expect(r.gaps).not.toContain('no pivotal efficacy study declared');
     expect(r.narrative).not.toMatch(/Phase Phase/);
     expect(r.narrative).toMatch(/X-301 \(Phase 3\)/);
   });
