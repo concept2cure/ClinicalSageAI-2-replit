@@ -204,16 +204,23 @@ function deriveKpis(list: PresubListRow[]): PresubKpi[] {
 }
 
 /**
- * Fetch the Q-Sub list from /api/q-sub and adapt each row into the
- * kit's PresubListRow shape (server shape is structurally identical;
- * this hook bridges the type so the kit's surface compiles cleanly).
+ * Fetch one project's Q-Sub list from /api/q-sub?program_id= and adapt each
+ * row into the kit's PresubListRow shape (server shape is structurally
+ * identical; this hook bridges the type so the kit's surface compiles cleanly).
  *
  * Also derives the 4 KPI cards (in-flight count, rolled-in %, pending
  * rollin, avg days in feedback) from the same list — single
  * round-trip drives both the list and the metrics strip.
+ *
+ * The project is required. This read had no project and returned every
+ * project's Q-Subs, which the host drew under the open project's title as an
+ * "Organization-wide view" (D2, 2026-10-29; the map's `device-presub` row,
+ * slice 12). There is no unscoped read left: with no project there is no read,
+ * and the route refuses a project the organization does not own.
  */
-export function usePresubList(): UsePresubListResult {
-  const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/q-sub');
+export function usePresubList(programId: string | null): UsePresubListResult {
+  const url = programId ? `/api/q-sub?program_id=${encodeURIComponent(programId)}` : null;
+  const { data, loading, error, refresh } = useFetchJson<ListPayload>(url);
   /* Server shape is structurally identical to PresubListRow — assert
      through a single typed bridge rather than copying field-by-field. */
   /*
@@ -249,7 +256,7 @@ export function usePresubList(): UsePresubListResult {
      with no error — which reads as "still loading" forever. While a fixture
      stood in for null nobody saw it; now the manager renders null as a
      spinner, so an unreadable body has to say so. */
-  const failed = error ?? (data != null && list === null ? shapeMismatch('/api/q-sub') : null);
+  const failed = error ?? (url !== null && data != null && list === null ? shapeMismatch(url) : null);
   return {
     list,
     kpis: list ? deriveKpis(list) : null,

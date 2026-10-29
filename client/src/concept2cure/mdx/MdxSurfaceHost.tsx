@@ -51,7 +51,6 @@ import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
 import { VaultSurface } from './surfaces/VaultSurface';
 import {
-  TasksSurface,
   ValidationSurface,
   SubmissionsSurface,
 } from './workbench/Workbench';
@@ -137,7 +136,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-udi': {
     title: 'UDI and labeling',
-    blurb: 'the UDI register.',
+    blurb: "the project's labels and UDI records, with the label symbols and translations still open.",
   },
   'device-postmarket': {
     title: 'Post-market vigilance',
@@ -145,15 +144,11 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-presub': {
     title: 'Pre-Sub manager',
-    blurb: 'the pre-submission manager.',
+    blurb: "the project's FDA Q-Submissions, with their questions, FDA's feedback and the commitments.",
   },
   'device-vault': {
     title: 'Document vault',
     blurb: 'device vault artifacts.',
-  },
-  'device-tasks': {
-    title: 'Tasks and reviews',
-    blurb: 'the device task workbench.',
   },
   'device-validation': {
     title: 'Validation center',
@@ -179,8 +174,11 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
   'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
 ];
 
+/* device-udi and device-presub left this list on 2026-10-29: each reads the
+   open project now (D2, device-features-reach-three). device-tasks left the kit
+   the same day: it folded into Tasks (D2, fold-device-tasks). */
 const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
-  'device-udi', 'device-presub', 'device-tasks', 'device-validation', 'device-submission', 'device-analytics',
+  'device-validation', 'device-submission', 'device-analytics',
 ]);
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
@@ -330,12 +328,12 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   }, [nav, liveProgramsResult.loading, liveProgramsResult.error, programForContext, programCount]);
 
   /*
-   * One builder, sixteen literal publish calls. The AnA coverage gate counts
+   * One builder, fifteen literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
    * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
    * this is the sanctioned multi-id shape from v2/surfaces/UsageBilling.tsx.
    * Only the call whose id matches `nav` publishes; the store treats the
-   * fifteen null calls as no-ops (each clears only its own id), and hook order
+   * fourteen null calls as no-ops (each clears only its own id), and hook order
    * stays fixed because every call runs unconditionally on every render.
    */
   usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
@@ -350,7 +348,6 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
   usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
   usePublishSurfaceContext('device-vault', nav === 'device-vault' ? anaContext : null);
-  usePublishSurfaceContext('device-tasks', nav === 'device-tasks' ? anaContext : null);
   usePublishSurfaceContext('device-validation', nav === 'device-validation' ? anaContext : null);
   usePublishSurfaceContext('device-submission', nav === 'device-submission' ? anaContext : null);
   usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
@@ -385,19 +382,19 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-udi':
-      surface = <UdiSurface onAskAna={onAsk} />;
+      /* Keyed by the project, so a switch starts the read afresh and never
+         draws the previous project's labels while the next project's read is in flight. */
+      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-postmarket':
       surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-presub':
-      surface = <PreSubManager onAskAna={onAsk} />;
+      /* Keyed by the project for the same reason as device-udi. */
+      surface = <PreSubManager key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-vault':
       surface = <VaultSurface program={programForContext} onAskAna={onAsk} />;
-      break;
-    case 'device-tasks':
-      surface = <TasksSurface onAskAna={onAsk} />;
       break;
     case 'device-validation':
       surface = <ValidationSurface onAskAna={onAsk} />;

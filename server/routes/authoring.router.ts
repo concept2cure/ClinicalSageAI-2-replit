@@ -111,7 +111,7 @@ import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAut
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
 import { refileSavedAuthoringSection } from '../services/authoring/authoring-refile-saved-section';
-import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
+import { requireGovernedReason, optionalGovernedReason, GOVERNED_REASON_MIN } from './governed-reason';
 import {
   createDocumentFromDraft,
   parseDraftInput,
@@ -4763,6 +4763,12 @@ async function sealRefusedForFiling(
  * spends no second factor and nothing is signed. A failed lookup refuses (503)
  * in the canonical sentence; its cause stays in the log.
  */
+/** A signature whose meaning its signer did not state: refused, nothing signed. */
+function signatureReasonRefusal() {
+  return { error: `State what this signature means, in at least ${GOVERNED_REASON_MIN} characters. Nothing was signed.`,
+    code: 'SIGNATURE_REASON_REQUIRED' };
+}
+
 async function signingRefused(
   client: Queryable, req: Request, res: Response,
   { docId, tenantId, meaning }: { docId: string | string[] | undefined; tenantId: number; meaning: string },
@@ -5110,7 +5116,7 @@ async function approveAndSnapshotForSignature(args: {
 router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { meaning, intent } = req.body;
+    const { meaning, intent: statedIntent } = req.body;
     // Part 11 §11.100 attribution: the SIGNER identity on an electronic
     // signature must come from the verified JWT, never from client-supplied
     // headers. x-user-email here meant anyone could sign as anyone.
@@ -5131,7 +5137,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid signature meaning' });
     }
 
-    if (!intent) return res.status(400).json({ error: 'Signature intent is required' });
+    // §11.50(a)(3): what the signature means, stated by its signer. A blank or
+    // whitespace-only intent used to pass and was stored verbatim; the signing
+    // dialog already asks for the same eight characters (EsignModal MIN_REASON).
+    const intentVerdict = requireGovernedReason(statedIntent);
+    if (!intentVerdict.ok) return res.status(400).json(signatureReasonRefusal());
+    const intent = intentVerdict.reason;
 
     // §11.70 — a signature must be linked to the record it signs. Without this
     // an unknown or cross-tenant docId produced a signature bound to sha256("").
@@ -7197,7 +7208,7 @@ async function advanceWorkflowForSignature(args: {
 router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { meaning = 'REVIEWER', reason } = req.body;
+    const { meaning = 'REVIEWER', reason: statedReason } = req.body;
     const tenantId = getTenantId(req);
     // Part 11 §11.100: the signer is the VERIFIED principal. This took its
     // identity from `x-user-email || req.body.signer_email || 'system'`, so a
@@ -7222,9 +7233,11 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     // Validate required fields
-    if (!reason) {
-      return res.status(400).json({ error: 'A reason is required for signing' });
-    }
+    // The same rule as /e-sign: a stated reason of at least eight characters,
+    // trimmed, never whitespace.
+    const reasonVerdict = requireGovernedReason(statedReason);
+    if (!reasonVerdict.ok) return res.status(400).json(signatureReasonRefusal());
+    const reason = reasonVerdict.reason;
 
     // §11.50(a)(3) — the MEANING of the signature is a closed set, and this
     // path took it as a free string with a default. `/e-sign` has validated it

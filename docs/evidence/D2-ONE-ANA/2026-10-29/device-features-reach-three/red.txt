@@ -1,0 +1,165 @@
+Red first, at head plus the new tests, before any product change. Trimmed to each case and its first assertion.
+
+== server
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 30ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 5ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 4ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 4ms
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 5ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 4ms
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 4ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 404 // Object.is equality
+ ❯ server/__tests__/routes/device-project-reads-admit-program.test.ts:104:24
+AssertionError: expected 200 to be 404 // Object.is equality
+ ❯ server/__tests__/routes/device-project-reads-admit-program.test.ts:110:24
+AssertionError: expected 200 to be 503 // Object.is equality
+ ❯ server/__tests__/routes/device-project-reads-admit-program.test.ts:117:24
+ Test Files  1 failed (1)
+      Tests  12 failed | 8 passed (20)
+
+== mdx-leaves
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > asks for the open project's Q-Subs only, and shows no other project's 45ms
+   → expected [ '/api/q-sub', '/api/q-sub/qs-1111' ] to include '/api/q-sub?program_id=11111111-1111-4…'
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > is not called an organization-wide view under the project's title 140ms
+   → expected 'Return to project workflowAurora pump…' not to match /organi[sz]ation-wide/i
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > never draws the previous project's Q-Subs under the next project 5031ms
+   → expected [ '/api/q-sub', '/api/q-sub/qs-1111' ] to include '/api/q-sub?program_id=22222222-2222-4…'
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > with no project, reads nothing and says a project is needed 5009ms
+   → Unable to find an element by: [data-testid="presub-no-project"]
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > asks for the open project's UDI summary only, and shows no other project's labels 21ms
+   → expected [ '/api/mdx/udi/summary' ] to include '/api/mdx/udi/summary?program_id=11111…'
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > is not called an organization-wide view under the project's title 21ms
+   → expected 'Return to project workflowAurora pump…' not to match /organi[sz]ation-wide/i
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > never draws the previous project's labels under the next project 5019ms
+   → expected [ '/api/mdx/udi/summary' ] to include '/api/mdx/udi/summary?program_id=22222…'
+ × client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > with no project, reads nothing and says a project is needed 5015ms
+   → Unable to find an element by: [data-testid="udi-no-project"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '/api/q-sub', '/api/q-sub/qs-1111' ] to include '/api/q-sub?program_id=11111111-1111-4…'
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:82:18
+AssertionError: expected 'Return to project workflowAurora pump…' not to match /organi[sz]ation-wide/i
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:92:37
+AssertionError: expected [ '/api/q-sub', '/api/q-sub/qs-1111' ] to include '/api/q-sub?program_id=22222222-2222-4…'
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:101:38
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+TestingLibraryElementError: Unable to find an element by: [data-testid="presub-no-project"]
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:109:11
+AssertionError: expected [ '/api/mdx/udi/summary' ] to include '/api/mdx/udi/summary?program_id=11111…'
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:119:18
+AssertionError: expected 'Return to project workflowAurora pump…' not to match /organi[sz]ation-wide/i
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:129:37
+AssertionError: expected [ '/api/mdx/udi/summary' ] to include '/api/mdx/udi/summary?program_id=22222…'
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:138:38
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+TestingLibraryElementError: Unable to find an element by: [data-testid="udi-no-project"]
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx:146:11
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+
+== labeling
+ × client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > reads the open project's labeling documents, with no prop from its caller 5062ms
+   → expected [] to include '/api/mdx/labeling?program_id=0b6f1c1e…'
+ × client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > with no project open, reads nothing, says so, and offers the way to open one 23ms
+   → Unable to find an element by: [data-testid="labeling-no-project"]
+ × client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > with an open project it cannot read by project, reads nothing and says that 14ms
+   → Unable to find an element by: [data-testid="labeling-no-project"]
+ × client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > never draws the previous project's label under the next project 5011ms
+   → expected 'Specialist / device / LabelingLabelin…' to match /Instructions for use v3/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to include '/api/mdx/labeling?program_id=0b6f1c1e…'
+ ❯ client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx:65:39
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+TestingLibraryElementError: Unable to find an element by: [data-testid="labeling-no-project"]
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx:76:19
+TestingLibraryElementError: Unable to find an element by: [data-testid="labeling-no-project"]
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx:87:19
+AssertionError: expected 'Specialist / device / LabelingLabelin…' to match /Instructions for use v3/
+ ❯ client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx:93:40
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+
+== guard
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench 2ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity 193ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports 100ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature 134ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing 204ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature 50ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature 58ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature 36ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature 39ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs 57ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 21 project features once: opened from Plan, or listed with why it has no door 0ms
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those eight features from a device project's Plan, over every recorded route and product type 1060ms
+   → expected [ 'device-510k', 'device-cer', …(6) ] to deeply equal [ 'device-510k', 'device-cer', …(9) ]
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to human-factors from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to design-controls from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to risk from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to ivd-completeness from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-tasks from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-vault from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-analytics from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-validation from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-submission from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-workstream from inside the project 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'device-510k', 'device-cer', …(6) ] to deeply equal [ 'device-510k', 'device-cer', …(9) ]
+ ❯ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx:218:45
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+
+== doors (53 cases; 52 red: the door constants and doors do not exist)
+      1       Tests  52 failed | 1 passed (53)
+     51    → Found multiple elements with the role "button"
+      1    → expected [ <button …(2)></button>, …(31) ] to have a length of 1 but got 32
+      1 ⎯⎯⎯⎯⎯⎯ Failed Tests 52 ⎯⎯⎯⎯⎯⎯⎯

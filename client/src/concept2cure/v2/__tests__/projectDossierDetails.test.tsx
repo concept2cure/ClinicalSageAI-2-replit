@@ -50,7 +50,7 @@ describe('the existing dossier details on Author', () => {
     expect(document.querySelector('time')?.parentElement?.textContent).toBe(`Updated ${new Date(updated).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`);
     expect(onOpen).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /Open Existing clinical overview/ }));
-    expect(onOpen).toHaveBeenCalledWith(doc);
+    expect(onOpen).toHaveBeenCalledWith(doc, 'M2'); // the row's module rides along (F3)
   });
 
   it('prints home review and draft totals without pooling the added market', () => {

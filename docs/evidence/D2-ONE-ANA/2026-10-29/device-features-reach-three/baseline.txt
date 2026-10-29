@@ -1,0 +1,40 @@
+Baseline at head (working tree with other sessions' edits), before this slice, one file at a time.
+client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx | Test Files  1 passed (1) | Tests  11 passed (11)
+client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx | Test Files  1 passed (1) | Tests  3 passed (3)
+client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx | Test Files  1 passed (1) | Tests  18 passed (18)
+client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx | Test Files  1 passed (1) | Tests  4 passed (4)
+client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx | Test Files  1 passed (1) | Tests  16 passed (16)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx | Test Files  1 passed (1) | Tests  3 passed (3)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx | Test Files  1 passed (1) | Tests  6 passed (6)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx | Test Files  1 passed (1) | Tests  3 passed (3)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.honest.test.tsx | Test Files  1 passed (1) | Tests  5 passed (5)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx | Test Files  1 passed (1) | Tests  3 passed (3)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noCommitmentsKpis.test.tsx | Test Files  1 passed (1) | Tests  4 passed (4)
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noMineFilter.test.tsx | Test Files  1 passed (1) | Tests  2 passed (2)
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx | Test Files  1 passed (1) | Tests  30 passed (30)
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx | Test Files  1 passed (1) | Tests  28 passed (28)
+client/src/concept2cure/v2/__tests__/clientNamesSlice1Features.test.tsx | Test Files  1 passed (1) | Tests  6 passed (6)
+client/src/concept2cure/v2/__tests__/adapterShapeSafety.test.tsx | Test Files  1 passed (1) | Tests  43 passed (43)
+client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx | Test Files  1 passed (1) | Tests  3 passed (3)
+client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx | Test Files  1 passed (1) | Tests  2 passed (2)
+client/src/concept2cure/v2/__tests__/labelingMapping.test.ts | Test Files  1 passed (1) | Tests  9 passed (9)
+client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx | Test Files  1 passed (1) | Tests  6 passed (6)
+client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx | Test Files  1 passed (1) | Tests  4 passed (4)
+client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts | Test Files  1 passed (1) | Tests  20 passed (20)
+client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx | Test Files  1 failed (1) | Tests  9 failed | 4 passed (13)
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx | Test Files  1 failed (1) | Tests  1 failed | 4 passed (5)
+server/__tests__/routes/q-sub.test.ts | Test Files  1 passed (1) | Tests  19 passed (19)
+server/__tests__/security/tenant-isolation-q-sub.contract.test.ts | Test Files  1 passed (1) | Tests  5 passed (5)
+server/routes/__tests__/labeling-translations-shape.test.ts | Test Files  1 passed (1) | Tests  3 passed (3)
+tests/mdx-beta-surfaces-routes.test.ts | Test Files  1 passed (1) | Tests  27 passed (27)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts | Test Files  1 passed (1) | Tests  28 passed (28)
+server/middleware/__tests__/launch-scope-api-gate.test.ts | Test Files  1 failed (1) | Tests  5 failed | 38 passed (43)
+
+Red at baseline, not this slice's:
+× tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510) 5201ms
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > judges a path as Express routes it, whatever its letter case 18ms
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 1ms
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 1ms
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 10ms
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 1ms
+projectMarketsDeviceAssembly.test.tsx: 9 red at baseline (another session's ProjectMarkets edit in progress); 13/13 green on the later run.

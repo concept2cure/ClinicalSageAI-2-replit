@@ -2,11 +2,16 @@
 /**
  * WO-9 Click 1 — landing in a drug program.
  *
- * Opening a program must show sponsor, product, indication and the agency
+ * Opening a program must show its client, product, indication and the agency
  * application number (the IND number for an IND), every value read from
  * GET /api/c2c/projects/:id — never from the window.C2C_PROJECT display
  * handoff, never derived from the title, never a placeholder. A program the
  * agency has not numbered says so in words; it never shows a made-up number.
+ *
+ * The owning party is labelled Client and read from the row's client_name, the
+ * client workspace the project is anchored to (D2 A2.2, a40f48f8). The row's
+ * sponsor_name is the organization's display name, a CRO's own name on a CRO
+ * account, and is never shown as the client.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,7 +42,8 @@ function program(over: Record<string, unknown> = {}) {
     status: 'active', phase: 'clinical', priority: 'high', description: null,
     product_name: 'Vorelinib', indication: 'KIT-mutant gastrointestinal stromal tumor',
     intended_use: null, primary_agency: 'FDA', target_submission_date: null, readiness: 0,
-    sponsor_name: 'Concept2Cure Therapeutics', application_number: '000512',
+    sponsor_name: 'Example CRO Organization', client_workspace_id: 11, client_name: 'Concept2Cure Therapeutics',
+    application_number: '000512',
     ...over,
   };
 }
@@ -68,12 +74,13 @@ describe('project home shows the program identity from the database', () => {
     expect(screen.queryByText(stored)).toBeNull();
   });
 
-  it('renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id', async () => {
+  it('renders client, product, indication and the IND number from GET /api/c2c/projects/:id', async () => {
     mockProgram(program());
     render(<ProjectHome {...props()} />);
     const facts = within(await screen.findByRole('region', { name: /project identity/i }));
-    expect(facts.getByText('Sponsor')).toBeTruthy();
+    expect(facts.getByText('Client')).toBeTruthy();
     expect(facts.getByText('Concept2Cure Therapeutics')).toBeTruthy();
+    expect(facts.queryByText('Example CRO Organization')).toBeNull();
     expect(facts.getByText('Product')).toBeTruthy();
     expect(facts.getByText('Vorelinib')).toBeTruthy();
     expect(facts.getByText('Indication')).toBeTruthy();
@@ -107,8 +114,8 @@ describe('project home shows the program identity from the database', () => {
     expect(facts.queryByText(/^\d{6}$/)).toBeNull();
   });
 
-  it('says "not recorded" for sponsor, product or indication the row lacks', async () => {
-    mockProgram(program({ sponsor_name: null, indication: null }));
+  it('says "not recorded" for client, product or indication the row lacks', async () => {
+    mockProgram(program({ client_workspace_id: null, client_name: null, indication: null }));
     render(<ProjectHome {...props()} />);
     const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getAllByText('not recorded')).toHaveLength(2);

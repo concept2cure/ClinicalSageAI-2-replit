@@ -1,0 +1,24 @@
+# mutation M2-remove-alias: client/src/concept2cure/v2/registryModel.ts
+# replaced:   'device-tasks': 'tasks',
+
+# with:     
+
+== client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > resolves the old id to Tasks from a link, an in-app move and AnA, with or without a project open 4ms
+   → expected undefined to be 'tasks' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'tasks' // Object.is equality
+      Tests  1 failed | 4 passed (5)
+== client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+ × client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > resolves every NAVIGATION_TARGETS id to a real surface view (never the scaffold) 9ms
+   → registry ids with no real surface view: device-tasks → device-tasks: expected [ 'device-tasks → device-tasks' ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > every target opens in the release, or resolves to a surface the launch scope can lock for AnA 3ms
+   → expected [ 'device-tasks → device-tasks' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: registry ids with no real surface view: device-tasks → device-tasks: expected [ 'device-tasks → device-tasks' ] to deeply equal []
++   "device-tasks → device-tasks",
+     36|       if (!hasView) unreachable.push(`${target.id} → ${resolved}`);
+AssertionError: expected [ 'device-tasks → device-tasks' ] to deeply equal []
++   "device-tasks → device-tasks",
+      Tests  2 failed | 3 passed (5)
+# restored byte-for-byte (cmp)

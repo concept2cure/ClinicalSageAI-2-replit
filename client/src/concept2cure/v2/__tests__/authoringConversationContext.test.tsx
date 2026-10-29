@@ -11,7 +11,10 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      // One account object, as AuthService.getUser() returns: the authoring read
+      // session is owned by that reference (authoringCurrentRead.ts), so a fresh
+      // object per call re-mints the session on every render and never settles.
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -38,8 +41,9 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
-    if (url === `/api/authoring/docs/${FLOW_DOC}`) return ok({ document: doc });
-    if (url === `/api/authoring/docs/${FLOW_DOC}/sections`) return ok({ sections });
+    // The current read names its project (`?programId=`, authoringCurrentReadPath); the route is the path.
+    if (url.split('?')[0] === `/api/authoring/docs/${FLOW_DOC}`) return ok({ document: doc });
+    if (url.split('?')[0] === `/api/authoring/docs/${FLOW_DOC}/sections`) return ok({ sections });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], revisions: [], comments: [] });
   });

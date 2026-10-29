@@ -44,7 +44,7 @@ function respond(body: unknown | null) {
   );
 }
 
-const mount = () => render(<PreSubManager onAskAna={() => {}} />);
+const mount = () => render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
 
 describe('PreSubManager — a failed read, an empty portfolio and a filter are three facts', () => {
   it('reports a FAILED read as a failure, never as a filter mismatch', async () => {
@@ -52,14 +52,14 @@ describe('PreSubManager — a failed read, an empty portfolio and a filter are t
     mount();
     await waitFor(() => expect(screen.getByTestId('presub-list-error')).toBeTruthy());
     expect(screen.queryByText('No Q-Subs match these filters')).toBeNull();
-    expect(screen.queryByText('Clear filters to see the full portfolio.')).toBeNull();
+    expect(screen.queryByText("Clear filters to see all of this project's Q-Subs.")).toBeNull();
   });
 
   it('says an empty portfolio is empty, and does not tell the user to clear filters', async () => {
     respond({ data: { rows: [], count: 0 } });
     mount();
     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBeTruthy());
-    expect(screen.queryByText('Clear filters to see the full portfolio.')).toBeNull();
+    expect(screen.queryByText("Clear filters to see all of this project's Q-Subs.")).toBeNull();
     expect(screen.queryByTestId('presub-list-error')).toBeNull();
   });
 

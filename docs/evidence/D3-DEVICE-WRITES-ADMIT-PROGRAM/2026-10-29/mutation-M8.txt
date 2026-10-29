@@ -1,0 +1,53 @@
+Mutation M8: server/routes/mdx-udi.ts
+  replaced: if (await programInOrganization(pool, programId, orgId)) return true;
+    notFoundInTenant(res, 'Project');
+  with:     await programInOrganization(pool, programId, orgId);
+    return true;
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed | 31 passed (39)
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected 200 to be 404 // Object.is equality
+
+== server/__tests__/routes/device-project-reads-admit-program.test.ts
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 passed (20)
+ FAIL  server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows
+ FAIL  server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows
+AssertionError: expected 200 to be 404 // Object.is equality
+ FAIL  server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list
+ FAIL  server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list
+AssertionError: expected 200 to be 404 // Object.is equality
+
+restored: sha256 before 6ebbba235a739ae4 after 6ebbba235a739ae4 -> identical

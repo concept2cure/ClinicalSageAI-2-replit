@@ -26,6 +26,7 @@ import type { ComposedSection, GeneratedTable } from './module3Composer.js';
 import type { CSRSection } from './csr-builder.js';
 import { ichHeadingTitle } from './ind/ctd/ich-m4-headings.js';
 import { ctdRecordSubtree } from './market-specs/ctd-component-outlines.js';
+import { phaseLabel, phaseNumbers } from '../../shared/clinical-phase';
 
 /**
  * A heading line as the ICH M2–M5 record numbers and titles it. The first level
@@ -161,6 +162,11 @@ export interface CSRSummaryInput {
   primaryEndpointMet?: boolean | null;
   /** Enrolled subjects; null when the study record does not carry it (never 0 for "unknown"). */
   sampleSize: number | null;
+  /**
+   * The planned size the study information gives, when that is all there is.
+   * Shown as planned; never counted as enrolled or exposed.
+   */
+  plannedSampleSize?: number | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -452,8 +458,11 @@ function safetyCounts(csrs: CSRSummaryInput[]): {
 }
 
 /** "n=…" for a study: the recorded size, or an explicit statement that none was recorded. */
-function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize'>): string {
-  return typeof c.sampleSize === 'number' ? String(c.sampleSize) : '[sample size not recorded]';
+function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize' | 'plannedSampleSize'>): string {
+  if (typeof c.sampleSize === 'number') return String(c.sampleSize);
+  return typeof c.plannedSampleSize === 'number'
+    ? `[enrolled not recorded; planned ${c.plannedSampleSize}]`
+    : '[sample size not recorded]';
 }
 
 /** Analysis population cell: ITT if recorded, else enrolled, else said to be missing. */
@@ -630,11 +639,22 @@ const COMPOSED_25 = ['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.
  * an explicit benefit-risk conclusion. It writes 2.5.1–2.5.7 as the record
  * heads them; the 2.5.6 benefit-risk subdivisions are not composed, and say so.
  */
+/* What each study is, by the first phase its recorded text names
+   (shared/clinical-phase.ts). These read c.phase as a bare digit with
+   startsWith('3'), so a study recorded as "Phase 3" or "III" was never pivotal
+   and "Phase 1" was never clinical pharmacology (CSR path review, 2026-10-29).
+   "2/3" reads as it always did here, Phase 2 first: whether a Phase 2/3 study
+   counts as pivotal is a product decision, not a parser's. */
+const firstPhase = (c: CSRSummaryInput) => phaseNumbers(c.phase)[0] ?? null;
+const isPhase1 = (c: CSRSummaryInput) => firstPhase(c) === 1;
+const isPhase3 = (c: CSRSummaryInput) => firstPhase(c) === 3;
+const isPhase2Or3 = (c: CSRSummaryInput) => firstPhase(c) === 2 || firstPhase(c) === 3;
+
 export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   const csrs = ctx.csrs;
-  const pivotal = csrs.filter(c => c.phase.startsWith('3'));
-  const clinPharm = csrs.filter(c => c.phase.startsWith('1'));
-  const controlled = csrs.filter(c => /^[2-3]/.test(c.phase));
+  const pivotal = csrs.filter(isPhase3);
+  const clinPharm = csrs.filter(isPhase1);
+  const controlled = csrs.filter(isPhase2Or3);
   const totalSubjects = csrs.reduce((s, c) => s + (c.ittPopulation || c.sampleSize || 0), 0);
   const safety = safetyCounts(csrs);
   const outcomes = pivotalOutcomes(pivotal);
@@ -689,7 +709,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       ? efficacyHeadline(outcomes, pivotal.length)
       : `[No pivotal efficacy study available — efficacy is not yet established.]`,
     ...pivotal.map(
-      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${sampleSizeText(c)}): ${c.primaryEndpoint} — ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`,
+      c => `  • ${c.protocolNumber} (${phaseLabel(c.phase)}, n=${sampleSizeText(c)}): ${c.primaryEndpoint} — ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`,
     ),
     ``,
     heading('2.5.5'),
@@ -792,9 +812,9 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   }, {});
   const totalSubjects = csrs.reduce((sum, c) => sum + (c.ittPopulation || c.sampleSize || 0), 0);
   const safety = safetyCounts(csrs);
-  const controlledCount = csrs.filter(c => c.phase.match(/^[2-3]/)).length;
-  const phase1 = csrs.filter(c => c.phase.startsWith('1'));
-  const pivotal = csrs.filter(c => c.phase.startsWith('3'));
+  const controlledCount = csrs.filter(isPhase2Or3).length;
+  const phase1 = csrs.filter(isPhase1);
+  const pivotal = csrs.filter(isPhase3);
   const outcomes = pivotalOutcomes(pivotal);
   const ae = commonAdverseEvents(csrs);
 
@@ -835,10 +855,10 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       ? `${controlledCount} Phase 2–3 study/ies are recorded. ${pivotal.length > 0 ? efficacyHeadline(outcomes, pivotal.length) : 'No pivotal (Phase 3) study is recorded.'}`
       : `[No controlled efficacy study available — efficacy has not been evaluated]`,
     ...pivotal.map(c =>
-      `  • ${c.protocolNumber} (Phase ${c.phase}): ${c.studyDesign}, n=${sampleSizeText(c)}. Primary endpoint (${c.primaryEndpoint}): ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`
+      `  • ${c.protocolNumber} (${phaseLabel(c.phase)}): ${c.studyDesign}, n=${sampleSizeText(c)}. Primary endpoint (${c.primaryEndpoint}): ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`
     ),
     ``,
-    `Phase distribution: ${Object.entries(phaseCounts).map(([p, n]) => `Phase ${p}: ${n}`).join(', ')}.`,
+    `Phase distribution: ${Object.entries(phaseCounts).map(([p, n]) => `${phaseLabel(p)}: ${n}`).join(', ')}.`,
     ``,
     heading('2.7.4'),
     `Safety database: ${totalSubjects} subjects enrolled across ${csrs.length} study/ies (ITT population where recorded, otherwise enrolled; all treatment arms). ${safety.statement}`,

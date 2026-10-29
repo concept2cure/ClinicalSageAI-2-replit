@@ -181,6 +181,19 @@ describe('the scope list itself', () => {
   });
 });
 
+describe('the folded device task workbench', () => {
+  it('is in neither project scope list: Tasks holds it (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/. The subset pin in
+       'the scope list itself' would pass with the id left in the Projects list
+       alone, so this names it. */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-tasks');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-tasks');
+    expect(isLaunchSurface('device-tasks')).toBe(false);
+    expect(projects.surfaces).toContain('tasks');
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;

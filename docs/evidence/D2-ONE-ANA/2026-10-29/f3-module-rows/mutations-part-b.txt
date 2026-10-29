@@ -1,0 +1,11 @@
+# Part B. Each mutation applied alone, the files restored and checked after (mutate2.py).
+# Tests: documentAuthoringDeepLink, editorTarget, projectHomeDocuments. 8 mutations, 8 red.
+# 'the module wins over an exact code' was GREEN on the first run: nothing pinned the precedence. A case was added; it is red now.
+RED  the setter drops the module: Tests  5 failed | 54 passed (59) | → the row named no document: expected { docType: null, …(7) } to match object { docId: 'doc-copy', …(2) }
+RED  the reader drops the module: Tests  3 failed | 56 passed (59) | → expected 'Cover letter.' to be 'Nonclinical overview.' // Object.is equality
+RED  the editor ignores the module (the head behaviour): Tests  2 failed | 57 passed (59) | → expected 'Cover letter.' to be 'Nonclinical overview.' // Object.is equality
+RED  the module wins over an exact code: Tests  1 failed | 59 passed (60) | → expected 'Nonclinical overview.' to be 'SE discussion body.' // Object.is equality  (after the precedence case was added; it was GREEN before it)
+RED  the first section in the list wins, not the first by order: Tests  1 failed | 58 passed (59) | → expected 'Clinical overview.' to be 'Nonclinical overview.' // Object.is equality
+RED  with none started, nothing is opened: Tests  1 failed | 58 passed (59) | → expected 'Default document content.' to be 'Cover letter.' // Object.is equality
+RED  the editor opens a section it was not asked for: Tests  4 failed | 55 passed (59) | → expected 'Earlier section.' to be 'SE discussion body.' // Object.is equality
+RED  the row sends no module: Tests  2 failed | 57 passed (59) | → the row named no document: expected { docType: null, …(7) } to match object { docId: 'doc-copy', …(2) }

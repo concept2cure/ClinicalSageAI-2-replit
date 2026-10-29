@@ -1804,7 +1804,9 @@ export async function runOrchestrator(
                   inputs.drugProductName || inputs.drugSubstanceName || '[product]',
                 studyDesign: csr.studyDesign,
                 primaryEndpoint: csr.primaryEndpoint,
-                sampleSize: csr.sampleSize ?? undefined,
+                // The request's sampleSize is the planned size: an enrolled
+                // count when one is recorded, else the plan the inputs carried.
+                sampleSize: csr.sampleSize ?? csr.plannedSampleSize ?? undefined,
               },
               sectionsToGenerate,
             },

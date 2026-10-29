@@ -203,8 +203,13 @@ export async function loadCsrInputsForProject(
       primaryEndpoint: info.primaryEndpoint,
       primaryResult,
       // Unknown stays unknown: `?? 0` printed "n=0" into the Clinical Overview
-      // for a study whose size was simply never recorded.
-      sampleSize: info.sampleSize ?? null,
+      // for a study whose size was simply never recorded. And the build
+      // request's sampleSize is the PLANNED size (CSRBuildRequest.studyInfo):
+      // until 2026-10-29 it was passed as enrolled, so Module 2 wrote "600
+      // subjects enrolled" from a plan and counted it as exposure. Enrolled is
+      // not recorded here; the plan travels as itself.
+      sampleSize: null,
+      plannedSampleSize: info.sampleSize ?? null,
       csrSections: sections,
     });
   }

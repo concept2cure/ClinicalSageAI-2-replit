@@ -54,7 +54,7 @@ beforeEach(() => {
     status: 200,
     text: async () => '',
     json: async () =>
-      url === '/api/q-sub' ? { data: { rows: [ROW], count: 1 } } : { data: DETAIL },
+      url === '/api/q-sub?program_id=p-1' ? { data: { rows: [ROW], count: 1 } } : { data: DETAIL },
   }));
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -68,7 +68,7 @@ const linkButton = () =>
 
 describe('PreSubManager — a dossier link nothing carries out is not a button', () => {
   it('offers no dossier-link button on a question when no caller wires the jump', async () => {
-    render(<PreSubManager onAskAna={() => {}} />);
+    render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(screen.getByText('Add a sensitisation test.')).toBeTruthy());
     expect(linkButton()).toHaveLength(0);
     // The section is the server's fact, so it is still said, as a destination.
@@ -76,7 +76,7 @@ describe('PreSubManager — a dossier link nothing carries out is not a button',
   });
 
   it('offers no dossier-link button on the Commitments tab either', async () => {
-    render(<PreSubManager onAskAna={() => {}} />);
+    render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(screen.getByText('Add a sensitisation test.')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /^Commitments/ }));
     await waitFor(() => expect(screen.getByText('From Q1')).toBeTruthy());
@@ -86,7 +86,7 @@ describe('PreSubManager — a dossier link nothing carries out is not a button',
 
   it('still offers the jump, and carries it out, once a caller wires it', async () => {
     const onJump = vi.fn();
-    render(<PreSubManager onAskAna={() => {}} onJumpToDossier={onJump} />);
+    render(<PreSubManager programId="p-1" onAskAna={() => {}} onJumpToDossier={onJump} />);
     await waitFor(() => expect(screen.getByText('Add a sensitisation test.')).toBeTruthy());
     const [btn] = linkButton();
     expect(btn).toBeTruthy();

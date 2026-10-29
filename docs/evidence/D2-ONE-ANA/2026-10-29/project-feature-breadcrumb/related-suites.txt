@@ -1,0 +1,62 @@
+Related suites: the shell, the registry model, the breadcrumb, ⌘K, and every suite that renders TopBar or CmdK.
+
+1. Before the change (HEAD 5b541627, source unchanged), 22 files:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 21 passed (22)
+      Tests  1 failed | 230 passed (231)
+   The one red, already in HEAD and outside this slice's files:
+   AssertionError: dead navigation targets (no such surface):
+     ProjectBiotechPlan.tsx → 'document'
+     ProjectBiotechPlan.tsx → 'document': expected [ { target: 'document', …(1) }, …(1) ] to deeply equal []
+
+2. With the fix, before shellChromeTruth.test.tsx moved to the 2026-10-23 decision:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 20 passed (22)
+      Tests  6 failed | 225 passed (231)
+ × navTargets.test.tsx > v2 navigation targets all resolve to a real destination > every literal nav target is a real surface, alias, hub, or modal mode 6ms
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core, a device workbench 6ms
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 3ms
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD") 1ms
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb 34ms
+   shellChromeTruth's finding-128 block pinned risk as "Medical Device & IVD", device-510k/device-pma
+   as having no parent, and device-510k's header as "Concept2Cure.RI › 510(k) and eSTAR".
+
+3. Final, with the fix and the updated shellChromeTruth.test.tsx, 30 files (the 22 above,
+   projectFeatureBreadcrumb.test.tsx, and 7 more shell-rendering suites that were run only after the change):
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 29 passed (30)
+      Tests  1 failed | 328 passed (329)
+ × navTargets.test.tsx > v2 navigation targets all resolve to a real destination > every literal nav target is a real surface, alias, hub, or modal mode 14ms
+
+Files in the final run:
+  client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx
+  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+  client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx
+  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+  client/src/concept2cure/v2/__tests__/clientNamesSlice1Features.test.tsx
+  client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx
+  client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx
+  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx
+  client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx
+  client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx
+  client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx
+  client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+  client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+  client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+  client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx
+  client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx
+  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx
+  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx
+  client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx
+  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx
+  client/src/concept2cure/v2/__tests__/registryModel.test.ts
+  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+  client/src/concept2cure/v2/__tests__/shellNav.test.tsx
+  client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx
+  client/src/concept2cure/v2/__tests__/shellWiring.test.tsx
+  client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx
+  shared/constants/__tests__/mdx-project-features.test.ts

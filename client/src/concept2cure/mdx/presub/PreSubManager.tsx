@@ -363,6 +363,8 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
 }
 
 export interface PreSubManagerProps {
+  /** The open project, from the host's `programForContext`. Null reads nothing. */
+  programId: string | null;
   onAskAna: (text: string) => void;
   onJumpToDossier?: (link: DossierLink) => void;
 }
@@ -380,7 +382,7 @@ const NO_PRESUB_KPIS: { label: string; metric: string; unit?: string; meta: stri
 type ListFilter = 'all' | PresubTypeId;
 type StageFilter = 'all' | PresubStageId;
 
-export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps) {
+export function PreSubManager({ programId, onAskAna, onJumpToDossier }: PreSubManagerProps) {
   const [filter, setFilter] = React.useState<ListFilter>('all');
   const [stageFilter, setStageFilter] = React.useState<StageFilter>('all');
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -396,8 +398,11 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
      fabricated signature, and it is the one a sponsor would most reasonably
      act on.
 
-     PRESUB_KPIS was derived from those rows and inherited the problem. */
-  const live = usePresubList();
+     PRESUB_KPIS was derived from those rows and inherited the problem.
+
+     The list is the open project's (D2, 2026-10-29). It was every project's,
+     under the project's title. */
+  const live = usePresubList(programId);
   const sourceList: PresubListRow[] = live.list ?? NO_PRESUBS;
   const sourceKpis = live.kpis ?? NO_PRESUB_KPIS;
 
@@ -421,6 +426,17 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
   }, [sourceList, filtered, selected]);
 
   const sel = sourceList.find(r => r.id === selected) || filtered[0];
+
+  /* No project, no read. The host does not mount this without one; this holds
+     when something else does, so no list is ever drawn without its project. */
+  if (!programId) {
+    return (
+      <section data-testid="presub-no-project">
+        <EmptyState title="Open a project to see its Q-Submissions"
+          hint="Each Q-Submission belongs to one project. Choose the project from Projects." />
+      </section>
+    );
+  }
 
   return (
     <>
@@ -561,7 +577,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
                 <div className="ps-empty-s">
                   {sourceList.length === 0
                     ? 'Pre-submissions, SIRs and informational meetings appear here once filed.'
-                    : 'Clear filters to see the full portfolio.'}
+                    : "Clear filters to see all of this project's Q-Subs."}
                 </div>
               </div>
             )}

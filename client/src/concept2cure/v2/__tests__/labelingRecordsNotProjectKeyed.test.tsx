@@ -13,6 +13,10 @@
  *
  * Until the read takes the project (slice 20), the record panels are not shown
  * and one plain line says why. AnA is told the same, not the other document.
+ *
+ * Slice 20 (2026-10-29, device-features-reach-three): the read takes the shell's
+ * open project. With no project open the panels are still not shown, and the
+ * line and AnA say that no project is open.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,6 +36,7 @@ vi.mock('../surfaceContext', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 /* Another project's IFU: the first row of the organization-wide read. */
 const OTHER_DOC = {
@@ -60,9 +65,9 @@ beforeEach(() => {
     return { ok: true, status: 200, json: async () => ({ data }) } as Response;
   });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
-const mount = () => render(<Labeling {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />);
+const mount = () => render(<Labeling {...({ onAsk: () => {}, onNav: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />);
 const text = () => document.body.textContent ?? '';
 /* Let every read that would be made settle, so a panel that renders the
    organization's first document has had the chance to. */
@@ -89,8 +94,8 @@ describe('Labeling — record panels wait for a project-keyed read (slice 0)', (
 
     /* The line names what is withheld, so it cannot be read as describing the
        panels that are still shown beneath it. */
-    expect(document.body.querySelector('[data-testid="labeling-not-keyed"]')?.textContent ?? '').toMatch(
-      /^Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are shown once this screen reads this project's records\./,
+    expect(document.body.querySelector('[data-testid="labeling-no-project"] p')?.textContent ?? '').toMatch(
+      /^Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are the open project's\./,
     );
     // Nothing that holds no record was taken away with them.
     const titles = Array.from(document.body.querySelectorAll('.sec-title')).map((t) => t.textContent);
@@ -118,29 +123,30 @@ describe('Labeling — record panels wait for a project-keyed read (slice 0)', (
       const data = path === '/api/mdx/labeling' ? [OTHER_DOC] : path === KEYED ? [OWN_DOC] : [];
       return { ok: true, status: 200, json: async () => ({ data }) } as Response;
     });
-    render(<Labeling {...({ onAsk: () => {}, programId: PROGRAM_ID } as unknown as React.ComponentProps<typeof Labeling>)} />);
+    publishShellProject({ id: PROGRAM_ID });
+    mount();
     await waitFor(() => expect(paths).toContain(KEYED));
     await settle();
     expect(paths).not.toContain('/api/mdx/labeling');
     await waitFor(() => expect(text()).toMatch(/Instructions for use v3/));
     expect(text()).not.toMatch(/00812345000017/);
-    expect(document.body.querySelector('[data-testid="labeling-not-keyed"]')).toBeNull();
+    expect(document.body.querySelector('[data-testid="labeling-no-project"]')).toBeNull();
   });
 
   /* The reason given is the one the code has. There is no organization-wide
-     read left to "not limit" (the test above proves it is never made): the
-     screen is not handed the project, so it reads no labeling document at all.
-     Saying the read "would show the organization's first labeling document"
-     describes the removed read, and AnA would repeat it to a user as a limit of
-     the labeling service, which does filter by project. */
-  const TRUE_REASON = /This screen is not given the open project yet, so it reads none of the organization's labeling documents\./;
+     read left to "not limit" (the test above proves it is never made): no
+     project is open, so it reads no labeling document at all. Saying the read
+     "would show the organization's first labeling document" describes the
+     removed read, and AnA would repeat it to a user as a limit of the labeling
+     service, which does filter by project. */
+  const TRUE_REASON = /No project is open, so (this screen reads no labeling document|no labeling record is read or shown)\./;
   const REMOVED_READ = /not limited to a project|would show the organization/;
 
-  it('gives the true reason on the screen: the screen is not given the project', async () => {
+  it('gives the true reason on the screen: no project is open', async () => {
     mount();
     await waitFor(() => expect(text()).toMatch(/Labeling and IFU/));
     await settle();
-    const note = document.body.querySelector('[data-testid="labeling-not-keyed"]')?.textContent ?? '';
+    const note = document.body.querySelector('[data-testid="labeling-no-project"] p')?.textContent ?? '';
     expect(note).toMatch(new RegExp(TRUE_REASON.source + '$'));
     expect(note).not.toMatch(REMOVED_READ);
   });
@@ -161,7 +167,7 @@ describe('Labeling — record panels wait for a project-keyed read (slice 0)', (
     expect(published.current).not.toBeNull();
     expect(published.current?.facts?.document).toBeUndefined();
     expect(published.current?.summary ?? '').not.toMatch(/Other project infusion pump/);
-    expect(published.current?.summary ?? '').toMatch(/not shown/i);
+    expect(published.current?.summary ?? '').toMatch(/no labeling record is read or shown/i);
     expect(published.current?.summary ?? '').toMatch(/project/);
   });
 });

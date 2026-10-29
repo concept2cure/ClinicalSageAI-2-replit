@@ -12,6 +12,12 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 vi.mock('../../dataConnect', () => ({ connected: () => false, EmptyState: ({ title }: { title: string }) => <div>{title}</div> }));
 vi.mock('../DocumentCanvas', () => ({ DocumentCanvas: (props: { docId: string; focusSectionId?: string }) => { canvas(props); return <div data-testid="saved-canvas">{props.docId}</div>; } }));
 vi.mock('../../../components/ana/useAnaChat', () => ({ useAnaChat: () => ({ messages: [], isStreaming: false, isLoadingThread: false, threadId: null, runStatus: null, pendingSteers: [], send: vi.fn(), reset: vi.fn(), loadThread: vi.fn() }) }));
+/* useDocumentList reads the signed-in session (editor/CanvasDocumentList.tsx);
+   with no AuthProvider mounted, the real useAuth throws before the thread renders. */
+vi.mock('@/services/portal/authService', async original => ({
+  ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' } }),
+}));
 import { ConversationThread } from '../../surfaces/ConversationThread';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000001';

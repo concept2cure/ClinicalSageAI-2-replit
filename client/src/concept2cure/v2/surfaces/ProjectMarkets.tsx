@@ -23,6 +23,14 @@
  * (navParams → submissionNavTarget, F10): on Validation when the server
  * blocked dispatch, otherwise on Sequences.
  *
+ * Under each Submit row is the sequence's readiness detail (MarketGateDetail):
+ * the server's composed gates, its structural findings with the act that opens
+ * where each is fixed, and the door to Dispatch once the gate allows it. It is
+ * Submission Readiness's own detail, imported from DispatchReadiness.tsx (F10,
+ * P-33: the one dispatch verdict per sequence, shown inside Submit). Submit no
+ * longer has a door to a second readiness screen; that screen draws this same
+ * list and detail.
+ *
  * "Add a market" opens the Submission Center's New submission form with the
  * open project named (FILING_SPINE.md F9; the form takes the project, F20).
  */
@@ -38,6 +46,9 @@ import type { ReviewItem } from '../fixtures/review-data';
 import type { BuilderSection } from './submissionNavTarget';
 import { MarketApplicationNumber } from './MarketApplicationNumber';
 import { STEP_DOORS } from '../projectDoors';
+import { getSurfaceMeta } from '../registryModel';
+import { mdxProjectPlan, PATHWAY_FEATURES, type MdxWorkflowProject } from './ProjectMdxWorkflow';
+import { MarketGateDetail } from './DispatchReadiness';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -203,7 +214,7 @@ export interface CenterTarget {
 }
 
 /** The one way the project's markets open the Submission Center: this list,
- *  and Submission Readiness's acts (F18). */
+ *  and the readiness detail's acts (F18). */
 export function openSubmissionCenter(onNav: (id: string) => void, at: CenterTarget): void {
   stashNavParamsForTarget('submission-center', {
     submissionId: at.submissionId != null ? String(at.submissionId) : '',
@@ -237,7 +248,7 @@ export function marketAccessibleName(s: Pick<MarketSubmission, 'applicationType'
 
 function MarketRow({ m, onRetry, onOpen, detail, number }: {
   m: ProgramMarket; onRetry: (id: number) => void; onOpen: ((m: ProgramMarket) => void) | null;
-  /** What is shown under the verdict in place of VerdictDetail (Submission Readiness's gates). */
+  /** What is shown under the verdict in place of VerdictDetail (the readiness detail, MarketGateDetail). */
   detail?: (m: ProgramMarket) => React.ReactNode;
   /** The market's own application number (P-44), where the list offers it. */
   number?: (m: ProgramMarket) => React.ReactNode;
@@ -312,7 +323,8 @@ export function marketsForbidden(markets: ProgramMarkets): boolean {
 const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this project’s markets are not shown.';
 
 /** The project's markets as a list, with its loading, refused, failed and
- *  empty states. The Submit tab and Submission Readiness (F18) both draw it. */
+ *  empty states. The Submit tab and Submission Readiness (F18) both draw it,
+ *  each with MarketGateDetail under every row (F10). */
 export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
@@ -371,22 +383,57 @@ export function NotSequencedState({ documentClass, regionalApplication }: {
 /** The Submit tab's market list. The header's Submission Center door opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-/** The IND's forms (1571, cover letter, Letter of Authorization), a Submission
- *  Center feature (P-32), offered on a US IND's Submit step. It was reached only
- *  from inside a Submission Center sequence; it reads the open program, so it
- *  opens on this one (docs/design/CLIENT_JOURNEY_2026-10-25.md). */
-function IndFormsDoor({ usInd, onNav, available }: {
-  usInd?: boolean; onNav: (id: string) => void; available: (id: string) => boolean;
+/** A door from the Submit step into a feature that works on the open project,
+ *  asked first whether this release can open it (`available` is
+ *  useSurfaceAvailable, passed down by ProjectHome). A feature it cannot open
+ *  draws no button: the door is left out, or, where the step's guidance
+ *  promises the job, `unavailable` says so in words.
+ *
+ *  Two doors use it. The IND's forms (1571, cover letter, Letter of
+ *  Authorization), a Submission Center feature (P-32), on a US IND. It was
+ *  reached only from inside a Submission Center sequence; it reads the open
+ *  program, so it opens on this one (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+ *  And a device project's filing assembly (pathwayAssembly). */
+function FeatureDoor({ surface, label, unavailable, onNav, available }: {
+  surface: string; label: string; unavailable?: string;
+  onNav: (id: string) => void; available: (id: string) => boolean;
 }) {
-  if (!usInd || !available('ind-checklist')) return null;
+  if (!available(surface)) return unavailable ? <span className="sec-sub" data-testid="pj-mkt-door-unavailable">{unavailable}</span> : null;
   return (
-    <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('ind-checklist')}>
-      {STEP_DOORS.indForms} {I.right}
+    <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav(surface)}>
+      {label} {I.right}
     </button>
   );
 }
 
-export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFiling, canChange, documentClass, regionalApplication, usInd }: {
+/** Where a device project's filing is assembled: the door Plan's
+ *  submission-assembly workstream offers (ProjectMdxWorkflow PATHWAY_FEATURES),
+ *  here on the step whose guidance says to assemble it (PJ_LIFECYCLE nowDevice).
+ *  The pathway is the one the project read records, by Plan's rule
+ *  (mdxProjectPlan's primary: the filing type, else the regulatory path). A
+ *  pathway with no feature (De Novo), an unrecorded one, or a project not yet
+ *  read has none, and none is guessed. Which store holds the device filing
+ *  (eSTAR tracker, device-submission, device-510k) is not chosen here
+ *  (.design/client-journey/FUNCTION_PARITY.md, device-submission). */
+function pathwayAssembly(project: MdxWorkflowProject | null | undefined, deviceFiling: boolean | undefined) {
+  const plan = deviceFiling && project ? mdxProjectPlan(project) : null;
+  return plan ? PATHWAY_FEATURES[plan.primary ?? ''] ?? null : null;
+}
+
+type FeatureDoorSpec = { surface: string; label: string; unavailable?: string };
+/** The feature doors this project's Submit step offers, in order. */
+function featureDoors(usInd: boolean | undefined, project: MdxWorkflowProject | null | undefined, deviceFiling: boolean | undefined): FeatureDoorSpec[] {
+  const doors: FeatureDoorSpec[] = [];
+  if (usInd) doors.push({ surface: 'ind-checklist', label: STEP_DOORS.indForms });
+  const assembly = pathwayAssembly(project, deviceFiling);
+  if (assembly) {
+    doors.push({ surface: assembly.surface, label: assembly.doors.assembly,
+      unavailable: `${getSurfaceMeta(assembly.surface).label}, where this filing is assembled, is not part of this release.` });
+  }
+  return doors;
+}
+
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFiling, project, canChange, documentClass, regionalApplication, usInd }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
@@ -394,6 +441,9 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
   ectdFiling: boolean;
   /** Device-family home projects cannot add medicinal eCTD markets. */
   deviceFiling?: boolean;
+  /** The verified project read (the value Plan's `prog` takes), or null while it
+   *  is not read: a device project's recorded pathway is read from it. */
+  project?: MdxWorkflowProject | null;
   /** Whether the caller may change the project (the detail read's canChange); undefined when not read. */
   canChange?: boolean;
   /** The project is a filing document class (a PAS, a CSR, a meeting package): null for an application. */
@@ -421,13 +471,10 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       <div className="pj-sec-h">
         <h2 id="pj-markets-h">Markets</h2>
         <span className="pj-sec-acts">
-          {/* The readiness screen (Submission Readiness), kept as slice 24's
-              door until F10 retargets it to Validation on the gated sequence. */}
-          {available('dispatch-readiness') && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('dispatch-readiness')}>
-              {STEP_DOORS.readiness} {I.right}
-            </button>
-          )}
+          {/* No door to the readiness screen (Submission Readiness): each row
+              below shows its sequence's readiness itself, and its acts open
+              that sequence (F10, P-33). Slice 24's door opened a second screen
+              that drew this same list. */}
           {/* eCTD compile, opened from the project, compiles the submission
               of the project's own application type; each sequence's Dispatch
               tab opens it on that sequence (F14), which is how another
@@ -440,7 +487,9 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               Compile and download {I.right}
             </button>
           )}
-          <IndFormsDoor usInd={usInd} onNav={onNav} available={available} />
+          {featureDoors(usInd, project, deviceFiling).map((door) => (
+            <FeatureDoor key={door.surface} {...door} onNav={onNav} available={available} />
+          ))}
           {center && ectdFiling && !deviceFiling && (
             <>
               {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
@@ -465,6 +514,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
         startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
+        detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>

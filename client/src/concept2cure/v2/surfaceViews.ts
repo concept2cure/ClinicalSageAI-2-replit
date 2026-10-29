@@ -448,7 +448,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-presub': { component: DeviceSurfaces['device-presub'], full: true },
   'device-software': { component: DeviceSurfaces['device-software'], full: true },
   'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
-  'device-tasks': { component: DeviceSurfaces['device-tasks'], full: true },
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
   'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
   'device-vault': { component: DeviceSurfaces['device-vault'], full: true },

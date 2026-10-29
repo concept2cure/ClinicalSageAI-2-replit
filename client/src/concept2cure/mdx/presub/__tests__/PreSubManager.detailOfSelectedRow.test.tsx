@@ -55,7 +55,7 @@ let releaseB: () => void = () => {};
 beforeEach(() => {
   const heldB = new Promise<void>((resolve) => { releaseB = resolve; });
   vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-    if (url === '/api/q-sub') return ok({ data: { rows: [ROW_A, ROW_B], count: 2 } });
+    if (url === '/api/q-sub?program_id=p-1') return ok({ data: { rows: [ROW_A, ROW_B], count: 2 } });
     if (url === '/api/q-sub/qs-a') return ok({ data: DETAIL_A });
     if (url === '/api/q-sub/qs-b') { await heldB; return ok({ data: DETAIL_B }); }
     throw new Error(`unexpected fetch ${url}`);
@@ -71,7 +71,7 @@ const detailTitle = (container: HTMLElement) =>
 
 describe('PreSubManager — the detail pane shows the selected Q-Sub and no other', () => {
   it("while B's read is pending, B's header is not drawn over A's summary or A's FDA response", async () => {
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(screen.getByText('FDA said yes to ALPHA')).toBeTruthy());
     expect(detailTitle(container)).toBe('Alpha');
 

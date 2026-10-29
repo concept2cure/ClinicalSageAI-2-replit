@@ -28,9 +28,14 @@ const disposition = z.object({ subjectId: id, armId: id,
   status: z.enum(['completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other']), reason: text.optional() }).strict();
 const demographic = z.object({ subjectId: id, armId: id, age: finite.min(0).max(125), sex: z.enum(['M', 'F', 'Other']),
   race: text.optional(), ethnicity: text.optional(), weight: finite.positive().optional(), bmi: finite.positive().optional() }).strict();
+const interval = z.object({ lower: finite, upper: finite, level: text }).strict();
+/** A Bayesian analysis records its credible interval and the posterior
+ * probability of a named hypothesis ("OR > 1"), as the SAP reports them. */
 const efficacy = z.object({ endpointName: text, endpointType: z.enum(['primary', 'secondary', 'exploratory']), armId: id,
-  value: finite, display: text, ci: z.object({ lower: finite, upper: finite, level: text }).strict().optional(),
-  pValue: finite.min(0).max(1).optional(), comparatorArmId: id.optional() }).strict();
+  value: finite, display: text, ci: interval.optional(),
+  pValue: finite.min(0).max(1).optional(), comparatorArmId: id.optional(),
+  credibleInterval: interval.optional(),
+  posteriorProbability: z.object({ value: finite.min(0).max(1), hypothesis: text }).strict().optional() }).strict();
 const ae = z.object({ subjectId: id, armId: id, pt: text, soc: text, severity: z.enum(['mild', 'moderate', 'severe']),
   serious: z.boolean(), related: z.enum(['related', 'unrelated', 'unknown']),
   outcome: z.enum(['recovered', 'recovering', 'not-recovered', 'fatal', 'unknown']).optional(), ledToDiscontinuation: z.boolean().optional() }).strict();
@@ -110,6 +115,7 @@ export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine
     if (!arms.has(r.armId) || (r.comparatorArmId && !arms.has(r.comparatorArmId))) fail('An efficacy result names an unknown arm.');
     if (r.comparatorArmId === r.armId) fail('An efficacy comparison cannot use its own arm as comparator.');
     if (r.ci && r.ci.lower > r.ci.upper) fail('Confidence interval bounds are reversed.');
+    if (r.credibleInterval && r.credibleInterval.lower > r.credibleInterval.upper) fail('Credible interval bounds are reversed.');
     const key = JSON.stringify([r.endpointName, r.endpointType, r.armId]);
     if (endpoints.has(key)) fail('Duplicate efficacy endpoint result for an arm.');
     endpoints.add(key);

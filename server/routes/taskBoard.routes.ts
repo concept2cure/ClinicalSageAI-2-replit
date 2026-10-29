@@ -178,6 +178,17 @@ interface TaskBoardItem {
    */
   phase: string | null;
   blocked: boolean;
+  /**
+   * Another store's own record that this work holds the submission: a review
+   * or correspondence item with a `blocker_type`, a schedule task flagged
+   * critical-to-quality or blocked, a filing on agency hold. Copied from the
+   * cross-store view's `blocking`, the field its `summary.blocking` counts, so
+   * nothing is inferred here. Distinct from `blocked` (the status): a
+   * critical-to-quality task is not blocked. Absent on the board's own tasks,
+   * whose `blocked` and `criticalPath` already say it. (D2, 2026-10-29, the
+   * device-tasks fold.)
+   */
+  blocking?: boolean;
   estimatedHours: number | null;
   /**
    * True for work that lives in another store (schedule, correspondence,
@@ -306,6 +317,7 @@ export function otherStoreCard(item: UnifiedWorkItem, program?: TaskHomeProgram)
     dueDateIso: item.dueAt,
     phase: null,
     blocked: item.status === 'blocked',
+    blocking: item.blocking,
     estimatedHours: null,
     readOnly: true,
     home: {

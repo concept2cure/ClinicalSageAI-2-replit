@@ -1,0 +1,40 @@
+# Mutations: each is one exact-string swap in a product file, one vitest run of the file that pins it,
+# then the inverse swap. The sha256 (first 16 hex) after restoring equals the pre-mutation value, and
+# `git diff --stat` on the three product files is empty afterwards.
+
+## M1  client/src/concept2cure/v2/surfaces/ProjectHome.tsx (identity facts)
+#  The Client fact reads the organization display name again (the pre-A2.2 source): a CRO account shows its own name as the client.
+#  -  const clientName = prog?.client_name ?? null;
+#  +  const clientName = prog?.sponsor_name ?? null;
+
+ × projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders client, product, indication and the IND number from GET /api/c2c/projects/:id 367ms
+   → Unable to find an element with the text: Concept2Cure Therapeutics.
+ × projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for client, product or indication the row lacks 81ms
+   → expected [ <span class="pj-fact-none"></span> ] to have a length of 2 but got 1
+      Tests  2 failed | 5 passed (7)
+ ❯ projectHomeIdentityFacts.test.tsx:82:18
+ ❯ projectHomeIdentityFacts.test.tsx:121:48
+#  restored: sha256 e3d6954cf6339b6f == pre-mutation; git diff --stat empty
+
+## M2  client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx (useProjectTeam)
+#  While the new program's roster loads, the hook serves the previous program's verified roster instead of retiring it.
+#  -    state = { data: null, loading: Boolean(programId), empty: false };
+#  +    state = scope.current.retiredRead?.data && !scope.current.retiredRead.loading ? scope.current.retiredRead : { data: null, loading: Boolean(programId), empty: false };
+
+ × projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 226ms
+   → Unable to find an element with the text: Loading team….
+      Tests  1 failed | 11 passed (12)
+ ❯ projectHomeTeamResponsibilities.test.tsx:111:19
+#  restored: sha256 1bcdfb277fb93d0a == pre-mutation; git diff --stat empty
+
+## M3  client/src/concept2cure/v2/dataConnect.tsx (useLiveData)
+#  An abandoned read is no longer cancelled: program A's late roster reply is applied after the switch to B.
+#  -    const current = () => !cancelled && owned.current();
+#  +    const current = () => owned.current();
+
+ × projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 181ms
+   → Unable to find an element with the text: Alex Chen · Account #9.
+      Tests  1 failed | 11 passed (12)
+ ❯ projectHomeTeamResponsibilities.test.tsx:131:19
+#  restored: sha256 e13d86de09dc2b0a == pre-mutation; git diff --stat empty
+

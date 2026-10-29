@@ -1,0 +1,19 @@
+Mutation M6: server/routes/q-sub.ts
+  replaced: if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
+    return serverError(res, log, 'create', err);
+  with:     return serverError(res, log, 'create', err);
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 37 passed (39)
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected 500 to be 503 // Object.is equality
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 500, body: { …(2) } } to deeply equal { status: 503, body: { …(3) } }
++     "error": "INTERNAL_ERROR",
++   "status": 500,
+
+restored: sha256 before a64170114005caa5 after a64170114005caa5 -> identical

@@ -1,0 +1,13 @@
+ × client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx > TaskBoard: another store's blocking work > flags a review blocker and a critical-to-quality task as blocking, with the board's flag 331ms
+   → Unable to find an element with the title: Blocking the submission.
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx > TaskBoard: another store's blocking work > invents no blocker: plain work and the board's own task carry no flag 74ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx > TaskBoard: another store's blocking work > does not call blocking work blocked: it stays in its own column, and Blocked counts only the hold 75ms
+ × client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx > TaskBoard: another store's blocking work > counts the work holding the submission by the cross-store rule: blocked, or recorded as blocking 92ms
+   → Unable to find an element with the text: Blocking the submission. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the title: Blocking the submission.
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+TestingLibraryElementError: Unable to find an element with the text: Blocking the submission. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

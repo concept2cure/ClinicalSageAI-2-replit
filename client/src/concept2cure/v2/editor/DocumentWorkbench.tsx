@@ -111,6 +111,7 @@ import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFiling
 import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
 import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
 import { FilingMarkets, FilingGaps, useCreateMarketCopy } from './FilingMarkets';
+import { linkedSectionPickFor, type LinkedSectionPick } from './linkedSectionPick';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -2356,7 +2357,10 @@ export function DocumentWorkbench({
     if (refusal) setTargetNotice(refusal);
     return !refusal;
   }, [linkedTargetRefusal]);
-  const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+  /* A linked document's section, chosen by `pick` from the sections read for
+     it on this editor's read path (linkedSectionPick.ts: an exact code, or the
+     first section within a module). */
+  const openLinkedSection = useCallback(async (docId: string, pick: (sections: AuthSection[] | null) => LinkedSectionPick) => {
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
@@ -2367,13 +2371,15 @@ export function DocumentWorkbench({
       setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
       return;
     }
-    const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
-    if (!reply.ok || matches.length !== 1) {
-      setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
-      return;
+    const chosen = pick(reply.ok ? reply.body?.sections ?? [] : null);
+    if ('notice' in chosen) {
+      setTargetNotice(chosen.notice);
+      if (!chosen.openDocument) return;
+      requestLeaveRef.current({ kind: 'document', id: docId });
+    } else {
+      setTargetNotice(null);
+      requestLeaveRef.current({ kind: 'document', id: docId, sectionId: chosen.sectionId });
     }
-    setTargetNotice(null);
-    requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
   }, [programId, readKey, readSession, linkedReadStillCurrent]);
   const rejectLinkedTarget = useCallback((target: EditorTarget): boolean => {
@@ -2448,10 +2454,8 @@ export function DocumentWorkbench({
       }
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
-        if (t.sectionCode) {
-          void openExactDocumentSection(linked.id, t.sectionCode);
-          return;
-        }
+        const pick = linkedSectionPickFor(t);
+        if (pick) { void openLinkedSection(linked.id, pick); return; }
         // A docs-error notice posted moments ago must not outlive the open.
         setTargetNotice(null);
         /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
@@ -2556,7 +2560,7 @@ export function DocumentWorkbench({
     requestLeave,
     fireToast,
     programId,
-    openExactDocumentSection,
+    openLinkedSection,
     programSwitchHeld,
     readKey, readSession,
     rejectLinkedTarget,

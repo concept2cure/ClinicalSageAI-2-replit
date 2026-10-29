@@ -1,0 +1,12 @@
+# Scoped typecheck (tsc over the changed files and everything they import), extending tsconfig.json
+# files: ProjectMarkets.tsx, ProjectHome.tsx (with the lead's line 1851), both new tests, client/src/types/global.d.ts and
+#        auth/ZenLogin.tsx (they carry ImportMeta.env and the vite/client CSS-module types), and this probe:
+#   import React from 'react';
+#   import { ProjectMarkets } from 'client/src/concept2cure/v2/surfaces/ProjectMarkets';
+#   import type { ProjectPlan } from 'client/src/concept2cure/v2/surfaces/ProjectPlan';
+#   /* The value ProjectHome hands Plan (ProjectPlan's prog) must be accepted as Submit's project. */
+#   declare const prog: React.ComponentProps<typeof ProjectPlan>['prog'];
+#   declare const rest: Omit<React.ComponentProps<typeof ProjectMarkets>, 'project'>;
+#   export const probe = <ProjectMarkets {...rest} project={prog} />;
+tsc exit 0, 0 errors
+# The probe made to fail: project={{ id: 1 }} gives TS2322 Type 'number' is not assignable to type 'string'.

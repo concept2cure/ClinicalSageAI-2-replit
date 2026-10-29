@@ -1,0 +1,17 @@
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/hooks/usePresub.ts | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/presub/PreSubManager.tsx | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/surfaces/UdiSurface.tsx | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/hooks/useUdi.ts | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/v2/surfaces/Labeling.tsx | head: 2 problems (0 errors, 2 warnings) | now: 2 problems (0 errors, 2 warnings)
+client/src/concept2cure/v2/projectDoors.ts | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx | head: 0 problems | now: 0 problems
+server/routes/q-sub.ts | head: 0 problems | now: 0 problems
+server/routes/mdx-udi.ts | head: 2 problems (0 errors, 2 warnings) | now: 2 problems (0 errors, 2 warnings)
+server/routes/mdx-labeling.ts | head: 0 problems | now: 0 problems
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+✖ 1 problem (0 errors, 1 warning)
+

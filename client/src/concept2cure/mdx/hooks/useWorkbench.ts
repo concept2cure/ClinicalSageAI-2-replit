@@ -1,151 +1,32 @@
 /**
  * useWorkbench — live data hooks for the cross-program Workbench panes.
  *
- *  useWorkbenchTasks()      — /api/submission-ops/workload
- *                              Adapts c2c_project_work_items rows into the
- *                              kit's Task[] shape (Kanban). Metrics derived
- *                              from the same list.
- *
  *  useWorkbenchValidation(programs) — composes:
  *                              /api/submission-ops/blockers (cross-program)
  *                              with the live program list to compute the
  *                              per-program rules matrix + summary KPIs.
  *
- * No new server routes — all three endpoints already exist.
+ * No new server routes.
+ *
+ * The task hooks (useWorkbenchTasks over /api/submission-ops/workload,
+ * useUnifiedWork and workNotOnTheBoard over /unified-work) went with the task
+ * panel when it folded into Tasks (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Tasks
+ * (v2/surfaces/TaskBoard.tsx) reads every store through GET
+ * /api/task-management/board.
  */
 
 import { useMemo } from 'react';
 import { formatRelativeShort } from '../lib/formatRelativeShort';
 import type {
-  Task,
-  TaskCol,
-  TaskMetric,
-  Tone,
   ValidationProgram,
   ValidationRule,
   ValidationSummary,
 } from '../data/workbench';
 import type { Program } from '../data/programs';
 import { useFetchJson } from './useFetchJson';
-import { firstArray, isRecord, shapeMismatch } from '../lib/payloadShape';
-import {
-  STATUS_TO_TASK_COL,
-  TYPE_TO_TASK_KIND,
-  PATHWAY_LABEL,
-} from '../../../../../shared/constants/mdx';
-
-/* ─── Tasks ────────────────────────────────────────────────────────── */
-
-interface ServerWorkItem {
-  id?: string | number;
-  workItemId?: string;
-  title?: string;
-  programCode?: string; programId?: string | number; projectCode?: string;
-  sectionLabel?: string; sectionKey?: string;
-  status?: string;
-  assigneeName?: string; assignee?: string; ownerName?: string;
-  dueDate?: string; due?: string;
-  workItemType?: string; type?: string;
-  commentCount?: number;
-  esigRequired?: boolean;
-}
-
-interface WorkloadPayload {
-  data?: ServerWorkItem[];
-  workload?: ServerWorkItem[];
-  rows?: ServerWorkItem[];
-}
-
-
-function formatDue(iso: string | undefined): string {
-  if (!iso) return '—';
-  const target = new Date(iso);
-  if (Number.isNaN(target.getTime())) return iso;
-  const days = Math.round((target.getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return `${-days}d overdue`;
-  if (days === 0) return 'today';
-  if (days === 1) return 'tomorrow';
-  if (days < 7) return `${days}d`;
-  return target.toISOString().slice(0, 10);
-}
-
-function dueToTone(iso: string | undefined): Tone {
-  if (!iso) return 'default';
-  const days = Math.round((new Date(iso).getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return 'err';
-  if (days <= 3) return 'warn';
-  return 'default';
-}
-
-function adaptTask(w: ServerWorkItem): Task {
-  const col = (STATUS_TO_TASK_COL[(w.status ?? '').toLowerCase()] ?? 'todo') as TaskCol;
-  const kind = (TYPE_TO_TASK_KIND[(w.workItemType ?? w.type ?? '').toLowerCase()] ?? 'edit') as Task['kind'];
-  const id = String(w.workItemId ?? w.id ?? Math.random().toString(36).slice(2, 10));
-  return {
-    id,
-    col,
-    prog:     w.programCode ?? w.projectCode ?? (w.programId ? String(w.programId) : '—'),
-    sect:     w.sectionLabel ?? w.sectionKey ?? '',
-    title:    w.title ?? '(Untitled)',
-    assignee: w.assigneeName ?? w.assignee ?? w.ownerName ?? 'Unassigned',
-    due:      formatDue(w.dueDate ?? w.due),
-    tone:     dueToTone(w.dueDate ?? w.due),
-    label:    kind === 'sign' ? 'Sign-off' : kind === 'review' ? 'Review' : 'Edit',
-    kind,
-    esig:     !!w.esigRequired,
-    comments: w.commentCount ?? 0,
-  };
-}
-
-function deriveTaskMetrics(tasks: Task[]): TaskMetric[] {
-  const total = tasks.length;
-  const overdue = tasks.filter(t => t.tone === 'err').length;
-  const inReview = tasks.filter(t => t.col === 'review').length;
-  const blocked = tasks.filter(t => t.col === 'blocked').length;
-  return [
-    { label: 'Open work',     metric: String(total),    meta: total === 0 ? 'No tasks' : 'Across portfolio', tone: 'default' },
-    { label: 'Overdue',       metric: String(overdue),  meta: overdue ? 'Past due date' : 'On schedule', tone: overdue ? 'err' : 'ok' },
-    { label: 'In review',     metric: String(inReview), meta: inReview ? 'Awaiting approval' : '—', tone: inReview ? 'warn' : 'default' },
-    { label: 'Blocked',       metric: String(blocked),  meta: blocked ? 'Need resolution' : 'No blockers', tone: blocked ? 'err' : 'ok' },
-  ];
-}
-
-export interface UseWorkbenchTasksResult {
-  tasks: Task[] | null;
-  metrics: TaskMetric[] | null;
-  loading: boolean;
-  error: string | null;
-  /** Re-runs the fetch. A failed read has to offer a way back — UI standards §8. */
-  refresh: () => void;
-}
-
-const WORKLOAD_PATH = '/api/submission-ops/workload';
-
-/**
- * Fetch the cross-program task list from /api/submission-ops/workload
- * (returns c2c_project_work_items rows) and adapt each row into the
- * kit's Task shape (Kanban). Derives 4 KPI cards from the same list.
- */
-export function useWorkbenchTasks(): UseWorkbenchTasksResult {
-  const { data, loading, error, refresh } = useFetchJson<WorkloadPayload>(WORKLOAD_PATH);
-  /*
-   * `data.data ?? data.workload ?? data.rows ?? []` — `??` only steps past
-   * null/undefined, so a `data` field holding `{}` (or a 200 that is a scalar,
-   * or an error body) won the chain and took the board down at `list.map`. The
-   * fallback to `[]` had the quieter half of the same bug: a body we couldn't
-   * read rendered as an empty Kanban, which says "you have no work".
-   */
-  const rows = firstArray<ServerWorkItem>(data?.data, data?.workload, data?.rows);
-  const failed = error ?? (data != null && rows === null ? shapeMismatch(WORKLOAD_PATH) : null);
-  const tasks = useMemo(() => (rows ? rows.map(adaptTask) : null), [rows]);
-  return {
-    tasks,
-    metrics: tasks ? deriveTaskMetrics(tasks) : null,
-    loading,
-    error: failed,
-    refresh,
-  };
-}
+import { firstArray, shapeMismatch } from '../lib/payloadShape';
+import { PATHWAY_LABEL } from '../../../../../shared/constants/mdx';
 
 /* ─── Validation ───────────────────────────────────────────────────── */
 
@@ -282,85 +163,4 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
   }, [rules, validationPrograms]);
 
   return { programs: validationPrograms, rules, summary, loading, error: failed, refresh };
-}
-
-/* ─── Unified work (all three tracking systems) ───────────────────────── */
-
-/**
- * useUnifiedWork — GET /api/submission-ops/unified-work
- *
- * The Workbench's task board reads /workload, which is `c2c_project_work_items`
- * ALONE. That is why a schedule-of-events milestone slip or an agency hold on a
- * filing never appears beside a review blocker, despite the page promising
- * "everything assigned across the portfolio".
- *
- * This exposes the unified view across all three systems so a surface can show
- * what the board is missing. Read-only; the board's own data path is untouched.
- */
-export interface UnifiedWorkItemView {
-  id: string;
-  source: 'schedule' | 'review' | 'correspondence' | 'filing' | 'board';
-  title: string;
-  status: 'open' | 'in_progress' | 'blocked' | 'done';
-  priority: string | null;
-  dueAt: string | null;
-  blocking: boolean;
-  detail: string | null;
-}
-
-export interface UnifiedWorkSummaryView {
-  total: number;
-  blocking: number;
-  open: number;
-  inProgress: number;
-  done: number;
-  /** `board` = the canonical unified_tasks org board, now part of the view. */
-  bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing' | 'board', number>;
-  /**
-   * True when at least one of the four source queries could not be read, so
-   * every count here is a floor and not a total. Optional only because a body
-   * from before the field existed has no opinion; the surface renders the
-   * caveat on `true` alone and never infers completeness from its absence.
-   */
-  partial?: boolean;
-}
-
-export interface UseUnifiedWorkResult {
-  items: UnifiedWorkItemView[] | null;
-  summary: UnifiedWorkSummaryView | null;
-  loading: boolean;
-  error: string | null;
-}
-
-/**
- * Pure: how many outstanding items the task board cannot show, because they come
- * from a system it does not read. Exported for unit testing.
- */
-export function workNotOnTheBoard(summary: UnifiedWorkSummaryView | null): number {
-  /* `summary.bySource.schedule` — the null check covered `summary` and not
-     `bySource`, so a summary that arrived without its per-source breakdown threw
-     here rather than reporting nothing off-board. */
-  const bySource = summary?.bySource;
-  if (!bySource || typeof bySource !== 'object') return 0;
-  const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
-  return n(bySource.schedule) + n(bySource.filing);
-}
-
-export function useUnifiedWork(projectId?: number): UseUnifiedWorkResult {
-  const url =
-    typeof projectId === 'number' && Number.isInteger(projectId) && projectId > 0
-      ? `/api/submission-ops/unified-work?projectId=${projectId}`
-      : '/api/submission-ops/unified-work';
-  const { data, loading, error } = useFetchJson<{
-    items: UnifiedWorkItemView[];
-    summary: UnifiedWorkSummaryView;
-  }>(url);
-  /* Only a list is handed on as items — a `{ items: {} }` body used to reach the
-     caller as something truthy that is not iterable. */
-  return {
-    items: firstArray<UnifiedWorkItemView>(data?.items),
-    summary: isRecord(data?.summary) ? (data.summary as UnifiedWorkSummaryView) : null,
-    loading,
-    error,
-  };
 }

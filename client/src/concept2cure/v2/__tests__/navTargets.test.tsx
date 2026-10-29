@@ -58,8 +58,11 @@ const allowed = new Set<string>([
  * call sites, and the first pattern alone yields 25 distinct targets against
  * the scanner's own `>5` floor below.
  */
+/* `creation.open('document')` (editor/useAuthoringCreation.ts) opens an
+   identified creation by its CreationKind ('document' | 'section'). It names
+   no surface, so it is not read as one. */
 const PATTERNS: RegExp[] = [
-  /(?<![A-Za-z])(?:onNav|nav|open)\(\s*'([a-z0-9-]+)'/g,
+  /(?<![A-Za-z])(?<!creation\.)(?:onNav|nav|open)\(\s*'([a-z0-9-]+)'/g,
   /setSurface\(\s*'([a-z0-9-]+)'/g,
 ];
 

@@ -1,0 +1,22 @@
+# Mutation M3-labeling-door: labeling: DOCUMENT_DESTINATION  ->  labeling: { surface: 'labeling', label: DEVICE_DOORS.documents }
+# The diff is against HEAD. Its PATHWAY_FEATURES export line is the lead's change, already in the working tree, not part of the mutation.
+@@ -30 +30 @@ const FILING_LABELS: Record<string, string> = { '510k': '510(k)', de_novo: 'De N
+-const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
++export const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
+@@ -75 +75 @@ const WORK_DESTINATIONS: Record<string, WorkDestination> = {
+-  'medical-writing': DOCUMENT_DESTINATION, labeling: DOCUMENT_DESTINATION, 'registration-udi': DOCUMENT_DESTINATION,
++  'medical-writing': DOCUMENT_DESTINATION, labeling: { surface: 'labeling', label: DEVICE_DOORS.documents }, 'registration-udi': DOCUMENT_DESTINATION,
+
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those eight features from a device project's Plan, over every recorded route and product type
+   → expected [ 'device-510k', 'device-cer', …(7) ] to deeply equal [ 'device-510k', 'device-cer', …(6) ]
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to labeling from inside the project
+   → labeling: slice 20 points the labeling package here, but no caller passes Labeling the open project, so it reads no record: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those eight features from a device project's Plan, over every recorded route and product type
+AssertionError: expected [ 'device-510k', 'device-cer', …(7) ] to deeply equal [ 'device-510k', 'device-cer', …(6) ]
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to labeling from inside the project
+AssertionError: labeling: slice 20 points the labeling package here, but no caller passes Labeling the open project, so it reads no record: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 28 passed (30)
+
+# Restored from the scratch copy; cmp against it reported no difference.

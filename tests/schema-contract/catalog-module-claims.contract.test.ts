@@ -265,3 +265,39 @@ describe('Retired filing catalogue subscriptions', () => {
     expect(after.rows).toEqual(before.rows);
   });
 });
+
+/* The device task workbench folded into Tasks (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Both catalogue writers
+   were amended in place (CLAUDE.md Rule 1): a fresh database never gets the row,
+   and a deployed one keeps it, deprecated, with its subscriptions. */
+describe('Retired device task workbench', () => {
+  const reconcile = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+  const packaging = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+
+  it('fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered', async () => {
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile());
+      await pg.exec(packaging());
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'device-tasks'")).rows).toEqual([]);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'tasks' AND COALESCE((metadata->>'deprecated')::boolean, false) = false")).rows).toEqual([{ module_id: 'tasks' }]);
+    }
+  });
+
+  it('keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291029, 'Device tasks historical subscriber', 'device-tasks-historical-subscriber');
+      INSERT INTO available_modules (module_id, name, description, category, metadata)
+      VALUES ('device-tasks', 'Device submission workload', '', 'Review & govern', '{"legacyMarker":"kept","tiers":["standard"]}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{"legacyMarker":"kept","tiers":["standard"]}';
+      ALTER TABLE module_subscriptions ADD CONSTRAINT device_tasks_subscription_retirement_fk
+        FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;
+      INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata)
+      VALUES (291029, 'device-tasks', true, '{"historicalSubscription":"kept"}');`);
+    const before = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291029');
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile()); await pg.exec(packaging()); }
+    const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id='device-tasks'");
+    expect(catalog.rows).toHaveLength(1);
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: ['standard'] });
+    const after = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291029');
+    expect(after.rows).toEqual(before.rows);
+  });
+});
