@@ -1,0 +1,21 @@
+# RED at 499a17b82: the sweep takes no lead time; a task's notice is always 48 hours (2026-10-29T03:41:38Z)
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > no due date → never classified 2ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > past due → overdue 1ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > inside the 48h window → due-soon 1ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > beyond the window → not yet interesting 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > an unparseable date never classifies (no fabricated urgency) 0ms
+ × server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > no lead, or an unreadable one, is the 48 hours 5ms
+   → remindWindowMs is not a function
+ × server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > a lead of 1 to 90 days, as a number or as its digits (the SQL reads the text), is that many days 1ms
+   → remindWindowMs is not a function
+ × server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > a task 20 days out is due soon with a 30-day lead, and not without one 1ms
+   → remindWindowMs is not a function
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > fresh task: both classes notify 1ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > due-soon marker suppresses due-soon but NOT the later overdue 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > overdue marker suppresses both classes (no backwards due-soon) 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > unrelated metadata is preserved semantics — only the markers matter 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: remindWindowMs is not a function
+TypeError: remindWindowMs is not a function
+TypeError: remindWindowMs is not a function
+ Test Files  1 failed (1)

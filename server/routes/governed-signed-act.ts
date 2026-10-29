@@ -123,6 +123,12 @@ export interface SignedAct {
   tenantRole?: string;
   /** The domain write, on the signing transaction. Throw an error with a `code` to refuse. */
   run: (client: RequestDbClient, orgId: number, userId: number) => Promise<SignedActResult>;
+  /**
+   * Work that follows the committed act (a reminder, a task), run after COMMIT
+   * and before the response. Best effort: a failure is logged and never
+   * changes the signature or the answer, which have already committed.
+   */
+  afterCommit?: (result: SignedActResult, orgId: number, userId: number) => Promise<void>;
 }
 
 interface SignatureComponents {
@@ -132,6 +138,16 @@ interface SignatureComponents {
   meaning: GovernedSignMeaning;
   password: string;
   mfaToken?: string;
+}
+
+/** The act's follow-up work, never able to touch what committed (SignedAct.afterCommit). */
+async function runAfterCommit(act: SignedAct, result: SignedActResult, orgId: number, userId: number): Promise<void> {
+  if (!act.afterCommit) return;
+  try {
+    await act.afterCommit(result, orgId, userId);
+  } catch (err) {
+    log.warn('Work after a signed act failed; the act stands', { domain: act.domain, target: act.target, err: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 function refusal(res: Response, status: number, code: string, message: string, extra: Record<string, unknown> = {}): null {
@@ -235,7 +251,8 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     // that both read a draft both signed it. A second sign of this target now
     // waits here until the first commits or rolls back, then reads what it left.
     await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`governed-signed-act:${orgId}:${act.target}`]);
-    const { target, payload = {}, body } = await act.run(client, orgId, userId);
+    const result = await act.run(client, orgId, userId);
+    const { target, payload = {}, body } = result;
     if (target !== act.target) throw new Error(`signed act wrote ${target}, declared ${act.target}`);
     const signedPayload = { ...payload, meaning };
     const gov = await recordGovernedAction(client, { orgId, userId, command: 'sign', target, reason, payload: signedPayload, domain: act.domain });
@@ -256,6 +273,7 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
       ...(Object.keys(payload).length > 0 ? { extraManifest: { act: payload } } : {}),
     });
     await client.query('COMMIT');
+    await runAfterCommit(act, result, orgId, userId);
     res.status(201).json({ ...body, ...gov, signatureId: signature.id, signedAt: signature.signedAt.toISOString(), meaning });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);

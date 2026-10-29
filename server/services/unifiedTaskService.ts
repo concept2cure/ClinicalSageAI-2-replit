@@ -65,6 +65,12 @@ export const MODULE_CONFIG = {
   // Raised by the biostatistics bridge (server/services/biostatistics-bridge)
   // from a design assessment: sample-size revisions, escalations, filing
   // deliverables. Source entity is the study design (cdisc_prm_studies).
+  Quality: {
+    name: 'Quality',
+    color: '#6c5f2f', // the task board draws var(--module-quality)
+    icon: 'ShieldCheck',
+    category: 'quality',
+  },
   Biostatistics: {
     name: 'Biostatistics',
     color: '#5a6f9c', // matches TB_MOD.Biostatistics on the task board
