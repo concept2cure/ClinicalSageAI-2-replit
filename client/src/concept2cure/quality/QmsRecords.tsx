@@ -25,6 +25,7 @@ import { listOf } from './changeHooks';
 import { formatDate } from './data';
 import { Kpi } from './Kpi';
 import { CapaActions } from './CapaActions';
+import { ReviewActions } from './ReviewActions';
 import { shellProgramId } from '../v2/shellProject';
 import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL,
@@ -32,6 +33,7 @@ import {
   AUDIT_STATUS_LABEL, CRITICALITY_LABEL, DISPOSITION_LABEL, NC_SOURCE_LABEL, SUPPLIER_STATUS_LABEL,
   createInternalAudit, createManagementReview, createNonconformance, createSupplier,
   dispositionNonconformance, isPast, isUndispositioned, reviewText, updateInternalAudit, updateSupplier,
+  addReviewAction, reviewActions,
   type InternalAuditRow, type ManagementReviewRow, type NonconformanceRow, type QmsRecordTab, type SupplierRow,
 } from './qmsRecordData';
 
@@ -520,15 +522,27 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     'was reviewed, and the decisions and actions that came out of it. Each review is recorded under your name.',
   noun: ['review', 'reviews'],
   listPath: '/api/mdx/qms/management-reviews',
-  grid: '120px 104px minmax(0, 1fr) minmax(0, 1fr)',
+  grid: '120px 104px minmax(0, 1fr) minmax(0, 1fr) 110px',
   columns: [
     { label: 'Period', cell: (r) => <span className="mono">{r.period}</span> },
     { label: 'Held', cell: (r) => formatDate(r.review_date) },
     { label: 'Reviewed', cell: (r) => <span title={reviewText(r.inputs, 'summary')}>{reviewText(r.inputs, 'summary') || '—'}</span> },
-    { label: 'Decisions and actions', cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
+    { label: 'Decisions', cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
+    {
+      label: 'Actions',
+      cell: (r) => {
+        const a = reviewActions(r);
+        const open = a.filter((x) => x.state === 'open').length;
+        return a.length ? `${open} open · ${a.length - open} closed` : 'None';
+      },
+    },
   ],
   kpis: (rows) => [
     { label: 'Reviews', val: String(rows.length), sub: 'On record' },
+    (() => {
+      const open = rows.flatMap(reviewActions).filter((a) => a.state === 'open').length;
+      return { label: 'Open actions', val: String(open), sub: open ? 'Decided, not yet closed' : 'None open', tone: open ? 'warn' as const : 'ok' as const };
+    })(),
     { label: 'Most recent', val: rows[0] ? formatDate(rows[0].review_date) : '—', sub: rows[0] ? rows[0].period : 'No review recorded', tone: rows[0] ? undefined : 'warn' },
   ],
   createLabel: 'Record review',
@@ -551,12 +565,31 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     });
     return `The ${row.period} management review was recorded.`;
   },
-  rowActions: [raiseCapaFrom<ManagementReviewRow>({
+  rowActions: [{
+    label: 'Add action',
+    title: 'Record an action this review decided, with its owner and due date',
+    form: (r) => ({
+      eyebrow: 'Quality',
+      title: `Add an action to the ${r.period} management review`,
+      governed: 'The action is written to the audit trail under your name.',
+      submitLabel: 'Add action',
+      fields: [
+        { key: 'description', label: 'Action', type: 'textarea', rows: 3, required: true },
+        { key: 'owner', label: 'Owner', type: 'text', half: true },
+        { key: 'dueDate', label: 'Due', type: 'date', half: true },
+      ],
+    }),
+    submit: async (r, v) => {
+      const row = await addReviewAction(r.id, { description: v.description.trim(), owner: v.owner.trim(), dueDate: v.dueDate });
+      return `Action ${reviewActions(row).at(-1)?.n ?? ''} was added to the ${r.period} review.`;
+    },
+  }, raiseCapaFrom<ManagementReviewRow>({
     source: 'management_review',
     ref: (r) => ({ kind: 'qms_management_review', id: String(r.id), label: `Management review ${r.period}` }),
     title: (r) => `Action from the ${r.period} management review`,
     problem: (r) => reviewText(r.outputs, 'decisions'),
   })],
+  detail: { label: 'Show actions', render: (r, onChanged) => <ReviewActions review={r} onChanged={onChanged} /> },
   ask: 'Prepare the inputs for our next management review from the quality records: nonconformances and their dispositions, internal audit findings, supplier standing, and change control.',
   askRow: (r) => `Summarise the ${r.period} management review: what it reviewed, what it decided, and which actions are still open.`,
 };

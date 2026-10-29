@@ -1718,13 +1718,16 @@ export default function createProjectVaultRoutes(): Router {
       // Where each version is placed (VR-14a): the live submission leaves that
       // name it. An unreadable placement list fails the read, as the stage does:
       // "placed nowhere" would be a claim about leaves not read.
-      const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses } = await import('../../services/vault/vault-where-used.js');
+      const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses, readVaultSectionCitations } = await import('../../services/vault/vault-where-used.js');
       const ids = family.map((v) => v.id);
       const actor = { userId: governedActorId(req) ?? undefined };
       const placements = await readVaultPlacements(pool, orgId, ids, actor);
       const estarUses = await readVaultEstarUses(pool, orgId, ids, actor);
       // The CMC records that cite each version as their source (row D2).
       const cmcEvidence = await readVaultCmcEvidenceUses(pool, orgId, ids, actor);
+      // The editor sections whose live lineage cites each version (slice G7), so
+      // a new version lists the sections that still cite its predecessor.
+      const sectionCitations = await readVaultSectionCitations(pool, orgId, ids, actor);
       // Why each version would not be transmitted, in the words the transmit
       // refusal prints (VR-14's one rule, read for display), or null. Placement
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
@@ -1736,6 +1739,7 @@ export default function createProjectVaultRoutes(): Router {
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
         cmcEvidence: cmcEvidence.get(v.id) ?? [],
+        sectionCitations: sectionCitations.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
       // Who may sign a review or an approval here (QA 2026-10-08, walk 2, j3):

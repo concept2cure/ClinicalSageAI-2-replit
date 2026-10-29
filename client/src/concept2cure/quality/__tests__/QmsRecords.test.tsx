@@ -170,4 +170,28 @@ describe('Quality records', () => {
     }));
     await waitFor(() => expect(screen.getByText('Action 1 is done.')).toBeTruthy());
   });
+
+  it('records a management-review action and closes it only with its note', async () => {
+    const REVIEW = { id: 3, review_date: '2026-10-01', period: 'H2-2026', inputs: null, outputs: { decisions: 'Staff QA', actions: [
+      { n: 1, description: 'Appoint a QA lead', owner: 'CEO', dueDate: '2026-12-01', state: 'open' },
+    ] }, open_action_count: 1, closed_action_count: 0 };
+    H.reads['/api/mdx/qms/management-reviews'] = { data: { data: [REVIEW] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ data: { ...REVIEW, outputs: { actions: [{ ...REVIEW.outputs.actions[0], state: 'closed' }] } } }) });
+    render(<QmsRecords tab="reviews" onAsk={vi.fn()} />);
+    expect(screen.getByText('1 open · 0 closed')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'H2-2026' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/How it was closed/), { target: { value: 'short' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close action' }));
+    await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/closure note of at least/)).toBeTruthy());
+    expect(H.apiRequest).not.toHaveBeenCalled();
+
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/How it was closed/), { target: { value: 'QA lead started on 2026-11-15' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close action' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/management-reviews/3/actions/1/close', {
+      closureNote: 'QA lead started on 2026-11-15',
+    }));
+    await waitFor(() => expect(screen.getByText('Action 1 was closed.')).toBeTruthy());
+  });
 });

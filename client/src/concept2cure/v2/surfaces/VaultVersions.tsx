@@ -52,8 +52,51 @@ export interface VaultVersion {
   estarUses?: VaultEstarUse[];
   /** The CMC records that cite it as the document they were taken from (row D2). */
   cmcEvidence?: VaultCmcEvidenceUse[];
+  /** The editor sections whose live lineage cites it (slice G7). Absent when the server did not say. */
+  sectionCitations?: VaultSectionCitation[];
   /** Why this version would not be transmitted (the server's VR-14 rule, verbatim), or null. Absent when the server did not say. */
   transmitRefusal?: string | null;
+}
+
+/** An editor section whose live span lineage cites a version, as the server returns it (vault-where-used.ts). */
+export interface VaultSectionCitation {
+  sectionId: string;
+  sectionCode: string | null;
+  sectionTitle: string | null;
+  documentId: string;
+  documentTitle: string | null;
+  spans: number;
+}
+
+const sectionName = (c: VaultSectionCitation) =>
+  `${c.documentTitle ?? 'Untitled document'} ${c.sectionCode ? `§${c.sectionCode}` : (c.sectionTitle ?? 'a section')}`;
+
+/** The sections a version is cited in, in words; nothing when none cites it. */
+export function sectionCitationText(cites: VaultSectionCitation[] | undefined): string {
+  if (!cites || cites.length === 0) return '';
+  return ` · cited in ${cites.map(sectionName).join('; ')}`;
+}
+
+/**
+ * The sections that cite an earlier version and not the current one: where a
+ * new version may need the text updated (Weave's Dossier Manager, slice G7).
+ * Derived from the versions the server returned; nothing is inferred.
+ */
+export function sectionsCitingEarlier(versions: VaultVersion[]): Array<VaultSectionCitation & { version: string | null }> {
+  const current = versions.find((v) => v.current);
+  if (!current) return [];
+  const citesCurrent = new Set((current.sectionCitations ?? []).map((c) => c.sectionId));
+  const seen = new Set<string>();
+  const out: Array<VaultSectionCitation & { version: string | null }> = [];
+  for (const v of versions) {
+    if (v.current) continue;
+    for (const c of v.sectionCitations ?? []) {
+      if (citesCurrent.has(c.sectionId) || seen.has(c.sectionId)) continue;
+      seen.add(c.sectionId);
+      out.push({ ...c, version: v.version });
+    }
+  }
+  return out;
 }
 
 /** A CMC record that cites a version as its source, as the server returns it (vault-where-used.ts). */
@@ -121,6 +164,10 @@ function isEstarUse(v: unknown): boolean {
     (v.retainedAs === null || (isObject(v.retainedAs) && typeof v.retainedAs.documentId === 'string' &&
       nullableText(v.retainedAs.documentCode) && nullableText(v.retainedAs.version)));
 }
+function isSectionCitation(v: unknown): boolean {
+  return isObject(v) && typeof v.sectionId === 'string' && typeof v.documentId === 'string' &&
+    nullableText(v.sectionCode) && nullableText(v.sectionTitle) && nullableText(v.documentTitle) && Number.isSafeInteger(v.spans);
+}
 function isCmcUse(v: unknown): boolean {
   return isObject(v) && typeof v.linkId === 'string' && typeof v.sourceType === 'string' && typeof v.sourceKey === 'string' &&
     Array.isArray(v.sections) && v.sections.every(s => typeof s === 'string');
@@ -133,7 +180,8 @@ function isVersionMetadata(v: Record<string, unknown>): boolean {
 function isVersion(v: unknown): v is VaultVersion {
   return isObject(v) && typeof v.id === 'string' && v.id.length > 0 && typeof v.createdAt === 'string' &&
     typeof v.current === 'boolean' && ['none', 'verified', 'unverified'].includes(String(v.link)) &&
-    isVersionMetadata(v) && optionalRows(v.placements, isPlacement) && optionalRows(v.estarUses, isEstarUse) && optionalRows(v.cmcEvidence, isCmcUse);
+    isVersionMetadata(v) && optionalRows(v.placements, isPlacement) && optionalRows(v.estarUses, isEstarUse) && optionalRows(v.cmcEvidence, isCmcUse) &&
+    optionalRows(v.sectionCitations, isSectionCitation);
 }
 export const isVersionsShape: ShapeGuard<VersionsShape> = (v): v is VersionsShape =>
   isObject(v) && Array.isArray(v.versions) && v.versions.every(isVersion);
@@ -204,6 +252,8 @@ interface Props {
   uploading: boolean;
   /** Re-read the Vault after a review or approval was recorded (VR-13). */
   onLifecycleChanged?: () => void;
+  /** Open the editor at a section that cites a version (slice G7). */
+  onOpenSection?: (documentId: string, sectionCode: string | null) => void;
 }
 
 interface ExportManifestSummary {
@@ -278,8 +328,9 @@ function supersededBy(versions: VaultVersion[]): string[] {
 }
 
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, signing }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, signing, onOpenSection }: {
   versions: VaultVersion[];
+  onOpenSection?: Props['onOpenSection'];
   signing?: VaultSigningPosture | null;
   title: string;
   onDownload: Props['onDownload'];
@@ -313,6 +364,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
             <span data-testid={`vault-version-placed-${v.id}`}>{placedInText(v.placements)}</span>
             <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
             <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
+            <span data-testid={`vault-version-sections-${v.id}`}>{sectionCitationText(v.sectionCitations)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <VersionViewButton version={v} title={title} onView={onView} viewingId={viewingId} />
@@ -329,6 +381,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
               Compare with {current.version ? `v${current.version}` : 'the current version'}
             </button>
           ) : null}
+          {v.current ? <EarlierVersionCitations versions={versions} onOpenSection={onOpenSection} /> : null}
           {v.current && onLifecycleChanged ? (
             <VersionLifecycleActions
               vaultId={v.id}
@@ -344,6 +397,28 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
               />
           ) : null}
         </div>
+      ))}
+    </div>
+  );
+}
+
+/** On the current version: the sections that still cite an earlier one, each opening the editor there. */
+function EarlierVersionCitations({ versions, onOpenSection }: { versions: VaultVersion[]; onOpenSection?: Props['onOpenSection'] }) {
+  const stale = sectionsCitingEarlier(versions);
+  if (stale.length === 0) return null;
+  return (
+    <div className="vd-d-idx" role="note" data-testid="vault-version-earlier-citations">
+      {I.alertTriangle} {stale.length === 1 ? 'One section cites' : `${stale.length} sections cite`} an earlier version
+      and may need its text updated:
+      {stale.map((c) => (
+        <span key={c.sectionId}>
+          {' '}
+          {onOpenSection ? (
+            <button className="sp-ask" onClick={() => onOpenSection(c.documentId, c.sectionCode)}>
+              {sectionName(c)} ({c.version ? `v${c.version}` : 'earlier version'})
+            </button>
+          ) : `${sectionName(c)} (${c.version ? `v${c.version}` : 'earlier version'})`}
+        </span>
       ))}
     </div>
   );
@@ -390,7 +465,7 @@ function NewVersionButton({ uploading, onPick }: { uploading: boolean; onPick: (
 }
 
 export function VaultVersions({
-  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged,
+  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged, onOpenSection,
 }: Props) {
   const path = versionsPath(projectId, documentId);
   const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
@@ -424,6 +499,7 @@ export function VaultVersions({
         onCompare={setComparing}
         projectId={projectId}
         signing={confirmed.signing ?? null}
+        onOpenSection={onOpenSection}
       />
     );
   }
@@ -432,7 +508,7 @@ export function VaultVersions({
     <div data-testid="vault-versions">
       <div className="vd-d-seclbl">Versions</div>
       {confirmed ? (
-        <div className="vd-d-idx">Submission placements, eSTAR exports and CMC evidence are limited to records you can currently access.</div>
+        <div className="vd-d-idx">Submission placements, eSTAR exports, CMC evidence and citing sections are limited to records you can currently access.</div>
       ) : null}
       {body}
       <VaultVersionViewer state={viewer} />

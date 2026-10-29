@@ -2104,6 +2104,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                         onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                         uploading={uploading}
                         onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
                       />
                     ) : null}
                     {projectId && sel.docId ? (
@@ -2147,6 +2148,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
                     />
                     <VaultAnnotations
                       key={`annotations-${sel.docId}`}
