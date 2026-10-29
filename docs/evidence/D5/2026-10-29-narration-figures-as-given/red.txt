@@ -1,0 +1,16 @@
+# Red: the four source files at HEAD (f2756897d), the new test
+stdout | server/services/ana/__tests__/narration-tools-figures-as-given.test.ts
+stderr | server/services/ana/__tests__/narration-tools-figures-as-given.test.ts
+stdout | server/services/ana/__tests__/narration-tools-figures-as-given.test.ts
+stderr | server/services/ana/__tests__/narration-tools-figures-as-given.test.ts
+stderr | server/services/ana/__tests__/narration-tools-figures-as-given.test.ts
+ × server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > narrate_statistical_result: every figure as given, none from a retained run, and where the run is read 9ms
+ × server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > draft_safety_narrative: every fact as given, none from the study data, and where the sourced narratives are built 2ms
+ × server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > each tool says so in its description, before AnA calls it 1ms
+ ✓ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > a refusal is unchanged: no figure, no narrative 1ms
+ FAIL  server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > narrate_statistical_result: every figure as given, none from a retained run, and where the run is read
+ ❯ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts:33:30
+ FAIL  server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > draft_safety_narrative: every fact as given, none from the study data, and where the sourced narratives are built
+ ❯ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts:46:28
+ FAIL  server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > each tool says so in its description, before AnA calls it
+ ❯ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts:53:52

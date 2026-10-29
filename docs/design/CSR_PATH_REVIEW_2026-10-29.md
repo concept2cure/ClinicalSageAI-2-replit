@@ -90,7 +90,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | ICH E3 outline | market-specs CSR spine | 119 headings (`13bafc62f`). The test that expected 16 is stale. |
 | AI drafting | `server/services/csr/csr-job-runner.ts` | Drafts from Data Room excerpts, with the placeholder gate and the unsupplied-statistics guard. **Gaps:** <ul><li>The §10–12 tables never enter the document text.</li><li>Seven of nine job-runner state tests are disabled by a stale fake database.</li><li>Saved placeholder text is now sent back to the model instead of failing the job (`2f57e2e7f`). This looks like a regression.</li></ul> |
-| Rule 2 (no figure from a model) | `record_endpoint_result`, `narrate_statistical_result`, `draft_safety_narrative`, `log_study_ae` | **Defect:** these AnA tools take clinical figures as model-supplied arguments. |
+| Rule 2 (no figure from a model) | `record_endpoint_result`, `narrate_statistical_result`, `draft_safety_narrative`, `log_study_ae` | These AnA tools take clinical figures as model-supplied arguments. `record_endpoint_result` and `log_study_ae` need a person's yes before they write. **Fixed** (D5, `docs/evidence/D5/2026-10-29-narration-figures-as-given/`): the two narrators now say in their output and their description that every figure or fact is as given. Each names the sourced path: `get_csr_section_evidence` for results, and the CSR build's narrative job for patient narratives. |
 | Study facts the draft states | `m2-summary-builders.ts`, `load-csr-inputs-for-project.ts` | **Fixed:** planned N no longer presented as enrolled (`9b0a63be0`); "Phase 3", "III" and "Phase 1" read as written (`cb14dfc51`). **Open, founder's call:** whether a Phase 2/3 study counts as pivotal; it still reads as Phase 2 first. |
 | Appendices 16.x | — | **Gap:** headings only. |
 | Rendering | the PDF renderer | Works (52/52). **Gap:** no PDF/A output. |
@@ -100,7 +100,7 @@ Fixed during this review, each shown failing first (evidence under
 | | Path | State |
 |---|---|---|
 | Clinical QC, claim reconciliation, evidence binding, peer review | `m5-clinical-qc`, `csr-claim-reconciliation`, `csr-section-evidence-binding` | Work. 487/487 tests pass. |
-| CSR scientific review | `server/services/authoring/csr-scientific-review.ts` (`07857e3e3`) | Since 2026-10-28 the server has refused to approve a CSR without a map binding each reported figure to its retained table cell. **Fixed** (`91465a856`): before this, no screen could send the map, so no CSR could be approved through the product. The review decision now has the step. |
+| CSR scientific review | `server/services/authoring/csr-scientific-review.ts` (`07857e3e3`) | Since 2026-10-28 the server has refused to approve a CSR without a map binding each reported figure to its retained table cell. **Fixed** (`91465a856`): before this, no screen could send the map, so no CSR could be approved through the product. The review decision now has the step. **Fixed** (D5, `docs/evidence/D5/2026-10-29-csr-vitals-reviewable/`): the review's table keys lacked vital signs and concomitant medications, so their figures could not be mapped and the receipt did not cover them. There is now one list. |
 
 ### 5. Approval, e-signature, lock, export, filing to Vault
 
@@ -118,7 +118,7 @@ Fixed during this review, each shown failing first (evidence under
 | | Path | State |
 |---|---|---|
 | Placement, STF, compile, DTD validation, compiled-sequence view | `place_into_sequence`, the STF generator, `EctdCompile.tsx` | Work. 621 tests pass. |
-| 5.3.5.1 placement | the placement dialog | **Gap:** the section must be typed by hand. |
+| 5.3.5.1 placement | the placement dialog; the CSR assembly's "Place CSR files" (`b265d6fc0`) | **Superseded** (corrected 2026-10-29): an assembled CSR's leaves are placed under 5.3.5.1 with their STF roles, without typing. That control is on the CSR workflow board, which production does not serve (handed to the CSR end-to-end lane). |
 | STF tags | the reviewed STF tag list | **Gap:** `study-report-body` is missing. |
 | Tests | the STF and compile suites | 39 red: the fake PDF fixtures predate the PDF integrity check, a table is missing from the test schema, and one test hangs. |
 
@@ -154,13 +154,12 @@ and are not used.
 ## Order of work
 
 1. ~~Bayesian result fields~~: done (`c173d35f5`, `d9e8b41db`).
-2. Rule 2:
+2. ~~Rule 2~~: done (D5, `docs/evidence/D5/2026-10-29-narration-figures-as-given/`).
    - `record_endpoint_result` and `log_study_ae` already need a person's yes
      before they write (their register class is `confirm`).
-   - `narrate_statistical_result` and `draft_safety_narrative` narrate the
-     figures their call supplies, under a deterministic-sounding source label.
-   - Next: bind them to a retained run's source, or say in their output that
-     each figure is as given.
+   - `narrate_statistical_result` and `draft_safety_narrative` now say that
+     each figure or fact is as given, and name the sourced path. The binding
+     itself is the scientific review's, before approval.
 3. The study facts the draft states: enrolled vs planned N and the phase are
    done (`9b0a63be0`, `cb14dfc51`), and the NCT number (D5). Open: a Fast Track field,
    and whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
