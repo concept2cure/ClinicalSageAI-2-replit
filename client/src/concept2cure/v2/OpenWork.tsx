@@ -33,6 +33,10 @@ export interface MyWorkItem {
   approvalRequired: boolean;
   approvalStatus: string;
   criticalPath: boolean;
+  /** A review route member whose step is not open yet: what it waits on (my-work.ts, RR1a). */
+  waitingOn?: string | null;
+  /** 'reviewer' or 'approver' on a review route: acted on where the route is, not on the task board (RR1b). */
+  reviewRole?: 'reviewer' | 'approver' | null;
 }
 export interface MyWork {
   items: MyWorkItem[];
@@ -111,6 +115,12 @@ function AssignedGroup({ workLoading, workError, assigned, go, openTask }: {
     Number(b.overdue) - Number(a.overdue) || Number(b.dueSoon) - Number(a.dueSoon)
   );
   const tone = (t: MyWorkItem) => (t.overdue ? 'err' : t.dueSoon || t.blocked ? 'warn' : 'ok');
+  /* A review route member is signed on its version, which the Review board
+     opens (RR1b); the task board refuses every write to it. One that waits on
+     an earlier step says what it waits on, not "blocked". */
+  const open = (t: MyWorkItem) => (t.reviewRole ? go('review') : openTask(t.taskId));
+  const state = (t: MyWorkItem) =>
+    t.waitingOn ? ` · waiting on ${t.waitingOn === 'review' ? 'the review' : t.waitingOn}` : t.blocked ? ' · blocked' : '';
   return (
     <div className="tt-group">
       <div className="tt-group-head">Assigned to you</div>
@@ -121,8 +131,8 @@ function AssignedGroup({ workLoading, workError, assigned, go, openTask }: {
       ) : !ordered.length ? (
         <div className="tt-empty">Nothing assigned to you right now. Tasks land here as soon as someone assigns you one.</div>
       ) : ordered.slice(0, 8).map(t => (
-        <WorkRow key={t.taskId} tone={tone(t)} title={t.title} onOpen={() => openTask(t.taskId)}
-          sub={`${t.projectName ? `${t.projectName} · ` : ''}${clModLabel(t.moduleType)}${t.blocked ? ' · blocked' : ''}${t.dueDate ? ` · ${dueLabel(t.dueDate)}` : ''}`} />
+        <WorkRow key={t.taskId} tone={tone(t)} title={t.title} onOpen={() => open(t)}
+          sub={`${t.projectName ? `${t.projectName} · ` : ''}${clModLabel(t.moduleType)}${state(t)}${t.dueDate && !t.waitingOn ? ` · ${dueLabel(t.dueDate)}` : ''}`} />
       ))}
       {ordered.length > 8 && (
         <button className="tt-more" onClick={() => go('tasks')}>+{ordered.length - 8} more on the board</button>

@@ -62,7 +62,7 @@
  * for this document.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { captureAuthoringSession } from './authoringCurrentRead';
 import { I } from '../icons';
@@ -82,6 +82,9 @@ import {
 } from './AssignReviewDialog';
 import { reviewStatusLabel, useDocumentReviews } from './ReviewTasksPanel';
 import { reviewStandingOf } from './reviewTaskState';
+import { DueDateField, ReasonField, reviewReasonProblem } from './reviewFields';
+
+export { reviewReasonProblem };
 import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
 
 /** One review request as the server recorded it. */
@@ -149,14 +152,6 @@ const RECONCILE = ' Check the Review board before sending again.';
 export const VERDICT_ON_THE_BOARD = 'Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.';
 
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
-
-/** Why the reason cannot be sent yet, in the server's terms; null when it can. */
-export function reviewReasonProblem(reason: string): string | null {
-  const n = reason.trim().length;
-  if (n < GOVERNED_REASON_MIN) return `A reason of at least ${GOVERNED_REASON_MIN} characters is required.`;
-  if (n > GOVERNED_REASON_MAX) return `A reason is at most ${GOVERNED_REASON_MAX} characters.`;
-  return null;
-}
 
 /** The request body. Separate so the identity sent can be read and tested without a server. */
 export function buildReviewRequestBody(reviewers: Assignee[], reason: string): {
@@ -336,26 +331,18 @@ function retainedVerdict(r: ReviewRequestReceipt): string {
   return `${reviewStatusLabel(r.status)}; ${binding}`;
 }
 
-/** The reason field: required, recorded on the audit trail, described by its rule. */
-function ReasonField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/** The reason field: required, recorded on the audit trail, described by its rule (the shared field, reviewFields.tsx). */
+function RequestReasonField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="de-field">
-      <label className="de-label" htmlFor="sfr-reason">Reason for the request<span className="req">*</span></label>
-      <div className="de-desc" id="sfr-reason-note">
-        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least {GOVERNED_REASON_MIN} characters.
-      </div>
-      <textarea
-        id="sfr-reason"
-        className="c2c-input"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        aria-required="true"
-        aria-describedby="sfr-reason-note"
-        placeholder="e.g. Ready for medical review before the pre-IND package."
-        style={{ width: '100%', minHeight: 64, resize: 'vertical', fontSize: 13 }}
-        data-testid="sfr-reason"
-      />
-    </div>
+    <ReasonField
+      id="sfr-reason"
+      label="Reason for the request"
+      note={`Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least ${GOVERNED_REASON_MIN} characters.`}
+      value={value}
+      onChange={onChange}
+      placeholder="e.g. Ready for medical review before the pre-IND package."
+      testId="sfr-reason"
+    />
   );
 }
 
@@ -383,10 +370,7 @@ function TaskFields({ instructions, onInstructions, due, onDue, priority, onPrio
           data-testid="sfr-instructions"
         />
       </div>
-      <div className="de-field half">
-        <label className="de-label" htmlFor="sfr-due">Due date</label>
-        <input id="sfr-due" className="c2c-input" type="date" value={due} onChange={e => onDue(e.target.value)} data-testid="sfr-due" />
-      </div>
+      <DueDateField id="sfr-due" label="Due date" value={due} onChange={onDue} half testId="sfr-due" />
       <div className="de-field half">
         <label className="de-label" htmlFor="sfr-priority">Priority</label>
         <select id="sfr-priority" className="c2c-input" value={priority} onChange={e => onPriority(e.target.value as Priority)}>
@@ -627,7 +611,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
                 roster={s.roster} rosterState={s.rosterState} onReloadRoster={s.reloadRoster}
                 standing={s.standing} selected={s.selected} onToggle={s.toggle} authorWithheld={s.authorWithheld}
               />
-              <ReasonField value={s.reason} onChange={s.setReason} />
+              <RequestReasonField value={s.reason} onChange={s.setReason} />
               <TaskFields
                 instructions={s.instructions} onInstructions={s.setInstructions}
                 due={s.due} onDue={s.setDue} priority={s.priority} onPriority={s.setPriority}

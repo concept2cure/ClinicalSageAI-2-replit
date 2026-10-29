@@ -41,6 +41,7 @@
  * for review offers leaves the author out and says so (useReviewerRoster).
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { PeoplePicker, type PickerOption } from './reviewFields';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import {
   AUTHORING_TASK_ENTITY,
@@ -328,45 +329,33 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
       {note ? (
         <div className="de-desc" role="status">{note}</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 200, overflowY: 'auto' }}>
-          {roster.map(a => (
-            <ReviewerOption key={a.id} member={a} prior={standing.rows.find(r => r.reviewerId === a.id) ?? null}
-              checked={selected.includes(a.id)} onToggle={onToggle} />
-          ))}
-        </div>
+        <PeoplePicker
+          name="sfr-reviewers"
+          multiple
+          searchLabel="Find a reviewer"
+          testIdPrefix="sfr-reviewer"
+          noteIdPrefix="sfr-prior"
+          maxHeight={200}
+          options={roster.map(a => reviewerOption(a, standing.rows.find(r => r.reviewerId === a.id) ?? null))}
+          selected={selected}
+          onChange={next => {
+            // The checklist's contract is one toggle at a time.
+            const changed = [...next.filter(id => !selected.includes(id)), ...selected.filter(id => !next.includes(id))];
+            changed.forEach(onToggle);
+          }}
+        />
       )}
       {!reading && authorWithheld && <AuthorWithheldNote testId="sfr-author-note" />}
     </fieldset>
   );
 }
 
-/** One member: a checkbox, with their earlier request here when they have one; disabled while it is pending. */
-function ReviewerOption({ member, prior, checked, onToggle }: {
-  member: Assignee;
-  prior: StandingReview | null;
-  checked: boolean;
-  onToggle: (id: string) => void;
-}) {
-  const noteId = `sfr-prior-${member.id}`;
-  const pending = alreadyAsked(prior);
-  return (
-    <div>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-        <input
-          type="checkbox"
-          checked={!pending && checked}
-          disabled={pending}
-          onChange={() => onToggle(member.id)}
-          aria-describedby={prior ? noteId : undefined}
-          data-testid={`sfr-reviewer-${member.id}`}
-        />
-        {member.label ?? member.name}
-      </label>
-      {prior && (
-        <div className="de-desc" id={noteId} style={{ margin: '0 0 4px 24px' }} data-testid={`sfr-prior-${member.id}`}>
-          {priorRequestNote(prior)}
-        </div>
-      )}
-    </div>
-  );
+/** One member: their earlier request here when they have one; not choosable while it is pending. */
+function reviewerOption(member: Assignee, prior: StandingReview | null): PickerOption {
+  return {
+    id: member.id,
+    label: member.label ?? member.name,
+    ...(prior ? { note: priorRequestNote(prior) } : {}),
+    disabled: alreadyAsked(prior),
+  };
 }

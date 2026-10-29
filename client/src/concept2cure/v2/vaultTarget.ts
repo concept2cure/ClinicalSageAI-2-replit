@@ -26,12 +26,16 @@ declare global {
   }
 }
 
+/** Said when a target is published, so a Vault already on screen takes it too (a review route's notice, RR1b). */
+export const VAULT_TARGET_EVENT = 'c2c:vault-target';
+
 /** Publish the document the Vault should open on next. Replaces any earlier target. */
 export function setVaultTarget(target: VaultTarget): void {
   if (typeof window === 'undefined') return;
   const documentId = target.documentId.trim();
   const programId = target.programId.trim();
   window.C2C_VAULT_TARGET = documentId && programId ? { documentId, programId } : null;
+  window.dispatchEvent(new Event(VAULT_TARGET_EVENT));
 }
 
 /** What the Vault found pending for it. */
@@ -51,6 +55,11 @@ export function takeVaultTarget(programId: string | null): TakenVaultTarget | nu
   if (!target) return null;
   if (!programId || target.programId !== programId) return { kind: 'other-project' };
   return { kind: 'here', documentId: target.documentId };
+}
+
+/** Whether the pending target is for `programId`: a Vault on another project leaves it for the one it is for. */
+export function vaultTargetIsFor(programId: string | null): boolean {
+  return typeof window !== 'undefined' && !!programId && window.C2C_VAULT_TARGET?.programId === programId;
 }
 
 /** Drop a pending target, for a sender whose navigation was refused. */
