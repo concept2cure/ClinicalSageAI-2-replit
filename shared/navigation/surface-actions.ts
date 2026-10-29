@@ -627,13 +627,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'quality',
     label: 'Open a quality tab',
     description:
-      'On the quality surface, switch between the SOP register and change control tabs. Approving, revising, or retiring a controlled document, raising or advancing a change, and recording training are governed acts that stay in conversation — never driven from here.',
+      'On the quality surface, switch between its tabs: the SOP register, change control, CAPA, nonconformances, suppliers, internal audits and management reviews. Approving, revising, or retiring a controlled document, raising or advancing a change, recording a quality record or its disposition, and recording training are governed acts a person does on the screen — never driven from here.',
     params: [
       {
         name: 'tab',
         required: true,
         description: 'The tab to open.',
-        enum: ['sop', 'change'],
+        enum: ['sop', 'change', 'capa', 'nonconforming', 'suppliers', 'audits', 'reviews'],
       },
     ],
   },

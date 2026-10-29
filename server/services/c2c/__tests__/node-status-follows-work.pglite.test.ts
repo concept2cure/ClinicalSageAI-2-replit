@@ -26,7 +26,7 @@ import express from 'express';
 import request from 'supertest';
 import type { JourneyDb } from '../../../../tests/golden-journeys/harness';
 import {
-  AUTHOR, FILING_JWT_SECRET, PASSWORD, PROJECT, T, makeFiling as makeFilingIn, signToken as sign, startFilingApp, type FilingApp,
+  APPROVER, FILING_JWT_SECRET, PASSWORD, PROJECT, T, makeFiling as makeFilingIn, signApproverToken, signToken as sign, startFilingApp, type FilingApp,
 } from './_filing-write-harness';
 
 process.env.JWT_SECRET = FILING_JWT_SECRET;
@@ -72,8 +72,8 @@ beforeAll(async () => {
   filing = await startFilingApp((built) => { h.db = built.db; h.pool = built.pool; });
   ({ jdb, app } = filing);
   token = await sign({});
-  approverToken = await sign({ roles: ['APPROVER'] });
-  reviewerToken = await sign({ roles: ['REVIEWER'] });
+  approverToken = await signApproverToken({ roles: ['APPROVER'] });
+  reviewerToken = await signApproverToken({ roles: ['REVIEWER'] });
 }, T);
 
 afterAll(async () => { await jdb?.close(); });
@@ -189,7 +189,7 @@ describe('2. the approval signature approves the sections it covers', () => {
     // 2.7 is never written: approving it would approve nothing.
     expect(await readiness(f.doc)).toBe(0);
 
-    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
       meaning: 'APPROVER', intent: 'I approve this filing for submission.', password: PASSWORD,
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -239,7 +239,7 @@ describe('2. the approval signature approves the sections it covers', () => {
   it('an approval on a document with no filing says so, not "nothing left to approve"', async () => {
     const f = await makeFiling(['2.5']);
     await q(`UPDATE authoring_documents SET c2c_document_id = NULL WHERE id = $1`, [f.authoringDocId]);
-    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
       meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD,
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -250,7 +250,7 @@ describe('2. the approval signature approves the sections it covers', () => {
   it('a second authoring document bound to the same filing cannot leave unsigned text approved', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
-    const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
       meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD,
     });
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);
@@ -289,7 +289,7 @@ describe('the signature a diverged filing refuses, and the way back', () => {
     const f = await makeFiling(['2.5', '2.6']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
     expect((await save(f.sectionIds['2.6'], 'Text the signer saw.')).status).toBe(200);
-    const sign = () => as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({ meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD });
+    const sign = () => as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({ meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD });
     // The filing's 2.6 changed after the last save in this editor.
     await q(`SELECT set_config('app.actor_id', '42', false), set_config('app.reason', 'elsewhere', false)`);
     await q(`UPDATE c2c_document_sections SET content = '{"text":"x"}'::jsonb WHERE document_id = $1 AND section_key = '2.6'`, [f.doc]);
@@ -330,7 +330,7 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
     await q(
       `INSERT INTO authoring_workflow_steps (workflow_id, doc_id, step_no, role, approver_email, status, tenant_id)
        VALUES (gen_random_uuid(), $1, 1, 'APPROVER', $2, 'PENDING', 1)`,
-      [f.authoringDocId, AUTHOR.email],
+      [f.authoringDocId, APPROVER.email],
     );
     const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken).send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -345,7 +345,7 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
     await q(
       `INSERT INTO authoring_workflow_steps (workflow_id, doc_id, step_no, role, approver_email, status, tenant_id)
        VALUES (gen_random_uuid(), $1, 1, 'APPROVER', $2, 'PENDING', 1)`,
-      [f.authoringDocId, AUTHOR.email],
+      [f.authoringDocId, APPROVER.email],
     );
     const first = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken).send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
     expect(first.status, JSON.stringify(first.body)).toBe(200);
@@ -370,12 +370,12 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
     expect(after.signatures).toEqual(expect.arrayContaining(before.signatures));
     expect(after.signatures).toHaveLength(before.signatures.length+1);
     const review = after.signatures.find(signature => signature.id===later.body.signatureId);
-    expect(review).toMatchObject({meaning:'REVIEWER',signer_email:AUTHOR.email,
+    expect(review).toMatchObject({meaning:'REVIEWER',signer_email:APPROVER.email,
       content_hash:before.signatures[0].content_hash,covered_content_hash:before.freezes[0].content_hash});
     expect(after.trail).toEqual(expect.arrayContaining(before.trail));
     expect(after.trail).toHaveLength(before.trail.length+1);
     expect(after.trail.find(row => row.metadata?.signatureId===later.body.signatureId)).toMatchObject({
-      operation_type:'SIGN',actor_id:AUTHOR.id,metadata:{meaning:'REVIEWER'} });
+      operation_type:'SIGN',actor_id:APPROVER.id,metadata:{meaning:'REVIEWER'} });
     const chained = await q("SELECT * FROM audit_logs WHERE action='authoring.document.sign' AND new_values->>'signatureId'=$1",[later.body.signatureId]);
     expect(chained).toHaveLength(1);
     expect(chained[0].sha256_chain).toBeTruthy();
@@ -396,7 +396,7 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
     await q(`ALTER TABLE audit_logs ADD CONSTRAINT tmp_no_esign
                CHECK (action <> 'authoring.document.e-sign') NOT VALID`);
     try {
-      const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+      const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
         meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD,
       });
       expect(res.status).toBe(500);
@@ -433,7 +433,7 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
   it('a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
-    const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
       meaning: 'APPROVER', intent: 'Approved.', password: PASSWORD,
     });
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);

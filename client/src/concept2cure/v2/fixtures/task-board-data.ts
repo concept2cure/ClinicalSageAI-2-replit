@@ -110,6 +110,7 @@ export const TB_MOD: Record<string, string> = {
   Clinical: 'var(--module-ind)',
   Nonclinical: 'var(--module-nonclinical)',
   Biostatistics: 'var(--module-biostatistics)',
+  Quality: 'var(--module-quality)',
   Safety: 'var(--module-safety)',
   Regulatory: 'var(--module-cmc)',
   general: 'var(--module-cmc)',

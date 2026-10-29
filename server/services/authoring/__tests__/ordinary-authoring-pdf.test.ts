@@ -10,11 +10,12 @@ vi.mock('../../../export/renderers', () => ({ renderHtmlToPdfTracked: mocks.html
 
 import { renderAuthoringExport, sectionsDigest, type RenderExportArgs } from '../authoring-export';
 import { ConversionCapacityError } from '../../conversion-slots';
+import { releaseGovernanceRead } from './release-governance-reads';
 
 const SAFE_MESSAGE = 'The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.';
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 const input = (): RenderExportArgs => ({
-  executor: { query: async () => ({ rows: [] }) }, tenantId: 7,
+  executor: { query: async (sql: string) => releaseGovernanceRead(sql) ?? { rows: [] } }, tenantId: 7,
   doc: { id: '11111111-1111-4111-8111-111111111111', title: 'Ordinary clinical overview', status: 'APPROVED' },
   sections: [{ id: 's1', code: '2.5', title: 'Overview', content:
     `<p>A <strong>reviewed</strong> ordinary document.</p><table><tr><th>Dose</th><th>Finding</th></tr>` +

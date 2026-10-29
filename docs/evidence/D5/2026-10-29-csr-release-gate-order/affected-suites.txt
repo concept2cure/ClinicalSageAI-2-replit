@@ -1,0 +1,27 @@
+# Every test file importing a changed module (112 files), with this change
+ Test Files  13 failed | 99 passed (112)
+      Tests  44 failed | 1597 passed (1641)
+
+# The 13 files that failed, run again at HEAD 499a17b82 with this change stashed
+ Test Files  13 failed (13)
+      Tests  42 failed | 205 passed (247)
+
+# Failing only with this change (before the fixture fix below):
+server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+  -> authoring-atomic-mutations.test.ts: its fake database did not answer the release-identity read, so the gate failed closed (409).
+     With release-governance-reads.ts: 8/8. At HEAD 2 of its 8 failed, and its two "ROLLBACK + 500" cases passed only because the gate itself answered 500.
+
+# Failing identically at HEAD (handed on; not this change):
+      3 server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+      3 server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+      3 server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+      3 server/services/authoring/__tests__/authoring-export-xml-figures.test.ts
+      4 server/services/authoring/__tests__/saved-draft-source-export.test.ts
+      5 server/services/company-documents/__tests__/correspondence-rendering.test.ts
+      4 server/services/export/__tests__/recorded-downloads.contract.test.ts
+      1 server/services/part11/__tests__/one-signing-authority-policy.test.ts
+      1 tests/authoring-program-scope.pglite.test.ts
+      1 tests/golden-journeys/ind-authoring.journey.test.ts
+      8 tests/lineage/founder-path-lineage.pglite.test.ts
+      4 tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts

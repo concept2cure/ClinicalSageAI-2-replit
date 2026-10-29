@@ -1,0 +1,12 @@
+# trunk's ReviewDecisionDialog, usePeerReviewDecision, authoringPeerReview and Review (8b58354af + 265ea2c5b), this change's screen test
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 5119ms
+   → Unable to find role="region" and name "CSR scientific review"
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 61ms
+   → expected 'Approve this CSR only after mapping i…' to match /clinical study report.*Nothing was re…/
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 37ms
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload
+AssertionError: expected 'Approve this CSR only after mapping i…' to match /clinical study report.*Nothing was re…/
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)

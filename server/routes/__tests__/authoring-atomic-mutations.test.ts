@@ -101,6 +101,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-at
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 const PASSWORD = 'signer-password';
 
@@ -147,13 +148,15 @@ beforeEach(async () => {
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: h.clientRelease }));
 
   h.clientQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (failOn && failOn.test(s)) throw new Error('injected mid-transaction failure');
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
     if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rowCount:0,rows:[] };
-    if (/SELECT doc_id::text FROM authoring_sections/.test(s)) return { rowCount:1,rows:[{doc_id:'D1'}] };
+    if (/SELECT doc_id::text FROM authoring_sections/.test(s)) return { rowCount:1,rows:[{doc_id:DOC_ID}] };
     if (/UPDATE authoring_sections/i.test(s)) {
-      return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'new text' }] };
+      return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, content: 'new text' }] };
     }
     if (/COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s)) {
       /* A workflow that EXISTS and is complete — which is the scenario this
@@ -171,8 +174,10 @@ beforeEach(async () => {
 describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
-        return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'old text' }] };
+        return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, content: 'old text' }] };
       }
       // canEditSection's parent-document lookup joins the section to its document
       // to read the document status; a non-frozen parent must not 403 the save.
@@ -229,8 +234,10 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
 describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       if (/FROM authoring_documents WHERE id = \$1/i.test(sql)) {
-        return { rowCount: 1, rows: [{ id: 'D1', status: 'draft', version: '1.0' }] };
+        return { rowCount: 1, rows: [{ id: DOC_ID, status: 'draft', version: '1.0' }] };
       }
       if (/FROM authoring_sections WHERE doc_id = \$1/i.test(sql)) {
         return { rowCount: 1, rows: [{ id: 'S1', code: '2.5', title: 'T', content: 'body' }] };
@@ -241,7 +248,7 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
 
   it('brackets the snapshot, status update and audit in one BEGIN…COMMIT', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/freeze')
+      .post(`/api/authoring/docs/${DOC_ID}/freeze`)
       .set('Authorization', await bearer())
       // DP-35: a freeze is signed — a meaning and the re-verified password.
       .send({ reason: 'lock for review', meaning: 'AUTHOR', password: PASSWORD });
@@ -281,7 +288,7 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
     failOn = /UPDATE authoring_documents/i;
 
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/freeze')
+      .post(`/api/authoring/docs/${DOC_ID}/freeze`)
       .set('Authorization', await bearer())
       // DP-35: a freeze is signed — a meaning and the re-verified password.
       .send({ reason: 'lock for review', meaning: 'AUTHOR', password: PASSWORD });
@@ -296,6 +303,8 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
 describe('POST /docs/:id/sign — signature + workflow approval + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       if (/SELECT code, content FROM authoring_sections/i.test(sql)) {
         return { rowCount: 1, rows: [{ code: '2.5', content: 'body' }] };
       }
@@ -315,7 +324,7 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
 
   it('brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer(['REVIEWER']))
       .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
@@ -354,7 +363,7 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
     failOn = /INSERT INTO authoring_signatures/i;
 
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer(['REVIEWER']))
       .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
@@ -373,11 +382,13 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
 describe('POST /sections/:id/revert — update + revision + filing + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       if (/FROM doc_revisions WHERE id = \$1/i.test(sql)) {
         return { rowCount: 1, rows: [{ id: 'R1', section_id: 'S1', content: 'earlier text', created_by: 41, created_at: '2026-09-01T00:00:00Z', tenant_id: 7 }] };
       }
       if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
-        return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'current text' }] };
+        return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, content: 'current text' }] };
       }
       if (/JOIN authoring_documents/i.test(sql)) {
         return { rowCount: 1, rows: [{ status: 'draft' }] };

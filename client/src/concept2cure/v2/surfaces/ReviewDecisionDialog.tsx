@@ -7,10 +7,17 @@ import { registerCeremonyOpen } from '../ceremony';
 import { useDialog } from '../useDialog';
 import { peerReviewScope, type PeerVerdict } from './authoringPeerReview';
 import { usePeerReviewDecision, type PeerReviewDecision } from './usePeerReviewDecision';
+import { CsrEvidenceReview } from './CsrEvidenceReview';
 import '../styles/review-decision.css';
 
 export const PEER_VERDICT_LABEL: Record<PeerVerdict, string> = { approved: 'Approved', changes_requested: 'Changes requested', rejected: 'Declined' };
-export interface ReviewDecisionDialogProps { documentId: string; onClose: () => void; onRecorded: (receipt: AuthoringReviewRow) => void }
+export interface ReviewDecisionDialogProps {
+  documentId: string;
+  /** The program the document is filed under: a CSR's review reads that program's retained analysis runs. */
+  programId?: string | null;
+  onClose: () => void;
+  onRecorded: (receipt: AuthoringReviewRow) => void;
+}
 
 export function ReviewDecisionDialog(props: ReviewDecisionDialogProps) {
   const user = useAuthUser();
@@ -38,11 +45,20 @@ function DecisionSession(props: ReviewDecisionDialogProps & {
         {state.context && <SavedReviewRead context={state.context} />}
         {state.receipt ? <DecisionReceipt receipt={state.receipt} /> : state.context?.canReview ? <DecisionFields state={state} /> :
           state.context && <p role="status">{state.context.unavailableReason ?? 'You cannot record a decision for this review request.'}</p>}
+        <CsrStep state={state} scope={props.scope} programId={props.programId ?? null} />
         <p className="esign-manifest">Your verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.</p>
       </div>
       <DecisionActions state={state} onClose={close} />
     </div>
   </div>;
+}
+
+/** The CSR scientific review, for an approval of a CSR that is still to be recorded. */
+function CsrStep({ state, scope, programId }: { state: PeerReviewDecision; scope: ReturnType<typeof peerReviewScope>; programId: string | null }) {
+  const context = state.context;
+  if (state.receipt || !context?.canReview || !state.csrRequired || state.decision !== 'approved' || !scope) return null;
+  return <CsrEvidenceReview scope={scope} programId={programId} context={context}
+    disabled={state.busy || state.blocked} onChange={state.setCsrEvidence} />;
 }
 
 function SavedReviewRead({ context }: { context: AuthoringReviewContext }) {
@@ -96,5 +112,10 @@ function DecisionActions({ state, onClose }: { state: PeerReviewDecision; onClos
 function maySubmitDecision(state: PeerReviewDecision): boolean {
   const length = state.reason.trim().length;
   return !state.busy && !state.loading && !state.blocked && !!state.decision && length <= 4000 &&
-    (state.decision === 'approved' || length >= 8);
+    (state.decision === 'approved' || length >= 8) && csrMapReady(state);
+}
+
+/** A CSR's approval goes only with its completed scientific-review map (CsrEvidenceReview). */
+function csrMapReady(state: PeerReviewDecision): boolean {
+  return state.decision !== 'approved' || !state.csrRequired || !!state.csrEvidence;
 }
