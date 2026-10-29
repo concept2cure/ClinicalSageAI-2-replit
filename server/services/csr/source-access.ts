@@ -6,12 +6,10 @@
  * re-exports both, so every existing importer is unchanged. */
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from '../authoring/authoring-program-access.js';
+import { CsrSourceInputError } from './csr-source-error.js';
 
 export interface CsrSourceScope { organizationId: number; userId: number; programId: string }
-export class CsrSourceInputError extends Error {
-  constructor(readonly status: 400 | 403 | 404 | 409 | 413 | 422 | 503, readonly code: string, message: string,
-    readonly issues?: Array<{ path: string; message: string }>) { super(message); this.name = 'CsrSourceInputError'; }
-}
+export { CsrSourceInputError };
 
 export async function authorizeCsrSourceProgram(q: RequestSqlClient, scope: CsrSourceScope, forWrite = false) {
   try {
