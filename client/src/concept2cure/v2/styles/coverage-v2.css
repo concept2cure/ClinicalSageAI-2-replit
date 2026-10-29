@@ -205,6 +205,7 @@
 .c2c-v2 .rd-chip.tone-ok{ background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--success); }
 .c2c-v2 .rd-chip.tone-ai{ background:var(--accent-000); color:var(--accent-200); }
 .c2c-v2 .rd-chip.tone-warn{ background:color-mix(in srgb, var(--warning) 16%, transparent); color:var(--warning); }
+.c2c-v2 .rd-chip.tone-err{ background:var(--error-muted); color:var(--error); }
 .c2c-v2 .rd-chip.tone-idle{ background:var(--bg-100); color:var(--text-300); }
 
 /* Template library */
