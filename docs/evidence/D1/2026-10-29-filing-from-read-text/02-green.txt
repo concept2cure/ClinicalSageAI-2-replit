@@ -1,0 +1,38 @@
+# MR-08 Stage 3 step 5, green: on the committed tree
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on.
+
+## tests/db/vault-processing-sweep.dbtest.ts
+ ✓ the upload request reads a text layer only > returns a scanned PDF without running OCR, and records it as still being read
+ ✓ the upload request reads a text layer only > still reads a born-digital file in the request
+ ✓ the upload request reads a text layer only > search says how many versions are not searched yet
+ ✓ the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it
+ ✓ the processing sweep > does nothing more on the next run
+ ✓ the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again
+ ✓ the processing sweep > two sweeps at once read a pending version once
+ ✓ the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+
+## The placement, filing, ingest and catalog dbtests
+# vault-placement, vault-placement-batch, vault-filing-attribution, vault-filing-vocabulary, vault-ingest, document-catalog, document-catalog-governed, vault-catalog-tenant-isolation
+ Test Files  8 passed (8)
+      Tests  93 passed (93)
+
+## Re-run after the sweep's final refactor: document-catalog (which sweeps an unreadable scan) and vault-ingest
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+
+## Unit: server/services/vault, server/jobs, document-placement-tools
+ Test Files  69 passed (69)
+      Tests  856 passed (856)
+
+## Type check
+tsc exit 0

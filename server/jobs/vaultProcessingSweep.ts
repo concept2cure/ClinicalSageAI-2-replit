@@ -21,6 +21,9 @@
  *   - The text, the catalog outcome and a chained `vault.document.extracted`
  *     audit row are written in one transaction. The passages are then indexed
  *     through the one chunking path ingest uses.
+ *   - In the same transaction, the classifier proposes a filing from the text,
+ *     for a version no person or agent has filed (`proposeFilingFromReadText`).
+ *     A scan named `scan-0001.pdf` was proposed from its name alone at ingest.
  *   - A file that cannot be read is recorded `extraction_failed` with the
  *     reason, so it is never left pending forever and never read as empty.
  */
@@ -117,6 +120,31 @@ function outcomeOf(
   };
 }
 
+/**
+ * The filing ingest proposed from the name alone, proposed again now the text
+ * is read (MR-08 Stage 3 step 5), only while no one has decided it. Under a
+ * savepoint: a proposal that fails is rolled back alone, so the text is still
+ * recorded and the version stays visibly unfiled for a person to file. It is
+ * never read again for want of a proposal. Returns what the extraction's
+ * audit row says of it.
+ */
+async function proposeFiling(
+  client: import('pg').PoolClient, organizationId: number, doc: PendingRow, text: string,
+): Promise<Record<string, unknown>> {
+  const { proposeFilingFromReadText } = await import('../services/vault/vault-placement.service.js');
+  await client.query('SAVEPOINT vault_filing_proposal');
+  try {
+    const filing = await proposeFilingFromReadText(client, { organizationId, programId: doc.program_id, documentId: doc.id, text });
+    await client.query('RELEASE SAVEPOINT vault_filing_proposal');
+    return filing.proposed ? { filingProposed: { folderId: filing.folderId, ctdSection: filing.ctdSection } } : {};
+  } catch (err) {
+    await client.query('ROLLBACK TO SAVEPOINT vault_filing_proposal');
+    const error = err instanceof Error && err.message ? err.message : 'unknown error';
+    logger.warn('vault processing: no filing proposed from the text read', { documentId: doc.id, err: error });
+    return { filingProposalError: error };
+  }
+}
+
 async function readAndRecord(client: import('pg').PoolClient, organizationId: number, doc: PendingRow): Promise<Outcome> {
   const { buildExtractionOutcome, recordExtractionOutcome } = await import('../services/vault/document-catalog.service.js');
   const { isConversionCapacityError } = await import('../services/conversion-slots.js');
@@ -139,6 +167,7 @@ async function readAndRecord(client: import('pg').PoolClient, organizationId: nu
       );
     }
     await recordExtractionOutcome(client, { documentId: doc.id, contentHash: doc.content_hash, outcome, pageCount });
+    const filing = text ? await proposeFiling(client, organizationId, doc, text) : {};
     await writeChainedAuditRow(client, {
       tenantId: organizationId,
       action: 'vault.document.extracted',
@@ -147,6 +176,7 @@ async function readAndRecord(client: import('pg').PoolClient, organizationId: nu
       details: {
         programId: doc.program_id, contentHash: doc.content_hash, outcome: outcome.status, method: outcome.method,
         charCount: outcome.charCount, pageCount, error: outcome.error,
+        ...filing,
         ...('extracted' in read && read.extracted.coverage ? { coverage: read.extracted.coverage } : {}),
       },
     });

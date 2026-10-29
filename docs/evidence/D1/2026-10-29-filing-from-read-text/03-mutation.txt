@@ -1,0 +1,101 @@
+# MR-08 Stage 3 step 5, mutations: each applied alone, then the filing cases run (-t "a filing")
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on.
+#  no-call              the sweep never asks for a proposal
+#  no-savepoint         a failed proposal rolls back the whole read
+#  no-audit             the proposal writes no vault.document.file row
+#  no-status            a suggested placement is proposed again
+#  no-placed-by         a version a person placed is proposed again
+#  no-decided           the filing audit trail is not read
+#  no-person-guard-sql  only an agent's filing row counts as a decision
+#  no-checkin           a check-in is proposed again
+
+=== mutation: no-call
+ × a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+   → expected { folder_id: null, …(4) } to match object { placement_status: 'suggested', …(3) }
+ × a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+   → expected { …(8) } to match object { outcome: 'extracted', …(1) }
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  2 failed | 6 passed | 8 skipped (16)
+=== mutation: no-savepoint
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ × a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+   → expected { …(7) } to match object { catalog_status: 'extracted' }
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  1 failed | 7 passed | 8 skipped (16)
+=== mutation: no-audit
+ × a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+   → expected [] to have a length of 1 but got +0
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  1 failed | 7 passed | 8 skipped (16)
+=== mutation: no-status
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ × a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+   → expected [ { new_values: { …(8) } } ] to have a length of +0 but got 1
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  1 failed | 7 passed | 8 skipped (16)
+=== mutation: no-placed-by
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ × a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+   → expected [ { new_values: { …(8) } } ] to have a length of +0 but got 1
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  1 failed | 7 passed | 8 skipped (16)
+=== mutation: no-decided
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ × a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+   → expected { folder_id: 'module-5', …(4) } to match object { placement_status: 'unfiled', …(2) }
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ × a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+   → expected { folder_id: 'module-5', …(4) } to deeply equal { folder_id: null, …(4) }
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  2 failed | 6 passed | 8 skipped (16)
+=== mutation: no-person-guard-sql
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ × a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+   → expected { folder_id: 'module-5', …(4) } to deeply equal { folder_id: null, …(4) }
+ ✓ a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+      Tests  1 failed | 7 passed | 8 skipped (16)
+=== mutation: no-checkin
+ ✓ a filing proposed from the text read after upload > a scan whose name says nothing is proposed by its body text, for a person to confirm
+ ✓ a filing proposed from the text read after upload > a proposal that fails keeps the text read, and leaves the scan unfiled for a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person unfiled before it was read stays as they left it
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan an agent unfiled before it was read stays unfiled: placed by no person, but decided
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan its name already filed keeps the suggestion awaiting a person
+ ✓ a filing that is not the classifier's to propose is left as it is > a scan a person filed before filings were audited keeps that filing
+ ✓ a filing that is not the classifier's to propose is left as it is > a person's filing on the audit trail stands where the row names no placer
+ × a filing that is not the classifier's to propose is left as it is > a new version of an unfiled scan keeps the filing of the version it replaced
+   → expected { folder_id: 'module-5', …(4) } to deeply equal { folder_id: null, …(4) }
+      Tests  1 failed | 7 passed | 8 skipped (16)
