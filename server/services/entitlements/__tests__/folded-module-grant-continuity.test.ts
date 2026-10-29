@@ -52,6 +52,10 @@ const CARRIED = [
   { source: 'device-vault', target: 'vault', fold: 'b9de04c62', tier: 'standard' },
   { source: 'artifacts-center', target: 'vault', fold: 'b9de04c62', tier: 'free' },
   { source: 'ectd-publishing', target: 'ectd-compile', fold: '302d632db', tier: 'standard' },
+  // Fold F1c (product 59b1482d2, 79d00b348) and fold F2 (product 1a6701ea6), retired in the change that adds them.
+  { source: 'risk', target: 'device-engineering', fold: 'F1c', tier: 'standard' },
+  { source: 'design-controls', target: 'device-engineering', fold: 'F1c', tier: 'standard' },
+  { source: 'ivd-completeness', target: 'device-diagnostics', fold: 'F2', tier: 'standard' },
 ] as const;
 
 /** Folded screens that never had a catalogue row: nothing to carry. */

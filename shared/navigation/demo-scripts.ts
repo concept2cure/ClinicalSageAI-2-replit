@@ -300,20 +300,20 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-510k' },
       },
       {
-        say: 'The ISO 14971 risk file is the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
-        navigate: { target: 'risk' },
+        // 2026-10-29 (D2, fold F1c): the risk file and the design-control trace are Engineering's, for the open project.
+        say: 'The ISO 14971 risk file is the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down. It lives in the project\'s engineering evidence.',
+        navigate: { target: 'device-engineering' },
       },
       {
         say: 'Work one hazard, do not slide it — open a hazard from their real file (pick one on screen) so they see its severity, probability, and controls the way they will actually use it.',
-        act: { actionId: 'risk.select-hazard' },
+        act: { actionId: 'device-engineering.select-hazard' },
       },
       {
         say: 'Switch to the residual matrix — the assessment after their controls. Accepting residual risk stays a signed human judgment; AnA shows the picture and never makes that call for them.',
-        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
+        act: { actionId: 'device-engineering.set-matrix-view', params: { view: 'residual' } },
       },
       {
-        say: 'Design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
-        navigate: { target: 'device-engineering' },
+        say: 'On the same screen, design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
       },
       {
         say: 'The validation center is where V&V evidence lands and its completeness is tracked against the plan — protocols, runs, and what is still open.',
@@ -370,12 +370,12 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-engineering' },
       },
       {
-        say: 'The ISO 14971 risk file: the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
-        navigate: { target: 'risk' },
+        // 2026-10-29 (D2, fold F1c): the risk file is on the same Engineering screen as the trace.
+        say: 'On the same screen, the ISO 14971 risk file: the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
       },
       {
         say: 'Switch to the residual matrix — after the controls. Accepting residual risk is the one thing AnA never does for them: it stays a signed human judgment, and the screen shows exactly that.',
-        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
+        act: { actionId: 'device-engineering.set-matrix-view', params: { view: 'residual' } },
       },
       {
         say: 'For Europe, the CER: clinical evaluation under EU MDR, with the benefit-risk and GSPR reasoning laid out — an uncharacterized dimension is never quietly treated as favourable.',

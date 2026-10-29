@@ -1,0 +1,135 @@
+# Mutations, 2026-10-29: each applied alone to the fixed tree, the suites run, the file restored byte-for-byte (sha256 checked)
+
+## M1 — read the register under the project's integer id, not its program UUID
+file: server/services/cmc/project-cmc-readiness.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  12 failed | 6 passed (18)
+red tests (12):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program
+
+## M2 — a boundary refusal is not named: out of scope reads as unreadable
+file: server/services/cmc/project-cmc-readiness.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  7 failed | 11 passed (18)
+red tests (7):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program
+
+## M3 — a failed read is reported as nothing recorded (missing)
+file: server/services/cmc/project-cmc-readiness.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  2 failed | 16 passed (18)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+
+## M4 — an application that could not be read (503) is treated as out of scope
+file: server/services/cmc/project-cmc-readiness.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  1 failed | 17 passed (18)
+red tests (1):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+
+## M5 — a half counts as recorded when any source feeds it (a drug substance feeds §3.2.P.2)
+file: server/services/cmc/project-cmc-readiness.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  2 failed | 16 passed (18)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says
+
+## M6 — the assessment drops the unreadable risk line
+file: server/routes/c2c/tasks.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  2 failed | 16 passed (18)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+
+## M7 — the assessment reads project metadata again (head's block)
+file: server/routes/c2c/tasks.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  12 failed | 6 passed (18)
+red tests (12):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+
+## M8 — the project context reads project metadata again
+file: server/routes/c2c/program-twin.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  2 failed | 16 passed (18)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program
+
+## M9 — PUT …/cmc is registered again
+file: server/routes/c2c/program-twin.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts, server/routes/c2c/__tests__/c2c-router.parity.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  2 failed (2)
+Tests  2 failed | 31 passed (33)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > put …/cmc is not served, and the project record is untouched
+  - server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > serves no project-metadata CMC route, on any router that mounts at /api/concept2cure
+
+## M10 — the boundary admits a program with nothing recorded without judging its application (head's admitProgramComposition)
+file: server/services/cmc/module3-compile.ts
+suites: server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+exit: 1 (red — caught)
+restored byte-for-byte: true
+Test Files  1 failed (1)
+Tests  2 failed | 16 passed (18)
+red tests (2):
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why
+  - server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why

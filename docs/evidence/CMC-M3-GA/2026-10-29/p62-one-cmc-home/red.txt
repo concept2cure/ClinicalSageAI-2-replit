@@ -1,0 +1,257 @@
+# Red: the new test against head's server/routes/c2c/tasks.ts and program-twin.ts (unchanged; git status shows neither modified), 2026-10-29
+# npx vitest run server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > the register keys project_id as TEXT and is policied, and the runtime role is not exempt 42ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > a recorded drug substance lands under the program UUID the CMC surface sends 44ms
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why 92ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why 55ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why 53ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why 54ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why 51ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for 59ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ …(2) ] to deeply equal [ Array(1) ]
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action 62ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds 66ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ …(2) ] to deeply equal [ …(2) ]
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded 57ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ Array(1) ] to include 'Record the drug substance in the CMC …'
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action 55ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing 57ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing 55ms
+   → [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says 58ms
+   → expected '{"drugSubstance":null,"drugProduct":{…' not to contain 'Metadata-only tablet'
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program 49ms
+   → expected { drugSubstance: null, …(4) } to match object { …(2) }
+(5 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > get …/cmc is not served, and the project record is untouched 47ms
+   → {"success":true,"data":{"drugSubstance":null,"drugProduct":null,"specifications":[],"stabilityStudies":[],"impurities":[],"lastUpdated":null}}: expected 200 to be 404 // Object.is equality
+ × server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > put …/cmc is not served, and the project record is untouched 53ms
+   → {"success":true,"data":{"saved":true,"lastUpdated":"2026-10-29T22:51:09.297Z"}}: expected 200 to be 404 // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "action": "Enter Drug Substance data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Substance information is required for Module 3 documentation.",
++   },
++   {
++     "action": "Enter Drug Product data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Product information is required for Module 3 documentation.",
++   },
++ ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:289:78
+    287|     const res = await assess(PROGRAMS[program].project);
+    288|     // The actions first, so a failure shows what the program was told.
+    289|     expect(cmcActions(res.body), JSON.stringify(res.body.data?.nextAct…
+       |                                                                              ^
+    290|     expect(res.status).toBe(200);
+    291|     expect(res.body.data.cmc).toMatchObject({ state: 'outside_composit…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ …(2) ] to deeply equal [ Array(1) ]
+- Expected
++ Received
+  [
+-   "Record the drug product in the CMC / Module 3 register",
++   "Enter Drug Substance data (CMC Module 3)",
++   "Enter Drug Product data (CMC Module 3)",
+  ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:299:8
+    297|     const res = await assess(PROGRAMS.drug.project);
+    298|     expect(cmcActions(res.body).map(a => a.action), JSON.stringify(res…
+    299|       .toEqual(['Record the drug product in the CMC / Module 3 registe…
+       |        ^
+    300|     expect(res.body.data.cmc).toMatchObject({
+    301|       state: 'read', cmcProjectId: PROGRAMS.drug.id,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "action": "Enter Drug Substance data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Substance information is required for Module 3 documentation.",
++   },
++   {
++     "action": "Enter Drug Product data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Product information is required for Module 3 documentation.",
++   },
++ ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:311:78
+    309|     await recordInRegister('product', PROGRAMS.drug.id, 9101);
+    310|     const res = await assess(PROGRAMS.drug.project);
+    311|     expect(cmcActions(res.body), JSON.stringify(res.body.data?.nextAct…
+       |                                                                              ^
+    312|     expect(res.body.data.cmc).toMatchObject({
+    313|       state: 'read', drugSubstance: { recorded: true }, drugProduct: {…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ …(2) ] to deeply equal [ …(2) ]
+- Expected
++ Received
+  [
+-   "Record the drug substance in the CMC / Module 3 register",
+-   "Record the drug product in the CMC / Module 3 register",
++   "Enter Drug Substance data (CMC Module 3)",
++   "Enter Drug Product data (CMC Module 3)",
+  ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:325:84
+    323|     const res = await assess(PROGRAMS.drug.project);
+    324|     const actions = cmcActions(res.body);
+    325|     expect(actions.map(a => a.action), JSON.stringify(res.body.data?.n…
+       |                                                                                    ^
+    326|       'Record the drug substance in the CMC / Module 3 register',
+    327|       'Record the drug product in the CMC / Module 3 register',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ Array(1) ] to include 'Record the drug substance in the CMC …'
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:338:8
+    336|     const res = await assess(PROGRAMS.drug.project);
+    337|     expect(cmcActions(res.body).map(a => a.action), JSON.stringify(res…
+    338|       .toContain('Record the drug substance in the CMC / Module 3 regi…
+       |        ^
+    339|     expect(JSON.stringify(res.body)).not.toContain('Metadata-only API'…
+    340|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "action": "Enter Drug Substance data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Substance information is required for Module 3 documentation.",
++   },
++   {
++     "action": "Enter Drug Product data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Product information is required for Module 3 documentation.",
++   },
++ ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:344:78
+    342|   it('a tracking record anchored to no program is answered by the boun…
+    343|     const res = await assess(UNANCHORED);
+    344|     expect(cmcActions(res.body), JSON.stringify(res.body.data?.nextAct…
+       |                                                                              ^
+    345|     expect(res.body.data.cmc).toMatchObject({
+    346|       state: 'outside_composition_scope', cmcProjectId: String(UNANCHO…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+AssertionError: [{"action":"Generate regulatory milestones","priority":"high","reason":"No tasks exist yet. Auto-generate milestone-based tasks for your submission type."},{"action":"Enter Drug Substance data (CMC Module 3)","priority":"medium","reason":"Drug Substance information is required for Module 3 documentation."},{"action":"Enter Drug Product data (CMC Module 3)","priority":"medium","reason":"Drug Product information is required for Module 3 documentation."}]: expected [ { …(3) }, { …(3) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "action": "Enter Drug Substance data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Substance information is required for Module 3 documentation.",
++   },
++   {
++     "action": "Enter Drug Product data (CMC Module 3)",
++     "priority": "medium",
++     "reason": "Drug Product information is required for Module 3 documentation.",
++   },
++ ]
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:359:78
+    357|     h.state.failOn = null;
+    358|     expect(res.status).toBe(200);
+    359|     expect(cmcActions(res.body), JSON.stringify(res.body.data?.nextAct…
+       |                                                                              ^
+    360|     expect(res.body.data.cmc.state).toBe('unreadable');
+    361|     expect(res.body.data.cmc).not.toHaveProperty('drugSubstance');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says
+AssertionError: expected '{"drugSubstance":null,"drugProduct":{…' not to contain 'Metadata-only tablet'
+Expected: "Metadata-only tablet"
+Received: "{"drugSubstance":null,"drugProduct":{"productName":"Metadata-only tablet"},"hasSpecifications":false,"hasStabilityStudies":false,"hasImpurities":false}"
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:373:51
+    371|     const res = await context(PROGRAMS.drug.project);
+    372|     expect(res.status).toBe(200);
+    373|     expect(JSON.stringify(res.body.data.cmc)).not.toContain('Metadata-…
+       |                                                   ^
+    374|     expect(res.body.data.cmc).toMatchObject({
+    375|       state: 'read', cmcProjectId: PROGRAMS.drug.id, drugSubstance: { …
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program
+AssertionError: expected { drugSubstance: null, …(4) } to match object { …(2) }
+(5 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "code": "CMC_PRODUCT_CLASS_OUT_OF_SCOPE",
+-   "state": "outside_composition_scope",
++   "drugProduct": null,
++   "drugSubstance": null,
++   "hasImpurities": false,
++   "hasSpecifications": false,
++   "hasStabilityStudies": false,
+  }
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:382:31
+    380|     const res = await context(PROGRAMS.device.project);
+    381|     expect(res.status).toBe(200);
+    382|     expect(res.body.data.cmc).toMatchObject({ state: 'outside_composit…
+       |                               ^
+    383|   });
+    384| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > get …/cmc is not served, and the project record is untouched
+AssertionError: {"success":true,"data":{"drugSubstance":null,"drugProduct":null,"specifications":[],"stabilityStudies":[],"impurities":[],"lastUpdated":null}}: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:391:50
+    389|     const call = request(app())[method](url(PROGRAMS.drug.project, 'cm…
+    390|     const res = method === 'put' ? await call.send({ drugSubstance: { …
+    391|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+    392|     expect((await h.state.pg.query(`SELECT metadata FROM projects WHER…
+    393|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+ FAIL  server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > put …/cmc is not served, and the project record is untouched
+AssertionError: {"success":true,"data":{"saved":true,"lastUpdated":"2026-10-29T22:51:09.297Z"}}: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ ❯ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts:391:50
+    389|     const call = request(app())[method](url(PROGRAMS.drug.project, 'cm…
+    390|     const res = method === 'put' ? await call.send({ drugSubstance: { …
+    391|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+    392|     expect((await h.state.pg.query(`SELECT metadata FROM projects WHER…
+    393|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+ Test Files  1 failed (1)
+      Tests  16 failed | 2 passed (18)
+   Start at  22:50:55
+   Duration  14.28s (transform 3.77s, setup 139ms, import 7.42s, tests 6.40s, environment 0ms)

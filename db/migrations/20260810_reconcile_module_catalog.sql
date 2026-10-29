@@ -1,3 +1,18 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 folds F1c and F2 (CLAUDE.md Rule 1).
+-- Risk management (risk) folded into Engineering evidence (device-engineering),
+-- which holds the project's ISO 14971 risk file (RiskRegister.tsx), and IVD
+-- completeness (ivd-completeness) into IVDR evidence (device-diagnostics), whose
+-- readiness panel draws the IVDR board and the assessment workbench. Removed:
+-- both ids from step 1's keep-list and step 2's upsert, so a fresh database
+-- never holds either row and step 1 deprecates the existing rows on every replay.
+-- The rows, their metadata (their recorded tier included), module_subscriptions
+-- FKs and every tenant record stay; no DELETE, no appended DROP. A live grant of
+-- either carries to its target in the entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts); no grant row is
+-- written. 20260823's packaging and customer-copy rows are removed with them.
+-- design-controls, folded with risk, was never on this file's lists; its writers
+-- are 20260814j and 20260823_module_catalog_mdx_registers, amended the same day.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
 -- The eCTD publishing reference (ectd-publishing) is folded into eCTD Compile:
 -- its spec versions sit beside the validation findings, and its version choice,
@@ -324,7 +339,6 @@ UPDATE available_modules
    'ind-checklist',
    'insights',
    'intelligence-catalog',
-   'ivd-completeness',
    'labeling',
    'labeling-pi',
    'lifecycle-mgmt',
@@ -351,7 +365,6 @@ UPDATE available_modules
    'report-governance',
    'research-admin',
    'review',
-   'risk',
    'safety-narrative',
    'shadow-review',
    'source-tracer',
@@ -382,7 +395,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('ectd-coauthor', 'eCTD co-author', 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.', 'Author & assemble', '/concept2cure/ectd-coauthor', 'gitBranch', 140, '{"tiers": [], "industries": []}'::json),
   ('ectd-compile', 'Compile & Export eCTD', 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id (/api/ectd-compile).', 'Author & assemble', '/concept2cure/ectd-compile', 'gitBranch', 150, '{"tiers": [], "industries": []}'::json),
   ('inconsistency', 'Inconsistency Intelligence', 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved/locked sections are flagged for re-approval with a task, on the audit trail. Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts', 'Author & assemble', '/concept2cure/inconsistency', 'gitCompare', 160, '{"tiers": [], "industries": []}'::json),
-  ('ivd-completeness', 'IVD completeness', 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist. Contract ref (not yet a @shared file): @shared/regulatory/ivdr', 'Author & assemble', '/concept2cure/ivd-completeness', 'microscope', 170, '{"tiers": [], "industries": []}'::json),
   ('labeling', 'Labeling', 'Labeling/IFU authoring + compliance. ui_kits/labeling prototyped.', 'Author & assemble', '/concept2cure/labeling', 'tag', 180, '{"tiers": [], "industries": []}'::json),
   ('labeling-pi', 'Prescribing information', 'USPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL. End-of-review agency labeling negotiation (sponsor vs FDA redline). The label as the document.', 'Author & assemble', '/concept2cure/labeling-pi', 'fileText', 190, '{"tiers": [], "industries": []}'::json),
   ('nonclinical', 'Nonclinical / Module 4', 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.', 'Author & assemble', '/concept2cure/nonclinical', 'microscope', 200, '{"tiers": [], "industries": []}'::json),
@@ -420,7 +432,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('global-ri', 'Global regulatory intelligence', 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.', 'Intelligence & risk', '/concept2cure/global-ri', 'globe', 580, '{"tiers": [], "industries": []}'::json),
   ('intelligence-catalog', 'Intelligence catalog', 'Read-only reference: 142 deterministic_registry tools across 24 domains, with the determinism-pedigree trust system and the shared deterministic-result rendering pattern. Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts', 'Intelligence & risk', '/concept2cure/intelligence-catalog', 'shieldCheck', 590, '{"tiers": [], "industries": []}'::json),
   ('precedent-intelligence', 'Precedent intelligence', 'Past approvals search + decision rationale. Slots into 510(k) §12 substantial equivalence.', 'Intelligence & risk', '/concept2cure/precedent-intelligence', 'scale', 600, '{"tiers": [], "industries": []}'::json),
-  ('risk', 'Risk management', 'ISO 14971 risk file, hazard analysis. ui_kits/risk prototyped.', 'Intelligence & risk', '/concept2cure/risk', 'alertTriangle', 610, '{"tiers": [], "industries": []}'::json),
   ('change-assessment', 'Change assessment', 'Change impact engine: FDA "When to Submit a 510(k) for a Change" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file.', 'Lifecycle & access', '/concept2cure/change-assessment', 'gitBranch', 620, '{"tiers": [], "industries": []}'::json),
   ('device-udi', 'UDI & device identification', 'UDI/GUDID summary and document catalog. The only UDI surface; labeling itself lives on the labeling surface.', 'Lifecycle & access', '/concept2cure/device-udi', 'barcode', 630, '{"tiers": [], "industries": []}'::json),
   ('lifecycle-mgmt', 'Lifecycle management', 'Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).', 'Lifecycle & access', '/concept2cure/lifecycle-mgmt', 'history', 640, '{"tiers": [], "industries": []}'::json),

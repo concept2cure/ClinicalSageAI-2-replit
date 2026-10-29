@@ -1,0 +1,49 @@
+# Boundary red: the two new cases in composition-boundary-readers.pglite.test.ts, run against head's server/services/cmc/module3-compile.ts (unchanged), 2026-10-29
+# npx vitest run server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-29T20:48:08.415Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters 10ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND 27ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing 12ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA 9ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in 11ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a biologic, the newer a small molecule 16ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a small molecule, the newer a biologic 14ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal 10ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary 9ms
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an NDA 16ms
+   → expected undefined to be 'CMC_APPLICATION_OUT_OF_SCOPE' // Object.is equality
+ × server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an EU clinical-trial application 10ms
+   → expected undefined to be 'CMC_APPLICATION_OUT_OF_SCOPE' // Object.is equality
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > a legacy numeric project, which is not a program > is refused as not a program — a settled answer, never a failed read or a driver error 9ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine 201ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an NDA
+ FAIL  server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an EU clinical-trial application
+AssertionError: expected undefined to be 'CMC_APPLICATION_OUT_OF_SCOPE' // Object.is equality
+- Expected:
+"CMC_APPLICATION_OUT_OF_SCOPE"
++ Received:
+undefined
+ ❯ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts:280:27
+    278|     await files();
+    279|     const refusal = await refusalOf(getModule3BuildStatus(ORG, PROGRAM…
+    280|     expect(refusal?.code).toBe('CMC_APPLICATION_OUT_OF_SCOPE');
+       |                           ^
+    281|     expect(refusal?.message).toContain(`files ${filed},`);
+    282|     await noTransactionOpen();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  20:48:06
+   Duration  4.48s (transform 1.55s, setup 61ms, import 2.06s, tests 2.16s, environment 0ms)

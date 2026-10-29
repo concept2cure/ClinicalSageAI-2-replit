@@ -117,7 +117,13 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-29 D2: billing folds into Licensing, which publishes the invoice facts
 // as 'licensing'; usage keeps its own context. The retired id is an alias, no
 // longer a routable publisher (foldBilling.test.ts).
-const ID_BASELINE = 106;
+// 2026-10-29 D2: risk and design-controls fold into Engineering evidence (fold
+// F1c), whose host publish carries the register's and the trace's context as
+// 'device-engineering'; ivd-completeness folds into IVDR evidence (fold F2),
+// whose host publish carries the readiness board's as 'device-diagnostics'. The
+// retired ids are aliases, no longer routable publishers
+// (foldRiskDesignControls.test.ts, foldIvdCompleteness.test.ts).
+const ID_BASELINE = 103;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

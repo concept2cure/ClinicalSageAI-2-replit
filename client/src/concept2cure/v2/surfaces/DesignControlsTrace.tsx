@@ -27,14 +27,13 @@ import { C2CToast, useToast } from '../toast';
 
 /* ════ The design-controls trace -- DHF ════
 
-   One panel, mounted twice until the fold (D2, fold F1 slice B, 2026-10-29;
+   One panel (D2, fold F1 slice B, 2026-10-29;
    docs/design/DEVICE_FOLDS_2026-10-29.md F1, "Work" item 4;
-   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f1b-engineering-parity/):
-     - the Design controls screen (./DesignControls.tsx), for the open
-       project, or the organization's register with no project open;
-     - Engineering (../../mdx/surfaces/EngineeringSurface.tsx), for its project
-       only, once its own route has admitted the project.
-   It was drawn inside DesignControls.tsx; Engineering printed one count line.
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f1b-engineering-parity/), mounted by
+   Engineering (../../mdx/surfaces/EngineeringSurface.tsx) for its project only,
+   once its own route has admitted the project. It was drawn inside the Design
+   controls screen, which mounted it too until it folded into Engineering (fold
+   F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
 
    Fixture-free by construction (real-data standard). The traceability matrix is
    the REAL design inputs (ISO 13485:2016 §7.3.3) from the c2c_design_controls
@@ -299,8 +298,7 @@ export function useDesignControlsTrace(opts: ProjectReadOptions): DesignControls
      admits first and answers with `meta.scope: 'program'` and the `programId`.
      An answer not keyed to the open project (an unreported scope, the
      organization's, or another project's) is not drawn under it, and a refused
-     one says so. With no project open on the Design controls screen, the read
-     is the organization's register, as before. */
+     one says so. Engineering reads nothing with no project open (requireProject). */
   const read = useProjectScopedRead<DcInput>('/api/design-controls', opts);
   const { programId } = opts;
 

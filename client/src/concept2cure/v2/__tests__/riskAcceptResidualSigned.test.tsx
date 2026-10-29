@@ -17,6 +17,11 @@
  *
  * EsignModal's own re-authentication is covered by its own tests. Here it is a
  * stub that hands over what a signer typed, as in the labeling approval test.
+ *
+ * 2026-10-29 (D2, fold F1c): the Risk screen folded into Engineering evidence,
+ * which mounts the same register (v2/surfaces/RiskRegister.tsx) for the open
+ * project. These cases run against it as Engineering mounts it
+ * (./engineeringPanels.harness.tsx); the read names the project and is keyed to it.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,7 +57,7 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
-import { Risk } from '../surfaces/Risk';
+import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 const HAZARD = {
   id: 41, ref_code: 'HZ-41', hazard: 'Sensor drift during wear', hazardous_situation: 'Drift over 14 days',
@@ -76,7 +81,7 @@ beforeEach(() => {
   H.apiRequest.mockReset().mockImplementation(async (method: string, path: string, body?: unknown) => {
     H.calls.push({ method, path, body });
     if (method === 'PATCH') return patchAnswer();
-    if (path === '/api/mdx/risk-items') return answer(200, { data: [HAZARD] });
+    if (path === RISK_READ) return answer(200, keyedToPanelProject([HAZARD]));
     return answer(200, { data: null });
   });
 });
@@ -86,7 +91,7 @@ const patches = () => H.calls.filter((c) => c.method === 'PATCH');
 const drawer = () => document.querySelector('.risk-drawer') as HTMLElement;
 
 async function renderRisk() {
-  render(<Risk {...({ surface: { id: 'risk' }, onAsk: vi.fn(), onNav: vi.fn() } as unknown as React.ComponentProps<typeof Risk>)} />);
+  render(<EngineeringRiskPanel onAsk={vi.fn()} />);
   await screen.findAllByText('Sensor drift during wear');
 }
 async function openAcceptance() {

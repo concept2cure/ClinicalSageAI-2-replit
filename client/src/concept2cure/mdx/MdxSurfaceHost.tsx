@@ -42,7 +42,7 @@ import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
-import { IvdSurface } from './surfaces/IvdSurface';
+import { IvdSurface, type IvdReadinessReport } from './surfaces/IvdSurface';
 import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
 import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
@@ -196,6 +196,24 @@ function withEngineeringPanels(base: ScreenContext, panels: EngineeringPanelsCon
     summary: `${base.summary} ${risk.summary} ${designControls.summary}`,
     facts: { ...base.facts, riskRegister: risk.facts ?? null, designControlsTrace: designControls.facts ?? null },
     availableActions: [...(base.availableActions ?? []), ...(risk.availableActions ?? []), ...(designControls.availableActions ?? [])],
+  };
+}
+
+/**
+ * device-diagnostics' context with its IVDR readiness board's (fold F2,
+ * 2026-10-29: the board and the IVD assessment workbench were the
+ * ivd-completeness screen's, which published the readiness under its own id).
+ * The store holds one context, so the board's rides this host's one publish, as
+ * Engineering's panels do above. Merged only when it was read for the project in
+ * context.
+ */
+function withIvdReadiness(base: ScreenContext, report: IvdReadinessReport | null, program: Program | null): ScreenContext {
+  if (!report || !program || report.programId !== String(program.id)) return base;
+  const { readiness } = report;
+  return {
+    summary: `${base.summary} ${readiness.summary}`,
+    facts: { ...base.facts, ivdReadiness: readiness.facts ?? null },
+    availableActions: [...(base.availableActions ?? []), ...(readiness.availableActions ?? [])],
   };
 }
 
@@ -357,6 +375,12 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     () => withEngineeringPanels(anaContext, engineeringPanels, programForContext),
     [anaContext, engineeringPanels, programForContext],
   );
+  /* What IVDR evidence's readiness board reports; null when the screen is not mounted. */
+  const [ivdReadiness, setIvdReadiness] = React.useState<IvdReadinessReport | null>(null);
+  const diagnosticsContext = React.useMemo(
+    () => withIvdReadiness(anaContext, ivdReadiness, programForContext),
+    [anaContext, ivdReadiness, programForContext],
+  );
 
   /*
    * One builder, fourteen literal publish calls. The AnA coverage gate counts
@@ -372,7 +396,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
   usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
   usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
-  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
+  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? diagnosticsContext : null);
   usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
   usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
   usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? engineeringContext : null);
@@ -401,6 +425,8 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
           onAskAna={onAsk}
           onOpenEditor={openEditor}
           onOpenLetter={openLetter}
+          onNav={onNav}
+          onReadinessContext={setIvdReadiness}
         />
       );
       break;
