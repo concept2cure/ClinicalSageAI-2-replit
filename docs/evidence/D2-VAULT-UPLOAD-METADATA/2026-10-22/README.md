@@ -93,7 +93,7 @@ In `04-green-db.txt`:
 ## What remains
 
 - **The route accepts a client version unchecked** (Part 11 review F1, server half). `POST /api/vault/ingest` still takes `version` from an API caller. Under a code that already has versions, and without `supersedesDocumentId`, that records an unlinked sibling. The service cannot restrict the format, because eSTAR and authoring retain non-numeric versions through it. The route-level control (refuse a version for an existing code unless it is added as a new version) is its own slice. **Done 2026-10-29**: `docs/evidence/D5-VAULT-INGEST-VERSION-NUMBERING/2026-10-29/`.
-- **A same-bytes re-upload does not report a different folder, kind or section** (F3, server half): `reuploadDiffers` compares title, type and classification only.
+- **A same-bytes re-upload does not report a different folder, kind or section** (F3, server half): `reuploadDiffers` compares title, type and classification only. **Done 2026-10-29**: `docs/evidence/D5-VAULT-REUPLOAD-FILING/2026-10-29/`.
 - **Who filed a document, and when, is stored but not shown** (F4). The read model returns no `placed_by` or `placed_at`. **Done 2026-10-29**: `docs/evidence/D5-VAULT-FILING-ATTRIBUTION/2026-10-29/`.
 - **No reason is captured at ingest** (F7). The review judged that correct for a first upload. If one is added, it goes in the ingest schema and audit row too.
 - **Accessibility advisories not taken:**

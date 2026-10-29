@@ -51,8 +51,10 @@ export interface VaultUploadOutcome {
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
   /** Files whose exact bytes the Vault already recorded at that code and
    *  version: nothing was changed, and `differs` says the upload asked for a
-   *  title, type or classification other than the recorded one (VR-05). */
-  alreadyRecorded: Array<{ name: string; title: string; differs: boolean }>;
+   *  title, type or classification other than the recorded one (VR-05);
+   *  `filingDiffers`, present only when true, a folder, kind or CTD section
+   *  (Part 11 review F3). */
+  alreadyRecorded: Array<{ name: string; title: string; differs: boolean; filingDiffers?: true }>;
   /** Files refused because a different file is already recorded at that name
    *  (409 VERSION_CONTENT_CONFLICT). The surface can offer to add each as the
    *  next version of the recorded document (VR-09), so the File is kept. */
@@ -127,15 +129,27 @@ export interface VaultUploadState {
 /** The default document type. See the note in `uploadOne`. */
 const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 
+/** The ingest's filing fields; any other field a re-upload reports is a detail. */
+const FILING_FIELDS = new Set(['folder_id', 'evidence_kind', 'ctd_section']);
+
+/** A re-upload the Vault already held: which of its asks were not applied, details or filing. */
+function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title: string): { title: string; differs: boolean; filingDiffers?: true } {
+  const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)));
+  return { title, differs: differs.some((d) => !FILING_FIELDS.has(String(d.field))), ...(filing ? { filingDiffers: true as const } : {}) };
+}
+
 /** What the user is told about files the Vault already held: nothing changed,
- *  and where a title, type or classification differs, how to change it. */
+ *  and where a title, type, classification or filing differs, how to change it. */
 function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
   if (list.length === 0) return '';
   const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
-  const hint = list.some((a) => a.differs)
+  const details = list.some((a) => a.differs)
     ? ' Its title, type or classification is changed with Edit details, not by uploading it again.'
     : '';
-  return `Already in the Vault, nothing changed: ${named}.${hint}`;
+  const filing = list.some((a) => a.filingDiffers)
+    ? ' Its folder, kind or CTD section is changed with Move in its filing, not by uploading it again.'
+    : '';
+  return `Already in the Vault, nothing changed: ${named}.${details}${filing}`;
 }
 
 /** The person's fields, as form entries: only what was given, and the filing details only with a folder. */
@@ -163,7 +177,7 @@ async function uploadOne(
       folderLabel: string | null;
       needsReview: boolean;
       placement: VaultPlacement;
-      already: { title: string; differs: boolean } | null;
+      already: { title: string; differs: boolean; filingDiffers?: true } | null;
       version: string | null;
       documentId: string | null;
     }
@@ -229,7 +243,7 @@ async function uploadOne(
       | {
           filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean; placementStatus?: string };
           document?: { id?: unknown; documentTitle?: string; version?: string };
-          reupload?: { differs?: unknown[] };
+          reupload?: { differs?: Array<{ field?: unknown }> };
         }
       | null;
     const filing = body?.filing;
@@ -240,9 +254,7 @@ async function uploadOne(
       /* The server's own word for the placement. A body that predates it reads
          as the classifier's: a suggestion when a folder is named, else unfiled. */
       placement: filing?.placementStatus === 'confirmed' ? 'confirmed' : filing?.folderId ? 'suggested' : 'unfiled',
-      already: body?.reupload
-        ? { title: body.document?.documentTitle || file.name, differs: (body.reupload.differs?.length ?? 0) > 0 }
-        : null,
+      already: body?.reupload ? alreadyRecordedOf(body.reupload.differs ?? [], body.document?.documentTitle || file.name) : null,
       version: body?.document?.version ?? null,
       documentId: typeof body?.document?.id === 'string' && body.document.id ? body.document.id : null,
     };
