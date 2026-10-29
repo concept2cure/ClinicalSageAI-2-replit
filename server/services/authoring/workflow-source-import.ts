@@ -293,3 +293,33 @@ export async function materializeWorkflowSource(input: WorkflowMaterializationIn
     return fail(503,'WORKFLOW_SOURCE_UNAVAILABLE','The saved workflow source could not be verified. Nothing was imported.');
   }
 }
+
+/** CSR slice 8 (2026-10-29): what the CSR assembler (csr/csr-assembly-source.ts)
+ * composes from. The same verified sections, gaps and title an import into
+ * Authoring produces, with every access, scope and hash check of that import,
+ * plus the job's study and the retained run it was drafted from. Read-only. */
+export interface CsrAssemblySource {
+  jobId: number; studyId: string; sourceRunId: string | null; title: string; fingerprint: string;
+  sections: MaterializedWorkflowSource['sections']; gaps: string[];
+  /** When the newest saved section was generated: the assembled PDFs are stamped from content, never the clock. */
+  lastGeneratedAt: Date | null;
+}
+export async function materializeCsrAssemblySource(input: WorkflowMaterializationInput, q: Queryable): Promise<CsrAssemblySource> {
+  if (input.source.kind !== 'csr') return fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact CSR job.');
+  const jobId = input.source.jobId;
+  const materialized = await materializeWorkflowSource(input, q);
+  try {
+    const { rows } = await q.query(`SELECT j.study_id, j.source_run_id, (SELECT max(o.generated_at) FROM csr_section_outputs o
+      WHERE o.job_id = j.id AND o.organization_id = j.organization_id) AS last_generated_at
+      FROM csr_build_jobs j WHERE j.id = $1 AND j.organization_id = $2`, [jobId, input.organizationId]);
+    const row = rows[0] as Record<string, unknown> | undefined;
+    if (!row || typeof row.study_id !== 'string' || (row.source_run_id != null && typeof row.source_run_id !== 'string')) return fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved CSR job identification is invalid.');
+    const last = row.last_generated_at == null ? null : new Date(row.last_generated_at as string);
+    return { jobId, studyId: row.study_id, sourceRunId: (row.source_run_id as string | null) ?? null, title: materialized.origin.title,
+      fingerprint: materialized.fingerprint, sections: materialized.sections, gaps: materialized.gaps, lastGeneratedAt: last && !Number.isNaN(last.getTime()) ? last : null };
+  } catch (error) {
+    if (error instanceof WorkflowSourceImportError) throw error;
+    sourceLogger.error('Saved CSR assembly source read failed', { message: error instanceof Error ? error.message : 'Unknown read failure' });
+    return fail(503, 'WORKFLOW_SOURCE_UNAVAILABLE', 'The saved CSR job could not be verified. Nothing was assembled.');
+  }
+}

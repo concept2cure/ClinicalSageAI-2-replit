@@ -1,0 +1,31 @@
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 628ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 406ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 868ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 421ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 120ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 179ms
+ × server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 677ms
+ × server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 31ms
+ × server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 482ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 417ms
+ × server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 443ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 420ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 993ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading
+AssertionError: expected [] to deeply equal [ 'BOOKMARK_DEPTH' ]
+- Expected
++ Received
+ FAIL  server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted
+AssertionError: expected 'Listing 16.2.4: 1 source record(s) of…' to be 'Listing 16.2.4: a row for subject SYN…' // Object.is equality
+Expected: "Listing 16.2.4: a row for subject SYN-LMN201-B-S05 disagrees with the source in Age."
+Received: "Listing 16.2.4: 1 source record(s) of subject SYN-LMN201-B-S05 are not listed."
+      Tests  4 failed | 9 passed (13)

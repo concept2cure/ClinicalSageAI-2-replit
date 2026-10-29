@@ -17,7 +17,7 @@ export const refuse = (code: string, message: string, path?: string): never => {
 
 export interface AdamDatasets {
   ADSL: AdamDataset; ADAE: AdamDataset; ADEX?: AdamDataset; ADLB?: AdamDataset;
-  ADVS?: AdamDataset; ADEG?: AdamDataset; ADCM?: AdamDataset;
+  ADVS?: AdamDataset; ADEG?: AdamDataset; ADCM?: AdamDataset; ADMH?: AdamDataset;
 }
 export type StudyData = CsrSourceEnvelope['studyData'];
 export type Participant = CsrSourceEnvelope['participants'][number];

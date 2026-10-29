@@ -793,82 +793,10 @@ export async function compareWithExistingCSRs(
   }
 }
 
-/**
- * Analyze safety signals across CSRs for a given drug/indication.
- */
-export async function analyzeCSRSafetySignals(
-  drugName: string,
-  indication: string
-): Promise<{
-  signals: Array<{
-    term: string;
-    frequency: string;
-    severity: string;
-    relatedStudies: number;
-    disproportionalityScore: number;
-  }>;
-  summary: string;
-}> {
-  const ai = await loadCSRClient();
-  if (!ai) {
-    return {
-      signals: [],
-      summary: 'AI analysis unavailable. Please ensure the AI Gateway is configured.',
-    };
-  }
-
-  try {
-    const prompt = `Analyze potential safety signals for ${drugName} in the context of ${indication}.
-Based on your knowledge of clinical pharmacology and regulatory precedents, identify the most likely adverse events
-that would be monitored in a clinical trial for this drug class and indication.
-
-Return a JSON object with this structure:
-{
-  "signals": [
-    { "term": "AE term (MedDRA PT)", "frequency": "common/uncommon/rare", "severity": "mild/moderate/severe", "relatedStudies": <number>, "disproportionalityScore": <0-5> }
-  ],
-  "summary": "Brief regulatory-grade summary of the safety landscape"
-}`;
-
-    const response = await ai.complete(
-      [
-        { role: 'system', content: 'You are a pharmacovigilance expert. Return only valid JSON.' },
-        { role: 'user', content: prompt },
-      ],
-      {
-        taskType: 'regulatory_review',
-        maxTokens: 4096,
-        temperature: 0.2,
-        callerModule: 'csr-builder/safety-signals',
-      }
-    );
-
-    try {
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        // Validate expected shape
-        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.signals)) {
-          return {
-            signals: parsed.signals.map((s: Record<string, unknown>) => ({
-              term: String(s.term || ''),
-              frequency: String(s.frequency || 'unknown'),
-              severity: String(s.severity || 'unknown'),
-              relatedStudies: Number(s.relatedStudies) || 0,
-              disproportionalityScore: Number(s.disproportionalityScore) || 0,
-            })),
-            summary: String(parsed.summary || ''),
-          };
-        }
-      }
-    } catch { /* fall through */ }
-
-    return { signals: [], summary: response };
-  } catch (err) {
-    console.warn('[CSR Builder] Safety signal analysis failed:', err);
-    return { signals: [], summary: 'Analysis failed — please retry.' };
-  }
-}
+// analyzeCSRSafetySignals was here until 2026-10-29 (CSR slice 9). It asked a
+// model for adverse-event frequencies and disproportionality scores for a drug
+// name (RULE 2). AE figures come from the engine AE tables of a retained run,
+// read through AnA's get_csr_section_evidence.
 
 /**
  * Template-based section generation (fallback when AI unavailable).
@@ -944,7 +872,6 @@ export default {
   getICHE3Structure,
   draftCSRSection,
   compareWithExistingCSRs,
-  analyzeCSRSafetySignals,
   hasUnresolvedPlaceholders,
   resolveCSRDraftTargets,
 };

@@ -8,7 +8,7 @@ import { STEADY_STAGES } from '../vault/vault-lifecycle.js';
 import { setTenantContextTx } from '../tenant/governed-tenant-context.js';
 import { buildCSRTables, type CSRTables } from '../csr-tabulation-builders.js';
 import { createHash } from 'node:crypto';
-import { isAdamBundle, loadAdamBundleEnvelope, type AdamComponent } from './adam-bundle-load.js';
+import { isAdamBundle, loadAdamBundleDatasets, loadAdamBundleEnvelope, type AdamComponent } from './adam-bundle-load.js';
 
 const MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 const MAX_ADAM_BYTES = 64 * 1024 * 1024;
@@ -174,3 +174,35 @@ export async function withCsrVaultSource<T>(connectable: RequestConnectable, sco
 export const previewCsrVaultSource = (connectable: RequestConnectable, scope: CsrSourceScope, selection: CsrSourceSelection, deps?: CsrSourceInputDeps) =>
   withCsrVaultSource(connectable, scope, selection, { requireApproval: false,
     consume: async loaded => ({ source: loaded.source, approved: loaded.approved, tables: loaded.tables }), deps });
+
+/**
+ * The subject-level ADaM rows of the approved bundle a retained run pins (CSR
+ * slice 7, the safety-narrative job). The manifest and every dataset it names
+ * pass the same exact-version, digest and lifecycle-approval checks as a
+ * package run (requireApproval), inside one transaction that is committed
+ * before the rows are returned. A hand-built csr-source.v1 file holds no
+ * subject-level dates, so it is refused by name rather than narrated.
+ */
+export async function readCsrAdamDatasets(connectable: RequestConnectable, scope: CsrSourceScope, selection: CsrSourceSelection,
+  deps: CsrSourceInputDeps = { readBytes: defaultReadBytes }) {
+  const client = await connectable.connect();
+  let open = false;
+  try {
+    await client.query('BEGIN'); open = true;
+    await setTenantContextTx(client, scope.organizationId);
+    await authorizeCsrSourceProgram(client, scope);
+    await lockDocumentDispositionProgram(client, scope.organizationId, scope.programId);
+    const row = await lockSelectedDocument(client, scope, selection);
+    if (!await hasLifecycleApproval(client, scope, row)) throw new CsrSourceInputError(409, 'CSR_SOURCE_APPROVAL_REQUIRED', 'The run’s ADaM bundle is no longer the exact current approved version. No narratives were composed.');
+    const bytes = await deps.readBytes(row, scope.organizationId);
+    verifyBytes(bytes, row.content_hash);
+    const raw = parseJsonBytes(bytes);
+    if (!isAdamBundle(raw)) throw new CsrSourceInputError(422, 'CSR_NARRATIVE_ADAM_REQUIRED', 'Patient narratives are composed from subject-level ADaM data. This run’s source is a hand-built summary with no subject-level dates, so no narratives were composed.');
+    const loaded = await loadAdamBundleDatasets(raw, sel => loadBundleComponent(client, scope, sel, { requireApproval: true, deps }));
+    await client.query('COMMIT'); open = false;
+    return loaded;
+  } catch (error) {
+    if (open) { try { await client.query('ROLLBACK'); } catch { /* preserve original refusal */ } }
+    throw error;
+  } finally { client.release(); }
+}

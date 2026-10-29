@@ -1,0 +1,8 @@
+# RED: the build board without the narrative panel (sabotage: CsrNarrativeBuild not rendered on CsrWorkflow), 2026-10-29T09:32:30Z
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > builds the narratives and shows the QC list with missing fields, prose source, refusals and review state 323ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 63ms
+ × client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 5025ms
+   → Unable to find a label with the text of: Patient safety narratives
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find a label with the text of: Patient safety narratives
+      Tests  1 failed | 2 passed (3)
