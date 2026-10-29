@@ -90,6 +90,11 @@ const ZIP_BASED_MIMES = new Set([
   'application/epub+zip',
 ]);
 
+/** Whether the bytes are a ZIP container, whatever type was declared for them. */
+export function isZipContainer(buffer: Buffer, mimeType: string): boolean {
+  return ZIP_BASED_MIMES.has(String(mimeType ?? '').split(';')[0].trim().toLowerCase()) || matchesMagic(buffer, ZIP_MAGIC);
+}
+
 function matchesMagic(buffer: Buffer, magic: Buffer): boolean {
   return buffer.length >= magic.length && buffer.subarray(0, magic.length).equals(magic);
 }

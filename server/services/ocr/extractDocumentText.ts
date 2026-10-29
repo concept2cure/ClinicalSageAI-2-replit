@@ -14,6 +14,7 @@
  */
 
 import { ocrService, type OcrPdfTextResult } from './ocrService';
+import { assertZipWithinLimits } from '../archive/safeZip';
 import { alignPageSpans, type PageSpan } from './page-offsets';
 import { createScopedLogger } from '../../utils/logger';
 import { RAW_TEXT_SOURCE_EXTENSIONS } from '../../../shared/constants/document-intake-formats';
@@ -180,6 +181,8 @@ async function extractXlsxText(
   mime: string | undefined,
 ): Promise<ExtractedDocumentText> {
   try {
+    // exceljs inflates each sheet whole: the archive is bounded first (SEC-17).
+    await assertZipWithinLimits(buffer);
     const { workbookToText } = await import('../documentIntelligence/spreadsheetService');
     return { text: await workbookToText(buffer, filename, mime), method: 'xlsx' };
   } catch (error) {
@@ -200,6 +203,8 @@ async function extractImageText(buffer: Buffer): Promise<ExtractedDocumentText> 
 
 async function extractDocxText(buffer: Buffer): Promise<ExtractedDocumentText> {
   try {
+    // mammoth inflates each part whole: the archive is bounded first (SEC-17).
+    await assertZipWithinLimits(buffer);
     const mammoth = await import('mammoth');
     const r = await mammoth.extractRawText({ buffer });
     return { text: (r.value || '').trim(), method: 'docx' };

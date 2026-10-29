@@ -6,6 +6,7 @@ import multer from 'multer';
 import { receiveUpload } from '../../middleware/uploadAllowlist';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import { extractTemplateFromFile } from '../../services/templates';
+import { ArchiveLimitError } from '../../services/archive/safeZip';
 
 const TEMPLATE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 const upload = multer({
@@ -52,6 +53,7 @@ export async function extractTemplatePreview(req: Request, res: Response) {
     );
     return res.json(result);
   } catch (err: any) {
+    if (err instanceof ArchiveLimitError) return res.status(422).json({ error: err.code, detail: err.message });
     console.error('[c2c/templates] extract', err?.message);
     return res.status(500).json({ error: 'EXTRACTION_FAILED' });
   }
