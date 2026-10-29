@@ -56,6 +56,7 @@ export function csrSourceContract() {
       'Completed flags match final disposition. Randomized participants cannot be screen-failed.',
       'All adverse events name an existing participant and that participant’s safety arm. Empty events require the explicit complete-domain declaration.',
       'Primary endpoint results match StudyInfo.primaryEndpoint; recorded result values, display strings, confidence intervals and p-values are not computed or clinically verified by this adapter.',
+      'A Bayesian result records its credible interval and the posterior probability of a named hypothesis (for example "OR > 1") as the SAP reports them. They are recorded, never computed or verified here, and they appear in the efficacy table only when a result carries them.',
       'Exposure and lab summaries use known arms without duplicate summaries. Lab counts do not exceed assessed denominators.',
       'A new package run requires the current, nonwithdrawn Vault version, exact preview digest and existing approved canonical lifecycle bound to those bytes.',
     ] };
