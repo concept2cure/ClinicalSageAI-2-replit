@@ -1,7 +1,9 @@
 /**
  * The one client call for a QMS approval signature — a controlled document, a
- * change, or a document's retirement — and, below it, the review routing that
- * must precede a document's approval (sendQmsDocumentForReview). The signed routes take the same body and
+ * change, or a document's retirement. The review routing that must precede a
+ * document's approval is its review route since RR4 (qmsReviewRoute.ts
+ * sendQmsForReview, which replaced sendQmsDocumentForReview here: a send now
+ * names one QMS approver and any reviewers). The signed routes take the same body and
  * answer the same way (server/routes/mdx-qms.ts: POST /qms/documents/:id/approve;
  * since P1-28 / DP-31, POST /qms/changes/:id/approve; since P1-29 / DP-32,
  * POST /qms/documents/:id/retire), so the register and the change log share
@@ -106,19 +108,3 @@ export async function postQmsPeriodicReview(
   return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
 const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
-
-/**
- * Send a draft controlled document for review: the existing edit route,
- * PATCH /api/mdx/qms/documents/:id with status 'in_review' (the server admits
- * only draft or in-review edits and records the §11.10(e) row). Not a
- * signature. Since 2026-10-08 only a document under review can be approved, so
- * this is the step before Approve (QA walk J8: no control in the product moved
- * a draft to review). A refusal is thrown as the server's sentence.
- */
-export async function sendQmsDocumentForReview(id: number, reason: string): Promise<void> {
-  const res = await apiRequest('PATCH', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason });
-  if (!res.ok) {
-    const json = await res.json().catch(() => null);
-    throw new Error(serverMessage(json) ?? 'Your session could not be verified. Sign in again; nothing was changed.');
-  }
-}

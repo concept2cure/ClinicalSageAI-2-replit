@@ -151,14 +151,10 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(H.request).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/4/bind', expect.objectContaining({ programId: PROGRAM, templateKey: 'sop', reason: expect.any(String) }));
     expect(H.ask).not.toHaveBeenCalled();
   });
-  it('collects a stated reason before review and sends it through PATCH', async () => {
+  it('Send for review opens the review route form; nothing is sent until it is complete (RR4)', async () => {
     renderRegister(); fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    const dialog = screen.getByRole('dialog');
+    expect(await screen.findByTestId('qms-route-form')).toBeTruthy();
     expect(H.request).not.toHaveBeenCalledWith('PATCH', expect.anything(), expect.anything());
-    fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Send for review' }));
-    await waitFor(() => expect(H.refresh).toHaveBeenCalled());
-    expect(H.request).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/4', { status: 'in_review', reason: 'Ready for independent Quality review.' });
   });
   it('creates and opens a controlled revision through the real revision route', async () => {
     H.docs = [{ ...DRAFT, status: 'effective' }];
