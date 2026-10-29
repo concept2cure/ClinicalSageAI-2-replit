@@ -21,6 +21,13 @@
  * the export's EXPORT_GENERATED audit row when it was not; both are read here.
  * Exports made before then name no source and are not inferred from a hash.
  * `vault.evidence_citations` holds search hits, not uses, and is not listed.
+ *
+ * Sections (2026-10-29, slice G7 of PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md):
+ * the editor sections whose live span lineage names the version as its source
+ * (`document_span_lineage`, provenance_kind 'vault_document', reference_id the
+ * version's vault.documents id; span-lineage-vault.ts is the writer). A retired
+ * span is not a use. This is what lets a new version list the sections that
+ * still cite its predecessor.
  */
 
 import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,ProgramReadAccessError } from '../c2c/current-program-access';
@@ -245,6 +252,57 @@ export async function readVaultCmcEvidenceUses(
     out.set(r.vault_id, [
       ...(out.get(r.vault_id) ?? []),
       { linkId: String(r.link_id), sourceType: String(r.source_type), sourceKey: String(r.source_key), sections },
+    ]);
+  }
+  await requireProgramScopeStillCurrent(q,identity,scope);
+  return out;
+}
+
+export interface VaultSectionCitation {
+  /** The editor section (authoring_sections.id) and its document. */
+  sectionId: string;
+  sectionCode: string | null;
+  sectionTitle: string | null;
+  documentId: string;
+  documentTitle: string | null;
+  /** How many live spans of the section name this version. */
+  spans: number;
+}
+
+/**
+ * Each version's citing editor sections, by version id: live span lineage only,
+ * in projects the caller can currently read. A section of a document outside
+ * that scope is not listed (it is not a use this caller may see).
+ */
+export async function readVaultSectionCitations(
+  q: PlacementQueryable,
+  organizationId: number,
+  vaultIds: string[],
+  opts: {userId:number | undefined},
+): Promise<Map<string, VaultSectionCitation[]>> {
+  const out = new Map<string, VaultSectionCitation[]>();
+  const {identity,scope}=await currentUsesScope(q,organizationId,vaultIds,opts.userId);
+  if (vaultIds.length === 0) return out;
+  const { rows } = await q.query(
+    `SELECT l.reference_id AS vault_id, s.id::text AS section_id, s.code, s.title,
+            d.id::text AS document_id, d.title AS document_title, count(*)::int AS spans
+       FROM document_span_lineage l
+       JOIN authoring_sections s ON s.id::text = l.document_id AND s.tenant_id = l.organization_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = l.organization_id
+      WHERE l.organization_id = $1 AND l.provenance_kind = 'vault_document' AND l.document_table = 'authoring_sections'
+        AND l.deleted_at IS NULL AND l.reference_id = ANY($2::text[])
+        AND (to_jsonb(d)->>'client_program_id') = ANY($3::text[])
+      GROUP BY l.reference_id, s.id, s.code, s.title, d.id, d.title
+      ORDER BY l.reference_id, d.title, s.code, s.id`,
+    [organizationId, vaultIds, scope.programIds],
+  );
+  for (const r of rows) {
+    out.set(String(r.vault_id), [
+      ...(out.get(String(r.vault_id)) ?? []),
+      {
+        sectionId: String(r.section_id), sectionCode: r.code ?? null, sectionTitle: r.title ?? null,
+        documentId: String(r.document_id), documentTitle: r.document_title ?? null, spans: Number(r.spans),
+      },
     ]);
   }
   await requireProgramScopeStillCurrent(q,identity,scope);
