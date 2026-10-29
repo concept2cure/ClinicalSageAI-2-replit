@@ -12,12 +12,13 @@ const H = vi.hoisted(() => ({
   apiRequest: vi.fn(),
   refresh: vi.fn(),
   reads: {} as Record<string, { data: unknown; loading: boolean; error: string | null }>,
+  program: null as string | null,
 }));
 
 vi.mock('../../mdx/hooks/useFetchJson', () => ({
   useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
 }));
-vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => null }));
+vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program }));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
@@ -38,7 +39,7 @@ const CAPA = {
   targetCloseDate: '2026-11-30T00:00:00Z', problemStatement: null, closedAt: null,
 };
 
-afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; });
+afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; });
 
 describe('Quality records', () => {
   it('lists nonconformances and records a disposition only with its rationale', async () => {
@@ -117,5 +118,26 @@ describe('Quality records', () => {
     fireEvent.click(within(d).getByRole('button', { name: 'Raise CAPA' }));
     await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/open a project first/)).toBeTruthy());
     expect(H.apiRequest).not.toHaveBeenCalled();
+  });
+
+  it('raises a CAPA from a nonconformance, in the open project, with the record as its source', async () => {
+    H.program = '40000000-0000-4000-8000-000000000001';
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ ...CAPA, capaCode: 'CAPA-008', meta: {} }) });
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Raise CAPA/ }));
+    const d = screen.getByRole('dialog');
+    expect((within(d).getByLabelText(/^Title/) as HTMLInputElement).value).toBe('NC-2026-004: Assay out of specification at release');
+    fireEvent.click(within(d).getByRole('radio', { name: 'Corrective' }));
+    fireEvent.click(within(d).getByRole('button', { name: 'Raise CAPA' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledTimes(1));
+    const [method, url, body] = H.apiRequest.mock.calls[0];
+    expect([method, url]).toEqual(['POST', '/api/capa-mdr/capa']);
+    expect(body).toMatchObject({
+      programId: H.program, type: 'corrective', source: 'nonconformance',
+      sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }],
+    });
+    await waitFor(() => expect(screen.getByText('CAPA-008 was raised from NC-2026-004.')).toBeTruthy());
   });
 });
