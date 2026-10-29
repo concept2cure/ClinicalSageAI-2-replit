@@ -1,0 +1,49 @@
+# GREEN, 2026-10-29T07:35:41Z, at 0c77b6afb plus this change
+
+## Real PostgreSQL 16: the re-upload and ingest suites
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking to file it elsewhere changes nothing, and says its filing differs (Part 11 review F3)
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > refuses a new version number for a code that has versions, names the document, and stores nothing
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > still takes the recorded version to the service, whose own conflict rule answers
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > accepts a typed version for a document code that has none yet
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a file carries its uploader's fields > a file sent with its row's fields is recorded with exactly those, and its folder as the person's filing
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses an actual actor without organization membership
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+
+## Client: the upload hook and the staging list
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts and settles
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no version
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles
+ Test Files  2 passed (2)
+      Tests  18 passed (18)

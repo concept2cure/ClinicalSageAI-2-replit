@@ -1,0 +1,18 @@
+M11: accepting goes back to a plain PATCH (no signature)
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > is refused: no password, meaning or reason means 400 and nothing written 30ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing password, and writes nothing 5ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing meaning, and writes nothing 4ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing reason, and writes nothing 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a wrong password: 401, said as the ceremony says it, and no transaction opened 4ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (review): 400 before the password is asked 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (authorship): 400 before the password is asked 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (release): 400 before the password is asked 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > an editor whose role carries no signing authority: 403 before the password is asked 5ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > signing authority that cannot be read: 503, and the password is not asked 3ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a hazard already accepted: 409, rolled back, no second signature 2ms
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a hazard the organization does not hold, or one deleted: 404, rolled back 3ms

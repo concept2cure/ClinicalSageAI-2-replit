@@ -15103,8 +15103,20 @@ registerToolHandler('log_nonconforming_product', async (input, ctx) => {
   }
 });
 
+/**
+ * The acting user, recorded as a labeling record's creator, as POST
+ * /api/mdx/labeling records it: separation of duties refuses that person's
+ * approval (D5, 2026-10-29). Null when no acting user is known.
+ */
+function labelingCreatorOf(ctx: { userId?: number | null } | undefined): number | null {
+  const id = ctx?.userId;
+  return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 registerToolHandler('create_labeling_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'create_labeling_document requires tenant context.' });
+  const createdBy = labelingCreatorOf(ctx);
+  if (createdBy === null) return JSON.stringify({ error: 'create_labeling_document records who added the document, and no acting user is known. Nothing was created.' });
   const deviceName = typeof input.device_name === 'string' ? input.device_name.trim() : '';
   const docKind    = typeof input.doc_kind === 'string' ? input.doc_kind : '';
   const allowedKind = new Set(['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label']);
@@ -15116,14 +15128,15 @@ registerToolHandler('create_labeling_document', async (input, ctx) => {
       ? input.program_id : null;
     const { rows } = await getPool().query(
       `INSERT INTO labeling_documents (
-         organization_id, program_id, device_name, doc_kind, language, region, udi_di
-       ) VALUES ($1,$2,$3,$4,COALESCE($5,'en'),$6,$7)
+         organization_id, program_id, device_name, doc_kind, language, region, udi_di, created_by
+       ) VALUES ($1,$2,$3,$4,COALESCE($5,'en'),$6,$7,$8)
        RETURNING id, device_name, doc_kind, language`,
       [
         ctx.organizationId, programId, deviceName, docKind,
         typeof input.language === 'string' ? input.language : null,
         typeof input.region === 'string' ? input.region : null,
         typeof input.udi_di === 'string' ? input.udi_di : null,
+        createdBy,
       ],
     );
     return JSON.stringify({
@@ -15139,6 +15152,8 @@ registerToolHandler('create_labeling_document', async (input, ctx) => {
 
 registerToolHandler('add_labeling_translation', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'add_labeling_translation requires tenant context.' });
+  const createdBy = labelingCreatorOf(ctx);
+  if (createdBy === null) return JSON.stringify({ error: 'add_labeling_translation records who added the translation, and no acting user is known. Nothing was added.' });
   const docId = typeof input.labeling_document_id === 'number' ? input.labeling_document_id : NaN;
   const lang  = typeof input.language === 'string' ? input.language.trim() : '';
   if (!Number.isFinite(docId)) return JSON.stringify({ error: 'labeling_document_id (number) is required.' });
@@ -15155,14 +15170,15 @@ registerToolHandler('add_labeling_translation', async (input, ctx) => {
     const { rows } = await getPool().query(
       `INSERT INTO labeling_translations (
          labeling_document_id, organization_id, language, translator,
-         translation_method, back_translation_verified, status
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),'pending')
+         translation_method, back_translation_verified, status, created_by
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),'pending',$7)
        RETURNING id, language, status`,
       [
         docId, ctx.organizationId, lang,
         typeof input.translator === 'string' ? input.translator : null,
         typeof input.translation_method === 'string' ? input.translation_method : null,
         input.back_translation_verified === true,
+        createdBy,
       ],
     );
     return JSON.stringify({

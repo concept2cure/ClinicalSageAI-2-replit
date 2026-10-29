@@ -1,0 +1,40 @@
+# Green: one file at a time, timeout 240, working tree over be1181958
+
+EngineeringSurface.projectKeyed.test                       Tests  18 passed (18)
+EngineeringSurface.refusal.test                            Tests  5 passed (5)
+EngineeringSurface.traceKeyed.test                         Tests  3 passed (3)
+EngineeringSurface.unreadable.test                         Tests  10 passed (10)
+anaDrivesWave3.test                                        Tests  5 passed (5)
+design-controls-program-scope.test                         Tests  18 passed (18)
+design-controls-read.test                                  Tests  3 passed (3)
+design-controls-risk-items-program-keys.pglite.test        Tests  12 passed (12)
+design-controls-write.test                                 Tests  5 passed (5)
+designControlsHonesty.test                                 Tests  4 passed (4)
+designControlsNoFixtures.test                              Tests  7 passed (7)
+designControlsPendingStore.test                            Tests  6 passed (6)
+designControlsReadsOpenProject.test                        Tests  7 passed (7)
+device-project-reads-admit-program.test                    Tests  20 passed (20)
+device-tools-admit-program.test                            Tests  16 passed (16)
+launch-scope-device-features.test                          Tests  3 passed (3)
+mdx-beta-surfaces-routes.test                              Tests  27 passed (27)
+mdx-engineering-trace-by-project.test                      Tests  6 passed (6)
+mdx-engineering.contract.test                              Tests  19 passed (19)
+mdx-risk-accept-residual-signature.test                    Tests  33 passed (33)
+mdx-risk-assignee-membership.test                          Tests  5 passed (5)
+mdx-risk-program-scope.test                                Tests  35 passed (35)
+mdx-risk-recompute.test                                    Tests  9 passed (9)
+mdx-surfaces-interactive-smoke.test                        Tests  5 passed (5)
+risk-tool-admits-program.test                              Tests  9 passed (9)
+riskAcceptResidualSigned.test                              Tests  8 passed (8)
+riskHonesty.test                                           Tests  6 passed (6)
+riskMapping.test                                           Tests  12 passed (12)
+tenant-isolation-sweep                                     Tests  20 passed (20)
+
+# Gates
+gate-ci:migration-drop-safety: [ci:migration-drop-safety] OK — 436 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+gate-ci:migration-set-order: [ci:migration-set-order] OK — 436 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+gate-ci:program-ownership-single-source: [ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+gate-ci:sign-ceremony: [ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+gate-ci:sign-ceremony:selftest: [ci:sign-ceremony:selftest] 29 passed — the gate fails on what it exists to catch.
+gate-ci:sql-interpolation: [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1066 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+gate-css: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).

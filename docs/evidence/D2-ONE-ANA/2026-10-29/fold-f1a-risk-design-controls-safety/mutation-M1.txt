@@ -1,0 +1,13 @@
+M1: design-controls GET drops admitProject
+file: server/routes/design-controls.routes.ts
+test: server/routes/__tests__/design-controls-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > reads only that project's inputs, after the ownership check, and says so 21ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > refuses another organization's project with 404 and reads nothing 5ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > refuses a missing project with 404 and reads nothing 3ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > refuses a deleted project with 404 and reads nothing 3ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > refuses a malformed id with 404 and reads nothing 5ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > GET /api/design-controls?program_id= > answers 503 when the ownership check cannot run, and reads nothing 3ms
+      Tests  6 failed | 12 passed (18)

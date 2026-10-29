@@ -4,7 +4,10 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
-import { apiRequest, extractApiError } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
+import { useAuthUser } from '@/services/portal/authService';
+import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 import { AnswerLead, UnresolvedLead } from '../AnswerLead';
 import { assessmentStateFor, hasAnswer, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -143,6 +146,68 @@ function errText(json: unknown, status: number): string {
   return clause(extractApiError(json, status).message);
 }
 
+/* ── Accepting residual risk: an electronic signature (D2, 2026-10-29) ──────
+   The server signs the acceptance. PATCH /api/mdx/risk-items/:id with status
+   `accepted` runs the platform's signing ceremony
+   (server/routes/mdx-risk-management.ts → signGovernedAct): signing authority,
+   then the password and any enrolled second factor, then the status, the
+   ledger pair and the signature row on one transaction. So "Accept residual"
+   opens the shared signature dialog (EsignModal, on useEsignature), as the
+   labeling translation approval does, and no longer sends a bare status. */
+
+/** The meanings the server's acceptance takes (DECISION_ACT_MEANINGS). */
+const RESIDUAL_ACCEPTANCE_MEANINGS: ReadonlyArray<EsigMeaning> = ['approval', 'responsibility'];
+const NOTHING_SIGNED = 'Nothing was signed.';
+const UNCONFIRMED_ACCEPTANCE =
+  'The server did not confirm the acceptance. Reload the risk file and check the hazard before you sign again.';
+
+/** The server's sentence, ending once with "Nothing was signed." (the ceremony's refusals already do). */
+function refusedSigning(message: string): Error {
+  return new Error(message.trimEnd().endsWith(NOTHING_SIGNED) ? message : `${message} ${NOTHING_SIGNED}`);
+}
+
+type SignInput = { meaning: EsigMeaning; reason: string; password: string; totp?: string };
+
+/**
+ * Send the signed acceptance. A coded refusal (4xx) is thrown as the server's
+ * sentence and the dialog stays open. A dropped connection or a server error
+ * may have come after the commit, so it says the outcome is unconfirmed rather
+ * than "nothing was signed". The time shown is the signature row's.
+ */
+export async function postResidualAcceptance(
+  dbId: number,
+  input: SignInput,
+): Promise<{ row: unknown; manifest: EsigSignedManifest }> {
+  let res: Response;
+  try {
+    res = await apiRequest('PATCH', '/api/mdx/risk-items/' + dbId, {
+      status: 'accepted',
+      meaning: input.meaning,
+      reason: input.reason,
+      password: input.password,
+      ...(input.totp ? { mfaToken: input.totp } : {}),
+    });
+  } catch (e) {
+    if (e instanceof ApiRequestError && e.status < 500) throw refusedSigning(e.message);
+    throw new Error(UNCONFIRMED_ACCEPTANCE, { cause: e });
+  }
+  const json = (await res.json().catch(() => null)) as { data?: unknown; signedAt?: string; sha256Chain?: string } | null;
+  // apiRequest hands a 401 back rather than throwing: the ceremony refused the password or code.
+  if (res.status === 401) {
+    throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
+  }
+  if (!res.ok || !json?.signedAt) throw new Error(UNCONFIRMED_ACCEPTANCE);
+  return {
+    row: json.data ?? null,
+    manifest: {
+      meaning: input.meaning,
+      reason: input.reason,
+      signedAt: json.signedAt,
+      ...(json.sha256Chain ? { hash: json.sha256Chain } : {}),
+    },
+  };
+}
+
 export function Risk({ onAsk }: SurfaceViewProps) {
   // REAL slice: GET /api/mdx/risk-items (server mdx-risk-management.ts) reads the
   // org's governed risk_items table via pg `pool` — org-scoped real rows, an
@@ -173,6 +238,9 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const [form, setForm] = useState(false);
   const [ctrlForm, setCtrlForm] = useState(false);
   const [toast, fire] = useToast();
+  const authUser = useAuthUser();
+  /** The hazard whose signed residual-risk acceptance is open, if any. */
+  const [accepting, setAccepting] = useState<RiskRow | null>(null);
 
   useEffect(() => {
     try {
@@ -492,31 +560,21 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     }
   };
 
-  // setStatus — REAL, awaited PATCH (addressed by numeric dbId). Adopts the
-  // SERVER's updated row so status AND residual acceptability (res) come from the
-  // authoritative `acceptable` boolean — the old code flipped res to 'Acceptable'
-  // locally on accept/verify, overstating acceptability the backend hadn't
-  // recorded. Controls are preserved (the item PATCH doesn't return them).
-  const setStatus = async (id: string, st: string) => {
-    const cur = rows.find(r => r.id === id);
-    if (!cur) return;
-    if (cur.dbId == null) { fire('This hazard isn’t in the governed file yet — reload before changing its status'); return; }
-    try {
-      const res = await apiRequest('PATCH', '/api/mdx/risk-items/' + cur.dbId, { status: st });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) { fire('Couldn’t update the status — ' + errText(json, res.status) + '. Nothing was persisted.'); return; }
-      const adopted = mapRiskItems([envRow(json)])?.[0];
-      setRows(rs => rs.map(r => r.id === id ? (adopted ? { ...adopted, controls: r.controls } : { ...r, status: st }) : r));
-      fire(id + ' → ' + st);
-    } catch (e) {
-      // Same restriction as addHazard: only an ApiRequestError message has been
-      // reduced to user copy; a native fetch rejection must not reach the toast.
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      const msg = known && (e as Error).message
-        ? clause((e as Error).message)
-        : 'the risk file could not be reached';
-      fire('Couldn’t update the status — ' + msg + '. Nothing was persisted.');
-    }
+  // Accept residual — the signed act (postResidualAcceptance). The dialog opens
+  // only for a hazard the governed file holds (a numeric dbId, which the route
+  // addresses). The row is replaced by the SERVER's accepted row only after the
+  // signature is confirmed, so status and residual acceptability (res) come from
+  // the record. Controls are preserved (the item PATCH doesn't return them).
+  const openAcceptance = (r: RiskRow) => {
+    if (r.dbId == null) { fire('This hazard isn’t in the governed file yet — reload before accepting its residual risk'); return; }
+    setAccepting(r);
+  };
+  const signAcceptance = async (r: RiskRow, input: SignInput): Promise<EsigSignedManifest> => {
+    const { row: signedRow, manifest } = await postResidualAcceptance(r.dbId as number, input);
+    const adopted = mapRiskItems([signedRow])?.[0];
+    setRows(rs => rs.map(x => x.id === r.id ? (adopted ? { ...adopted, controls: x.controls } : { ...x, status: 'accepted', open: false }) : x));
+    fire(r.id + ' residual risk accepted and signed');
+    return manifest;
   };
 
   const ctrlTone: Record<string, string> = { proposed: 'idle', implemented: 'ai', verified: 'warn', effective: 'ok' };
@@ -766,7 +824,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
           {row.open && <div className="risk-flag" style={{ marginTop: 10 }}>{I.alertTriangle} Open evaluation — residual risk not yet accepted. Benefit-risk justification required before section 2.3.</div>}
           <div className="cm-pushbar" style={{ marginTop: 10 }}>
-            {row.status !== 'accepted' && <button className="btn ghost" onClick={() => setStatus(row.id, 'accepted')}>{I.check} Accept residual</button>}
+            {row.status !== 'accepted' && <button className="btn ghost" onClick={() => openAcceptance(row)}>{I.penLine} Accept residual</button>}
             <button className="btn ghost" onClick={() => onAsk('Draft the benefit-risk rationale for ' + row.id)}>{I.sparkles} Draft benefit-risk</button>
           </div>
         </aside>
@@ -776,6 +834,20 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
       {form && <C2CForm config={hazardFormConfig} onCancel={() => setForm(false)} onSubmit={addHazard} />}
       {ctrlForm && <C2CForm config={ctrlFormConfig} onCancel={() => setCtrlForm(false)} onSubmit={addControl} />}
+      {accepting && (
+        <EsignModal
+          open
+          action={'Accept the residual risk of ' + accepting.id}
+          target={accepting.id + ' — ' + (accepting.hazard || 'hazard')}
+          targetMeta="Your signature accepts this hazard’s residual risk as it stands, under ISO 14971."
+          meanings={RESIDUAL_ACCEPTANCE_MEANINGS}
+          defaultMeaning="approval"
+          signer={esignSignerOf(authUser)}
+          requireMfa={authUser?.mfaEnabled === true}
+          onClose={() => setAccepting(null)}
+          onSign={(input) => signAcceptance(accepting, input)}
+        />
+      )}
       <C2CToast msg={toast} />
     </div>
   );

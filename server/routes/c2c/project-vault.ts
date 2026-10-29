@@ -145,6 +145,15 @@ interface UploadFiling {
   placementStatus: string;
   confidence: string | null;
   rationale: string | null;
+  /**
+   * The person whose filing decision this is, and when (placed_by, placed_at;
+   * Part 11 review F4). Null for a suggestion, which names nobody. `placedBy`
+   * is null with `placedByRecorded` true when a person is recorded but their
+   * name cannot be read in this organisation.
+   */
+  placedBy: string | null;
+  placedByRecorded: boolean;
+  placedAt: string | null;
 }
 
 interface VaultFolder {
@@ -468,6 +477,10 @@ export interface UploadRow {
   placement_rationale: string | null;
   updated_at: string | Date | null;
   owner_name: string | null;
+  /** Who made the filing decision and when; NULL for a suggestion (F4). */
+  placed_by?: number | string | null;
+  placed_by_name?: string | null;
+  placed_at?: string | Date | null;
   /** Versions back through valid predecessors, this one included (VR-09). */
   version_count?: number | null;
   /** This version's lifecycle stage; null when it has no record: not reviewed (VR-13). */
@@ -497,6 +510,16 @@ function uploadTypeLabel(row: UploadRow): string {
   }
   if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   return 'File';
+}
+
+/** Who decided the filing, and when (Part 11 review F4); a suggestion names nobody. */
+function filingDecision(row: UploadRow): Pick<UploadFiling, 'placedBy' | 'placedByRecorded' | 'placedAt'> {
+  const at = row.placed_at ? new Date(row.placed_at) : null;
+  return {
+    placedBy: row.placed_by_name ?? null,
+    placedByRecorded: row.placed_by != null,
+    placedAt: at && !Number.isNaN(at.getTime()) ? at.toISOString() : null,
+  };
 }
 
 /** Where the leaf sits among its document's versions (VR-09) and in review (VR-13). */
@@ -549,6 +572,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       placementStatus,
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
+      ...filingDecision(row),
     },
     details: {
       documentTitle: row.document_title,
@@ -1351,6 +1375,7 @@ export default function createProjectVaultRoutes(): Router {
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
+                  d.placed_by, d.placed_at, COALESCE(pb.name, pb.email) AS placed_by_name,
                   d.updated_at,
                   ${vaultBinaryAvailableSql('d')} AS original_file_available,
                   ${vaultDispositionChoiceSql('d')} AS disposition,
@@ -1359,6 +1384,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${vaultLifecycleStageSql('d')} AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
+             LEFT JOIN LATERAL public.actor_name(d.placed_by) pb ON TRUE
              ${versionCountLateral('d')}
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC

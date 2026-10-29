@@ -1,0 +1,10 @@
+# H6: with no home document the line still draws copy words
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '  if (documents.length === 0) return null;\n'
+# with:     ''
+# test: client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx
+# vitest exit: 1
+ × the existing dossier details on Author > the home line asks for the one home document's copy, and with no home document it has no door 10ms
+      Tests  1 failed | 8 passed (9)
+AssertionError: a door or copy words for no document: expected 'Store unavailable.This figure counts …' to be 'Store unavailable.' // Object.is equality
+# restored: sha256 matches (ed20cd2989f0b397)

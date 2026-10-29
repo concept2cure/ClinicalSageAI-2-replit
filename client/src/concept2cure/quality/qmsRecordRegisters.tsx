@@ -109,6 +109,10 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   capaSourceKind: CAPA_SOURCE_KIND.nonconforming,
   ask: 'Give me a read-out on nonconformances: which are awaiting disposition, how long each has been open, and which recur by product, lot or source.',
   askRow: (r) => `Summarise nonconformance ${r.nc_number}: what was found, its disposition, and whether it needs a CAPA or a change.`,
+  facts: (r) => ({
+    nonconformance: r.nc_number, found: r.description, product: r.device_name, lot: r.lot_or_serial, source: r.source,
+    disposition: isUndispositioned(r) ? 'awaiting disposition' : r.disposition, detected: r.detected_at?.slice(0, 10) ?? null,
+  }),
 };
 
 export const SUPPLIERS: RegisterConfig<SupplierRow> = {
@@ -202,6 +206,10 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   capaSourceKind: CAPA_SOURCE_KIND.supplier,
   ask: 'Give me a read-out on suppliers: which critical suppliers are not approved, whose audits or re-approvals are past due, and what falls due next quarter.',
   askRow: (r) => `Summarise supplier ${r.supplier_name}: what it supplies, its approval standing, and what its qualification needs next.`,
+  facts: (r) => ({
+    supplier: r.supplier_name, code: r.supplier_code, supplies: r.scope, criticality: r.criticality, approval: r.approval_status,
+    nextAudit: r.next_audit_date?.slice(0, 10) ?? null, reapprovalDue: r.reapproval_date?.slice(0, 10) ?? null,
+  }),
 };
 
 export const AUDITS: RegisterConfig<InternalAuditRow> = {
@@ -289,6 +297,10 @@ export const AUDITS: RegisterConfig<InternalAuditRow> = {
   capaSourceKind: CAPA_SOURCE_KIND.audit,
   ask: 'Give me a read-out on the internal audit programme: what is planned and overdue, which audits found major findings, and which areas have not been audited this year.',
   askRow: (r) => `Summarise internal audit ${r.audit_number}: its scope, status and findings, and what follow-up it needs.`,
+  facts: (r) => ({
+    audit: r.audit_number, scope: r.scope, standard: r.audit_standard, planned: r.planned_date?.slice(0, 10) ?? null, status: r.status,
+    majorFindings: r.major_findings, minorFindings: r.minor_findings, observations: r.observations,
+  }),
 };
 
 export const REVIEWS: RegisterConfig<ManagementReviewRow> = {
@@ -369,5 +381,13 @@ export const REVIEWS: RegisterConfig<ManagementReviewRow> = {
   capaSourceKind: CAPA_SOURCE_KIND.review,
   ask: 'Prepare the inputs for our next management review from the quality records: nonconformances and their dispositions, internal audit findings, supplier standing, and change control.',
   askRow: (r) => `Summarise the ${r.period} management review: what it reviewed, what it decided, and which actions are still open.`,
+  facts: (r) => {
+    const actions = reviewActions(r);
+    return {
+      period: r.period, held: r.review_date?.slice(0, 10) ?? null, reviewed: reviewText(r.inputs, 'summary') || null,
+      decisions: reviewText(r.outputs, 'decisions') || null,
+      openActions: actions.filter((a) => a.state === 'open').length, closedActions: actions.filter((a) => a.state === 'closed').length,
+    };
+  },
 };
 

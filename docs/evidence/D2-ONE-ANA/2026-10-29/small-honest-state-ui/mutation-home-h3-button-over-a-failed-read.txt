@@ -1,0 +1,18 @@
+# H3: the home line is a button whatever the copy read said (a dead button over a failed read)
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '  if (documents.length === 1) return <MarketCopy name="the home filing" forMarket={false} copy={copyFor(documents[0])} onOpen={onOpen} />;'
+# with:     '  if (documents.length === 1) return <button type="button" className="btn ghost pj-mkt-btn" onClick={() => { const c = copyFor(documents[0]); if (c.kind === \'one\') onOpen(c.doc, null); }}>Open the home filing</button>;'
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 5028ms
+ × Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 5026ms
+ × Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 5022ms
+ × Author — the readiness card's home line > when the documents could not be read, it says its copy is not known, never that there is none 5028ms
+ × Author — the readiness card's home line > while the documents are read, it says so and has nothing to click 5026ms
+      Tests  5 failed | 27 passed (32)
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'Open IND editing copy'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'No editing copy of this filing yet.'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain '2 documents are bound to this filing,…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'The project\'s documents could not be…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'Reading the project\'s documents…'
+# restored: sha256 matches (ed20cd2989f0b397)

@@ -1,0 +1,9 @@
+M8: risk PATCH /risk-items/:id drops the editor gate
+file: server/routes/mdx-risk-management.ts
+test: server/routes/__tests__/mdx-risk-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 8ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 3ms
+      Tests  2 failed | 33 passed (35)

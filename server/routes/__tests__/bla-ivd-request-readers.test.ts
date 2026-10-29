@@ -23,9 +23,16 @@ function app(withContext = true) {
   });
   a.use('/bla', blaRouter); a.use('/ivd', ivdRouter); a.use('/lifecycle', lifecycleRouter); return a;
 }
+/* The one statement the shared pool answers: the ownership check a project-named
+   IVD list asks first (admitProject over programInOrganization, D2 2026-10-29). */
+const ownership = (sql: unknown) => /FROM regulatory_programs/.test(String(sql));
+const readsOnPool = () => h.poolQuery.mock.calls.filter(([sql]) => !ownership(sql));
 beforeEach(() => {
   vi.clearAllMocks();
-  h.poolQuery.mockRejectedValue(new Error('Implicit pool is unavailable in this adapter test'));
+  h.poolQuery.mockImplementation(async (sql: string, args: unknown[] = []) => {
+    if (ownership(sql) && args[0] === PROGRAM && args[1] === 7) return { rows: [{ id: PROGRAM }] };
+    throw new Error('Implicit pool is unavailable in this adapter test');
+  });
   h.query.mockResolvedValue({ rows: [{ id: ID, organization_id: 7, org_id: 7, assessment_type: 'cdx_pairing',
     corpus_version: 'old-synthetic-version', inputs: {}, result: {}, program_id: PROGRAM }] });
 });
@@ -39,11 +46,11 @@ describe('BLA and IVD reader adapters use their request client', () => {
   ])('reads $path through the supplied pinned client', async ({ path, params }) => {
     const res = await request(app()).get(path);
     expect(res.status, JSON.stringify(res.body)).toBe(200); expect(h.query.mock.calls[0][1]).toEqual(params);
-    expect(h.poolQuery).not.toHaveBeenCalled();
+    expect(readsOnPool()).toEqual([]);
   });
   it('loads persisted drift inputs through the same request client', async () => {
     const res = await request(app()).post('/lifecycle/drift/detect').send({ currentVersion: 'new-synthetic-version' });
-    expect(res.status, JSON.stringify(res.body)).toBe(200); expect(h.query).toHaveBeenCalled(); expect(h.poolQuery).not.toHaveBeenCalled();
+    expect(res.status, JSON.stringify(res.body)).toBe(200); expect(h.query).toHaveBeenCalled(); expect(readsOnPool()).toEqual([]);
   });
   it.each(['/bla/assessments', '/ivd', '/ivd/documents'])('refuses missing request context for %s without a pooled fallback', async path => {
     const res = await request(app(false)).get(path);

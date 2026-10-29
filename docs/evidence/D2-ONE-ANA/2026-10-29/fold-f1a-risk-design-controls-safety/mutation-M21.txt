@@ -1,0 +1,8 @@
+M21: an answer with no signature is shown as accepted
+file: client/src/concept2cure/v2/surfaces/Risk.tsx
+test: client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > an answer that carries no signature is not shown as accepted 5066ms
+      Tests  1 failed | 7 passed (8)

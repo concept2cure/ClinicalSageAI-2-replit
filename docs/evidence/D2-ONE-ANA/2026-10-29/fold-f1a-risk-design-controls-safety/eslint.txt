@@ -1,0 +1,55 @@
+# eslint at head (the five source files and the three updated tests, before this slice)
+
+client/src/concept2cure/v2/surfaces/DesignControls.tsx
+  142:8  warning  Function 'DesignControls' has too many lines (279). Maximum allowed is 100  max-lines-per-function
+  142:8  warning  Function 'DesignControls' has a complexity of 27. Maximum allowed is 15     complexity
+
+client/src/concept2cure/v2/surfaces/Risk.tsx
+   71:8   warning  Function 'mapRiskItems' has a complexity of 22. Maximum allowed is 15                                       complexity
+  146:8   warning  Function 'Risk' has too many lines (460). Maximum allowed is 100                                            max-lines-per-function
+  146:8   warning  Function 'Risk' has a complexity of 71. Maximum allowed is 15                                               complexity
+  321:6   warning  React Hook useMemo has an unnecessary dependency: 'view'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  430:55  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                                          complexity
+  464:56  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                                          complexity
+  722:1   warning  File has too many lines (544). Maximum allowed is 500                                                       max-lines
+
+server/routes/design-controls.routes.ts
+  74:54  warning  Async arrow function has a complexity of 19. Maximum allowed is 15  complexity
+
+server/routes/mdx-risk-management.ts
+   40:10  warning  'getUserId' is defined but never used                               @typescript-eslint/no-unused-vars
+  201:69  warning  Async arrow function has a complexity of 20. Maximum allowed is 15  complexity
+
+✖ 12 problems (0 errors, 12 warnings)
+
+
+# server/routes/mdx-engineering.ts at head, run separately before item 3 was applied:
+server/routes/mdx-engineering.ts
+  148:75  warning  Async arrow function has too many lines (320). Maximum allowed is 100  max-lines-per-function
+
+# eslint after (every changed and new file)
+
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+client/src/concept2cure/v2/surfaces/DesignControls.tsx
+  143:8  warning  Function 'DesignControls' has too many lines (296). Maximum allowed is 100  max-lines-per-function
+  143:8  warning  Function 'DesignControls' has a complexity of 38. Maximum allowed is 15     complexity
+
+client/src/concept2cure/v2/surfaces/Risk.tsx
+   74:8   warning  Function 'mapRiskItems' has a complexity of 22. Maximum allowed is 15                                       complexity
+  211:8   warning  Function 'Risk' has too many lines (468). Maximum allowed is 100                                            max-lines-per-function
+  211:8   warning  Function 'Risk' has a complexity of 74. Maximum allowed is 15                                               complexity
+  389:6   warning  React Hook useMemo has an unnecessary dependency: 'view'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  498:55  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                                          complexity
+  532:56  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                                          complexity
+  733:1   warning  File has too many lines (595). Maximum allowed is 500                                                       max-lines
+
+server/routes/mdx-engineering.ts
+  148:75  warning  Async arrow function has too many lines (320). Maximum allowed is 100  max-lines-per-function
+
+server/routes/mdx-risk-management.ts
+  383:134  warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+
+✖ 12 problems (0 errors, 12 warnings)
+

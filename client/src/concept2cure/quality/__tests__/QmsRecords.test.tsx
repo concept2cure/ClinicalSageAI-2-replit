@@ -208,4 +208,20 @@ describe('Quality records', () => {
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
     expect(within(screen.getByText('NC-2026-004').closest('.qms-row') as HTMLElement).getByText('not read')).toBeTruthy();
   });
+
+  it('tells the shell for AnA what the register read, and that a failed read is a failure', async () => {
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    const onContext = vi.fn();
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} onContext={onContext} />);
+    await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ tab: 'nonconforming', state: 'ready', count: 1 })));
+    const ctx = onContext.mock.calls.at(-1)![0];
+    expect(ctx.records).toEqual([expect.objectContaining({ nonconformance: 'NC-2026-004', disposition: 'awaiting disposition', lot: 'B-1021' })]);
+    expect(ctx.counts).toContainEqual({ label: 'Awaiting disposition', val: '1' });
+    cleanup();
+
+    H.reads['/api/mdx/qms/nonconforming'] = { data: null, loading: false, error: 'HTTP 500' };
+    const failed = vi.fn();
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} onContext={failed} />);
+    await waitFor(() => expect(failed).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'failed', count: null, records: [] })));
+  });
 });

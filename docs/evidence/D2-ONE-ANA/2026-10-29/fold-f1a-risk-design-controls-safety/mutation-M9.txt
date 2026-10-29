@@ -1,0 +1,8 @@
+M9: risk POST controls drops the editor gate
+file: server/routes/mdx-risk-management.ts
+test: server/routes/__tests__/mdx-risk-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > 'post' '/api/mdx/risk-items/1/controls' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 7ms
+      Tests  1 failed | 34 passed (35)

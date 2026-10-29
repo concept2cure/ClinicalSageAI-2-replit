@@ -65,7 +65,6 @@
     "migrations/20260610_iacuc_animal_governance.sql",
     "migrations/20260610_ibc_biosafety.sql",
     "migrations/20260610_ind_dispatch_snapshots.sql",
-    "migrations/20260610_ivd_assessments.sql",
     "migrations/20260610_lifecycle_obligations.sql",
     "migrations/20260610_nonclinical_send.sql",
     "migrations/20260610_rim_lite.sql",

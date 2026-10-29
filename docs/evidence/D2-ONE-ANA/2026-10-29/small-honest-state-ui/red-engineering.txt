@@ -1,0 +1,17 @@
+# Fix 1, red: head 96537cfe plus the new test file only.
+# timeout 240 npx vitest run --config vitest.config.ts client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+ × EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 46ms
+ × EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 16ms
+ ✓ EngineeringSurface — the route refuses the project > any other failure is still a failed read on each panel, never the ownership words 26ms
+ × projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > reads the 404 and the 503 by their bodies 1ms
+ × projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > is null for every other failure, including a 404 or 503 that is not the ownership answer 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: what the screen says: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to contain 'This project isn\'t one this organiza…'
+Expected: "This project isn't one this organization can see"
+Received: "Workstream · ENG-1 · ENG-1 SensorDevice engineering21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity. Ask AnACould not load engineering metricsTry againCould not load engineering documentsTry againWhat's blocking your documentsNot counted until the risk file is readCould not load blocker sourcesTry againSituational awarenessDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances"
+AssertionError: what the screen says: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to contain 'This project couldn\'t be checked, so…'
+Expected: "This project couldn't be checked, so nothing was shown"
+Received: "Workstream · ENG-1 · ENG-1 SensorDevice engineering21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity. Ask AnACould not load engineering metricsTry againCould not load engineering documentsTry againWhat's blocking your documentsNot counted until the risk file is readCould not load blocker sourcesTry againSituational awarenessDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances"
+TypeError: projectRefusalOf is not a function
+TypeError: projectRefusalOf is not a function
+      Tests  4 failed | 1 passed (5)
