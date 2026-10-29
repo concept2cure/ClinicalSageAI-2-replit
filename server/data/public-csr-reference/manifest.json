@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "collectionId": "cdi-csr-reference-2026-10-27-v1",
-  "targetStudyId": "NCT05330182",
+  "collectionId": "cdi-csr-reference-2026-10-29-v2",
+  "supersedesCollectionId": "cdi-csr-reference-2026-10-27-v1",
   "records": [
     {
       "sourceKey": "cdi-rbx2660-s12879-022-07256-y",
@@ -27,16 +27,6 @@
         "retrieval": "allowed",
         "basis": "CC BY 4.0 license verified in the retained publication. Preserve attribution and identify extraction as a derivative.",
         "sourceUrl": "https://creativecommons.org/licenses/by/4.0/"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is primary_trial_publication; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -69,16 +59,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -109,16 +89,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -151,16 +121,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -191,16 +151,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -233,16 +183,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_cmc_statistical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -273,16 +213,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -315,16 +245,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -355,16 +275,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -397,16 +307,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -437,16 +337,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_statistical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -479,16 +369,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -519,16 +399,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -561,16 +431,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -601,16 +461,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -643,16 +493,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -683,16 +523,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_cmc_statistical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -725,16 +555,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -765,16 +585,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -807,16 +617,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -847,16 +647,6 @@
         "retrieval": "allowed",
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_statistical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
-        ]
       },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
@@ -889,16 +679,6 @@
         "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
         "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
-        "limitations": [
-          "External comparator evidence; never the LMN-201 client study results.",
-          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
-          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
-          "Intravenous single antitoxin intervention differs from LMN-201 oral multicomponent treatment; recurrence analysis sets and follow-up windows must be matched explicitly."
-        ]
-      },
       "acquiredAt": "2026-10-27",
       "scientificReview": "not_assessed",
       "tableSemanticsVerified": false,
@@ -926,14 +706,6 @@
         "basis": "Public EU CTR posting; PDF permissions disallow copy. No reusable extracted text or embeddings produced. Commercial use clearance unassessed; do not infer it from publication.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2010-020941-29/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI reporting exemplar; antibiotic treatment study, not adjunctive LMN-201 recurrence-prevention evidence.",
-        "limitations": [
-          "Ten-page synopsis only; source pagination refers to a much larger CSR. Original full CSR is not possessed.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "445473407cc4572a682c0cfe74434bd95b821a511125587517e0993ac29281f6",
@@ -960,14 +732,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. A long-form sponsor report body for structural review. Not a CDI clinical comparator; appendices are not implied.",
         "sourceUrl": "https://www.jnjmedicalconnect.com/products/erleada/medical-content/erleada-falls-and-fractures"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "A long-form sponsor report body for structural review. Not a CDI clinical comparator; appendices are not implied.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -990,14 +754,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Biologic writing example. Sponsor listing offers a redacted CSR and separately says full reports may be requested.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/112022"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Biologic writing example. Sponsor listing offers a redacted CSR and separately says full reports may be requested.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1022,14 +778,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Biologic/vaccine reporting example. Linked filename identifies redaction; full appendices and scientific quality are not verified.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/110390"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Biologic/vaccine reporting example. Linked filename identifies redaction; full appendices and scientific quality are not verified.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1052,14 +800,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Related to ZOSTER-006; keep both studies in the same training/evaluation split to avoid leakage. Corrected HTML-escaped query separators; corrected binary URL remains untested.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/113077"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Related to ZOSTER-006; keep both studies in the same training/evaluation split to avoid leakage. Corrected HTML-escaped query separators; corrected binary URL remains untested.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1084,14 +824,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for factorial-design synopsis reporting, not CDI evidence.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-001755-72/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Candidate for factorial-design synopsis reporting, not CDI evidence.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1114,14 +846,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for open-label dose-cohort and expansion reporting.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2012-002523-14/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Candidate for open-label dose-cohort and expansion reporting.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1146,14 +870,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for comparative regimen and follow-up writing.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2011-005214-11/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Candidate for comparative regimen and follow-up writing.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1176,14 +892,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Registry listing is version 3; resolve the current labeled attachment rather than constructing a version-1 URL. Biologic comparator writing, not CDI evidence.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2006-005330-20/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Registry listing is version 3; resolve the current labeled attachment rather than constructing a version-1 URL. Biologic comparator writing, not CDI evidence.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1208,14 +916,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Antibody-drug-conjugate reporting example. Results must be read before any outcome classification; do not assume success.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-003693-33/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Antibody-drug-conjugate reporting example. Results must be read before any outcome classification; do not assume success.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1238,14 +938,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Vaccine immunogenicity and noninferiority reporting candidate. Incidental CDI adverse-event mentions do not make this a CDI efficacy comparator.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2009-015877-11/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Vaccine immunogenicity and noninferiority reporting candidate. Incidental CDI adverse-event mentions do not make this a CDI efficacy comparator.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1270,14 +962,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for early-phase biologic PK, tolerability, and immunogenicity writing.",
         "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D9182C00002/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Candidate for early-phase biologic PK, tolerability, and immunogenicity writing.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1300,14 +984,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Sponsor also lists a protocol and SAP, enabling a matched-document consistency benchmark after acquisition.",
         "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D9676C00002/"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Sponsor also lists a protocol and SAP, enabling a matched-document consistency benchmark after acquisition.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1332,14 +1008,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Observational, not randomized interventional evidence. Useful for design-classification and causal-language challenge tests.",
         "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D8450R00005/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Observational, not randomized interventional evidence. Useful for design-classification and causal-language challenge tests.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1362,14 +1030,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for long-term open-label follow-up and exposure reporting.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-004476-36/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Candidate for long-term open-label follow-up and exposure reporting.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1394,14 +1054,6 @@
         "retrieval": "review_required",
         "basis": "Footer explicitly restricts duplication, referencing, publication and disclosure without Assign DMB consent. Do not automatically admit to shared commercial retrieval/training.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Abbreviated-report structure only; not CDI comparator.",
-        "limitations": [
-          "35-page abbreviated CSR with synopsis. Separate appendix and signatures not acquired in this batch.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -1429,14 +1081,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Keep distinct from the 24-month report and link by study. Exact report completeness unverified.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-001672-55/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Keep distinct from the 24-month report and link by study. Exact report completeness unverified.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1459,14 +1103,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Follow-up report, not a new independent study; same evaluation split as the 12-month report.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-001672-55/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Follow-up report, not a new independent study; same evaluation split as the 12-month report.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1491,14 +1127,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. SOURCE MISMATCH: attachment label says TAS-120-302; registry protocol says TO-TAS-102-302. Preserve both and quarantine until document identity is verified. Do not silently correct.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-002683-16/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "SOURCE MISMATCH: attachment label says TAS-120-302; registry protocol says TO-TAS-102-302. Preserve both and quarantine until document identity is verified. Do not silently correct.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1521,14 +1149,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1553,14 +1173,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1583,14 +1195,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1615,14 +1219,6 @@
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
-      },
       "acquisition": {
         "status": "not_acquired_this_run",
         "listingVerifiedAt": "2026-10-27"
@@ -1645,14 +1241,6 @@
         "retrieval": "review_required",
         "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
-        "limitations": [
-          "Catalog listing does not establish a full retained CSR.",
-          "Not the client study data."
-        ]
       },
       "acquisition": {
         "status": "not_acquired_this_run",
@@ -1677,14 +1265,6 @@
         "retrieval": "review_required",
         "basis": "Public ClinicalTrials.gov sponsor attachment; document-level commercial retrieval/training rights unassessed.",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT01987895"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "CDI endpoint, follow-up and clinical-response definitions; do not substitute for client's protocol.",
-        "limitations": [
-          "Protocol, 138 PDF pages; not a report of results.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -1713,14 +1293,6 @@
         "basis": "Public ClinicalTrials.gov sponsor attachment; commercial retrieval/training rights unassessed.",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT01987895"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Endpoint handling and analysis-set reporting example; keep linked studies within one benchmark split.",
-        "limitations": [
-          "One shared SAP covers two trials; 164 PDF pages, internal main-document pagination 155. Not a CSR.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "6492828309a64241b6f70f76bc001a59608c11069ca9ca7bcb6cfe8b95e76e44",
@@ -1747,14 +1319,6 @@
         "retrieval": "review_required",
         "basis": "GSK terms allow personal noncommercial copying with attribution; commercial reuse not established. Do not ingest into commercial AnA retrieval or training before clearance.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/110390"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General regulated-report architecture only; not CDI comparator.",
-        "limitations": [
-          "Substantial redacted CSR with body and appendices; no certification of completeness. Patient listings are removed; linked pooled analyses belong to ZOSTER-022.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -1783,14 +1347,6 @@
         "basis": "GSK noncommercial limitation. Additional parts not acquired. Commercial reuse clearance required.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/100388"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General report organization and linked follow-up only; not CDI comparator.",
-        "limitations": [
-          "Part 1 of a large split report. Covers Phase A and linked follow-up studies; not full package and not three independent reports.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "41733fad8277212a86e61b060d469d93f94bf764b25a11d85132bc70ed1adbdd",
@@ -1817,14 +1373,6 @@
         "retrieval": "review_required",
         "basis": "GSK noncommercial limitation plus PDF copy:no. No corpus text derivatives or embeddings.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/200592"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General pharmacology/safety report structure only.",
-        "limitations": [
-          "Redacted phase 1 report for prematurely terminated study; not a CDI comparator.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -1853,14 +1401,6 @@
         "basis": "GSK noncommercial limitation plus PDF copy:no. No corpus text derivatives or embeddings.",
         "sourceUrl": "https://www.gsk-studyregister.com/trials/114312"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General reporting exemplar only.",
-        "limitations": [
-          "Redacted phase 2 report. Source landing page title says GW766944 while title page/description says GW766994; discrepancy retained.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "175cc7970c2283fb13d4425987cb7e3e6ed7f2c00709a8ec38c4318fcdd4eecd",
@@ -1887,14 +1427,6 @@
         "retrieval": "review_required",
         "basis": "Sponsor-uploaded public file; document includes subject-coded listings. Privacy and commercial-use review required before shared retrieval. No assumption of public domain solely from government hosting.",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT04388904"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General report structure; not CDI comparator.",
-        "limitations": [
-          "87 PDF pages including a wrapper and 86 numbered pages; body with results; several appendices explicitly to be provided separately and absent. Filename SAP_001 is not the actual document type.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -1923,14 +1455,6 @@
         "basis": "Public EMA catalogue file with commercial-confidential redactions; commercial reuse/training permission not established.",
         "sourceUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/D8111R00003%20EUPAS41335%20clinical-study-report%20Final%2020%20Apr%202022_Redacted.pdf"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Safety-surveillance report structure only.",
-        "limitations": [
-          "47 PDF pages; body 46 pages plus signature page. Report of noninterventional surveillance, not randomized efficacy CSR.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "4154b6144bf5cec27555e55f12db540522dab0d45dc3bf48887cd808ae040799",
@@ -1958,14 +1482,6 @@
         "basis": "Public redacted file retains a no-third-party-release notice. Commercial use, redistribution and training require review; do not auto-admit.",
         "sourceUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/viiv-201177-clinical-study-report-redact.pdf"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Interim pharmacovigilance reporting only.",
-        "limitations": [
-          "176 PDF pages; first interim report of a planned five-year cohort. Not a final interventional CSR.",
-          "Acquired original has not been admitted to commercial reference retrieval."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "d4f94a6e7aa4094c79c393a452c358d7f156c1e6cf900f8128e9a9fabf5d1f28",
@@ -1991,17 +1507,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03788434"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9 amendments and dose groups; E3 Section11 diagnostic sensitivity definitions; E3 Section12 safety/PD organization",
-        "limitations": [
-          "Eight-strain live commensal bacterial consortium, not nonviable spirulina biologic",
-          "Dosing after completing successful SOC",
-          "Prior recurrence or high-risk first CDI; three arms",
-          "Primary recurrence at8weeks uses toxin-positive/lab-confirmed/clinically treated definitions whose hierarchy must be preserved",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2029,17 +1534,6 @@
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03788434"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9 amendments and dose groups; E3 Section11 diagnostic sensitivity definitions; E3 Section12 safety/PD organization",
-        "limitations": [
-          "Eight-strain live commensal bacterial consortium, not nonviable spirulina biologic",
-          "Dosing after completing successful SOC",
-          "Prior recurrence or high-risk first CDI; three arms",
-          "Primary recurrence at8weeks uses toxin-positive/lab-confirmed/clinically treated definitions whose hierarchy must be preserved",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "862887793261114a51e9923faa7d42587c1d25c37780f0d53b91e91b31fed8f3",
@@ -2065,16 +1559,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT04893239"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Cross-reference product rationale and earlier clinical study while preserving trial identity",
-        "limitations": [
-          "Phase1 exploratory open-label ostomy delivery study",
-          "12participants, not RePreve population",
-          "Protocol supports planned methods only; cannot substitute for study CSR or final data",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2102,17 +1586,6 @@
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03244644"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9.7 statistical plan and amendments; E3 Section11 sensitivity analyses and participant accounting; How to document Bayesian prior/borrowing, posterior criterion, and sensitivity assumptions",
-        "limitations": [
-          "Rectal microbiota rather than oral antitoxin/lysin",
-          "Treatment after successful SOC; baseline must be controlled",
-          "Primary no-CDI-diarrhea success at8weeks; prior phase2b borrowing is study-specific",
-          "Eligibility recurrent/severe CDI rather than same LMN target population",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "7e5be77ffa1999198460566d29ffc148c1b48ddcca2d4a62e2ebae5d51c048a7",
@@ -2138,17 +1611,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03244644"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9.7 statistical plan and amendments; E3 Section11 sensitivity analyses and participant accounting; How to document Bayesian prior/borrowing, posterior criterion, and sensitivity assumptions",
-        "limitations": [
-          "Rectal microbiota rather than oral antitoxin/lysin",
-          "Treatment after successful SOC; baseline must be controlled",
-          "Primary no-CDI-diarrhea success at8weeks; prior phase2b borrowing is study-specific",
-          "Eligibility recurrent/severe CDI rather than same LMN target population",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2176,17 +1638,6 @@
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03183128"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9 recurrence adjudication and diagnostic requirements; E3 Section10 disposition and missing follow-up; E3 Section11 estimand/population/sensitivity reporting",
-        "limitations": [
-          "Microbiota spores rather than antitoxin/lysin",
-          "At least3CDI episodes in12months including qualifying episode",
-          "Qualifying CDI already responded to antibiotics before investigational dosing",
-          "Primary recurrence up to8weeks; secondary4/12/24weeks; does not study active-CDI initial cure adjunct in same way",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "f3c6ac19fed94af1cad023bbdd8d82e2f1d85a3304f62885ec6f0c0701b2e1c7",
@@ -2212,17 +1663,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03183128"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section9 recurrence adjudication and diagnostic requirements; E3 Section10 disposition and missing follow-up; E3 Section11 estimand/population/sensitivity reporting",
-        "limitations": [
-          "Microbiota spores rather than antitoxin/lysin",
-          "At least3CDI episodes in12months including qualifying episode",
-          "Qualifying CDI already responded to antibiotics before investigational dosing",
-          "Primary recurrence up to8weeks; secondary4/12/24weeks; does not study active-CDI initial cure adjunct in same way",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2250,16 +1690,6 @@
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03183141"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Cohort-specific disposition; Separate open-label and randomized populations; Do not combine related studies across training/test partitions",
-        "limitations": [
-          "Single-arm open-label; no randomized concurrent comparator",
-          "Cohort1 patients from ECOSPORIII recurrence; cohort2 broader recurrence history",
-          "Mechanism and timing differ from LMN",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "3921ba4775d770741d6e5553495c7c053f2c336c3877299c54c86cdabc719111",
@@ -2285,16 +1715,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://clinicaltrials.gov/study/NCT03183141"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Cohort-specific disposition; Separate open-label and randomized populations; Do not combine related studies across training/test partitions",
-        "limitations": [
-          "Single-arm open-label; no randomized concurrent comparator",
-          "Cohort1 patients from ECOSPORIII recurrence; cohort2 broader recurrence history",
-          "Mechanism and timing differ from LMN",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2322,16 +1742,6 @@
         "basis": "proprietary legend; commercial reuse review required; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://portal.dimdi.de/data/ctr/O-3708_01-2-0-6A5234-20230220143759.pdf"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 synopsis structure and safety tabulation organization",
-        "limitations": [
-          "Pediatric ages1to<18; LMN target adults",
-          "IV dose; primary PK/safety rather than LMN primary global cure",
-          "3:1randomization and historical adult PK comparison",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "1d12924675b4e05e27ffad02d8a0db8f1c3796c8c2bc85db914503265150cec2",
@@ -2358,17 +1768,6 @@
         "basis": "public_access_confirmed; commercial reuse/redistribution/training review required; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-55531B-20170320163525.pdf"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section2 synopsis; E3 Section9 trial plan and endpoint definitions; E3 Section11 analysis populations and global cure versus recurrence denominators; E3 Section12 safety reporting",
-        "limitations": [
-          "Single intravenous infusion rather than repeated oral biologic",
-          "Phase3 larger trials; recurrence primary and global cure secondary",
-          "Week12 window and population definitions must not be imported into LMN-201",
-          "MODIFY I multiarm adaptive design; MODIFY II different arm structure",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "23681f486d142f3ed0cf0a2c836e875978ca61168dbeb4afab78ca779a6d36ed",
@@ -2394,17 +1793,6 @@
         "retrieval": "review_required",
         "basis": "public_access_confirmed; commercial reuse/redistribution/training review required; pending_document_rights_and_extraction_review",
         "sourceUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-0C69AC-20170320165835.pdf"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "E3 Section2 synopsis; E3 Section9 trial plan and endpoint definitions; E3 Section11 analysis populations and global cure versus recurrence denominators; E3 Section12 safety reporting",
-        "limitations": [
-          "Single intravenous infusion rather than repeated oral biologic",
-          "Phase3 larger trials; recurrence primary and global cure secondary",
-          "Week12 window and population definitions must not be imported into LMN-201",
-          "MODIFY I multiarm adaptive design; MODIFY II different arm structure",
-          "Sponsor original is retained for review; commercial retrieval has not been cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2433,14 +1821,6 @@
         "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-004619-31/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Antibiotic-treatment sustained-cure and recurrence-reporting example in older adults; distinct from adjunctive LMN-201 recurrence prevention.",
-        "limitations": [
-          "47 PDF pages. Synopsis internally numbered 1-38, followed by investigator-site information, protocol-amendment summary and Germany-specific ICH E3 disclosure. Not a full CSR. Some pages have no extractable text; extraction coverage not qualified.",
-          "Sponsor original retained for review; commercial retrieval not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "4d2b990e7d8971761509b2aff94b5a04d62e210a03db842f28a70432d8c68ebe",
@@ -2467,14 +1847,6 @@
         "retrieval": "review_required",
         "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-000508-40/results"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Pediatric antibiotic-treatment reporting example for clinical response and recurrence; lower direct similarity to adult adjunctive LMN-201 design.",
-        "limitations": [
-          "36 PDF pages. Synopsis internally numbered 1-19, followed by investigator-site information, protocol-amendment summary and Germany-specific ICH E3 disclosure. Not a full CSR. Some pages have no extractable text; extraction coverage not qualified.",
-          "Sponsor original retained for review; commercial retrieval not cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2503,14 +1875,6 @@
         "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
         "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2006-004291-12/results"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Pivotal antibiotic noninferiority reporting and post-treatment recurrence example; not an adjunctive prevention study.",
-        "limitations": [
-          "33 PDF pages. The clinical-study-report synopsis is pages 1-5; remaining content includes protocol-amendment summary and investigator-site information. Not a full CSR.",
-          "Sponsor original retained for review; commercial retrieval not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "473cb5dfcad6197e77a92974fd2b2ecd073b5280ac35f9e021e737836feaa8a4",
@@ -2537,14 +1901,6 @@
         "retrieval": "review_required",
         "basis": "Public sponsor-hosted PDF; no affirmative commercial database, redistribution, embedding or training license has been established. Review required.",
         "sourceUrl": "https://www.novctrd.com/ctrdweb/trialresult/trialresults/pdf?trialResultId=12263"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "Scientific reporting example for dose-ranging trial disposition, efficacy/safety summaries and early-termination explanation. Does not increase CSR count.",
-        "limitations": [
-          "8-page sponsor results summary for the dose-ranging portion of a phase 2 study. Refers to a clinical trial report dated 26 June 2014. This retained file is not the original full CSR and is not labelled a CSR synopsis. Counted separately.",
-          "Sponsor original retained for review; commercial retrieval not cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2574,16 +1930,6 @@
         "retrieval": "review_required",
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "6,134-page sponsor-published redacted report original. Title page and detailed efficacy, immunogenicity and safety table of contents visually inspected. Includes original Phase A final report; overlaps the already retained 100388 split part 1. Complete downloaded file, not an unredacted sponsor submission. All appendix completeness remains unqualified.",
-          "Same Phase A report and study family as GSK100388_csr_part1.pdf; do not count as an additional independent study.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2642,16 +1988,6 @@
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "2,071-page sponsor split report original. First title page identifies Phase A Report Amendment 1 Final dated 5 March 2012. Detailed methods, efficacy, safety, references and serious-adverse-event sections listed in the contents. This numbered file is a report-version component, not an independent study; complete package/version coverage is not established by its filename.",
-          "Linked Phase A report-version component; retain with base and part 1.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "0f439f62bded83a2ae5d97af3aaad3801f9a18d131c33740d344ed865c0b858f",
@@ -2709,16 +2045,6 @@
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "1,837-page redacted Year 6 Annex Clinical Study Report with methods, efficacy, immunogenicity and safety reporting. This is the Year 6 follow-up annex, not the final Year 10 report. Same report title/date as the smaller 2019 public file; full page-by-page equivalence has not been established.",
-          "Same Year 6 report version as GSK104106_csr_8ac17f81.pdf, with different public file size/page count. Count once at logical report level.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "797167a522d499a05ef53cd27a049c27198de236b7caaee4bd12669fb4c564d9",
@@ -2770,16 +2096,6 @@
         "retrieval": "review_required",
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "1,331-page alternative public file of the same Year 6 annex report dated 23 March 2016. Title and contents checked. Its page count differs from the 1,837-page public file; not counted as a second report or study. No claim that either public file contains every original appendix.",
-          "Alternate public file of gsk-varicella-year6-annex-original2016; logical report duplicate.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",
@@ -2833,16 +2149,6 @@
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "1,940-page sponsor-published final redacted CSR for Phase B through Year 10, including whole-study analyses across Phases A and B. Title, detailed investigational-plan and methods contents, efficacy, immunogenicity, safety and appendices/report tables inspected. Complete public original retained; patient listings have been removed under sponsor disclosure policy and all-appendix completeness is not certified.",
-          "Final 10-year follow-up in the same 100388/104106 longitudinal study family; keep related documents together for benchmarking.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "b078056109314724f37141ba331ff244a49894d513b7f0629846918960fc34dc",
@@ -2895,16 +2201,6 @@
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
       },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "60-page Abridged Annex Report 2. The title expressly refers readers to the main Phase A amendment and Phase B report for complete study design, conduct, objectives, endpoints and results. Supporting annex, not a full standalone CSR.",
-          "Supporting annex to the same longitudinal study family; no independent study count.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
-      },
       "acquisition": {
         "status": "original_retained_outside_application",
         "sha256": "5b912f572ac748fe768d81c6d2e4489264f035dcaf194087bda1deca5f4a3606",
@@ -2956,16 +2252,6 @@
         "retrieval": "review_required",
         "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
         "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
-      },
-      "fit": {
-        "targetStudyId": "NCT05330182",
-        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
-        "limitations": [
-          "144-page Report Amendment 1 Final body. Title states the same Phase A and B study coverage; PDF contains report body, not a demonstrated complete appendix package. PDF metadata reports JavaScript; never execute embedded document actions.",
-          "Amended report body for the same Year 10 report; no independent study count.",
-          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
-          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
-        ]
       },
       "acquisition": {
         "status": "original_retained_outside_application",

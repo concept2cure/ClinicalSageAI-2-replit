@@ -49,6 +49,7 @@ import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { CompanyLegalCommunicationLinks } from './CompanyLegalCommunicationLinks';
 import type { CompanyLegalCommunicationLink } from '@shared/company-correspondence';
+import { AGENCY_LETTER_CLASSES, AGENCY_LETTER_CLASS_LABEL } from '@shared/regulatory/agency-interaction';
 import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { CommitmentFulfilDialog } from './CommitmentFulfilment';
 import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
@@ -441,6 +442,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       linkedArtifactIds: Number.isSafeInteger(letter) && letter > 0 ? [letterSourceRef(letter)] : [],
       ...(v.linkedSubmissionId ? { linkedSubmissionId: v.linkedSubmissionId } : {}),
       dueDate: v.dueDate || undefined,
+      ...(v.letterClass ? { letterClass: v.letterClass } : {}),
       urgency: (v.urgency || 'medium') as 'low' | 'medium' | 'high' | 'critical',
       responseRequired: v.responseRequired === 'yes',
       extractedIssues: v.issue ? [v.issue] : [],
@@ -970,10 +972,19 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 required: true,
               },
               {
+                /* The class the response clock reads (P-39 step 3, S4): with no
+                   stated due date, the clock derives one from the class's
+                   codified window and says on whose authority. */
+                key: 'letterClass',
+                label: 'Letter class (optional)',
+                type: 'select',
+                options: AGENCY_LETTER_CLASSES.map((c) => ({ value: c, label: AGENCY_LETTER_CLASS_LABEL[c] })),
+              },
+              {
                 key: 'dueDate',
                 label: 'Response due (optional)',
                 type: 'text',
-                placeholder: 'YYYY-MM-DD',
+                placeholder: 'YYYY-MM-DD; the agency’s date, when the letter states one',
               },
               {
                 key: 'issue',

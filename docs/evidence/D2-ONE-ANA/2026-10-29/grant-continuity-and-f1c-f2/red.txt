@@ -1,0 +1,85 @@
+# Item 1, red: the pin written before the resolver reads the mapping (license-manager.ts unchanged at d140aefa5).
+# npx vitest run server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row 2ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target 1ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant 2ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks 48ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault 18ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center 17ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing 39ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither 99ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it 26ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing 51ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before 17ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it 9ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on 5ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module 5ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed 5ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping 170ms
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once 214ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 11 passed (17)
+
+# Failures (trimmed):
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+AssertionError: expected { …(11) } to deeply equal { Object (/api/ectd-compile, /api/ectd/export, ...) }
+- Expected
++ Received
+-   "/api/csr/jobs": "served",
+-   "/api/ectd-compile": "served",
+-   "/api/ectd/controlled-vocab": "served",
+-   "/api/ectd/export": "served",
+-   "/api/ectd/qualification/spec-versions": "served",
+-   "/api/ectd/validate": "served",
+-   "/api/submission-orchestrator/csr/readiness": "served",
+-   "/api/submission-orchestrator/csr/source-contract": "served",
+-   "/api/submission-orchestrator/csr/source-preview": "served",
+-   "/api/submission-orchestrator/csr/sources": "served",
+-   "/api/submission-orchestrator/runs": "served",
++   "/api/csr/jobs": "403 MODULE_NOT_LICENSED",
++   "/api/ectd-compile": "403 MODULE_NOT_LICENSED",
++   "/api/ectd/controlled-vocab": "403 MODULE_NOT_LICENSED",
++   "/api/ectd/export": "403 MODULE_NOT_LICENSED",
++   "/api/ectd/qualification/spec-versions": "403 MODULE_NOT_LICENSED",
++   "/api/ectd/validate": "403 MODULE_NOT_LICENSED",
++   "/api/submission-orchestrator/csr/readiness": "403 MODULE_NOT_LICENSED",
++   "/api/submission-orchestrator/csr/source-contract": "403 MODULE_NOT_LICENSED",
++   "/api/submission-orchestrator/csr/source-preview": "403 MODULE_NOT_LICENSED",
++   "/api/submission-orchestrator/csr/sources": "403 MODULE_NOT_LICENSED",
++   "/api/submission-orchestrator/runs": "403 MODULE_NOT_LICENSED",
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+AssertionError: ectd-compile: expected { allowed: false, …(1) } to match object { allowed: true }
+- Expected
++ Received
+-   "allowed": true,
++   "allowed": false,
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+AssertionError: expected { allowed: false, …(1) } to deeply equal { allowed: true, …(1) }
+- Expected
++ Received
+-   "allowed": true,
+-   "heldThrough": "ectd-publishing",
++   "allowed": false,
++   "reason": "Module 'ectd-compile' requires standard tier or higher (current: free)",
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+AssertionError: expected { moduleId: 'ectd-compile', …(13) } to match object { subscriptionState: 'enabled', …(2) }
+- Expected
++ Received
+-   "heldThrough": "ectd-publishing",
+-   "isEnabled": true,
+-   "subscriptionState": "enabled",
++   "isEnabled": false,
++   "subscriptionState": "none",
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+AssertionError: tasks: expected { id: 'tasks', label: 'Tasks', …(3) } to match object { Object (entitled, source) }
+- Expected
++ Received
+-   "source": "subscribed",
++   "source": "included",
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]
+- Expected
++ Received
+-   "server/services/license-manager.ts",
+

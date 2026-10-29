@@ -1,0 +1,45 @@
+# Gates shown failing on the case each exists to catch, on the slice-1 working tree over cbcd32f58b; each temporary edit reverted (diff -q clean).
+
+## G1: ci:migration-set-order with 20261029g moved after the tenant isolation sweep
+exit 1
+[ci:migration-set-order] ❌ 2 ordering invariant(s) broken:
+  • the tenant-isolation sweep is not the last entry
+      1 file(s) are ordered after it and will never be swept:
+        migrations/20261029g_qms_job_roles_and_training_assignments.sql
+      Move them ABOVE the two isolation steps at the end of the list.
+  • the isolation tail is not uuid step, child scope, sweep
+      Expected the last three entries to be, in order:
+        db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+
+## G2: ci:migration-deploy-path with 20261029g left out of C2C_MIGRATION_FILES
+exit 1
+[ci:migration-deploy-path] FAIL — 1 new migration(s) no deploy applies:
+  migrations/20261029g_qms_job_roles_and_training_assignments.sql
+  install-fresh would apply this to a NEW database, but deploy-migrate applies
+  only C2C_MIGRATION_FILES. Every database already provisioned would never get
+  it, and any code reading what it creates fails there.
+  Add it to C2C_MIGRATION_FILES in scripts/db/migration-set.mjs, above the
+  final tenant-sweep pair. It re-runs on every deploy (CLAUDE.md Rule 1), so it
+  must be replayable: IF NOT EXISTS, and no DROP of anything another file creates.
+
+## G3: ci:install-fresh-overlay-deps with a temporary FK from 20261029g to public.qms_document_versions, whose only creator is db/migrations/20261014_qms_controlled_authoring_content.sql (the db-tree file that also holds qms_document_org_id_key)
+exit 1
+[ci:install-fresh-overlay-deps] 370 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 1 finding(s).
+[ci:install-fresh-overlay-deps] FAIL — 1 overlay dependency the installer cannot reach:
+  migrations/20261029g_qms_job_roles_and_training_assignments.sql
+      needs qms_document_versions, created only by db/migrations/20261014_qms_controlled_authoring_content.sql
+  install-fresh's step-3 overlay reads migrations/ and nothing else, so each of these
+  defers on every pass and the installer reports INCOMPLETE — failing blank-db
+  provisioning and step 8 of Tier 5 Browser Smoke, which the release-evidence policy
+  requires. deploy-migrate is unaffected, so the deploy path stays green and hides it.
+
+## G4: ci:purge-coverage (against the evidence database) with the three tables taken out of PURGE_RETAINED_RECORDS
+exit 1
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_assembly_runs
+  - csr_narrative_runs
+  - qms_job_role_members
+  - qms_job_roles
+  - qms_training_assignments
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+  (csr_assembly_runs and csr_narrative_runs are named at trunk too: see slice1-gates-green.txt.)

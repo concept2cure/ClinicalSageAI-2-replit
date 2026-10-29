@@ -1,19 +1,18 @@
 /**
  * useEngineering — live adapter for the Engineering surface.
  *
- * Calls `GET /api/mdx/engineering/:programId`, which returns the design
- * history file, design-controls trace, ISO 14971 risk records, change
- * requests and non-conformances for the selected program.
+ * Calls `GET /api/mdx/engineering/:programId`, which returns the project's
+ * document sections (its design history), design-controls trace, ISO 14971
+ * risk records, change controls and non-conformances.
  *
  * Each panel is returned as a `DataState`, not a bare array, so the
  * surface must declare which of loading / idle / error / empty / ready
  * it is rendering. There is deliberately no fixture fallback here: an
  * unreachable endpoint or an empty tenant now reads as exactly that.
  *
- * `scopes` reports each panel's tenancy — several source tables have no
- * program column yet, so those panels are organization-wide and the
- * surface labels them accordingly rather than implying they belong to
- * the selected program.
+ * `scopes` reports each panel's tenancy. Every panel is read for the project
+ * since P-60 (2026-10-29); the surface still draws only a panel reported
+ * keyed to it, so an unreported or organization-wide panel stays hidden.
  *
  * `refusal` names the route's two refusals of the project itself (404 not
  * this organization's, 503 the check could not run), so the surface can say
@@ -36,7 +35,7 @@ export type DocumentRow = EngineeringDocument;
 export type PanelScope = 'program' | 'organization';
 
 export interface EngineeringSummary {
-  /** Percent of required DHF sections validated or approved. */
+  /** Percent of the project's mandatory document sections approved or locked (P-60). */
   dhfCompletion: number;
   openEcrs: number;
   openRisks: number;

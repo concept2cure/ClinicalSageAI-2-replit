@@ -231,7 +231,7 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   // setup folded into admin-console (D2, 2026-10-29): its settings are on Admin and access → Settings.
   onboarding: 'first-run flow',
   'onboarding-ingest': 'step within the onboarding flow',
-  billing: 'account administration',
+  // billing folded into licensing (D2, 2026-10-29): the invoices are on Licensing, for billing administrators.
   usage: 'account administration',
   licensing: 'account administration — grants catalog entries',
   'master-licensing': 'platform-owner administration',

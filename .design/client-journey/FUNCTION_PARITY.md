@@ -420,14 +420,14 @@ Retire the PDEV compile path (the route, the UI and the AnA command) together.
 ### Into Licensing (`licensing`)
 
 #### From `billing`
-- [ ] Invoice list. From `UsageBilling.tsx:462-528`. Goes to: Licensing, under the plan status (administration). Gate the route to billing admins, state "billing not set up" when there is no customer record, and page through invoices. Real today.
-- [ ] Session usage window. From `UsageBilling.tsx:375-410`. Goes to: stays on 'usage' (the same component), or is embedded in Licensing. Real today.
-- [ ] Weekly limit buckets. From `UsageBilling.tsx:411-458`. Goes to: the same. Real today.
-- [ ] Rate limits by tier. From `UsageBilling.tsx:545-604`. Goes to: Licensing's plan cards, or stays on usage. Real today.
-- [ ] "Learn more" AnA prompt. From `UsageBilling.tsx:417-429`. Goes to: beside the usage card. Real today.
-- [ ] Billing entry in the account menu for every member. From `Shell.tsx:371`. Goes to: point it at Licensing, offered to billing admins only. Real today.
-- [ ] AnA billing.open-tab and invoice facts. From `UsageBilling.tsx:281-335`. Goes to: invoice facts in Licensing's context. Retire billing.open-tab. Real today.
-- [ ] AnA target "Billing". From `index.ts:243`. Goes to: alias it to licensing. Real today.
+- [x] Invoice list. From `UsageBilling.tsx:462-528`. Goes to: Licensing, under the plan status (administration). Gate the route to billing admins, state "billing not set up" when there is no customer record, and page through invoices. Real today. Done: `LicensingInvoices.tsx`; `GET /api/billing/invoices` takes `requireRole(...BILLING_ADMIN_ROLES)` (fold-billing Part 1, `9c2fdec74`).
+- [x] Session usage window. From `UsageBilling.tsx:375-410`. Goes to: stays on 'usage' (the same component), or is embedded in Licensing. Real today. Done: stays on `usage`.
+- [x] Weekly limit buckets. From `UsageBilling.tsx:411-458`. Goes to: the same. Real today. Done: stays on `usage`.
+- [x] Rate limits by tier. From `UsageBilling.tsx:545-604`. Goes to: Licensing's plan cards, or stays on usage. Real today. Done: stays on `usage`, and per P-68 it states the limits the platform enforces, the same for every subscription, from `GET /api/billing/rate-limits` (`UsageRateLimits.tsx`). The per-tier grid it showed was enforced nowhere and is deleted.
+- [x] "Learn more" AnA prompt. From `UsageBilling.tsx:417-429`. Goes to: beside the usage card. Real today. Done: stays beside the weekly-limits card.
+- [x] Billing entry in the account menu for every member. From `Shell.tsx:371`. Goes to: point it at Licensing, offered to billing admins only. Real today. Done: per P-68 a billing administrator has one entry, "Subscription & billing", opening Licensing; every other member keeps Compare subscriptions and Usage & limits.
+- [x] AnA billing.open-tab and invoice facts. From `UsageBilling.tsx:281-335`. Goes to: invoice facts in Licensing's context. Retire billing.open-tab. Real today. Done: `invoiceContext` in Licensing's facts; `billing.open-tab` removed, and `usage.open-tab` offers `usage` and `limits` only.
+- [x] AnA target "Billing". From `index.ts:243`. Goes to: alias it to licensing. Real today. Done: `DEEP_LINK_ALIASES.billing = 'licensing'`; the target is kept (fold-billing Part 2, `foldBilling.test.ts`).
 
 ### Into product development (`pdev`, outside the launch catalogue)
 
@@ -471,7 +471,7 @@ The mounted, uncalled /api/cer backend must be converged onto device-cer or dele
 - [ ] Project knowledge-source app id. From `knowledge-sources.ts:234`. Goes to: accept or translate 'device-cer'. Not real today.
 - [ ] AnA prompt keys. From `module-intelligence.ts:1391-1395`, `lumen-instruction-engine.ts:747`. Goes to: re-keyed to device-cer. Not real today.
 - [ ] 'cer' app gating. From `app-registry.ts:94`. Goes to: moduleId 'device-cer'. Update `app-registry.test.ts:20`. Not real today.
-- [ ] Rate-limit keys for each tier. From `billing-dashboard.ts:536-572`. Goes to: re-keyed or dropped. Not real today.
+- [x] Rate-limit keys for each tier. From `billing-dashboard.ts:536-572`. Goes to: re-keyed or dropped. Not real today. Done: dropped with the unenforced per-tier grid (fold-billing Part 2, P-68).
 
 #### From `ce-marking`
 - [ ] Annex II/III technical documentation. From the catalogue row. Goes to: the existing manifest and assemble routes (`submissions.ts:1576-1600,1688-1760`), reached from an MDR project's Submit step. Not real today.
@@ -652,7 +652,7 @@ fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/`, `foldSetup.test.t
 - [x] Set the retention period: the same card; admin-console claims `/api/vault/legal-holds/retention`.
 - [x] List, place and lift legal holds: `LegalHoldsCard` mounted on Settings. Vault does not offer "Place legal hold"; reaching it needs the form to take a preset project and document. Handed on.
 - [x] Ask AnA to summarise the configuration: admin-console's `facts.configuration` and summary sentence, only while Settings shows it, and "Ask AnA to summarise this configuration" in the tab head (`adminConsoleSettings.test.tsx`).
-- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx` `AdminConsole`, unmounted since `af973c5e8` (2026-07-27). Goes to: a card in Settings, if the founder chooses. Not real today; not carried.
+- [x] GAMP 5 validation kit: `ValidationKitCard` mounted on Settings (decision P-67, 2026-10-29), over `GET /api/validation-kit`, which now offers the launch package only, each document with its own recorded status. `AdminConsole` (unmounted since `af973c5e8`, 2026-07-27) is deleted (`docs/evidence/D4/2026-10-29/validation-kit-settings/`).
 
 ### Into protocol development (`protocol-dev`)
 

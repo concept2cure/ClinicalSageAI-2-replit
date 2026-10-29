@@ -102,9 +102,11 @@ export interface K510SurfaceProps {
    *  Code + label both travel: the editor matches by code first, by title as
    *  the fallback, and reports an honest miss with the label otherwise. */
   onOpenEditor?: (section?: EditorSectionRef) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
-export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
+export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K510SurfaceProps) {
   /* No program ⇒ no stage. -1 lights no dot in the strip and the header
      says so, instead of the fixture's "Stage 5 of 7" on a device nobody
      opened. */
@@ -828,6 +830,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={program?.id ?? null}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

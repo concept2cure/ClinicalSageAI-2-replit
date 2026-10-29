@@ -1,0 +1,61 @@
+# Green
+# npx vitest run server/services/csr/__tests__/csr-nct-number.test.ts server/services/csr/__tests__/study-pivotal-declaration.pglite.test.ts server/services/authoring/__tests__/workflow-source-import.pglite.test.ts --reporter=verbose
+ ✓ workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local visit, composes live rows, and fingerprints retained cells
+ ✓ workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local assessment, composes live rows, and fingerprints retained cells
+ ✓ workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a missing retired endpoint rather than dropping its retained cell
+ ✓ workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-protocol retired endpoint rather than dropping its retained cell
+ ✓ workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-organization retired endpoint rather than dropping its retained cell
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > holds an unverified controlled export while caller-executor content-only export excludes signature authority
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification
+ ✓ workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > carries a section's claim receipts bound to the copy it stores, and drops receipts made for other text
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose
+ ✓ workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors
+ ✓ workflow-source-import.pglite.test.ts > stored CSR assembly source > returns the import’s verified sections and gaps with the job’s study, retained run and newest generation time
+ ✓ workflow-source-import.pglite.test.ts > stored CSR assembly source > refuses through the import’s own checks: another actor, a forged hash, a non-CSR source
+ ✓ workflow-source-import.pglite.test.ts > stored CSR assembly source > carries the study’s ClinicalTrials.gov number from the job’s source, and none the source did not state
+ ✓ workflow-source-import.pglite.test.ts > stored CSR assembly source > reports a job with no retained run as such, never inventing one
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > requires actual current source access, refuses a different target and a withdrawn saved source
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > imports saved generated-document payloads as draft copies without transferring approval or transmission
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source
+ ✓ workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > honors newly filed protocol scope even before its first study design and refuses binding disagreement
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > records the declaration with its reason, and a change is a new row with the history kept
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses no choice, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses a choice that is not yes or no, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses a reason under eight characters, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses a reason of spaces, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses a study the project has no CSR for, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > refuses another organization’s study, and records nothing
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > never rewrites a declaration: UPDATE and TRUNCATE are refused
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > the migration replays cleanly, as every deploy runs it
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > Module 2’s input carries each study’s current declaration, and null where none was made
+ ✓ study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > Module 2’s input carries each study’s ClinicalTrials.gov number as its source stated it, and none that is malformed
+ ✓ csr-nct-number.test.ts > the source contract > takes a ClinicalTrials.gov number in its form, NCT and eight digits
+ ✓ csr-nct-number.test.ts > the source contract > a study information record states its registration only when it is well formed
+ ✓ csr-nct-number.test.ts > drafting > the prompt states the registration, and the §1 and §2 templates print it
+ ✓ csr-nct-number.test.ts > drafting > with none stated, none is printed or prompted
+ ✓ csr-nct-number.test.ts > the CSR builder route > keeps the registration a request states (it was stripped), and refuses a malformed one
+ ✓ csr-nct-number.test.ts > Module 2.7 Clinical Study Index > carries the registration beside the study
+ ✓ csr-nct-number.test.ts > Module 2.7 Clinical Study Index > says the source states none (undefined), never leaves it blank
+ ✓ csr-nct-number.test.ts > Module 2.7 Clinical Study Index > says the source states none (null), never leaves it blank
+ ✓ csr-nct-number.test.ts > the assembled title page > prints the registration under the study
+ ✓ csr-nct-number.test.ts > the assembled title page > prints none when the source states none
+ Test Files  3 passed (3)
+      Tests  53 passed (53)
+
+# npx vitest run client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx
+ Test Files  2 passed (2)
+      Tests  20 passed (20)

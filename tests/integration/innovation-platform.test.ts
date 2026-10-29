@@ -39,17 +39,11 @@ if (runIntegration) {
       throw new Error('Missing TEST_DATABASE_URL or DATABASE_URL for integration tests.');
     }
 
+    // No session setting lifts row-level security (P-70, 2026-10-29); this
+    // suite used to set app.bypass_rls and app.is_admin, which no policy reads.
     testPool = new Pool({
       connectionString,
     });
-
-    testPool.on('connect', client => {
-      client.query("SET app.bypass_rls = 'true'");
-      client.query("SET app.is_admin = 'true'");
-    });
-
-    await testPool.query("SET app.bypass_rls = 'true'");
-    await testPool.query("SET app.is_admin = 'true'");
 
     // Create test organization, program, and user
     await testPool.query(

@@ -1,0 +1,62 @@
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > the manifest declares the study’s ADaM conventions > accepts the conventions block and refuses an unknown convention 11ms
+   → expected false to be true // Object.is equality
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D1: disposition from DCDECOD when declared > reads COMPLETED, ADVERSE EVENT, DEATH and LOST TO FOLLOW-UP from DCDECOD 6ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D1: disposition from DCDECOD when declared > still requires EOSSTT when nothing is declared, and refuses a blank DCDECOD 8ms
+   → expected AdamDerivationError: ADSL has no EOSSTT v… { …(3) } to match object { Object (code, issues) }
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > counts AE withdrawals from the declared ADSL flag, labelled as subject-level, never as 0 2ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > still refuses a blank AEACN when no subject-level flag is declared 2ms
+   → expected AdamDerivationError: ADSL has no EOSSTT v… { …(3) } to match object { Object (code, issues) }
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > refuses a declared flag that ADSL lacks or that is not Y/N/blank 2ms
+   → expected AdamDerivationError: ADSL has no EOSSTT v… { …(3) } to match object { …(2) }
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > the contract refuses a subject-level basis mixed with event-level flags, or a flagged subject outside safety 1ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D3: the SAP’s causality classes > refuses REMOTE when undeclared, and counts it as declared 2ms
+   → expected AdamDerivationError: ADSL has no EOSSTT v… { …(3) } to match object { …(2) }
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D4: laboratory data split into ADLBC and ADLBH > derives shifts from both, and refuses a parameter that appears in both 2ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D5: the last on-treatment record named by AVISIT > requires ONTRTFL when undeclared, and reads the declared End of Treatment record 2ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D5: the last on-treatment record named by AVISIT > refuses two different End of Treatment values for one series 8ms
+   → expected 'CSR_ADAM_VARIABLE_MISSING' to be 'CSR_ADAM_LAST_VALUE_AMBIGUOUS' // Object.is equality
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D6: ANRIND decoded by the declared codelist > refuses N/H/L when undeclared 1ms
+   → expected 'CSR_ADAM_VARIABLE_MISSING' to be 'CSR_ADAM_VALUE_UNMAPPED' // Object.is equality
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D7: a parameter whose baselines differ by position is summarised per position > derives one series per subject, parameter and ATPT instead of refusing BASELINE_AMBIGUOUS 1ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D7: a parameter whose baselines differ by position is summarised per position > still refuses two baselines at the same position 2ms
+   → expected 'CSR_ADAM_VARIABLE_MISSING' to be 'CSR_ADAM_BASELINE_AMBIGUOUS' // Object.is equality
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D9: exposure from ADSL when there is no ADEX > summarises the declared duration and average daily dose for every safety subject 1ms
+   → ADSL has no EOSSTT variable; the CSR derivation requires it.
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D9: exposure from ADSL when there is no ADEX > refuses a safety subject without a duration, and a declaration beside ADEX 1ms
+   → expected 'CSR_ADAM_VARIABLE_MISSING' to be 'CSR_ADAM_EXPOSURE_INCOMPLETE' // Object.is equality
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > reads DCDECOD ADVERSE EVENT even when AEACN is fully recorded and nothing is declared 2ms
+   → expected [ [ 'SYN-LEGACY-4', …(1) ] ] to deeply equal [ [ 'SYN-LEGACY-2', …(1) ], …(2) ]
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > selects from the declared ADSL flag when AEACN was not collected, and names the reason’s source 1ms
+   → AEACN does not record the action taken with study treatment for a treatment-emergent event.
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > still refuses a blank AEACN when no flag is declared 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-dataset-reader.ts 2ms
+ × server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-rows.ts 20ms
+   → expected [ …(11) ] to deeply equal []
+ × server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-source-derivation.ts 12ms
+   → expected [ …(11) ] to deeply equal []
+ × server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-safety-domains.ts 12ms
+   → expected [ …(11) ] to deeply equal []
+ × server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-subject-selection.ts 10ms
+   → expected [ …(11) ] to deeply equal []
+ × server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-subject-facts.ts 11ms
+   → expected [ …(11) ] to deeply equal []
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-compose.ts 1ms
+ × server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > formats the boundary cases as the SAS convention does 4ms
+   → roundHalfUp is not a function
+ × server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints a mean of 60.05 as 60.1, not 60.0 4ms
+   → expected '60.0 (0.1)' to be '60.1 (0.1)' // Object.is equality
+ × server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints exposure the same way 3ms
+   → expected [ '60.0', '1.00' ] to deeply equal [ '60.1', '1.01' ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  26 failed | 3 passed (29)
+ × server/services/csr/__tests__/adam-declared-conventions.test.ts > D16: two pairwise comparisons of one arm (found on the pilot re-run) > accepts high vs placebo and high vs low as two results, and still refuses a true duplicate 24ms
+   → The source derived from these ADaM datasets does not meet the CSR input contract. No tables were saved.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 19 skipped (20)

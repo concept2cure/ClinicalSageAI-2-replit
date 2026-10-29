@@ -40,9 +40,9 @@ beforeAll(async () => {
     CREATE TABLE csr_section_outputs (id serial PRIMARY KEY, organization_id integer, project_id integer, job_id integer,
       section_number text, content text, content_hash text, ai_generated boolean, model text, token_cost integer, lineage jsonb, generated_at timestamp DEFAULT now(), review_status text NOT NULL DEFAULT 'draft', reviewer_id integer, review_decided_at timestamptz, review_reason text, reviewed_content_hash text);
     INSERT INTO csr_build_jobs VALUES
-      (1,7,11,'LMN-201-PART-B','complete','{"studyInfo":{"protocolNumber":"LMN-201-CDI02","phase":"Phase 2/3","title":"RePreve Part B"}}','2026-10-01'),
+      (1,7,11,'LMN-201-PART-B','complete','{"studyInfo":{"protocolNumber":"LMN-201-CDI02","phase":"Phase 2/3","title":"RePreve Part B","nctNumber":"NCT05330182"}}','2026-10-01'),
       (2,7,11,'LMN-201-PART-A','complete','{"studyInfo":{"protocolNumber":"LMN-201-CDI02A","phase":"Phase 2/3","title":"RePreve Part A"}}','2026-10-01'),
-      (3,7,11,'X-301','complete','{"studyInfo":{"protocolNumber":"X-301","phase":"Phase 3"}}','2026-10-01'),
+      (3,7,11,'X-301','complete','{"studyInfo":{"protocolNumber":"X-301","phase":"Phase 3","nctNumber":"NCT1"}}','2026-10-01'),
       (4,8,11,'OTHER-ORG','complete','{"studyInfo":{"protocolNumber":"Z"}}','2026-10-01');
   `);
   await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
@@ -102,6 +102,13 @@ describe('the sponsor declares, per study, whether it is pivotal', () => {
     const inputs = await loadCsrInputsForProject(7, 11, { actorUserId: 5 });
     expect(Object.fromEntries(inputs.map(i => [i.studyId, i.pivotal]))).toEqual({
       'LMN-201-PART-A': false, 'LMN-201-PART-B': true, 'X-301': null,
+    });
+  });
+
+  it('Module 2’s input carries each study’s ClinicalTrials.gov number as its source stated it, and none that is malformed', async () => {
+    const inputs = await loadCsrInputsForProject(7, 11, { actorUserId: 5 });
+    expect(Object.fromEntries(inputs.map(i => [i.studyId, i.nctNumber]))).toEqual({
+      'LMN-201-PART-A': null, 'LMN-201-PART-B': 'NCT05330182', 'X-301': null,
     });
   });
 });

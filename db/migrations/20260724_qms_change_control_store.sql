@@ -94,3 +94,15 @@ CREATE TABLE IF NOT EXISTS qms_change_links (
 CREATE INDEX IF NOT EXISTS qms_change_link_org_idx    ON qms_change_links (organization_id);
 CREATE INDEX IF NOT EXISTS qms_change_link_change_idx ON qms_change_links (change_id);
 CREATE INDEX IF NOT EXISTS qms_change_link_type_idx   ON qms_change_links (organization_id, link_type);
+
+-- ── AMENDED IN PLACE 2026-10-29 (MR-12 Stage 8, CAT2-25) ─────────────────────
+-- A link is no longer deleted when it is removed. changeControl.service.ts
+-- removeLink stamps removed_at, removed_by and the person's reason, and every
+-- reader filters removed_at IS NULL, so the record of what a change was linked
+-- to, and who unlinked it and why, is kept (21 CFR 11.10(e)). Added here, in
+-- the file that creates the table, because every file in the set re-runs on
+-- every deploy (RULE 1); ADD COLUMN IF NOT EXISTS makes the replay a no-op.
+-- Evidence: docs/evidence/MR-12/2026-10-29-change-links-kept/.
+ALTER TABLE qms_change_links ADD COLUMN IF NOT EXISTS removed_at     TIMESTAMPTZ;
+ALTER TABLE qms_change_links ADD COLUMN IF NOT EXISTS removed_by     INTEGER;
+ALTER TABLE qms_change_links ADD COLUMN IF NOT EXISTS removal_reason TEXT;

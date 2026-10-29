@@ -1,0 +1,30 @@
+ESLint, plain `npx eslint --no-ignore <file>`; HEAD = the file as committed, linted through --stdin with its own path.
+
+client/src/concept2cure/mdx/data/engineering.ts HEAD=0w/0e NOW=0w/0e
+client/src/concept2cure/mdx/hooks/useEngineering.ts HEAD=1w/0e NOW=1w/0e
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx HEAD=5w/0e NOW=5w/0e
+client/src/concept2cure/mdx/surfaces/EngineeringDesignHistory.tsx HEAD=new NOW=0w/0e
+client/src/concept2cure/quality/ChangeControl.tsx HEAD=4w/0e NOW=4w/0e
+client/src/concept2cure/quality/qmsWrites.ts HEAD=0w/0e NOW=0w/0e
+server/routes/mdx-engineering.ts HEAD=1w/0e NOW=1w/0e
+server/routes/mdx-qms.ts HEAD=1w/0e NOW=1w/0e
+server/routes/mdx-qms-context.ts HEAD=0w/0e NOW=0w/0e
+server/services/ana/AnaToolExecutor.ts HEAD=95w/0e NOW=95w/0e
+server/services/ana/qms-labeling-analytics-tool-defs.ts HEAD=0w/0e NOW=0w/0e
+server/services/qms/changeControl.service.ts HEAD=0w/0e NOW=0w/0e
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx HEAD=new NOW=0w/0e
+client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx HEAD=new NOW=0w/0e
+server/routes/__tests__/mdx-engineering-per-product.test.ts HEAD=new NOW=0w/0e
+server/routes/__tests__/qms-change-project.test.ts HEAD=new NOW=0w/0e
+server/services/ana/__tests__/change-tool-admits-program.test.ts HEAD=new NOW=0w/0e
+tests/schema-contract/change-controls-program-key.pglite.test.ts HEAD=new NOW=0w/0e
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx HEAD=1w/0e NOW=1w/0e
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx HEAD=0w/0e NOW=0w/0e
+server/routes/__tests__/mdx-engineering-panels-by-project.test.ts HEAD=0w/0e NOW=0w/0e
+server/routes/__tests__/mdx-engineering-trace-by-project.test.ts HEAD=0w/0e NOW=0w/0e
+server/routes/__tests__/mdx-engineering.contract.test.ts HEAD=1w/0e NOW=1w/0e
+server/services/ana/__tests__/qms-change-tools.test.ts HEAD=0w/0e NOW=0w/0e
+server/services/qms/__tests__/changeControl.pglite.integration.test.ts HEAD=0w/0e NOW=0w/0e
+tests/mdx-beta-surfaces-routes.test.ts HEAD=0w/0e NOW=0w/0e
+
+0 errors in every file. No file gains a warning; the six new files have none.

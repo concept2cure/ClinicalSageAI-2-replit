@@ -114,7 +114,10 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-29 D2: ectd-publishing folds into eCTD Compile, which publishes the
 // eCTD reference as 'ectd-compile' (facts.reference). The retired id is an
 // alias, no longer a routable publisher (foldEctdPublishing.test.ts).
-const ID_BASELINE = 107;
+// 2026-10-29 D2: billing folds into Licensing, which publishes the invoice facts
+// as 'licensing'; usage keeps its own context. The retired id is an alias, no
+// longer a routable publisher (foldBilling.test.ts).
+const ID_BASELINE = 106;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

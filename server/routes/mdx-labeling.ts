@@ -50,7 +50,7 @@ import { resolveUserId } from '../types/auth-request';
    a reason, which withdraws the approval. */
 import {
   DOC_SIGNED_STATUS, signingLimit, editsBesides,
-  signDocumentStatus, moveDocumentStatus, refuseControlledDocumentEdit,
+  signDocumentStatus, moveDocumentStatus, refuseControlledDocumentEdit, documentEditWhere,
   approveTranslationSigned, moveTranslationStatus, refuseApprovedTranslationEdit,
 } from './mdx-labeling-approvals';
 /* Whether each approval still binds the label it signed (21 CFR 11.70): the
@@ -60,6 +60,11 @@ import { readSignedContentStates } from '../services/part11/signed-content-state
    step's own check, so the screen can say so before a password is typed
    (D5, 2026-10-29; docs/evidence/D5-SIGNED-CONTENT-ON-SCREEN/2026-10-29/). */
 import { signerIndependenceOf, type SignerIndependence } from '../services/governance/separation-of-duties';
+/* Signed content is not edited in place (P-63, 2026-10-29): what a label's or a
+   translation's signature binds is read from its recipe, and its symbols are
+   written only while the label carries no signature
+   (docs/evidence/D5-SIGNED-CONTENT-LOCKED/2026-10-29/). */
+import { deleteLabelingSymbol, insertLabelingSymbol, lockedFieldsIn, type ChildWrite } from '../services/part11/signed-content-lock';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -87,6 +92,13 @@ async function requireDocInOrg(orgId: number, docId: number): Promise<boolean> {
     [docId, orgId],
   );
   return rows.length > 0;
+}
+
+/** A symbol write that wrote nothing, answered: 404, the signed-content refusal, or a record that moved. */
+function answerChildWrite(res: Response, w: Exclude<ChildWrite, { outcome: 'written' }>, noun: string) {
+  if (w.outcome === 'not-found') return notFoundInTenant(res, noun);
+  if (w.outcome === 'refused') return clientError(res, w.refusal.status, w.refusal.message, w.refusal.details);
+  return clientError(res, 409, 'This labeling document changed while the symbol was being saved. Reload it and try again. Nothing was saved.', { code: 'LABELING_STATUS_CHANGED' });
 }
 
 /* ─── Documents ─────────────────────────────────────────────── */
@@ -278,18 +290,16 @@ router.patch('/labeling/:id', requireEditorAccess, signingLimit(DOC_SIGNED_STATU
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
+  // What the document's signature binds is not edited while it carries one (P-63; documentEditWhere).
+  const { where, locked } = documentEditWhere(args.length, parsed.data);
   try {
     if (!(await admitProject(res, parsed.data.programId, orgId))) return;
-    // A document that carries an approval is not edited (mdx-labeling-approvals.ts says why).
     const { rows } = await pool.query(
-      `UPDATE labeling_documents SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
-          AND status NOT IN ('approved', 'effective', 'superseded')
-        RETURNING *`,
+      `UPDATE labeling_documents SET ${setFrags.join(', ')} WHERE ${where.join(' AND ')} RETURNING *`,
       args,
     );
     if (rows.length > 0) return ok(res, rows[0]);
-    return refuseControlledDocumentEdit(res, id, orgId);
+    return refuseControlledDocumentEdit(res, id, orgId, locked);
   } catch (err) { return serverError(res, log, 'patch', err); }
 });
 
@@ -411,7 +421,7 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, signingLimi
       args,
     );
     if (rows.length > 0) return ok(res, rows[0]);
-    return refuseApprovedTranslationEdit(res, transId, orgId);
+    return refuseApprovedTranslationEdit(res, transId, orgId, lockedFieldsIn('labeling-translation', parsed.data));
   } catch (err) { return serverError(res, log, 'trans-patch', err); }
 });
 
@@ -447,20 +457,10 @@ router.post('/labeling/:id/symbols', requireEditorAccess, async (req: Request, r
   if (!(await requireDocInOrg(orgId, id))) return notFoundInTenant(res, 'Labeling document');
   const parsed = symbolCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO labeling_symbols (
-         labeling_document_id, organization_id, symbol_code, symbol_name,
-         description, required_by
-       ) VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING *`,
-      [
-        id, orgId, p.symbolCode, p.symbolName,
-        p.description ?? null, p.requiredBy ?? null,
-      ],
-    );
-    return created(res, rows[0]);
+    // A symbol is part of the label: none is added to one that carries a signature (P-63).
+    const written = await insertLabelingSymbol(pool, orgId, id, parsed.data);
+    return written.outcome === 'written' ? created(res, written.row) : answerChildWrite(res, written, 'Labeling document');
   } catch (err) { return serverError(res, log, 'sym-create', err); }
 });
 
@@ -470,12 +470,9 @@ router.delete('/labeling/symbols/:symId', requireEditorAccess, async (req: Reque
   const symId = Number(req.params.symId);
   if (!Number.isFinite(symId)) return clientError(res, 422, 'symId must be numeric');
   try {
-    const { rowCount } = await pool.query(
-      `DELETE FROM labeling_symbols WHERE id = $1 AND organization_id = $2`,
-      [symId, orgId],
-    );
-    if ((rowCount ?? 0) === 0) return notFoundInTenant(res, 'Symbol');
-    return noContent(res);
+    // Nor is one removed from it (P-63).
+    const written = await deleteLabelingSymbol(pool, orgId, symId);
+    return written.outcome === 'written' ? noContent(res) : answerChildWrite(res, written, 'Symbol');
   } catch (err) { return serverError(res, log, 'sym-delete', err); }
 });
 

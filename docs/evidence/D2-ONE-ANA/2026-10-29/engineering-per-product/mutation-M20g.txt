@@ -1,0 +1,7 @@
+# M20g: the file is off the applier (the deploy-path gate)
+# file: scripts/db/migration-set.mjs
+# command: npm run --silent ci:migration-deploy-path
+# exit: 1
+# original sha256 3c6bac0a6057eaefbcd8c0dbec8ed8b80ae14aec171cb4741d0000b884989cf0; restored byte for byte: True
+
+[ci:migration-deploy-path] FAIL — 1 new migration(s) no deploy applies:

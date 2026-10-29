@@ -1,0 +1,74 @@
+{
+ "what": "Engine tables (buildCSRTables over the derived source) against the independent pandas oracle, cell by cell. Counts only; no data value.",
+ "run2": {
+  "cells": 1436,
+  "matched": 1436,
+  "mismatched": 0,
+  "byTable": {
+   "aeBySOC": {
+    "cells": 69,
+    "mismatched": 0
+   },
+   "aeOverallSummary": {
+    "cells": 18,
+    "mismatched": 0
+   },
+   "aeTopPT": {
+    "cells": 84,
+    "mismatched": 0
+   },
+   "analysisPopulations": {
+    "cells": 16,
+    "mismatched": 0
+   },
+   "deathsSAEsDiscontinuations": {
+    "cells": 12,
+    "mismatched": 0
+   },
+   "demographics": {
+    "cells": 15,
+    "mismatched": 0
+   },
+   "disposition": {
+    "cells": 28,
+    "mismatched": 0
+   },
+   "exposure": {
+    "cells": 12,
+    "mismatched": 0
+   },
+   "labShifts": {
+    "cells": 1050,
+    "mismatched": 0
+   },
+   "vitalSigns": {
+    "cells": 132,
+    "mismatched": 0
+   }
+  },
+  "narrativeSelection": {
+   "oracle": 95,
+   "engine": 95,
+   "missedByEngine": 0,
+   "extraInEngine": 0,
+   "deaths": 3,
+   "serious": 3,
+   "discontinuationForAe": 92
+  }
+ },
+ "run2FirstOracleDefinition": {
+  "cells": 1436,
+  "matched": 1406,
+  "mismatched": 30,
+  "onlyInEngine": 30,
+  "explanation": "The first oracle listed a laboratory parameter only for arms with a record; the engine table lists every arm (0 assessed, percentages \"\u2014\"). 30 cells = 6 parameter-arm rows x 5 columns. Oracle corrected to the engine table definition; no engine change."
+ },
+ "perturbedEngineCell": {
+  "cells": 1436,
+  "matched": 1435,
+  "mismatched": 1,
+  "mismatchTables": [
+   "aeBySOC"
+  ]
+ }
+}

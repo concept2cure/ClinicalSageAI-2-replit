@@ -66,7 +66,7 @@ import {
 } from './vault-ingest-discard.js';
 import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers } from './vault-reupload.js';
-import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, checkInLineage, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
 import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
@@ -230,7 +230,7 @@ async function admitVaultDocument(
   // A check-in is planned before any byte is stored, so a refusal stores
   // nothing, and again under the head's row lock in the transaction below.
   const checkIn = args.supersedesDocumentId
-    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash, restoreOf: args.restoreOf?.versionId })
     : null;
   if (checkIn && !checkIn.ok) return checkIn;
   // What this version is recorded as: a check-in's are the server's.
@@ -468,7 +468,7 @@ async function admitVaultDocument(
     }
     // A check-in holds its head's row lock from here to COMMIT: a concurrent
     // check-in waits, then finds this version and is refused, naming it.
-    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
+    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash, restoreOf: args.restoreOf?.versionId }, checkIn));
     if (stale) return (await client.query('ROLLBACK'), stale);
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
@@ -499,7 +499,7 @@ async function admitVaultDocument(
         placement_status, placement_confidence, placement_rationale,
         placed_by, placed_at,
         processing_status, created_by, organization_id,
-        storage_version_id, storage_provider, id
+        storage_version_id, storage_provider, id, restored_from_id
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
@@ -514,7 +514,7 @@ async function admitVaultDocument(
         $22, $23, $24,
         $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
         'PENDING', $26, $27,
-        $28, $29, $31
+        $28, $29, $31, $32
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
         -- Title, type, classification and filing are not in this list: a
@@ -597,7 +597,8 @@ async function admitVaultDocument(
         storageVersionId,
         storageProvider,
         DEFAULT_RETENTION_YEARS,
-        candidateId,
+        // A restore names the version whose bytes these are; the database checks it.
+        candidateId, (checkIn && args.restoreOf?.versionId) || null,
       ],
     );
 
@@ -683,7 +684,7 @@ async function admitVaultDocument(
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
         ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
-        ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
+        ...(checkIn ? { lineage: checkInLineage(checkIn.head, args.restoreOf) } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier

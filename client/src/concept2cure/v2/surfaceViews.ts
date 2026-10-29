@@ -565,7 +565,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },
   training: { component: Training },
-  billing: { component: UsageBilling },
+  // No `billing`: folded into Licensing (D2, 2026-10-29; fold-billing). An alias of `licensing` now.
   usage: { component: UsageBilling },
   vault: { component: Vault, full: true },
 };

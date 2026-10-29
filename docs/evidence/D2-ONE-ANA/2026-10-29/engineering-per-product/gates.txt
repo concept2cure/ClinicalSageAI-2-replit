@@ -1,0 +1,45 @@
+Gates, on the finished tree (working tree over 16791c326), 2026-10-29T20:29:33Z.
+
+ci:migration-drop-safety — exit 0 — [ci:migration-drop-safety] OK — 450 migrations, 43 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+ci:migration-drop-safety:selftest — exit 0 — [ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+ci:migration-set-order — exit 0 — [ci:migration-set-order] OK — 450 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:migration-deploy-path — exit 0 — [ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+ci:migration-deploy-path:selftest — exit 0 — [ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+ci:sql-interpolation — exit 1 —   SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+ci:sql-interpolation:selftest — exit 0 — [ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+ci:program-ownership-single-source — exit 1 — Node.js v22.22.0
+ci:program-ownership-single-source:selftest — exit 0 — [self-test] OK — 10 copies found, 6 reads passed.
+ci:tenant-isolation:no-regression — exit 1 —   server/services/vault/vault-placement.service.ts#faad7a0ef639:documents
+ci:tenant-column-types — exit 0 — [ci:tenant-column-types] OK — all tenant columns are integer-typed
+ci:tenant-entry-points — exit 1 —   the digest: npm run ci:tenant-entry-points:write-baseline
+ci:tenant-resolvers — exit 0 — OK: no new local tenant resolvers.
+
+ci:program-ownership-single-source, run with a private git index (GIT_INDEX_FILE) that drops the two files another worker deleted from the working tree but not from the index (server/services/innovation/rlsBypassSession.ts, tests/db/rls-bypass-does-not-outlive-release.dbtest.ts), so the gate can read every file it lists:
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+ci:purge-coverage, against the deploy-shaped database (PostgreSQL 16.15 + pgvector, built from blank by scripts/db/install-fresh.mjs then scripts/db/deploy-migrate.mjs, and deploy-migrate replayed once more):
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+   platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 1
+     tenant_offboarding_certificates: The offboarding certificate (P-58, migrations/20261029k_tenant_offboarding_custody.sql): one row per purged tenant, written by its purge, with the export digest, the rows erased per table, the held records erased, the custody signature, who purged and when. Counts, identifiers, digests and times only. Append-only for every role; it is the platform's record that the tenant's data was returned and erased.
+   keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 2
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_assembly_runs
+  - csr_narrative_runs
+  - qc_deviations
+
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+live database, and a table some migration drops can linger on a local one
+that has not replayed it — in which case the fix is to migrate, not to list
+a table that a correctly-migrated database does not have. Listing a phantom
+here makes the purge look more complete than it is, which is the opposite of
+what this gate is for.
+
+If it is real: add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON
+DELETE CASCADE path from a table already there. A tenant that asks to be
+erased must not keep rows in a table nobody remembered to list.

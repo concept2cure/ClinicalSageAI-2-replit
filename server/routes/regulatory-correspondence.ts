@@ -42,6 +42,7 @@ import {
 } from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
 import { governedActorId } from '../middleware/orgMembership';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './c2c/project-access';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -632,11 +633,40 @@ router.post('/correspondence/intake', async (req, res) => {
   }
 });
 
+const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The projects a correspondence read covers: each one the request names that
+ * the reader may open (2026-10-29). The device screens name their program (a
+ * regulatory_programs uuid, programTabsService.getCorrespondence); other callers
+ * name the integer project. Until then the uuid became NaN, the filter was
+ * dropped, and a project's Correspondence tab listed every letter in the
+ * organisation, other projects' and private ones included. Null when the
+ * request names no project at all.
+ */
+async function admittedProjects(req: Request, pool: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  orgId: number, raw: unknown): Promise<number[] | null> {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  let candidates: number[];
+  if (/^\d{1,10}$/.test(value)) candidates = [Number(value)];
+  else if (PROGRAM_UUID.test(value)) {
+    const { rows } = await pool.query(
+      `SELECT id FROM projects WHERE organization_id = $1 AND regulatory_program_id = $2::uuid ORDER BY id`, [orgId, value]);
+    candidates = rows.map((r) => Number(r.id));
+  } else return null;
+  const admitted: number[] = [];
+  for (const id of candidates) {
+    try { await requireProjectAdmission(req, String(id)); admitted.push(id); } catch (err) {
+      if (!(err instanceof ProjectAdmissionRefusal)) throw err;
+    }
+  }
+  return admitted;
+}
+
 router.get('/correspondence', async (req, res) => {
   const actor = requireActorContext(req, res);
   if (!actor) return;
   const { orgId } = actor;
-  const projectId = req.query.projectId ? Number(req.query.projectId) : null;
   const submissionId = req.query.submissionId ? String(req.query.submissionId) : null;
 
   const pool = getDbClientOrNull();
@@ -644,12 +674,12 @@ router.get('/correspondence', async (req, res) => {
   if (!requirePersistentStore(isReady, res, 'list correspondence')) {
     return;
   }
-  const params: any[] = [orgId];
-  const clauses: string[] = [`organization_id = $1`];
-  if (projectId) {
-    params.push(projectId);
-    clauses.push(`project_id = $${params.length}`);
-  }
+  // A project's letters only, and only a project the reader may open; never the organisation's whole store.
+  const projects = await admittedProjects(req, pool!, orgId, req.query.projectId);
+  if (projects === null) return res.status(422).json({ error: 'Name the project whose correspondence to list (projectId).' });
+  if (projects.length === 0) return res.status(404).json({ error: 'Project not found.' });
+  const params: any[] = [orgId, projects];
+  const clauses: string[] = [`organization_id = $1`, `project_id = ANY($2::int[])`];
   if (submissionId) {
     params.push(submissionId);
     clauses.push(`submission_id = $${params.length}`);
@@ -676,6 +706,11 @@ router.get('/correspondence/:correspondenceId', async (req, res) => {
     [req.params.correspondenceId, orgId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Correspondence not found' });
+  // The letter's own project admits the reader, as the list does; a letter of a project they may not open is not found.
+  try { await requireProjectAdmission(req, String(rows[0].project_id)); } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) return res.status(404).json({ error: 'Correspondence not found' });
+    throw err;
+  }
   const issueRows = await pool!.query(
     `SELECT * FROM c2c_correspondence_issues WHERE correspondence_id = $1 ORDER BY created_at ASC`,
     [req.params.correspondenceId]
@@ -686,6 +721,24 @@ router.get('/correspondence/:correspondenceId', async (req, res) => {
   );
   return res.json({ data: rows[0], issues: issueRows.rows, responsePackages: packageRows.rows });
 });
+
+/**
+ * A review changes the letter's project's record, so the reviewer must be able
+ * to change that project (2026-10-29). Answers the refusal itself and returns
+ * false; true when the review may proceed.
+ */
+async function reviewerMayChange(req: Request, res: Response,
+  pool: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> }, orgId: number): Promise<boolean> {
+  const owner = await pool.query(
+    `SELECT c.project_id FROM c2c_correspondence_issues i JOIN c2c_correspondence c ON c.id = i.correspondence_id
+      WHERE i.id = $1 AND c.organization_id = $2`, [req.params.issueId, orgId]);
+  if (!owner.rows[0]) { res.status(404).json({ error: 'Issue not found' }); return false; }
+  try { await requireProjectAdmission(req, String(owner.rows[0].project_id), true); return true; } catch (err) {
+    if (!(err instanceof ProjectAdmissionRefusal)) throw err;
+    res.status(err.status).json({ error: err.message, code: err.code });
+    return false;
+  }
+}
 
 router.patch('/issues/:issueId/review', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
@@ -704,6 +757,7 @@ router.patch('/issues/:issueId/review', async (req, res) => {
   if (!requirePersistentStore(isReady, res, 'review correspondence issue')) {
     return;
   }
+  if (!(await reviewerMayChange(req, res, pool!, orgId))) return;
 
   // Governed resolve (medium-risk, no re-auth): UPDATE + ledger write in one
   // transaction (audit_logs + c2c_ana_actions).

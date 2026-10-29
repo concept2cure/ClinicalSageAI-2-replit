@@ -1,0 +1,165 @@
+# RED: the base commit 92bb29868b853c4be94f31c19efeee50d192f5a1, before this change
+# Lane: private PostgreSQL 16.15 + pgvector, database built from blank by install-fresh + deploy-migrate (exit 0, 0). Runtime role app_service: LOGIN NOSUPERUSER NOBYPASSRLS.
+
+## §1 The bypass, set by the runtime role itself, on the head database (92bb29868b853c4be94f31c19efeee50d192f5a1, install-fresh + deploy-migrate)
+$ psql "$APP_DATABASE_URL" -f red-vault.sql   # app_service; probe/seed.sql seeded two tenants as the owner
+ current_user | rolsuper | rolbypassrls 
+--------------+----------+--------------
+ app_service  | f        | f
+(1 row)
+
+BEGIN
+-- tenant A scope, no switch:
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+-- tenant A scope + SET LOCAL app.bypass_rls = true:
+SET
+ document_code 
+---------------
+ p70-a-doc
+ p70-b-doc
+(2 rows)
+
+ROLLBACK
+-- the same, session-level SET (no transaction):
+SET
+ document_code 
+---------------
+ p70-a-doc
+ p70-b-doc
+(2 rows)
+
+-- and writes: tenant A updates tenant B's title under the bypass
+UPDATE 1
+RESET
+-- reset, A again:
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+
+## §2 ci:session-scoped-rls-bypass as extended here, run on the base tree (the gate as it stood passes there: see the last line)
+[ci:session-scoped-rls-bypass] ❌ 32 problem(s):
+
+  • server/services/innovation/submission-readiness-twin-service.ts: 4 session-scoped bypass set(s) — this file is not in the baseline
+  • scripts/db/program-same-org-preflight.mjs: 1 write(s) of app.bypass_rls / app.is_admin — no policy reads either since P-70; a cross-tenant read goes through a reviewed SECURITY DEFINER door or a role granted only to that path
+  • db/migrations/053_gcc_rls_policies.sql:60: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/053_gcc_rls_policies.sql:97: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/069_gcc_multitenant_rls_expansion.sql:102: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/069_gcc_multitenant_rls_expansion.sql:135: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/069_gcc_multitenant_rls_expansion.sql:174: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/069_gcc_multitenant_rls_expansion.sql:229: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/072_gcc_innovation_platform_core.sql:1196: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/072_gcc_innovation_platform_core.sql:1317: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/077_gcc_self_evolving_intelligence.sql:603: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:376: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:385: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:394: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:403: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:413: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260129_phase5_intelligent_document_system.sql:422: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule
+  • db/migrations/20260206_phase4_orchestration_kernel.sql:413: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase4_orchestration_kernel.sql:422: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase4_orchestration_kernel.sql:431: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_contradiction_scanner.sql:74: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:198: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:208: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:218: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:228: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:238: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase5_evidence_fabric.sql:248: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase6_docx_factory.sql:93: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260206_phase6_docx_factory.sql:103: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  • db/migrations/20260207_phase6_6_predicate_intelligence.sql:164: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1)
+  • db/migrations/20260207_phase6_6_predicate_intelligence.sql:174: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1)
+  • db/migrations/20260207_phase6_6_predicate_intelligence.sql:184: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1)
+
+  Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+  app.is_admin, and none may: any role can set a custom setting, so a reader
+  lets any session lift row-level security from inside its own connection.
+  Setting either is dead code. A path that must read across tenants does it
+  through a reviewed SECURITY DEFINER door, or a role granted only to that
+  path, with its reason on scripts/db/security-definer-allowlist.json.
+  (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+  ROLLBACK and client.release(), so the next checkout inherited it.)
+
+exit 1
+--- the gate as it stood at the base, on the base tree:
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+exit 0
+
+## §3 tests/db/no-session-rls-bypass.dbtest.ts on the base database, from the base tree with only the test added
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > no policy, and no function outside pg_catalog, reads app.bypass_rls or app.is_admin
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with no switch, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role reads A's rows and none of B's
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, no helper admits B's program or organization
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.bypass_rls, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, the runtime role writes none of B's rows
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.is_admin, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, the runtime role writes none of B's rows
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.rls_enforce off, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, the runtime role writes none of B's rows
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app_super_admin, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role reads A's rows and none of B's
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, no helper admits B's program or organization
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role writes none of B's rows
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with all four, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > A writes its own Vault version in its own scope
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same-organization preflight refuses vault.documents as a role row security holds, rather than under-count it
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same preflight reads vault.documents as a role row security does not hold (a superuser here)
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  14 failed | 15 passed (29)
+
+### the reasons, one line each
+      1 AssertionError: all four let A update B's Vault version: expected 1 to be +0 // Object.is equality
+      1 AssertionError: all four showed the runtime role another tenant's rows: expected { 'vault.documents': 1, …(17) } to deeply equal { 'vault.documents': +0, …(17) }
+      1 AssertionError: app.bypass_rls let A update B's Vault version: expected 1 to be +0 // Object.is equality
+      1 AssertionError: app.bypass_rls showed the runtime role another tenant's rows: expected { 'vault.documents': 1, …(17) } to deeply equal { 'vault.documents': +0, …(17) }
+      1 AssertionError: app.is_admin showed the runtime role another tenant's rows: expected { 'vault.documents': +0, …(17) } to deeply equal { 'vault.documents': +0, …(17) }
+      1 AssertionError: expected 1 to be +0 // Object.is equality
+      1 AssertionError: expected [ …(23) ] to deeply equal []
+      1 AssertionError: expected { access_program: true, …(5) } to deeply equal { access_program: false, …(5) }
+      1 Error: ENOENT: no such file or directory, open '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/red-src/migrations/20261029j_no_session_rls_
+      1 TypeError: .toMatch() expects to receive a string, but got undefined
+      1 error: invalid input syntax for type boolean: ""
+
+### the 23 readers the catalog case found
++   "function identity.can_access_org(uuid)",
++   "function identity.can_access_program(uuid)",
++   "function identity.can_write_org(uuid)",
++   "function identity.can_write_program(uuid)",
++   "policy auto_tables_org_policy on intelligent_docs.auto_generated_tables",
++   "policy candidates_program_isolation on predicate.candidates",
++   "policy compliance_rules_org_policy on intelligent_docs.compliance_rules",
++   "policy compliance_scores_org_policy on intelligent_docs.compliance_scores",
++   "policy contradiction_scans_rls on evidence.contradiction_scans",
++   "policy defense_preview_program_isolation on predicate.defense_previews",
++   "policy evidence_claims_program_isolation on evidence.claims",
++   "policy evidence_derivations_program_isolation on evidence.derivations",
++   "policy evidence_hash_ledger_program_isolation on evidence.hash_ledger",
++   "policy evidence_provenance_program_isolation on evidence.provenance",
++   "policy evidence_sources_program_isolation on evidence.sources",
++   "policy evidence_support_program_isolation on evidence.support",
++   "policy federated_admin on cortex.federated_learning_state",
++   "policy guidance_docs_admin on innovation.guidance_documents",
++   "policy propagation_org_policy on intelligent_docs.change_propagation_events",
++   "policy se_matrix_program_isolation on predicate.se_matrix_rows",
++   "policy source_docs_org_policy on intelligent_docs.source_documents",
++   "policy trace_links_org_policy on intelligent_docs.traceability_links",
++   "policy workspace_analytics_policy on innovation.workspace_analytics",

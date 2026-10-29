@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { CsrBuildDraftControl } from './CsrBuildProgress';
+import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
 const SOURCES = '/api/submission-orchestrator/csr/sources';
@@ -73,7 +74,7 @@ function ClinicalTable({ table }: { table: Table }) {
 }
 function SourceTables({ source, tables }: { source: CsrSourceReceipt; tables: Tables }) {
   return <div>
-    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · data cut {source.dataCutDate}</p>
+    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · {source.studyInfo.nctNumber ?? 'no ClinicalTrials.gov number in the source'} · data cut {source.dataCutDate}</p>
     <p>Source: {source.documentTitle}, version {source.version}</p>
     <details><summary>Source fingerprint</summary><code style={{ overflowWrap: 'anywhere' }}>{source.sha256}</code></details>
     {Object.entries(tables).filter((entry): entry is [string, Table] => Boolean(entry[1])).map(([key, table]) => <ClinicalTable key={`${source.sha256}:${key}`} table={table} />)}
@@ -171,6 +172,9 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
     <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
+    {/* Pivotal declarations (D5, 2026-10-29) on the CSR card a launch screen shows; the
+        CSR workflow board, where they also appear, is not a launch surface. */}
+    <StudyPivotalDeclarations scope={{ programId }} />
   </section>;
 }
 

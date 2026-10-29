@@ -1,0 +1,70 @@
+"""Write each mutation's exact old/new text (regions separated by a line =====) and its runner line."""
+import pathlib
+
+P = pathlib.Path('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass')
+M = P / 'muts'
+M.mkdir(exist_ok=True)
+CONV = 'migrations/20261029j_no_session_rls_bypass.sql'
+DEPLOY = f'{P}/deploy-then-test.sh'
+ONGREEN = f'{P}/run-dbtest-db.sh {P}/mut-src c2c_rls_green_tpl c2c_rls_mut tests/db/no-session-rls-bypass.dbtest.ts'
+GATE = 'node scripts/ci/check-session-scoped-rls-bypass.mjs'
+SELFTEST = 'node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs'
+TWIN_UNIT = 'npx vitest run server/services/innovation/__tests__/readiness-twin-records-only-what-it-assessed.test.ts'
+
+muts = [
+    ('M1-convergence-cannot-clean-a-helper', CONV,
+     "[ \\t]*IF\\s+current_setting\\([^)]*bypass_rls",
+     "[ \\t]*IF\\s+NEVER_current_setting\\([^)]*bypass_rls", DEPLOY),
+    ('M2-convergence-skips-helpers-and-its-assertion', CONV,
+     "    EXECUTE v_new;\n=====\n  IF v_left IS NOT NULL THEN",
+     "    NULL;\n=====\n  IF FALSE THEN", DEPLOY),
+    ('M3-evidence-creator-never-converges-a-stored-policy', 'db/migrations/20260206_phase5_evidence_fabric.sql',
+     "       AND coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') LIKE '%app.bypass_rls%'",
+     "       AND coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') LIKE '%never-matches%'", DEPLOY),
+    ('M4-workspace-analytics-keeps-is-admin', CONV,
+     "                    AND coalesce(pg_get_expr(polqual, polrelid), '') LIKE '%app.is_admin%') THEN\n    ALTER POLICY",
+     "                    AND FALSE) THEN\n    ALTER POLICY", DEPLOY),
+    ('M5-convergence-recreates-helpers-on-every-run', CONV,
+     "    CONTINUE WHEN position('bypass_rls' IN (SELECT prosrc FROM pg_proc WHERE oid = to_regprocedure(v_fn))) = 0;\n",
+     "", ONGREEN),
+    ('M6-evidence-creator-alters-on-every-run', 'db/migrations/20260206_phase5_evidence_fabric.sql',
+     "       AND coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') LIKE '%app.bypass_rls%'\n",
+     "", ONGREEN),
+    ('M7-preflight-never-refuses', 'scripts/db/program-same-org-preflight.mjs',
+     "  if (!held || (enforceArm && !enforcing)) return null;",
+     "  if (held || !held) return null;", ONGREEN),
+    ('M8-twin-sets-the-bypass-again', 'server/services/innovation/submission-readiness-twin-service.ts',
+     "    try {\n      // Resolve submission type through the canonical bridge",
+     "    try {\n      await client.query(\"SET app.bypass_rls = 'true'\");\n      // Resolve submission type through the canonical bridge", GATE),
+    ('M9-twin-returns-an-unconfirmed-connection', 'server/services/innovation/submission-readiness-twin-service.ts',
+     "      client.release(discard);", "      client.release();", TWIN_UNIT),
+    ('M10-preflight-lifts-the-bypass-again', 'scripts/db/program-same-org-preflight.mjs',
+     "    await client.query(`SELECT set_config('app.rls_enforce', 'off', true)`);",
+     "    await client.query(`SELECT set_config('app.rls_enforce', 'off', true), set_config('app.bypass_rls', 'true', true)`);", GATE),
+    ('M11-fresh-install-helper-reads-the-bypass', 'db/migrations/069_gcc_multitenant_rls_expansion.sql',
+     "  v_has_auth BOOLEAN := FALSE;\nBEGIN\n  IF p_program_id IS NULL THEN\n    RETURN FALSE;\n  END IF;\n\n  SELECT core.get_program_org_id(p_program_id) INTO v_program_org_id;\n\n  -- If program org",
+     "  v_has_auth BOOLEAN := FALSE;\nBEGIN\n  IF current_setting('app.bypass_rls', TRUE) = 'true' THEN\n    RETURN TRUE;\n  END IF;\n\n  IF p_program_id IS NULL THEN\n    RETURN FALSE;\n  END IF;\n\n  SELECT core.get_program_org_id(p_program_id) INTO v_program_org_id;\n\n  -- If program org",
+     GATE),
+    ('M12-gate-reads-no-sql', 'scripts/ci/check-session-scoped-rls-bypass.mjs',
+     "  for (const m of text.matchAll(READER)) readers.push(`${rel}:${lineOf(text, m.index)}`);\n}\nfor (const rel of SEARCH_DIRS",
+     "  void text;\n}\nfor (const rel of SEARCH_DIRS", SELFTEST),
+    ('M13-gate-strips-no-sql-comments', 'scripts/ci/check-session-scoped-rls-bypass.mjs',
+     "const stripSql = (sql) => sql.replace(/\\/\\*[\\s\\S]*?\\*\\//g, ' ').replace(/--[^\\n]*/g, ' ');",
+     "const stripSql = (sql) => sql;", SELFTEST),
+    ('M14-gate-lets-scripts-write-the-bypass', 'scripts/ci/check-session-scoped-rls-bypass.mjs',
+     "  if (writes) {", "  if (writes && false) {", SELFTEST),
+    ('M15-gate-reads-tests-as-product-code', 'scripts/ci/check-session-scoped-rls-bypass.mjs',
+     "  if (rel === SELF || rel === SELFTEST || isTestPath(rel)) continue;",
+     "  if (rel === SELF || rel === SELFTEST) continue;", SELFTEST),
+    ('M16-intelligent-docs-policy-keeps-the-bypass', 'db/migrations/20260129_phase5_intelligent_document_system.sql',
+     "  USING (\n    organization_id::text = current_setting('app.current_organization_id', true)\n  );\n\n-- Traceability Links Policy",
+     "  USING (\n    organization_id::text = current_setting('app.current_organization_id', true)\n    OR current_setting('app.bypass_rls', true) = 'true'\n  );\n\n-- Traceability Links Policy",
+     DEPLOY),
+]
+lines = []
+for name, rel, old, new, cmd in muts:
+    (M / f'{name}.old').write_text(old)
+    (M / f'{name}.new').write_text(new)
+    lines.append(f'{name}\t{rel}\t{cmd}')
+(M / 'list.tsv').write_text('\n'.join(lines) + '\n')
+print(len(muts), 'mutations written')

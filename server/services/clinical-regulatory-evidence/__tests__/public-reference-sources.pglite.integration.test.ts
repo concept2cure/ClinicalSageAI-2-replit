@@ -37,7 +37,6 @@ function sourceFixture(pageTexts = ['First page: study design.', 'Second page: s
     permittedUse: { retrieval: 'allowed', basis: 'Test disposition only', sourceUrl: 'https://www.fda.gov/test-source' },
     retention: { status: 'retained', artifactPath, sha256: checksum, bytes: bytes.length },
     extraction: { status: 'extracted_unreviewed', textSha256: hash(text), pageCount: pages.length, pages },
-    fit: { targetStudyId: 'NCT05330182', rationale: 'External reference comparison only.', limitations: ['Not client results.'] },
   } };
 }
 async function insert(options: { title?: string; organizationId?: number; visibility?: string; sourceType?: string;
@@ -93,7 +92,11 @@ describe('public reference catalog and explicit scope', () => {
 
   it('fails closed when a catalog row has invalid or incomplete reference metadata', async () => {
     await insert({ title: 'Valid report' });
-    await insert({ title: 'Broken manifest', reference: { schemaVersion: 1, evidenceRole: 'external_reference' } });
+    // Admitted by the SQL filters (version, role, both flags) but missing the rest of its identity, so
+    // only the manifest check can refuse it. Without the two flags the SQL excluded the row before
+    // that check, the search resolved, and this case failed (it did at d56be445f; D6, 2026-10-29).
+    await insert({ title: 'Broken manifest', reference: { schemaVersion: 1, evidenceRole: 'external_reference',
+      clientStudyEvidence: false, trainingApproved: false } });
     await expect(searchPublicReferenceSources(42, {}, executor)).rejects.toMatchObject({
       code: 'SOURCE_MANIFEST_INVALID',
     });
@@ -116,14 +119,21 @@ describe('public reference catalog and explicit scope', () => {
     }
   });
 
-  it('finds recorded study applicability without claiming that the reference is client evidence', async () => {
-    const fixture = sourceFixture(); fixture.reference.fit.rationale = 'LMN-201 reporting comparison only.';
-    const selected = await insert({ reference: fixture.reference });
+  it('never returns or searches a stored fit: a public reference names no tenant study (P-66)', async () => {
+    // The shape version 1 of the CDI seed stored (migrations/20261027_cdi_public_reference_seed.sql).
+    const tailored = { ...sourceFixture().reference, fit: { targetStudyId: 'NCT05330182',
+      rationale: 'LMN-201 reporting comparison only.', limitations: ['Not client results.'] } };
+    const selected = await insert({ title: 'Tailored report', reference: tailored });
+    const found = await searchPublicReferenceSources(42, { query: 'Tailored' }, executor);
+    expect(found.sources.map(source => source.sourceId)).toEqual([selected]);
+    expect(found.sources[0]).not.toHaveProperty('fit');
+    expect(JSON.stringify(found)).not.toMatch(/NCT05330182|LMN-201|targetStudyId/);
     for (const query of ['NCT05330182', 'LMN-201']) {
-      const result = await searchPublicReferenceSources(42, { query }, executor);
-      expect(result.sources.map(source => source.sourceId)).toEqual([selected]);
-      expect(result.sources[0].clientStudyEvidence).toBe(false);
+      expect((await searchPublicReferenceSources(42, { query }, executor)).sources, query).toEqual([]);
     }
+    const page = await readPublicReferencePages(42, { sourceId: selected }, dependencies);
+    expect(page).not.toHaveProperty('fit');
+    expect(JSON.stringify(page)).not.toMatch(/NCT05330182|LMN-201|targetStudyId/);
   });
 
   it('paginates stable source ids and applies indication/phase filters', async () => {

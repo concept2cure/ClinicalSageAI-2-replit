@@ -26,6 +26,8 @@ export interface PmaSurfaceProps {
   onAskAna: (text: string) => void;
   /** Open the one document editor; a section ref deep-links to that section. */
   onOpenEditor?: (section?: EditorSectionRef) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
 /* Slice 0, the map's `device-pma` row ("it states only the recorded stage, and
@@ -83,7 +85,7 @@ export function useRecordedPhaseLine(programId: string | null): string | null {
   return `Project phase: ${PROJECT_PHASE_LABEL[phase as ProgramPhase] ?? phase.replace(/_/g, ' ')}`;
 }
 
-export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps) {
+export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: PmaSurfaceProps) {
   /* Slice 0: the taxonomy, no position — see the note above PROJECT_PHASE_LABEL. */
   const phases = PMA_PHASES;
   const phaseLine = useRecordedPhaseLine(program ? String(program.id) : null);
@@ -322,6 +324,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={program?.id ?? null}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

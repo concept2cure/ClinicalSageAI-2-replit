@@ -1,0 +1,189 @@
+# Mutations: each applied alone to the scratch copy of the finished tree (mut-src), the check that should catch it run, the file restored and sha256-checked.
+# Base 92bb29868b853c4be94f31c19efeee50d192f5a1 + this change. DB mutations: deploy-then-test.sh = a database installed at the base, deploy-migrate from mut-src, then the P-70 dbtest on it.
+
+### M1-convergence-cannot-clean-a-helper
+file: migrations/20261029j_no_session_rls_bypass.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/deploy-then-test.sh
+exit: 1 -> KILLED
+deploy-migrate exit 1
+583:  ✗ failed:  migrations/20261029j_no_session_rls_bypass.sql — P-70: identity.can_access_org(uuid) still reads app.bypass_rls after the edit; its stored body is not the shape 053/069 wrote. Replace it by hand.
+585:❌ Deploy migration failed: migration halted at migrations/20261029j_no_session_rls_bypass.sql — P-70: identity.can_access_org(uuid) still reads app.bypass_rls after the edit; its stored body is not the shape 053/069 wrote. Replace it by hand. (444/448 applied before the failure)
+restored byte for byte (sha256 437810c23ad2f79b…): True
+
+### M2-convergence-skips-helpers-and-its-assertion
+file: migrations/20261029j_no_session_rls_bypass.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/deploy-then-test.sh
+exit: 1 -> KILLED
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role reads A's rows and none of B's 8ms
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, no helper admits B's program or organization 2ms
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role writes none of B's rows 3ms
+ Test Files  1 failed (1)
+      Tests  7 failed | 22 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > no policy, and no function outside pg_catalog, reads app.bypass_rls or app.is_admin
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role reads A's rows and none of B's
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, no helper admits B's program or organization
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, no helper admits B's program or organization
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role writes none of B's rows
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role reads A's rows and none of B's
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role writes none of B's rows
+restored byte for byte (sha256 437810c23ad2f79b…): True
+
+### M3-evidence-creator-never-converges-a-stored-policy
+file: db/migrations/20260206_phase5_evidence_fabric.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/deploy-then-test.sh
+exit: 1 -> KILLED
+deploy-migrate exit 1
+583:  ✗ failed:  migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy evidence_claims_program_isolation on evidence.claims, policy evidence_derivations_program_isolation on evidence.derivations, policy evidence_hash_ledger_program_isolation on evidence.hash_ledger, policy evidence_provenance_program_isolation on evidence.provenance, policy evidence_sources_program_isolation on evidence.sources, policy evidence_support_program_isolation on evidence.support
+585:❌ Deploy migration failed: migration halted at migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy evidence_claims_program_isolation on evidence.claims, policy evidence_derivations_program_isolation on evidence.derivations, policy evidence_hash_ledger_program_isolation on evidence.hash_ledger, policy evidence_provenance_program_isolation on evidence.provenance, policy evidence_sources_program_isolation on evidence.sources, policy evidence_support_program_isolation on evidence.support (444/448 applied before the failure)
+restored byte for byte (sha256 4d0268e8831dcbb1…): True
+
+### M4-workspace-analytics-keeps-is-admin
+file: migrations/20261029j_no_session_rls_bypass.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/deploy-then-test.sh
+exit: 1 -> KILLED
+deploy-migrate exit 1
+583:  ✗ failed:  migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy workspace_analytics_policy on innovation.workspace_analytics
+585:❌ Deploy migration failed: migration halted at migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy workspace_analytics_policy on innovation.workspace_analytics (444/448 applied before the failure)
+restored byte for byte (sha256 437810c23ad2f79b…): True
+
+### M5-convergence-recreates-helpers-on-every-run
+file: migrations/20261029j_no_session_rls_bypass.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/run-dbtest-db.sh /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/mut-src c2c_rls_green_tpl c2c_rls_mut tests/db/no-session-rls-bypass.dbtest.ts
+exit: 1 -> KILLED
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy 125ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy
+restored byte for byte (sha256 437810c23ad2f79b…): True
+
+### M6-evidence-creator-alters-on-every-run
+file: db/migrations/20260206_phase5_evidence_fabric.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/run-dbtest-db.sh /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/mut-src c2c_rls_green_tpl c2c_rls_mut tests/db/no-session-rls-bypass.dbtest.ts
+exit: 1 -> KILLED
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy 125ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy
+restored byte for byte (sha256 4d0268e8831dcbb1…): True
+
+### M7-preflight-never-refuses
+file: scripts/db/program-same-org-preflight.mjs
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/run-dbtest-db.sh /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/mut-src c2c_rls_green_tpl c2c_rls_mut tests/db/no-session-rls-bypass.dbtest.ts
+exit: 1 -> KILLED
+ × tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same-organization preflight refuses vault.documents as a role row security holds, rather than under-count it 70ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same-organization preflight refuses vault.documents as a role row security holds, rather than under-count it
+restored byte for byte (sha256 d0135cdbe375c468…): True
+
+### M8-twin-sets-the-bypass-again
+file: server/services/innovation/submission-readiness-twin-service.ts
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.mjs
+exit: 1 -> KILLED
+[ci:session-scoped-rls-bypass] ❌ 1 problem(s):
+  • server/services/innovation/submission-readiness-twin-service.ts: 1 session-scoped bypass set(s) — this file is not in the baseline
+  Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+  (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+restored byte for byte (sha256 e02a0efbd42d5279…): True
+
+### M9-twin-returns-an-unconfirmed-connection
+file: server/services/innovation/submission-readiness-twin-service.ts
+command: bash -c npx vitest run server/services/innovation/__tests__/readiness-twin-records-only-what-it-assessed.test.ts
+exit: 1 -> KILLED
+ × server/services/innovation/__tests__/readiness-twin-records-only-what-it-assessed.test.ts > P-70: no session setting widens the tenant scope > returns the connection after an assessment, and destroys it when the rollback cannot be confirmed 7ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/innovation/__tests__/readiness-twin-records-only-what-it-assessed.test.ts > P-70: no session setting widens the tenant scope > returns the connection after an assessment, and destroys it when the rollback cannot be confirmed
+restored byte for byte (sha256 e02a0efbd42d5279…): True
+
+### M10-preflight-lifts-the-bypass-again
+file: scripts/db/program-same-org-preflight.mjs
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.mjs
+exit: 1 -> KILLED
+[ci:session-scoped-rls-bypass] ❌ 1 problem(s):
+  • scripts/db/program-same-org-preflight.mjs: 1 write(s) of app.bypass_rls / app.is_admin — no policy reads either since P-70; a cross-tenant read goes through a reviewed SECURITY DEFINER door or a role granted only to that path
+  Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+  (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+restored byte for byte (sha256 d0135cdbe375c468…): True
+
+### M11-fresh-install-helper-reads-the-bypass
+file: db/migrations/069_gcc_multitenant_rls_expansion.sql
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.mjs
+exit: 1 -> KILLED
+[ci:session-scoped-rls-bypass] ❌ 1 problem(s):
+  • db/migrations/069_gcc_multitenant_rls_expansion.sql:177: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+  Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+  (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+restored byte for byte (sha256 c502610abb61516e…): True
+
+### M12-gate-reads-no-sql
+file: scripts/ci/check-session-scoped-rls-bypass.mjs
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+exit: 1 -> KILLED
+  ✗ RED — a deploy-set migration whose policy honours the bypass, named by file and line
+      expected exit 1, got 0
+      | [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (1 migration file(s) and 1 code file(s) read), and no script writes either (P-70).
+  ✗ RED — a SECURITY DEFINER helper that returns TRUE on app.is_admin, inside a dollar-quoted body, spaces before the quote
+      expected exit 1, got 0
+      | [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (1 migration file(s) and 1 code file(s) read), and no script writes either (P-70).
+  ✗ RED — a reader in a file on no applier (db/migrations/_legacy/) still fails: it is one list entry from a deploy
+      expected exit 1, got 0
+      | [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (1 migration file(s) and 1 code file(s) read), and no script writes either (P-70).
+[ci:session-scoped-rls-bypass:selftest] FAIL — 3/36 case(s) did not hold against scripts/ci/check-session-scoped-rls-bypass.mjs.
+restored byte for byte (sha256 3981cc96e35c15f4…): True
+
+### M13-gate-strips-no-sql-comments
+file: scripts/ci/check-session-scoped-rls-bypass.mjs
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+exit: 1 -> KILLED
+  ✗ quiet — the reader quoted in SQL comments, and the LIKE / ~ / regex shapes that find a stored reader without being one
+      expected exit 0, got 1
+      | [ci:session-scoped-rls-bypass] ❌ 2 problem(s):
+      |   • migrations/20261029j_no_session_rls_bypass.sql:1: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+      |   • migrations/20261029j_no_session_rls_bypass.sql:2: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+      |   Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+      |   (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+[ci:session-scoped-rls-bypass:selftest] FAIL — 1/36 case(s) did not hold against scripts/ci/check-session-scoped-rls-bypass.mjs.
+restored byte for byte (sha256 3981cc96e35c15f4…): True
+
+### M14-gate-lets-scripts-write-the-bypass
+file: scripts/ci/check-session-scoped-rls-bypass.mjs
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+exit: 1 -> KILLED
+  ✗ RED — a session-scoped SET of the bypass in a scripts/ .cjs file (formerly KNOWN GAP 5)
+      expected exit 1, got 0
+      | [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (0 migration file(s) and 2 code file(s) read), and no script writes either (P-70).
+  ✗ RED — a script that lifts the bypass transaction-locally (the preflight before P-70): no policy reads it, and none may
+      expected exit 1, got 0
+      | [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (0 migration file(s) and 2 code file(s) read), and no script writes either (P-70).
+[ci:session-scoped-rls-bypass:selftest] FAIL — 2/36 case(s) did not hold against scripts/ci/check-session-scoped-rls-bypass.mjs.
+restored byte for byte (sha256 3981cc96e35c15f4…): True
+
+### M15-gate-reads-tests-as-product-code
+file: scripts/ci/check-session-scoped-rls-bypass.mjs
+command: bash -c node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+exit: 1 -> KILLED
+  ✗ quiet — a test that reads the setting to prove nothing honours it (tests are not product code)
+      expected exit 0, got 1
+      | [ci:session-scoped-rls-bypass] ❌ 2 problem(s):
+      |   • server/db/__tests__/no-bypass.test.ts:2: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+      |   • server/db/no-bypass.spec.ts:2: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).
+      |   Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or
+      |   (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,
+[ci:session-scoped-rls-bypass:selftest] FAIL — 1/36 case(s) did not hold against scripts/ci/check-session-scoped-rls-bypass.mjs.
+restored byte for byte (sha256 3981cc96e35c15f4…): True
+
+### M16-intelligent-docs-policy-keeps-the-bypass
+file: db/migrations/20260129_phase5_intelligent_document_system.sql
+command: bash -c /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass/deploy-then-test.sh
+exit: 1 -> KILLED
+deploy-migrate exit 1
+583:  ✗ failed:  migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy source_docs_org_policy on intelligent_docs.source_documents
+585:❌ Deploy migration failed: migration halted at migrations/20261029j_no_session_rls_bypass.sql — P-70: a session setting still lifts row-level security here: policy source_docs_org_policy on intelligent_docs.source_documents (444/448 applied before the failure)
+restored byte for byte (sha256 f7b171938d612e80…): True
+

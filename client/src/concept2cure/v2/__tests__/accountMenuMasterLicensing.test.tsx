@@ -103,8 +103,9 @@ describe('Account menu — Master Administration licensing entry', () => {
     expect(menuItems()).toContain('Admin');
     expect(menuItems()).toContain('Access requests');
     expect(menuItems()).not.toContain('Platform licensing');
-    // The customer's own subscription page stays reachable.
-    expect(menuItems()).toContain('Compare subscriptions');
+    // The customer's own subscription page stays reachable: for an
+    // administrator it is "Subscription & billing" (P-68; accountMenuBilling.test.tsx).
+    expect(menuItems()).toContain('Subscription & billing');
   });
 
   it('is not offered on masterAdmin alone — the commercial unlock is not console access', async () => {

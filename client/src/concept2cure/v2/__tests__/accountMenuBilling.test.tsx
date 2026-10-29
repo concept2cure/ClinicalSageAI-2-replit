@@ -1,15 +1,18 @@
 // @vitest-environment jsdom
 /**
- * Account menu — the Billing entry (D2, fold billing into Licensing, 2026-10-29;
- * docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/).
+ * Account menu — the billing administrator's one subscription entry (D2, fold
+ * billing into Licensing; decision P-68; docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/).
  *
  * "Billing" was in every member's menu and opened the `billing` screen, whose
- * invoice list answered any member. The invoices are on Licensing now, for
- * billing administrators, and the route refuses anyone else. The entry follows
- * them: it opens Licensing and is offered when the session carries the
- * permission the server derives from the route's own role list
- * (BILLING_ADMIN_PERMISSION). Usage & limits and Compare subscriptions stay in
- * every member's menu.
+ * invoice list answered any member. Part 1 moved the invoices to Licensing for
+ * billing administrators and pointed "Billing" there, which left a billing
+ * administrator two doors to one screen, "Billing" and "Compare subscriptions".
+ * P-68: a billing administrator's menu has one entry, "Subscription & billing",
+ * opening Licensing (INFORMATION_ARCHITECTURE.md section 9); every member keeps
+ * "Usage & limits", and a member who is not a billing administrator keeps
+ * "Compare subscriptions". The entry follows the permission the server derives
+ * from the billing routes' own role list (BILLING_ADMIN_PERMISSION), not the
+ * broader org-admin test.
  *
  * The real Rail over the real NavEntitlementsProvider, network stubbed.
  */
@@ -68,31 +71,36 @@ afterEach(() => {
   auth.permissions = undefined;
 });
 
-describe('Account menu — Billing', () => {
-  it('is not offered to a member; Usage & limits and Compare subscriptions are', async () => {
+describe('Account menu — the subscription entry (P-68)', () => {
+  it('a member keeps Usage & limits and Compare subscriptions, and has no billing entry', async () => {
     auth.roles = ['member', 'user'];
     auth.permissions = ['governed:write'];
-    const { items } = await openAccountMenu();
-    expect(items()).not.toContain('Billing');
+    const { items, onNav } = await openAccountMenu();
     expect(items()).toContain('Usage & limits');
     expect(items()).toContain('Compare subscriptions');
+    expect(items()).not.toContain('Subscription & billing');
+    expect(items()).not.toContain('Billing');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Compare subscriptions' }));
+    expect(onNav).toHaveBeenCalledWith('licensing');
   });
 
-  it('is not offered to an organisation administrator whose session lacks the billing permission', async () => {
-    // isOrgAdmin admits business_admin; the billing guard does not. The menu
-    // follows the guard's permission, not the broader admin test.
+  it('an organisation administrator whose session lacks the billing permission is offered what a member is', async () => {
+    // isOrgAdmin admits business_admin; the billing guard does not.
     auth.roles = ['business_admin', 'user'];
     auth.permissions = ['governed:write'];
     const { items } = await openAccountMenu();
     expect(items()).toContain('Admin');
-    expect(items()).not.toContain('Billing');
+    expect(items()).toContain('Compare subscriptions');
+    expect(items()).not.toContain('Subscription & billing');
   });
 
-  it('is offered to a billing administrator and opens Licensing, never the retired billing screen', async () => {
+  it('a billing administrator has one entry, Subscription & billing, opening Licensing, and Usage & limits', async () => {
     auth.permissions = ['governed:write', 'report:finalize', 'audit:attest', 'billing:admin'];
     const { items, onNav } = await openAccountMenu();
-    expect(items()).toContain('Billing');
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Billing' }));
+    const toLicensing = items().filter((i) => ['Subscription & billing', 'Compare subscriptions', 'Billing'].includes(i));
+    expect(toLicensing).toEqual(['Subscription & billing']);
+    expect(items()).toContain('Usage & limits');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Subscription & billing' }));
     expect(onNav).toHaveBeenCalledWith('licensing');
     expect(onNav).not.toHaveBeenCalledWith('billing');
   });

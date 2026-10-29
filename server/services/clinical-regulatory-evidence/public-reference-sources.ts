@@ -39,6 +39,11 @@ const extractionSchema = z.object({
   pageCount: z.number().int().positive().max(10000),
 });
 // The catalog permits absent retention/extraction. The text reader requires both.
+// No `fit` (P-66, 2026-10-29): version 1 of the CDI seed named one tenant's study
+// as every source's fit target, and this reader returned it to every tenant. The
+// field is not part of the contract, so a stored one is stripped here and never
+// returned or searched. No engine computes a fit from a project's own records,
+// and this reader is not given a project, so none is computed either.
 const referenceSchema = z.object({
   schemaVersion: z.literal(1), documentClass: z.string().min(1).max(100),
   studyFamily: z.string().min(1).max(300), evidenceRole: z.literal('external_reference'),
@@ -46,8 +51,6 @@ const referenceSchema = z.object({
   permittedUse: z.object({ retrieval: z.enum(['allowed', 'review_required', 'restricted']),
     basis: z.string().min(1).max(4000), sourceUrl: httpsUrl }),
   retention: retentionSchema.nullish(), extraction: extractionSchema.nullish(),
-  fit: z.object({ targetStudyId: z.string().min(1).max(100), rationale: z.string().min(1).max(4000),
-    limitations: z.array(z.string().min(1).max(2000)).max(30) }).optional(),
 });
 type PublicReference = z.infer<typeof referenceSchema>;
 type Retention = z.infer<typeof retentionSchema>;
@@ -117,7 +120,6 @@ function summary(row: SourceRow, reference: PublicReference) {
     sourceSha256: row.checksum,
     contentAccess: reference.permittedUse.retrieval !== 'allowed' ? reference.permittedUse.retrieval
       : reference.retention && reference.extraction ? 'requires_integrity_check' : 'not_retained_and_extracted',
-    ...(reference.fit ? { fit: reference.fit } : {}),
   };
 }
 
@@ -149,8 +151,7 @@ export async function searchPublicReferenceSources(organizationId: number, input
       AND ($2::text IS NULL OR s.phase = $2)
       AND ($3::text IS NULL OR concat_ws(' ', s.title, s.sponsor, s.product, s.indication, s.source_record_identifier,
       s.trial_registry_identifier, s.source_type, s.metadata->'publicReference'->>'documentClass',
-      s.metadata->'publicReference'->>'studyFamily', s.metadata->'publicReference'->'fit'->>'targetStudyId',
-      s.metadata->'publicReference'->'fit'->>'rationale', s.metadata->'publicReference'->'fit'->'limitations')
+      s.metadata->'publicReference'->>'studyFamily')
       ILIKE $3 ESCAPE '\\')
     ORDER BY s.id ASC LIMIT $4 OFFSET $5`,
   [validated.indication ? escapedLike(validated.indication) : null, validated.phase ?? null,

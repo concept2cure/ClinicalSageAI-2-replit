@@ -200,6 +200,8 @@ export interface CSRBuildRequest {
     sampleSize?: number;
     treatmentDuration?: string;
     targetAgencies?: string[];
+    /** The study's ClinicalTrials.gov registration (NCT and eight digits), from the approved source. */
+    nctNumber?: string;
   };
   deepResearchJobId?: number; // Pull data from a completed deep research job
   sectionsToGenerate?: string[]; // Specific sections, or all if empty
@@ -614,6 +616,7 @@ You are drafting a section of a Clinical Study Report for a ${info.phase} clinic
 Study Details:
 - Title: ${info.title}
 - Protocol: ${info.protocolNumber}
+${info.nctNumber ? `- ClinicalTrials.gov: ${info.nctNumber}` : ''}
 - Phase: ${info.phase}
 - Indication: ${info.indication}
 - Sponsor: ${info.sponsor}
@@ -784,6 +787,11 @@ export async function compareWithExistingCSRs(
 // name (RULE 2). AE figures come from the engine AE tables of a retained run,
 // read through AnA's get_csr_section_evidence.
 
+/** The registration line a title page or synopsis prints, when the source states one. */
+function registryLine(info: CSRBuildRequest['studyInfo']): string {
+  return info.nctNumber ? `ClinicalTrials.gov Identifier: ${info.nctNumber}\n` : '';
+}
+
 /**
  * Template-based section generation (fallback when AI unavailable).
  */
@@ -792,10 +800,10 @@ function generateSectionTemplate(
   info: CSRBuildRequest['studyInfo']
 ): string {
   const templates: Record<string, string> = {
-    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}\nPhase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\nInvestigational Product: ${info.investigationalProduct}\n${info.comparator ? `Comparator: ${info.comparator}\n` : ''}`,
+    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\nInvestigational Product: ${info.investigationalProduct}\n${info.comparator ? `Comparator: ${info.comparator}\n` : ''}`,
 
     // E3 does not number synopsis fields; the synopsis is one heading.
-    '2': `Study Title: ${info.title}\nProtocol Number: ${info.protocolNumber}\nStudy Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nMethodology: This was a ${info.studyDesign} study of ${info.investigationalProduct}${info.comparator ? ` versus ${info.comparator}` : ''} in patients with ${info.indication}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` The treatment duration was ${info.treatmentDuration}.` : ''}\n\nResults and conclusions: [DATA TO BE INSERTED]`,
+    '2': `Study Title: ${info.title}\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Study Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nMethodology: This was a ${info.studyDesign} study of ${info.investigationalProduct}${info.comparator ? ` versus ${info.comparator}` : ''} in patients with ${info.indication}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` The treatment duration was ${info.treatmentDuration}.` : ''}\n\nResults and conclusions: [DATA TO BE INSERTED]`,
 
     // Study metadata alone does not establish ethics approval, informed
     // consent or compliance; each E3 §5 heading says what its records must show.

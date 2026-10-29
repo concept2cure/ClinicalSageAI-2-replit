@@ -6,25 +6,13 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import { getSurfaceMeta } from '../registryModel';
+import { RateLimitsCard, rateLimitContext, useRateLimits } from './UsageRateLimits';
 
-/* ── Per-tier rate limits — canonical rate card, verbatim from the server's
-   RATE_LIMITS grid (billing-dashboard.ts). This is reference config, NOT
-   fixture data: a published per-tier rate card rendered for comparison,
-   with the org's real tier highlighted. ── */
-
-interface RateLimit {
-  requestsPerMinute: number;
-  requestsPerDay: number;
-  tokensPerMinute: number;
-  tokensPerDay: number;
-}
-
-const USAGE_RATE_LIMITS: Record<string, RateLimit> = {
-  free: { requestsPerMinute: 10, requestsPerDay: 100, tokensPerMinute: 10000, tokensPerDay: 100000 },
-  standard: { requestsPerMinute: 60, requestsPerDay: 5000, tokensPerMinute: 100000, tokensPerDay: 1000000 },
-  professional: { requestsPerMinute: 120, requestsPerDay: 20000, tokensPerMinute: 500000, tokensPerDay: 5000000 },
-  enterprise: { requestsPerMinute: 500, requestsPerDay: 100000, tokensPerMinute: 2000000, tokensPerDay: 20000000 },
-};
+/* ── Rate limits are the platform's, read from the server (P-68). This file
+   held a client copy of a per-tier grid (USAGE_RATE_LIMITS) that no limiter
+   enforced, highlighted with the organisation's tier. UsageRateLimits.tsx reads
+   GET /api/billing/rate-limits, which states server/config/platform-limits.ts:
+   the same for every subscription. ── */
 
 /* ── Credits are NOT shown (settings/integrity audit 2026-10-17, finding 4).
    The credit ledger (server/services/credit-ledger.ts) is never spent:
@@ -39,9 +27,10 @@ const USAGE_RATE_LIMITS: Record<string, RateLimit> = {
    2026-10-29). It was this screen's Billing tab, shown to every member under
    both ids. It moved to Licensing under the plan status (LicensingInvoices.tsx),
    for billing administrators, which is also who GET /api/billing/invoices now
-   admits. Usage, the weekly caps and the rate card stay here, on 'usage', for
-   every member: they are what a member runs into while working, and Licensing
-   is where a subscription is bought. ── */
+   admits, and the `billing` id is an alias of Licensing. Usage, the weekly caps
+   and the rate limits stay here, on 'usage', for every member: they are what a
+   member runs into while working, and Licensing is where a subscription is
+   bought. ── */
 
 /* ── Live response shapes — aligned to the real /api/billing payload.
    GET /usage/limits → UsageLimitsSnapshot (services/usage-windows.ts)
@@ -89,12 +78,6 @@ interface LiveUsageSnapshot {
 const isUsageSnapshot: ShapeGuard<LiveUsageSnapshot> = hasKeys<LiveUsageSnapshot>('plan', 'weekly');
 
 /* ── Helpers ── */
-
-function _fmt(n: number): string {
-  if (n >= 1000000) return n / 1000000 + 'M';
-  if (n >= 1000) return n / 1000 + 'K';
-  return String(n);
-}
 
 /** ISO → "Sun 8:00 AM" (weekly reset display shape); "—" when absent. */
 function fmtResetAt(iso: string | null): string {
@@ -175,59 +158,33 @@ function Panel<T>({
   return <>{children(state.data)}</>;
 }
 
-/* ── Usage & limits surface ──
-   Mounted under both `usage` and `billing` registry ids until `billing` is
-   retired as an alias of Licensing; both open on the usage tab, since the
-   invoice list moved to Licensing. */
+/* ── Usage & limits surface (id `usage`) ── */
 
-export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
+export function UsageBilling({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState<'usage' | 'limits'>('usage');
 
-  // One org-scoped GET behind /api/billing (billing-dashboard.ts), a real DB
-  // read. No fixtures: every panel renders live data, an honest empty, or an
-  // honest error.
+  // Two org-scoped GETs behind /api/billing (billing-dashboard.ts): the usage
+  // windows (a real DB read) and the enforced rate limits (useRateLimits). No
+  // fixtures: every panel renders live data, an honest empty, or an honest error.
   const usageState = useLiveData<LiveUsageSnapshot>(
     '/api/billing/usage/limits',
     ['/api/billing/usage/limits'],
     isUsageSnapshot,
   );
   const snap = usageState.data;
-
-  // Real org tier drives the plan label + the rate-limit table highlight;
-  // null while the snapshot is loading or unavailable (no fabricated tier).
-  const tier = snap ? snap.plan : null;
+  // The limits the platform enforces, the same for every subscription (P-68).
+  const rateLimits = useRateLimits();
 
   /* Was a dead write to `c2c_open_surface`, a key with no reader — so "View
      all plans" did nothing. The shell's `onNav` is what navigates. */
   const nav = (id: string) => onNav(id);
 
-  /* What AnA can see of this screen.
-     ONE component, TWO routable ids. `billing` and `usage` are separate
-     registry entries rendering this same file, and the shell reads context by
-     EXACT id — so publishing under a single literal would leave whichever id
-     was not chosen blind, with no symptom. Both hooks are therefore called
-     unconditionally (React requires that anyway) and the inactive one publishes
-     null, which clears only if it still owns the slot. The literals stay
-     literal so the CI gate can still see which ids this file claims.
-
-     `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id. */
-  const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
-
-  /* AnA can open either on-screen tab — the same click a person makes. `tab`
-     is local display state independent of which registry id (`usage`/
-     `billing`) is mounted, so the SAME handler body is registered under
-     whichever id currently owns the bus slot, mirroring the publish gating
-     just above/below. View-state only — nothing governed here. The billing
-     tab is gone with the invoice list, so asking for it says where the list
-     is instead of opening a tab that does not exist. */
+  /* AnA can open either on-screen tab — the same click a person makes.
+     View-state only — nothing governed here. The action's own declaration
+     (surface-actions.ts) offers only these two tabs since the billing tab
+     folded into Licensing. */
   const openTab: SurfaceActionHandler = (params) => {
     const target = params.tab;
-    if (target === 'billing') {
-      return {
-        ok: false,
-        reason: `Invoices are on ${getSurfaceMeta('licensing').label}, for billing administrators. This screen shows usage and rate limits.`,
-      };
-    }
     if (target !== 'usage' && target !== 'limits') {
       return { ok: false, reason: `"${target}" is not a usage tab.` };
     }
@@ -235,8 +192,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
     setTab(target);
     return { ok: true, detail: `Opened the ${target} tab` };
   };
-  useSurfaceActionHandlers(activeId === 'usage' ? 'usage' : null, { 'usage.open-tab': openTab });
-  useSurfaceActionHandlers(activeId === 'billing' ? 'billing' : null, { 'billing.open-tab': openTab });
+  useSurfaceActionHandlers('usage', { 'usage.open-tab': openTab });
 
   const anaContext = useMemo(() => {
     return {
@@ -250,7 +206,12 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
               (snap.session ? `, session window ${snap.session.pctUsed}% used over ${snap.session.windowHours}h` : '') +
               `, ${(snap.weekly ?? []).length} weekly cap bucket(s).`) +
         ' Usage credits are not metered, so no credit balance is shown. ' +
-        `Invoices are not on this screen: they are on ${getSurfaceMeta('licensing').label}, for billing administrators.`,
+        `Invoices are not on this screen: they are on ${getSurfaceMeta('licensing').label}, for billing administrators. ` +
+        (rateLimits.state.loading
+          ? 'The rate limits are still loading.'
+          : rateLimits.state.error || !rateLimits.state.data
+            ? 'The rate limits could not be read — a failure, not an absence of limits.'
+            : 'The rate limits on the limits tab are the ones the platform enforces, the same for every subscription.'),
       facts: {
         openTab: tab,
         plan: snap ? { tier: snap.plan, label: snap.planLabel, lastUpdated: snap.lastUpdated } : null,
@@ -258,16 +219,17 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         sessionWindow: snap?.session ?? null,
         weeklyCaps: snap?.weekly ?? null,
         credits: 'not metered — nothing draws down the credit ledger, so no balance is shown',
+        ...rateLimitContext(rateLimits.state),
       },
       availableActions: [
         'Switch between the usage and rate-limits tabs',
         'Read plan usage limits, the session window and the weekly caps',
+        'Read the rate limits the platform enforces, the same for every subscription',
         'Compare subscriptions on its own screen, where billing administrators read invoices',
       ],
     };
-  }, [tab, usageState.loading, usageState.error, snap]);
-  usePublishSurfaceContext('usage', activeId === 'usage' ? anaContext : null);
-  usePublishSurfaceContext('billing', activeId === 'billing' ? anaContext : null);
+  }, [tab, usageState.loading, usageState.error, snap, rateLimits.state]);
+  usePublishSurfaceContext('usage', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 1000 }}>
@@ -388,67 +350,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         </div>
       )}
 
-      {tab === 'limits' && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Rate limits by tier</span>
-            <span className="s">
-              Per plan tier
-            </span>
-          </div>
-          <div className="pj-card-b" style={{ padding: 0 }}>
-            <table className="ub-inv ub-rl">
-              <thead>
-                <tr>
-                  <th>Tier</th>
-                  <th>Req / min</th>
-                  <th>Req / day</th>
-                  <th>Tokens / min</th>
-                  <th>Tokens / day</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(USAGE_RATE_LIMITS).map(([t, l]) => (
-                  <tr key={t} data-cur={t === tier || undefined}>
-                    <td>
-                      <span
-                        className={
-                          'rd-chip tone-' + (t === tier ? 'ai' : 'idle')
-                        }
-                      >
-                        {t}
-                      </span>
-                    </td>
-                    <td>{_fmt(l.requestsPerMinute)}</td>
-                    <td>{_fmt(l.requestsPerDay)}</td>
-                    <td>{_fmt(l.tokensPerMinute)}</td>
-                    <td>{_fmt(l.tokensPerDay)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div
-            className="scaf-note"
-            style={{ margin: '12px 16px 16px' }}
-          >
-            {tier ? (
-              <>
-                Your organization is on the <b>{tier}</b> tier — weekly limits
-                and overage caps are governed (admin/owner, reason-for-change,
-                audited).
-              </>
-            ) : usageState.loading ? (
-              <span role="status">Loading your plan tier…</span>
-            ) : (
-              <>
-                Weekly limits and overage caps are governed (admin/owner,
-                reason-for-change, audited).
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {tab === 'limits' && <RateLimitsCard read={rateLimits} />}
 
     </div>
   );

@@ -17,7 +17,7 @@
  * POST /budgets            — Update budget settings
  * GET  /alerts/history     — Get alert history
  * POST /alerts/:id/acknowledge — Acknowledge a billing alert
- * GET  /rate-limits        — Get rate limits for current plan
+ * GET  /rate-limits        — The request limits the platform enforces (the same for every subscription)
  * GET  /activity           — Get recent billing activity
  */
 
@@ -48,6 +48,7 @@ import {
 import { resolveCapabilities } from '../services/entitlements/resolver.js';
 import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { BILLING_ADMIN_ROLES } from '../../shared/constants/permissions.js';
+import { RATE_LIMITS as ENFORCED_RATE_LIMITS, LEGACY_RATE_LIMITS } from '../config/platform-limits.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -528,66 +529,82 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /rate-limits — Get rate limits for current plan
+// GET /rate-limits — the request limits the platform enforces
+//
+// Decision P-68 (fold billing into Licensing, Part 2, 2026-10-29). This used
+// to answer from a per-tier grid written here (free 10 requests a minute …
+// enterprise 500, with per-module keys) that no limiter read, and told an
+// organisation with no tier it was on 'standard'. The limits the product
+// applies are server/config/platform-limits.ts, and neither varies by
+// subscription:
+//   - RATE_LIMITS: the Redis limiter on every /api request
+//     (server/startup/middleware.ts), by category (middleware/redisRateLimiter.ts
+//     getCategory);
+//   - LEGACY_RATE_LIMITS: the in-memory limiter, which the routers in
+//     SHARED_LIMITER_ROUTES mount after authentication, with one store shared
+//     across them. Some AnA actions in ana-features.ts set their own, lower
+//     ceilings on it.
+// The organisation's tier is reported as recorded, or as not recorded; it
+// changes no number here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Rate limit definitions per tier
-const RATE_LIMITS: Record<string, {
-  requestsPerMinute: number;
-  requestsPerDay: number;
-  tokensPerMinute: number;
-  tokensPerDay: number;
-  modules: Record<string, { requestsPerMinute: number; requestsPerDay: number }>;
-}> = {
-  free: {
-    requestsPerMinute: 10,
-    requestsPerDay: 100,
-    tokensPerMinute: 10_000,
-    tokensPerDay: 100_000,
-    modules: {
-      'ind-wizard': { requestsPerMinute: 5, requestsPerDay: 20 },
-      'csr-intelligence': { requestsPerMinute: 5, requestsPerDay: 30 },
-      'cer-generator': { requestsPerMinute: 3, requestsPerDay: 10 },
-      'vault': { requestsPerMinute: 10, requestsPerDay: 100 },
-    },
-  },
-  standard: {
-    requestsPerMinute: 60,
-    requestsPerDay: 5_000,
-    tokensPerMinute: 100_000,
-    tokensPerDay: 1_000_000,
-    modules: {
-      'ind-wizard': { requestsPerMinute: 20, requestsPerDay: 500 },
-      'csr-intelligence': { requestsPerMinute: 30, requestsPerDay: 1_000 },
-      'cer-generator': { requestsPerMinute: 15, requestsPerDay: 200 },
-      'vault': { requestsPerMinute: 60, requestsPerDay: 5_000 },
-    },
-  },
-  professional: {
-    requestsPerMinute: 120,
-    requestsPerDay: 20_000,
-    tokensPerMinute: 500_000,
-    tokensPerDay: 5_000_000,
-    modules: {
-      'ind-wizard': { requestsPerMinute: 60, requestsPerDay: 2_000 },
-      'csr-intelligence': { requestsPerMinute: 60, requestsPerDay: 5_000 },
-      'cer-generator': { requestsPerMinute: 40, requestsPerDay: 1_000 },
-      'vault': { requestsPerMinute: 120, requestsPerDay: 20_000 },
-    },
-  },
-  enterprise: {
-    requestsPerMinute: 500,
-    requestsPerDay: 100_000,
-    tokensPerMinute: 2_000_000,
-    tokensPerDay: 20_000_000,
-    modules: {
-      'ind-wizard': { requestsPerMinute: 200, requestsPerDay: 10_000 },
-      'csr-intelligence': { requestsPerMinute: 200, requestsPerDay: 20_000 },
-      'cer-generator': { requestsPerMinute: 100, requestsPerDay: 5_000 },
-      'vault': { requestsPerMinute: 500, requestsPerDay: 100_000 },
-    },
-  },
+/** What a person reads for each limiter category. */
+const RATE_LIMIT_LABELS: Record<string, string> = {
+  auth: 'Sign-in and account requests',
+  api: 'General requests',
+  ai: 'AI requests',
+  documents: 'Document generation, export and download',
+  document_metadata: 'Document details and history',
+  concept2cure: 'Workspace requests',
+  validation: 'Validation runs',
+  upload: 'File uploads',
 };
+
+/**
+ * The routers that mount the in-memory limiter (`createRateLimiter()`), by file
+ * under server/routes and by the name a person knows them by. Pinned both ways
+ * by billing-rate-limits-enforced.test.ts: each file mounts it, and every file
+ * that mounts it is listed.
+ */
+export const SHARED_LIMITER_ROUTES: ReadonlyArray<{ file: string; name: string }> = [
+  { file: 'submissions.ts', name: 'Submission Center' },
+  { file: 'submission-filed-baseline.ts', name: 'Filed submission baselines' },
+  { file: 'ind-lifecycle/shared.ts', name: 'IND lifecycle' },
+  { file: 'ind-forms.routes.ts', name: 'IND forms' },
+  { file: 'ind-master-data.routes.ts', name: 'IND master data' },
+  { file: 'etmf.routes.ts', name: 'eTMF' },
+  { file: 'cdisc-validation.routes.ts', name: 'CDISC validation' },
+  { file: 'ectd-documents.ts', name: 'eCTD document ingestion' },
+  { file: 'gateway-accounts.ts', name: 'Agency gateway accounts' },
+  { file: 'global-ri/_shared.ts', name: 'Global regulatory intelligence' },
+  { file: 'authoring-pdf.routes.ts', name: 'Authoring PDF' },
+  { file: 'ai-placement-policy.ts', name: 'AI placement policy' },
+  { file: 'ana-skills.ts', name: 'AnA skills' },
+  { file: 'ana-features.ts', name: 'AnA actions' },
+  { file: 'platform-capabilities.routes.ts', name: 'Platform capabilities' },
+  { file: 'regulatory-assessments.routes.ts', name: 'Regulatory assessments' },
+];
+
+interface LimitRule {
+  windowMs: number;
+  maxRequests: number;
+  maxRequestsAuthenticated?: number;
+  skipRoles?: readonly string[];
+}
+
+/** One limiter's rules as a person reads them: per signed-in user, per address, per window. */
+function limitRows(rules: Record<string, LimitRule>) {
+  return Object.entries(rules).map(([category, rule]) => ({
+    category,
+    label: RATE_LIMIT_LABELS[category] ?? category,
+    windowSeconds: rule.windowMs / 1000,
+    // Both limiters key a verified identity at maxRequestsAuthenticated when the
+    // rule sets one, and at maxRequests otherwise (resolveSubject in each).
+    perSignedInUser: rule.maxRequestsAuthenticated ?? rule.maxRequests,
+    perAddress: rule.maxRequests,
+    exemptRoles: [...(rule.skipRoles ?? [])],
+  }));
+}
 
 router.get('/rate-limits', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -596,18 +613,22 @@ router.get('/rate-limits', authenticateToken, async (req: Request, res: Response
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    // Look up the org's tier
     const orgResult = await pool.query(
       `SELECT tier FROM organizations WHERE id = $1`,
       [orgId],
     );
-
-    const tier = orgResult.rows[0]?.tier || 'standard';
-    const limits = RATE_LIMITS[tier] || RATE_LIMITS.standard;
+    const recorded = orgResult.rows[0]?.tier;
+    const tier = typeof recorded === 'string' && recorded.trim() ? recorded : null;
 
     res.json({
       tier,
-      limits,
+      tierRecorded: tier !== null,
+      sameForEverySubscription: true,
+      limits: limitRows(ENFORCED_RATE_LIMITS as unknown as Record<string, LimitRule>),
+      sharedRouteLimits: {
+        appliesTo: SHARED_LIMITER_ROUTES.map((r) => r.name),
+        limits: limitRows(LEGACY_RATE_LIMITS as unknown as Record<string, LimitRule>),
+      },
     });
   } catch (error) {
     return serverError(res, logger, 'reading rate limits', error);

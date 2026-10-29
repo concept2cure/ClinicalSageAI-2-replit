@@ -1,0 +1,11 @@
+# Scoped tsc (tsconfig: typecheck-tsconfig.json): the same file list on the base tree and on the finished tree.
+## base: 6 error(s)
+server/middleware/orgMembership.ts: error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+tests/db/no-session-rls-bypass.dbtest.ts: error TS7016: Could not find a declaration file for module '../../scripts/db/program-same-org-preflight.mjs'. 'scripts/db/program-same-org-preflight.mjs' implicitly has an 'any' 
+tests/schema-contract/chat-threads-program-key.pglite.test.ts: error TS7016: Could not find a declaration file for module '../../scripts/db/program-same-org-preflight.mjs'. 'scripts/db/program-same-org-preflight.mjs' imp
+tests/schema-contract/integer-project-same-org-keys.pglite.test.ts: error TS7016: Could not find a declaration file for module '../../scripts/db/program-same-org-preflight.mjs'. 'scripts/db/program-same-org-preflight.mjs
+tests/schema-contract/program-same-org-keys.pglite.test.ts: error TS7006: Parameter 'r' implicitly has an 'any' type.
+tests/schema-contract/program-same-org-keys.pglite.test.ts: error TS7016: Could not find a declaration file for module '../../scripts/db/program-same-org-preflight.mjs'. 'scripts/db/program-same-org-preflight.mjs' implic
+## finished: 1 error(s)
+server/middleware/orgMembership.ts: error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+(the remaining one is the scope's: orgMembership.ts reaches an augmentation this file list does not include; it is the same on both sides. The change adds none and removes the five TS7016/TS7006 on the preflight import, by scripts/db/program-same-org-preflight.d.mts.)

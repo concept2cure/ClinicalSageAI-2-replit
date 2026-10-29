@@ -19,6 +19,14 @@
 --   - Migration is idempotent (IF NOT EXISTS on schema, tables, indexes).
 --   - Hash ledger rows are append-only — no UPDATE/DELETE permitted.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): the six program-isolation policies no longer admit a session
+-- that sets app.bypass_rls. Any role can set a custom setting, so the runtime
+-- role could read and write every program's evidence from inside its own
+-- connection. Each policy is created only when absent, so section 7 also
+-- removes the term from a stored policy that still reads it (ALTER POLICY, only
+-- then; a replay changes nothing). No DROP. Nothing replaces the term.
+-- =============================================================================
 
 -- ============================================================================
 -- Phase 5 — Evidence Fabric: Claims, Sources, Support, Derivations, Hashes
@@ -195,7 +203,6 @@ DO $$ BEGIN
 CREATE POLICY evidence_claims_program_isolation ON evidence.claims
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -205,7 +212,6 @@ DO $$ BEGIN
 CREATE POLICY evidence_sources_program_isolation ON evidence.sources
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -215,7 +221,6 @@ DO $$ BEGIN
 CREATE POLICY evidence_support_program_isolation ON evidence.support
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -225,7 +230,6 @@ DO $$ BEGIN
 CREATE POLICY evidence_derivations_program_isolation ON evidence.derivations
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -235,7 +239,6 @@ DO $$ BEGIN
 CREATE POLICY evidence_provenance_program_isolation ON evidence.provenance
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -245,9 +248,28 @@ DO $$ BEGIN
 CREATE POLICY evidence_hash_ledger_program_isolation ON evidence.hash_ledger
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- A database created before 2026-10-29 holds these policies with the
+-- app.bypass_rls term (P-70, see the header): remove it, only where the stored
+-- expression still reads it.
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT pol.polname, pol.polrelid::regclass AS tbl
+      FROM pg_policy pol
+     WHERE pol.polrelid IN (SELECT to_regclass(t) FROM unnest(ARRAY[
+             'evidence.claims', 'evidence.sources', 'evidence.support',
+             'evidence.derivations', 'evidence.provenance', 'evidence.hash_ledger']) t)
+       AND pol.polname LIKE 'evidence\_%\_program\_isolation'
+       AND coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') LIKE '%app.bypass_rls%'
+  LOOP
+    EXECUTE format('ALTER POLICY %I ON %s USING (program_id::TEXT = current_setting(%L, TRUE))',
+                   r.polname, r.tbl, 'app.current_program_id');
+  END LOOP;
 END $$;
 
 -- ============================================================================

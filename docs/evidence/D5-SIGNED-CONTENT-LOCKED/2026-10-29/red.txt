@@ -1,0 +1,1161 @@
+# Red: the new tests run against HEAD (d140aefa5) product code, 2026-10-29T19:13:29Z.
+# Each changed product file held its bytes at HEAD (git show HEAD:<path>); each new product module was moved aside.
+# Then every file was put back from the bytes read before, and its sha256 checked (end of this file).
+# This change's files, sha256 before:
+#   6763687897e27d77c1f9f2a630b855c0db4bdbb0c256229aaf25bec80da7ea93  server/services/part11/governed-target-binders.ts
+#   7e0996a052a3b7f78e211fd617d263bb87983254b402c122cafe3dd528455ca6  server/services/part11/signature-persistence.ts
+#   2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7  server/services/part11/signed-content-state.ts
+#   072185d3e353efa1dbad173ef8e2644fd7ff93265caf02183bda47562f18ce83  server/routes/mdx-labeling.ts
+#   d69da3b28e2e57c06cdf4f8c82f342d6d34f61de8f0724fd9f3d12b38f64d998  server/routes/mdx-labeling-approvals.ts
+#   299ab17db7c4e7f5be8d170dacffbbd2f810f55d758205e8d465cbb5ad36aff9  server/routes/mdx-risk-management.ts
+#   c1cb3e36d55b0227a568d3bb65f29789b16b5894e7303ff7a934e5c85e89c88e  server/services/ana/AnaToolExecutor.ts
+#   9b9db26815aa651817d55e5b405634f4de6d017cc02150ff0a8a63fbfa714171  client/src/concept2cure/v2/SignedContentState.tsx
+#   de577030cefc12b3a15e0d7fcb814727f4aed8c038768207f143328903f3ea32  server/services/part11/signed-content-lock.ts
+#   4304aeef70b2c731b3e3ba9ac7d1b7d47ab80538510f57bb2f95144d19db9695  server/routes/mdx-risk-acceptance-lock.ts
+# Set to HEAD:
+#   f69ad3925b98625d482db69273caea3ffc39af21bd66140221a14b67dec75ab6  server/services/part11/governed-target-binders.ts
+#   fda0b7ba79d6cf3f140f103286108cce34d92146d5ad8ac03c90cdf482475c78  server/services/part11/signature-persistence.ts
+#   76ce02f4a5c92c9b86d588735ac098d868410c074c0498c1b73684eab5e3c5ca  server/services/part11/signed-content-state.ts
+#   dac1fdc1dce2edb9d87e06048e4572d0968c7625ac7bbf4f54aef84c23677717  server/routes/mdx-labeling.ts
+#   a748c48389fce3ed8a5024730eb437c22e06e786331ebe01d3a71bccfab7b546  server/routes/mdx-labeling-approvals.ts
+#   ebe62eef23cf04106b0a3c106da47517492fbe438b0ad9d2c5753ddf657331de  server/routes/mdx-risk-management.ts
+#   f7d6c36cdca21f05d8f72db16b3c3d540b6f48323bf2f55158e9ec6e49050fe1  server/services/ana/AnaToolExecutor.ts
+#   bfbaf7064e3d4159b0ee027107aa0726a50e653b44ee9d4134257ff703ebed0f  client/src/concept2cure/v2/SignedContentState.tsx
+# Moved aside:
+#   server/services/part11/signed-content-lock.ts
+#   server/routes/mdx-risk-acceptance-lock.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 49ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 15ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 21ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 13ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 16ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 12ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 13ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 24ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 15ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > adding a symbol: 409, naming the symbols, and none is added 9ms
+   → expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > removing a symbol: 409, and it stays 10ms
+   → expected { status: 204, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 14ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 13ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 15ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 12ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 14ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 12ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 8ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 16ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 14ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > adding a symbol: 409, naming the symbols, and none is added 7ms
+   → expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > removing a symbol: 409, and it stays 8ms
+   → expected { status: 204, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 7ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 8ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 7ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 9ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 7ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 9ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 9ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 7ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 14ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > adding a symbol: 409, naming the symbols, and none is added 27ms
+   → expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > removing a symbol: 409, and it stays 7ms
+   → expected { status: 204, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > an edit naming a bound field beside an unbound one is refused whole: the project is not moved either 8ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a move out of approved sent with an unbound field is refused whole: the move is made on its own, with a reason 8ms
+   → expected 'This labeling document is approved, s…' to match /send that move on its own, with a rea…/
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a field the signature does not bind stays editable: the project an approved label sits in 30ms
+   → expected 409 to be 200 // Object.is equality
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a symbol refused after a signed approval leaves the signature matching the label 26ms
+   → expected 201 to be 409 // Object.is equality
+stdout | server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol
+{
+  "timestamp": "2026-10-29T19:13:37.152Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:13:37.153Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol 9786ms
+   → expected { ok: true, id: 49, …(3) } to match object { code: 'SIGNED_CONTENT_LOCKED' }
+(5 matching properties omitted from actual)
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 29ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > translator: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 11ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > translationMethod: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 8ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > backTranslationVerified: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 8ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was 10ms
+   → expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > the signature binds labeling-translation/v2: the translation, and the source document version and content digest 23ms
+   → expected '7f3ab9df17704578f0fe5fadab6c6bf3fd616…' to be 'ea242e32e53762f3a55ebbdd225790022972a…' // Object.is equality
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a source that moves on after the approval reads "source-changed", naming both versions 23ms
+   → expected 'matches' to be 'source-changed' // Object.is equality
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a symbol added to the source reads "source-changed" too: it is the source content 26ms
+   → expected 'matches' to be 'source-changed' // Object.is equality
+ × server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a source that cannot be bound refuses the approval: 409 SIGNATURE_CONTENT_UNBOUND, nothing signed 12ms
+   → expected 201 to be 409 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > is a state this client reads, not "could not be read" 6ms
+   → expected 'unavailable' to be 'source-changed' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > has its own words 1ms
+   → expected 'Signature state could not be read' to be 'Source changed since it was signed' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > carries a signature: a line is drawn even for a translation back in review 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > says the words beside its tone, who signed and when, and the server's reason 27ms
+   → expected 'Signature state could not be read' to be 'Source changed since it was signed' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > AnA is told the same, with the signer and the reason 3ms
+   → expected { state: 'unavailable', …(2) } to match object { state: 'source-changed', …(3) }
+(1 matching property omitted from actual)
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > refCode: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 73ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > hazard: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 21ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > hazardousSituation: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 24ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > harm: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 20ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > sequenceOfEvents: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 24ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > severity: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 28ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > probability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 23ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > detectability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 51ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > controlStrategy: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 20ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > source: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 15ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > residualSeverity: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 18ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > residualProbability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 14ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > benefitRiskRationale: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching 24ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > adding a control: 409, naming the controls, and none is added 14ms
+   → expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's description: 409, and it is as it was 14ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's verificationEvidence: 409, and it is as it was 17ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's status: 409, and it is as it was 14ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's newRiskItemId: 409, and it is as it was 16ms
+   → expected { status: 500, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > fields the acceptance does not bind stay editable: the assignee, the project, and closing it 24ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"open"}): 409, the reopen named, nothing saved 24ms
+   → expected 200 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"mitigating"}): 409, the reopen named, nothing saved 13ms
+   → expected 200 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"verified"}): 409, the reopen named, nothing saved 13ms
+   → expected 200 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"acceptable":false}): 409, the reopen named, nothing saved 15ms
+   → expected 200 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"acceptable":null}): 409, the reopen named, nothing saved 13ms
+   → expected 200 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > a hazard recorded acceptable before the signed acceptance (acceptable true, status verified) is held the same way 6ms
+   → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+stdout | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:13:52.182Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:13:52.182Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control 1852ms
+   → expected { ok: true, id: 31, …(4) } to match object { code: 'SIGNED_CONTENT_LOCKED' }
+(6 matching properties omitted from actual)
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > returns it to the status it had before acceptance, clears the acceptability, and signs the hazard as it stood 22ms
+   → expected 404 to be 201 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > then the hazard takes edits, and its residual risk is accepted and signed again 14ms
+   → expected 404 to be 201 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > may name the pre-acceptance status it returns to 13ms
+   → expected 404 to be 201 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a hazard accepted with no signed acceptance on record must be told the status: 409, nothing signed; then it reopens 9ms
+   → expected 404 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > an acceptance withdrawn from force records no status to return to: the reopen must be told it 13ms
+   → expected 404 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a hazard not accepted has nothing to reopen: 409, nothing signed, nothing changed 6ms
+   → expected 404 to be 409 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > without the signature: 400, and the acceptance stands 12ms
+   → expected 404 to be 400 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a wrong password: 401, and the acceptance stands 13ms
+   → expected 404 to be 401 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a status that is not before acceptance: 422, nothing signed 15ms
+   → expected 404 to be 422 // Object.is equality
+ × server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a viewer is refused by the editor gate, and a hazard the organization does not hold is a 404 13ms
+   → expected 404 to be 403 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64) 50ms
+   → expected 'unavailable' to be 'source-changed' // Object.is equality
+
+ Test Files  5 failed (5)
+      Tests  89 failed | 38 passed (127)
+   Start at  19:13:30
+   Duration  26.34s (transform 9.31s, setup 272ms, import 3.34s, tests 20.75s, environment 793ms)
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:13:32.713Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol
+{
+  "timestamp": "2026-10-29T19:13:37.154Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's newRiskItemId: 409, and it is as it was
+{
+  "timestamp": "2026-10-29T19:13:51.935Z",
+  "level": "error",
+  "message": "[mdx-risk] patch-control failed",
+  "context": {
+    "err": "insert or update on table \"risk_controls\" violates foreign key constraint \"risk_controls_new_risk_item_id_fkey\"",
+    "correlationId": null,
+    "code": "23503"
+  }
+}
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:13:52.182Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:13:52.251Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/part11/__tests__/signed-content-lock.test.ts [ server/services/part11/__tests__/signed-content-lock.test.ts ]
+Error: Cannot find module '../signed-content-lock' imported from /home/user/ClinicalSageAI-2-replit/server/services/part11/__tests__/signed-content-lock.test.ts
+ ❯ server/services/part11/__tests__/signed-content-lock.test.ts:22:1
+     20| } from '../governed-target-binders';
+     21| import { BINDING_BASIS, canonicalJson } from '../signature-persistence…
+     22| import {
+       | ^
+     23|   SIGNED_CONTENT_LOCKED, lockedChildrenOf, lockedFieldsIn, lockedField…
+     24| } from '../signed-content-lock';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/90]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 89 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > refCode: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > hazard: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > hazardousSituation: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > harm: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > sequenceOfEvents: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > severity: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > probability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > detectability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > controlStrategy: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > source: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > residualSeverity: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > residualProbability: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > benefitRiskRationale: 409 SIGNED_CONTENT_LOCKED, the row as it was, the acceptance still matching
+AssertionError: expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 200,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:128:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > adding a control: 409, naming the controls, and none is added
+AssertionError: expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 201,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:137:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's description: 409, and it is as it was
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's verificationEvidence: 409, and it is as it was
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's status: 409, and it is as it was
+AssertionError: expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 200,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > editing a control's newRiskItemId: 409, and it is as it was
+AssertionError: expected { status: 500, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 500,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > fields the acceptance does not bind stay editable: the assignee, the project, and closing it
+AssertionError: expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 200,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:157:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"open"}): 409, the reopen named, nothing saved
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"mitigating"}): 409, the reopen named, nothing saved
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"status":"verified"}): 409, the reopen named, nothing saved
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"acceptable":false}): 409, the reopen named, nothing saved
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > taking the acceptance off without a signature ({"acceptable":null}): 409, the reopen named, nothing saved
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:167:24
+    165|     const before = await hazardRow(id);
+    166|     const res = await patchRisk(id, body);
+    167|     expect(res.status).toBe(409);
+       |                        ^
+    168|     expect(res.body.details.code).toBe('RESIDUAL_ACCEPTANCE_REOPEN_REQ…
+    169|     expect(res.body.error).toMatch(/\/api\/mdx\/risk-items\/:id\/reope…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: a hazard whose residual risk is accepted refuses an edit of what the acceptance binds > a hazard recorded acceptable before the signed acceptance (acceptable true, status verified) is held the same way
+AssertionError: expected { status: 200, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "risk-item",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 200,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+AssertionError: expected { ok: true, id: 31, …(4) } to match object { code: 'SIGNED_CONTENT_LOCKED' }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
++   "control_type": "protective_measure",
++   "description": "Dual-sensor cross-check",
++   "id": 31,
++   "message": "Added protective_measure control to risk item 28.",
++   "ok": true,
++   "status": "proposed",
+  }
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:200:17
+    198|     const id = await acceptedHazard();
+    199|     const out = JSON.parse(await getToolHandler('add_risk_control')!({…
+    200|     expect(out).toMatchObject({ code: 'SIGNED_CONTENT_LOCKED' });
+       |                 ^
+    201|     expect(await controlsOf(id)).toHaveLength(1);
+    202|   }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > returns it to the status it had before acceptance, clears the acceptability, and signs the hazard as it stood
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:220:24
+    218|     const [acceptance] = await signaturesOn(`risk-item:${id}`);
+    219|     const res = await reopen(id, REOPEN);
+    220|     expect(res.status).toBe(201);
+       |                        ^
+    221|     expect(await hazardRow(id)).toMatchObject({ status: 'verified', ac…
+    222|     const rows = await signaturesOn(`risk-item:${id}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > then the hazard takes edits, and its residual risk is accepted and signed again
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:237:47
+    235|   it('then the hazard takes edits, and its residual risk is accepted a…
+    236|     const id = await acceptedHazard();
+    237|     expect((await reopen(id, REOPEN)).status).toBe(201);
+       |                                               ^
+    238|     expect((await patchRisk(id, { probability: 2, benefitRiskRationale…
+    239|     expect((await addControl(id)).status).toBe(201);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > may name the pre-acceptance status it returns to
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:247:76
+    245|   it('may name the pre-acceptance status it returns to', async () => {
+    246|     const id = await acceptedHazard();
+    247|     expect((await reopen(id, { ...REOPEN, status: 'mitigating' })).sta…
+       |                                                                            ^
+    248|     expect((await hazardRow(id)).status).toBe('mitigating');
+    249|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a hazard accepted with no signed acceptance on record must be told the status: 409, nothing signed; then it reopens
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:254:24
+    252|     const id = await seedHazard({ status: 'accepted', acceptable: true…
+    253|     const res = await reopen(id, REOPEN);
+    254|     expect(res.status).toBe(409);
+       |                        ^
+    255|     expect(res.body.error.code).toBe('RISK_REOPEN_STATUS_REQUIRED');
+    256|     expect(await signatureCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > an acceptance withdrawn from force records no status to return to: the reopen must be told it
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:265:24
+    263|     await h.pg.query(`UPDATE electronic_signatures SET is_valid = fals…
+    264|     const res = await reopen(id, REOPEN);
+    265|     expect(res.status).toBe(409);
+       |                        ^
+    266|     expect(res.body.error.code).toBe('RISK_REOPEN_STATUS_REQUIRED');
+    267|     expect(await signatureCount()).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a hazard not accepted has nothing to reopen: 409, nothing signed, nothing changed
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:273:24
+    271|     const id = await seedHazard();
+    272|     const res = await reopen(id, REOPEN);
+    273|     expect(res.status).toBe(409);
+       |                        ^
+    274|     expect(res.body.error.code).toBe('RISK_NOT_ACCEPTED');
+    275|     expect(res.body.error.message).toMatch(/Nothing was signed\.$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > without the signature: 400, and the acceptance stands
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:283:24
+    281|     const id = await acceptedHazard();
+    282|     const res = await reopen(id, { reason: REOPEN.reason });
+    283|     expect(res.status).toBe(400);
+       |                        ^
+    284|     expect(res.body.error.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    285|     expect(await hazardRow(id)).toMatchObject({ status: 'accepted', ac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a wrong password: 401, and the acceptance stands
+AssertionError: expected 404 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:290:73
+    288|   it('a wrong password: 401, and the acceptance stands', async () => {
+    289|     const id = await acceptedHazard();
+    290|     expect((await reopen(id, { ...REOPEN, password: 'wrong' })).status…
+       |                                                                         ^
+    291|     expect(await hazardRow(id)).toMatchObject({ status: 'accepted', ac…
+    292|     expect(await signatureCount()).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a status that is not before acceptance: 422, nothing signed
+AssertionError: expected 404 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:297:72
+    295|   it('a status that is not before acceptance: 422, nothing signed', as…
+    296|     const id = await acceptedHazard();
+    297|     expect((await reopen(id, { ...REOPEN, status: 'closed' })).status)…
+       |                                                                        ^
+    298|     expect(await signatureCount()).toBe(1);
+    299|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/90]⎯
+
+ FAIL  server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: reopening a hazard's accepted residual risk is a signed act > a viewer is refused by the editor gate, and a hazard the organization does not hold is a 404
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/__tests__/routes/risk-acceptance-locked.pglite.test.ts:304:47
+    302|     const id = await acceptedHazard();
+    303|     h.role = 'viewer';
+    304|     expect((await reopen(id, REOPEN)).status).toBe(403);
+       |                                               ^
+    305|     h.role = 'member';
+    306|     expect((await reopen(424242, REOPEN)).status).toBe(404);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > deviceName: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > docKind: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > version: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > region: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > udiDi: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > expiresAt: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > effectiveDate: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+AssertionError: expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "labeling-document",
++   "code": "LABELING_DOCUMENT_CONTROLLED",
++   "record": undefined,
+    "status": 409,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:124:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > adding a symbol: 409, naming the symbols, and none is added
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > adding a symbol: 409, naming the symbols, and none is added
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > adding a symbol: 409, naming the symbols, and none is added
+AssertionError: expected { status: 201, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "labeling-document",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 201,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:131:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > approved > removing a symbol: 409, and it stays
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > effective > removing a symbol: 409, and it stays
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > superseded > removing a symbol: 409, and it stays
+AssertionError: expected { status: 204, code: undefined, …(1) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "labeling-document",
+-   "status": 409,
++   "code": undefined,
++   "record": undefined,
++   "status": 204,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:139:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > an edit naming a bound field beside an unbound one is refused whole: the project is not moved either
+AssertionError: expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "labeling-document",
++   "code": "LABELING_DOCUMENT_CONTROLLED",
++   "record": undefined,
+    "status": 409,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:147:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a move out of approved sent with an unbound field is refused whole: the move is made on its own, with a reason
+AssertionError: expected 'This labeling document is approved, s…' to match /send that move on its own, with a rea…/
+
+- Expected:
+/send that move on its own, with a reason\. Nothing was saved\.$/
+
++ Received:
+"This labeling document is approved, so what was signed stays as it is. Move it back to draft or review, with a reason, to change it; that withdraws its approval. Nothing was saved."
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:156:28
+    154|     expect(res.status).toBe(409);
+    155|     expect(res.body.details.code).toBe('LABELING_DOCUMENT_CONTROLLED');
+    156|     expect(res.body.error).toMatch(/send that move on its own, with a …
+       |                            ^
+    157|     expect(await docRow(id)).toMatchObject({ status: 'approved', progr…
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a field the signature does not bind stays editable: the project an approved label sits in
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:164:24
+    162|     expect((await patchDoc(id, { status: 'approved', ...SIGNATURE })).…
+    163|     const res = await patchDoc(id, { programId: PROGRAM });
+    164|     expect(res.status).toBe(200);
+       |                        ^
+    165|     expect((await docRow(id)).program_id).toBe(PROGRAM);
+    166|     expect((await getDoc(id)).body.data.signedContent.state).toBe('mat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: a labeling document that carries a signature refuses an edit of what it binds > a symbol refused after a signed approval leaves the signature matching the label
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:172:42
+    170|     const id = await seedDoc();
+    171|     expect((await patchDoc(id, { status: 'approved', ...SIGNATURE })).…
+    172|     expect((await addSymbol(id)).status).toBe(409);
+       |                                          ^
+    173|     expect((await getDoc(id)).body.data.signedContent.state).toBe('mat…
+    174|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol
+AssertionError: expected { ok: true, id: 49, …(3) } to match object { code: 'SIGNED_CONTENT_LOCKED' }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
++   "id": 49,
++   "message": "Added symbol 5.1.1 (Manufacturer) to document 41.",
++   "ok": true,
++   "symbol_code": "5.1.1",
++   "symbol_name": "Manufacturer",
+  }
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:205:17
+    203|     const id = await seedDoc({ status: 'approved' });
+    204|     const out = JSON.parse(await getToolHandler('add_labeling_symbol')…
+    205|     expect(out).toMatchObject({ code: 'SIGNED_CONTENT_LOCKED' });
+       |                 ^
+    206|     expect(out.error).toMatch(/is not edited in place.*Nothing was sav…
+    207|     expect(await symbolsOf(id)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > language: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > translator: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > translationMethod: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > backTranslationVerified: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: an approved translation refuses an edit of what its approval binds > artifactId: 409 SIGNED_CONTENT_LOCKED, and the row is as it was
+AssertionError: expected { status: 409, …(2) } to deeply equal { status: 409, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SIGNED_CONTENT_LOCKED",
+-   "record": "labeling-translation",
++   "code": "TRANSLATION_APPROVED_LOCKED",
++   "record": undefined,
+    "status": 409,
+  }
+
+ ❯ Module.expectLocked server/__tests__/routes/signed-records.fixture.ts:168:100
+    166| /** A refusal of signed content: 409, the one code, the fields or chil…
+    167| export function expectLocked(res: request.Response, record: string, wh…
+    168|   expect({ status: res.status, code: res.body?.details?.code, record: …
+       |                                                                                                    ^
+    169|   if (what.fields) expect(res.body.details.fields).toEqual(what.fields…
+    170|   if (what.child) expect(res.body.details.child).toBe(what.child);
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:228:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > the signature binds labeling-translation/v2: the translation, and the source document version and content digest
+AssertionError: expected '7f3ab9df17704578f0fe5fadab6c6bf3fd616…' to be 'ea242e32e53762f3a55ebbdd225790022972a…' // Object.is equality
+
+Expected: "ea242e32e53762f3a55ebbdd225790022972a6e25121711d2fdc0128d9c275bc"
+Received: "7f3ab9df17704578f0fe5fadab6c6bf3fd616dbe41fa270bceadd6d7f3f33fa8"
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:243:38
+    241|     const [sig] = await signaturesOn(`labeling-translation:${id}`);
+    242|     expect(sig.binding_basis).toBe('labeling-translation-content-sha25…
+    243|     expect(sig.bound_payload_digest).toBe(reviewed);
+       |                                      ^
+    244|     expect(manifestOf(sig)).toMatchObject({
+    245|       bindingRecipe: 'labeling-translation/v2',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a source that moves on after the approval reads "source-changed", naming both versions
+AssertionError: expected 'matches' to be 'source-changed' // Object.is equality
+
+Expected: "source-changed"
+Received: "matches"
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:257:25
+    255|     expect((await patchDoc(docId, { version: '2.2' })).status).toBe(20…
+    256|     const facet = (await getDoc(docId)).body.data.translations[0].sign…
+    257|     expect(facet.state).toBe('source-changed');
+       |                         ^
+    258|     expect(facet.reason).toMatch(/version 2\.1/);
+    259|     expect(facet.reason).toMatch(/version 2\.2/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a symbol added to the source reads "source-changed" too: it is the source content
+AssertionError: expected 'matches' to be 'source-changed' // Object.is equality
+
+Expected: "source-changed"
+Received: "matches"
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:267:81
+    265|     await patchTrans(id, { status: 'approved', ...SIGNATURE });
+    266|     expect((await addSymbol(docId)).status).toBe(201);
+    267|     expect((await getDoc(docId)).body.data.translations[0].signedConte…
+       |                                                                                 ^
+    268|   });
+    269|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/90]⎯
+
+ FAIL  server/__tests__/routes/signed-content-locked.pglite.test.ts > P-64: a translation's approval binds the source it translates > a source that cannot be bound refuses the approval: 409 SIGNATURE_CONTENT_UNBOUND, nothing signed
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/__tests__/routes/signed-content-locked.pglite.test.ts:284:24
+    282|     const { id } = await seedTranslation({ status: 'draft', artifact_i…
+    283|     const res = await patchTrans(id, { status: 'approved', ...SIGNATUR…
+    284|     expect(res.status).toBe(409);
+       |                        ^
+    285|     expect(res.body.error.code).toBe('SIGNATURE_CONTENT_UNBOUND');
+    286|     expect(res.body.error.message).toMatch(/source document it transla…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words > a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64)
+AssertionError: expected 'unavailable' to be 'source-changed' // Object.is equality
+
+Expected: "source-changed"
+Received: "unavailable"
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx:148:57
+    146|     onDetail[12] = { signedContent: facet('source-changed', { reason }…
+    147|     await mount();
+    148|     expect(signatureOf(12)?.getAttribute('data-state')).toBe('source-c…
+       |                                                         ^
+    149|     expect(signatureOf(12)?.querySelector('.rd-chip')?.textContent).to…
+    150|     expect(signatureOf(12)?.textContent).toContain(reason);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > is a state this client reads, not "could not be read"
+AssertionError: expected 'unavailable' to be 'source-changed' // Object.is equality
+
+Expected: "source-changed"
+Received: "unavailable"
+
+ ❯ client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx:25:25
+     23| describe('source-changed', () => {
+     24|   it('is a state this client reads, not "could not be read"', () => {
+     25|     expect(facet.state).toBe('source-changed');
+       |                         ^
+     26|   });
+     27|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > has its own words
+AssertionError: expected 'Signature state could not be read' to be 'Source changed since it was signed' // Object.is equality
+
+Expected: "Source changed since it was signed"
+Received: "Signature state could not be read"
+
+ ❯ client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx:29:39
+     27|
+     28|   it('has its own words', () => {
+     29|     expect(signedContentWords(facet)).toBe('Source changed since it wa…
+       |                                       ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > carries a signature: a line is drawn even for a translation back in review
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx:33:46
+     31|
+     32|   it('carries a signature: a line is drawn even for a translation back…
+     33|     expect(showsSignedContent(facet, false)).toBe(true);
+       |                                              ^
+     34|   });
+     35|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > says the words beside its tone, who signed and when, and the server's reason
+AssertionError: expected 'Signature state could not be read' to be 'Source changed since it was signed' // Object.is equality
+
+Expected: "Source changed since it was signed"
+Received: "Signature state could not be read"
+
+ ❯ client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx:39:30
+     37|     const { container } = render(<SignedContentLine facet={facet} expe…
+     38|     const chip = container.querySelector('.rd-chip') as HTMLElement;
+     39|     expect(chip.textContent).toBe('Source changed since it was signed'…
+       |                              ^
+     40|     expect(chip.className).toContain('tone-err');
+     41|     expect(chip.querySelector('svg')).not.toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/90]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx > source-changed > AnA is told the same, with the signer and the reason
+AssertionError: expected { state: 'unavailable', …(2) } to match object { state: 'source-changed', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reason": "The source it translates changed after it was signed: it was signed against labeling-document:4 at version 2.1, which is now at version 2.2.",
+-   "signedBy": "Sam Signer",
+-   "state": "source-changed",
+-   "words": "Source changed since it was signed",
++   "state": "unavailable",
++   "words": "Signature state could not be read",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx:47:40
+     45|
+     46|   it('AnA is told the same, with the signer and the reason', () => {
+     47|     expect(signedContentForAna(facet)).toMatchObject({ state: 'source-…
+       |                                        ^
+     48|   });
+     49| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/90]⎯
+
+
+# Restored, sha256 after:
+#   6763687897e27d77c1f9f2a630b855c0db4bdbb0c256229aaf25bec80da7ea93  server/services/part11/governed-target-binders.ts  equal
+#   7e0996a052a3b7f78e211fd617d263bb87983254b402c122cafe3dd528455ca6  server/services/part11/signature-persistence.ts  equal
+#   2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7  server/services/part11/signed-content-state.ts  equal
+#   072185d3e353efa1dbad173ef8e2644fd7ff93265caf02183bda47562f18ce83  server/routes/mdx-labeling.ts  equal
+#   d69da3b28e2e57c06cdf4f8c82f342d6d34f61de8f0724fd9f3d12b38f64d998  server/routes/mdx-labeling-approvals.ts  equal
+#   299ab17db7c4e7f5be8d170dacffbbd2f810f55d758205e8d465cbb5ad36aff9  server/routes/mdx-risk-management.ts  equal
+#   c1cb3e36d55b0227a568d3bb65f29789b16b5894e7303ff7a934e5c85e89c88e  server/services/ana/AnaToolExecutor.ts  equal
+#   9b9db26815aa651817d55e5b405634f4de6d017cc02150ff0a8a63fbfa714171  client/src/concept2cure/v2/SignedContentState.tsx  equal
+#   de577030cefc12b3a15e0d7fcb814727f4aed8c038768207f143328903f3ea32  server/services/part11/signed-content-lock.ts  equal
+#   4304aeef70b2c731b3e3ba9ac7d1b7d47ab80538510f57bb2f95144d19db9695  server/routes/mdx-risk-acceptance-lock.ts  equal

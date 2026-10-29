@@ -312,8 +312,8 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
  * (named so on 2026-10-26: "Plan" is the project's first step, the
  * subscription is "subscription", section 9 of
  * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
- * surface's registry label, as the breadcrumb and ⌘K do, except Billing, which
- * names the billing job on Licensing for billing administrators; they are written out
+ * surface's registry label, as the breadcrumb and ⌘K do, except a billing
+ * administrator's one entry to Licensing, "Subscription & billing" (P-68); they are written out
  * because config/ui-surface-registry.json's audit (npm run audit:ui-authority)
  * reads this menu's labels from this file, and shellNav.test.tsx and
  * clientNamesSlice1.test.tsx hold them to the registry.
@@ -394,18 +394,20 @@ function AccountMenu({
        the entry is offered. */
     ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
-    /* Billing is the invoices and the Stripe portal, which are on Licensing
-       under the plan status (D2, fold billing into Licensing, 2026-10-29). It
-       was in every member's menu and opened the `billing` screen, whose invoice
-       list answered any member. It is offered now when the session carries the
-       permission the server derives from the invoice route's own role list, and
-       it names the job, not the page: Compare subscriptions below is the same
-       screen's door for choosing a subscription, which every member keeps. */
-    ...(billingAdmin ? [{ label: 'Billing', ic: 'creditCard', to: 'licensing' }] : []),
     { sep: true },
     { clientType: true },
     { sep: true },
-    { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
+    /* Licensing, by who uses it for what (decision P-68). A billing
+       administrator reads the invoices, checks out and manages billing there
+       (fold billing into Licensing, 2026-10-29), and has ONE entry to it,
+       "Subscription & billing" (INFORMATION_ARCHITECTURE.md section 9). Part 1
+       had pointed a separate "Billing" entry at it, which gave them two doors
+       to one screen. Everyone else compares the subscriptions there, under the
+       registry label. `billingAdmin` is the permission the server derives from
+       the billing routes' own role list, not the broader org-admin test. */
+    billingAdmin
+      ? { label: 'Subscription & billing', ic: 'creditCard', to: 'licensing' }
+      : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },

@@ -47,6 +47,8 @@ const ROOT = path.resolve(__dirname, '../../../../');
 const DEPLOY_DDL = [
   'db/migrations/20260331_communication_center_scaffold.sql',
   'db/migrations/20260401_submission_center_items.sql',
+  // The letter's class, which the create writes and the response clock reads (P-39 step 3, S4).
+  'migrations/20261029j_agency_letter_class.sql',
 ];
 
 beforeAll(async () => {
@@ -199,5 +201,50 @@ describe('POST agency-communications links only a data-room source of this tenan
     const res = await request(app()).post(url).send(body('cre_source:501'));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await stored('cre_source:501')).toBe(1);
+  });
+});
+
+/* P-39 step 3, S4 (2026-10-29): a letter records its class, and the inbox reads
+   its response clock from it: the agency's date wins, then the class's codified
+   window from receipt; a letter with no class is on no clock. */
+describe('the response clock on an inbox letter', () => {
+  beforeAll(async () => {
+    await h.pg.exec(fs.readFileSync(path.join(ROOT, 'migrations/20261029j_agency_letter_class.sql'), 'utf8')); // replayed (RULE 1)
+    // The columns the list's linked-submission join reads.
+    await h.pg.exec(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS organization_id integer, ADD COLUMN IF NOT EXISTS program_id uuid,
+      ADD COLUMN IF NOT EXISTS title text, ADD COLUMN IF NOT EXISTS application_type text, ADD COLUMN IF NOT EXISTS primary_region text,
+      ADD COLUMN IF NOT EXISTS deleted_at timestamptz`);
+    const received = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    await h.pg.query(`
+      INSERT INTO concept2cure_agency_communications
+        (event_id, organization_id, project_id, source_type, communication_type, source_channel, urgency,
+         response_required, human_review_status, closure_status, audit_metadata, received_date, due_date, letter_class)
+      VALUES ('rtf-1', 7, 42, 'uploaded_official_correspondence', 'Refuse to file', 'esg', 'critical', true,
+              'pending_review', 'open', '{"visibilityTier":"shared_client_c2c"}'::jsonb, $1, NULL, 'refuse_to_file_letter'),
+             ('ir-1', 7, 42, 'uploaded_official_correspondence', 'IR', 'esg', 'high', true,
+              'pending_review', 'open', '{"visibilityTier":"shared_client_c2c"}'::jsonb, $1, '2099-01-15', 'information_request'),
+             ('nocls-1', 7, 42, 'uploaded_official_correspondence', 'Letter', 'esg', 'medium', true,
+              'pending_review', 'open', '{"visibilityTier":"shared_client_c2c"}'::jsonb, $1, NULL, NULL)`, [received]);
+  });
+
+  it("derives a refuse-to-file letter's due date from its codified window, and keeps the agency's stated date", async () => {
+    const res = await request(app()).get('/api/concept2cure/projects/42/agency-communications');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const byId = new Map((res.body.data as Array<{ id: string; responseClock: Record<string, unknown> }>).map((r) => [r.id, r]));
+    expect(byId.get('rtf-1')!.responseClock).toMatchObject({
+      // Received ten days (and some milliseconds) ago: 19 whole days remain, by the clock's floor rule.
+      state: 'dated', dueDateSource: 'derived_from_window', windowDays: 30, citation: '21 CFR 314.101(a)(3)', daysUntilDue: 19,
+    });
+    expect(byId.get('ir-1')!.responseClock).toMatchObject({ state: 'dated', dueDateSource: 'agency_stated' });
+    expect(String(byId.get('ir-1')!.responseClock.dueDate)).toMatch(/^2099-01-15/);
+    expect(byId.get('nocls-1')!.responseClock).toEqual({ state: 'untracked', reason: 'class_asks_nothing' });
+  });
+
+  it('refuses a letter class outside the vocabulary', async () => {
+    const res = await request(app()).post('/api/concept2cure/projects/42/agency-communications').send({
+      sourceType: 'manual_logged_event', communicationType: 'IR', sourceChannel: 'esg', urgency: 'high',
+      responseRequired: true, visibilityTier: 'shared_client_c2c', letterClass: 'informal_chat',
+    });
+    expect(res.status).toBe(400);
   });
 });

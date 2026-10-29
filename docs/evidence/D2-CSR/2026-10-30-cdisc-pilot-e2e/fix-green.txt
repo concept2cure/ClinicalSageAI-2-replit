@@ -1,0 +1,36 @@
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > the manifest declares the study’s ADaM conventions > accepts the conventions block and refuses an unknown convention 8ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D1: disposition from DCDECOD when declared > reads COMPLETED, ADVERSE EVENT, DEATH and LOST TO FOLLOW-UP from DCDECOD 13ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D1: disposition from DCDECOD when declared > still requires EOSSTT when nothing is declared, and refuses a blank DCDECOD 4ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > counts AE withdrawals from the declared ADSL flag, labelled as subject-level, never as 0 8ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > still refuses a blank AEACN when no subject-level flag is declared 2ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > refuses a declared flag that ADSL lacks or that is not Y/N/blank 3ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D2: subject-level AE discontinuation when AEACN was not collected > the contract refuses a subject-level basis mixed with event-level flags, or a flagged subject outside safety 5ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D3: the SAP’s causality classes > refuses REMOTE when undeclared, and counts it as declared 11ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D4: laboratory data split into ADLBC and ADLBH > derives shifts from both, and refuses a parameter that appears in both 5ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D5: the last on-treatment record named by AVISIT > requires ONTRTFL when undeclared, and reads the declared End of Treatment record 4ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D5: the last on-treatment record named by AVISIT > refuses two different End of Treatment values for one series 2ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D6: ANRIND decoded by the declared codelist > refuses N/H/L when undeclared 1ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D7: a parameter whose baselines differ by position is summarised per position > derives one series per subject, parameter and ATPT instead of refusing BASELINE_AMBIGUOUS 5ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D7: a parameter whose baselines differ by position is summarised per position > still refuses two baselines at the same position 2ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D9: exposure from ADSL when there is no ADEX > summarises the declared duration and average daily dose for every safety subject 4ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D9: exposure from ADSL when there is no ADEX > refuses a safety subject without a duration, and a declaration beside ADEX 2ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > reads DCDECOD ADVERSE EVENT even when AEACN is fully recorded and nothing is declared 1ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > selects from the declared ADSL flag when AEACN was not collected, and names the reason’s source 1ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D8: narrative selection never narrows AE withdrawal silently > still refuses a blank AEACN when no flag is declared 0ms
+ ✓ server/services/csr/__tests__/adam-declared-conventions.test.ts > D16: two pairwise comparisons of one arm (found on the pilot re-run) > accepts high vs placebo and high vs low as two results, and still refuses a true duplicate 4ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-dataset-reader.ts 4ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-rows.ts 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-source-derivation.ts 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/adam-safety-domains.ts 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-subject-selection.ts 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-subject-facts.ts 1ms
+ ✓ server/services/csr/__tests__/adam-derivation-import-graph.test.ts > pure CSR derivation modules do not import the database > server/services/csr/narrative-compose.ts 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > formats the boundary cases as the SAS convention does 2ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints a mean of 60.05 as 60.1, not 60.0 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints exposure the same way 1ms
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+
+# Wider suite: npx vitest run server/services/csr server/services/__tests__/csr-tabulation-source-correctness.test.ts server/services/ana/__tests__/csr-section-evidence-tool.test.ts server/__tests__/services/submission-orchestrator.test.ts shared
+ Test Files  119 passed (119)
+      Tests  1561 passed (1561)

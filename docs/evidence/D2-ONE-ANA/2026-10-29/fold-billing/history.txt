@@ -43,3 +43,15 @@ da7e9a069 2026-03-19 feat: comprehensive warm color sweep across 123 files
 8dcf40fd2 2026-03-19 refactor: split BillingDashboard (1214 lines) into 7 focused modules
 a56a7e595 2026-03-19 fix: audit fixes - security, schema alignment, and performance
 1ae2b44d3 2026-03-19 feat: redesign sales landing page and add Anthropic-style billing dashboard
+
+# Part 2 — git log --all --diff-filter=D --name-only (shallow, 1357 commits), filtered for rate.?limit|ratelimit|usage|billing|licens|invoice:
+(no deleted paths)
+
+# The per-tier grid's history (git log -S on its module keys, shallow window):
+c04ed02be 2026-10-23 Retain October 21 qualification before current upstream integration
+
+# GitHub API: history of server/routes/billing-dashboard.ts (newest, oldest)
+9c2fdec74 2026-10-29 Invoices are for billing administrators, and live in Licensing (D2 / D6, fold billing part 1)
+e1f3fd425 2026-10-17 Land audited service, governance, and UI integration remedies
+87905b9d1 2026-09-30 Server errors: 25 five-hundreds stop shipping the caught error's text
+1ae2b44d3 2026-03-19 feat: redesign sales landing page and add Anthropic-style billing dashboard

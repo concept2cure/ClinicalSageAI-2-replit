@@ -22,6 +22,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError } from '../services/csr/project-scope';
+import { nctNumberSchema } from '../../shared/csr-source-input.js';
 
 const logger = createScopedLogger('csr-builder-routes');
 
@@ -88,6 +89,9 @@ const studyInfoSchema = z.object({
   sampleSize: z.number().int().positive().max(1000000).optional(),
   treatmentDuration: z.string().max(200).optional(),
   targetAgencies: z.array(z.string().max(50)).max(10).optional(),
+  // The study's ClinicalTrials.gov registration (2026-10-29). Before, an
+  // nctNumber in the request was stripped without a word, as any unknown key.
+  nctNumber: nctNumberSchema.optional(),
 });
 
 const buildRequestSchema = z.object({

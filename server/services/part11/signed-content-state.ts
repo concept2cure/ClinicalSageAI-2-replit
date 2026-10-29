@@ -21,6 +21,10 @@
  * signature on each target that is still in force, and says:
  *   - matches     its digest is the record's digest now, by the same basis;
  *   - changed     same basis, another digest: the record changed after signing;
+ *   - source-changed  another digest, but only because a source the recipe
+ *                 binds moved on (P-64: the document a translation translates):
+ *                 derived with the source the signature recorded, the record
+ *                 still gives the signed digest;
  *   - unverified  it cannot be checked: the row does not hash to its
  *                 manifest, it binds another basis (a signature from before
  *                 the binder, which bound the ledger chain hash), or the
@@ -30,10 +34,16 @@
  *   - unsigned    no signature on the target;
  *   - unavailable the signatures could not be read. Never shown as unsigned.
  *
+ * Each signature is re-derived by the recipe it recorded (P-64): the
+ * manifest's `bindingRecipe`, or, for a signature from before that member, the
+ * recipe tag its `bindingNote` names. So an approval taken by
+ * labeling-translation/v1 is checked by v1, not by v2.
+ *
  * Read only, on the caller's client.
  *
  * @module server/services/part11/signed-content-state
  */
+import type { BoundSource } from './governed-target-binders';
 import {
   GOVERNED_REVOCATION_SIGNATURE_TYPE,
   BINDING_BASIS,
@@ -43,7 +53,7 @@ import {
   type SignatureDbClient,
 } from './signature-persistence';
 
-export type SignedContentState = 'matches' | 'changed' | 'unverified' | 'withdrawn' | 'unsigned' | 'unavailable';
+export type SignedContentState = 'matches' | 'changed' | 'source-changed' | 'unverified' | 'withdrawn' | 'unsigned' | 'unavailable';
 
 export interface SignedContentFacet {
   state: SignedContentState;
@@ -100,22 +110,60 @@ function uncheckable(row: Row): string | null {
   return null;
 }
 
+const RECIPE_IN_NOTE = /\(recipe ([a-z0-9][\w.-]*\/v\d+)\)/;
+
+/** The recipe the signature recorded: its manifest's bindingRecipe, else the tag its bindingNote names; undefined when neither. */
+function recipeOf(manifest: unknown): string | undefined {
+  const m = manifest as { bindingRecipe?: unknown; bindingNote?: unknown } | null;
+  if (typeof m?.bindingRecipe === 'string' && m.bindingRecipe) return m.bindingRecipe;
+  return typeof m?.bindingNote === 'string' ? RECIPE_IN_NOTE.exec(m.bindingNote)?.[1] : undefined;
+}
+
+/** The source the signature recorded binding, when its manifest names one whole. */
+function sourceOf(manifest: unknown): BoundSource | null {
+  const s = (manifest as { boundSource?: Record<string, unknown> } | null)?.boundSource;
+  return s && typeof s.target === 'string' && typeof s.version === 'string' && typeof s.contentDigest === 'string'
+    ? { target: s.target, version: s.version, contentDigest: s.contentDigest } : null;
+}
+
+type Derived = Awaited<ReturnType<typeof deriveGovernedTargetBinding>>;
+
+/** One signature being checked: where it is, its row, and the recipe it recorded. */
+interface Check { client: SignatureDbClient; orgId: number; target: string; row: Row; recipe: string | undefined }
+
+/** A digest that differs: `source-changed` when, as of the source the signature recorded, the record still gives the signed digest. */
+async function changedFacet({ client, orgId, target, row, recipe }: Check, current: Derived): Promise<SignedContentFacet> {
+  const ref = referenceOf(row);
+  const changed: SignedContentFacet = { state: 'changed', ...ref, currentDigest: current.digest, reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' };
+  const signedSource = sourceOf(manifestOf(row));
+  const nowSource = sourceOf(current.manifest ?? null);
+  if (!signedSource || !nowSource || signedSource.contentDigest === nowSource.contentDigest) return changed;
+  const asSigned = await deriveGovernedTargetBinding(client, target, orgId, { recipe, asOfSource: signedSource });
+  if (asSigned.digest !== row.bound_payload_digest) return changed;
+  return {
+    state: 'source-changed', ...ref, currentDigest: current.digest,
+    reason: `The source it binds changed after it was signed: it was signed against ${signedSource.target} at version ${signedSource.version}, which is now at version ${nowSource.version} with other content. The record itself is as it was signed.`,
+  };
+}
+
 async function facetOf(client: SignatureDbClient, orgId: number, target: string, row: Row): Promise<SignedContentFacet> {
   const ref = referenceOf(row);
   const cannot = uncheckable(row);
   if (cannot) return { state: 'unverified', ...ref, currentDigest: null, reason: cannot };
-  let current: Awaited<ReturnType<typeof deriveGovernedTargetBinding>>;
+  const recipe = recipeOf(manifestOf(row));
+  let current: Derived;
   try {
-    current = await deriveGovernedTargetBinding(client, target, orgId);
+    current = await deriveGovernedTargetBinding(client, target, orgId, recipe ? { recipe } : undefined);
+    if (current.digest && current.basis === row.binding_basis && current.digest !== row.bound_payload_digest) {
+      return await changedFacet({ client, orgId, target, row, recipe }, current);
+    }
   } catch {
     return { state: 'unverified', ...ref, currentDigest: null, reason: "The record's content could not be read to compare with the signature." };
   }
   if (!current.digest || current.basis !== row.binding_basis) {
     return { state: 'unverified', ...ref, currentDigest: current.digest, reason: `The record's content cannot be derived by the signature's basis now: ${current.fallbackReason ?? `its basis is '${current.basis}'`}.` };
   }
-  return current.digest === row.bound_payload_digest
-    ? { state: 'matches', ...ref, currentDigest: current.digest, reason: null }
-    : { state: 'changed', ...ref, currentDigest: current.digest, reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' };
+  return { state: 'matches', ...ref, currentDigest: current.digest, reason: null };
 }
 
 /**

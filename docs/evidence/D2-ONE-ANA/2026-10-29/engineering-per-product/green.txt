@@ -1,0 +1,48 @@
+## green, on the working tree over 3830ae34d, 2026-10-29T20:12:49Z
+Command: npx vitest run <the files below> (one run).
+
+## New
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx: 5 passed
+client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx: 4 passed
+server/routes/__tests__/mdx-engineering-per-product.test.ts: 14 passed
+server/routes/__tests__/qms-change-project.test.ts: 7 passed
+server/services/ana/__tests__/change-tool-admits-program.test.ts: 4 passed
+tests/schema-contract/change-controls-program-key.pglite.test.ts: 7 passed
+
+## Amended beside the code
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx: 18 passed
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx: 10 passed
+server/routes/__tests__/mdx-engineering-panels-by-project.test.ts: 9 passed
+server/routes/__tests__/mdx-engineering-trace-by-project.test.ts: 6 passed
+server/routes/__tests__/mdx-engineering.contract.test.ts: 19 passed
+server/services/ana/__tests__/qms-change-tools.test.ts: 18 passed
+server/services/qms/__tests__/changeControl.pglite.integration.test.ts: 12 passed
+tests/mdx-beta-surfaces-routes.test.ts: 25 passed
+
+## Existing, unchanged, over the changed code
+client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx: 3 passed
+client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx: 1 passed
+client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts: 6 passed
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx: 13 passed
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx: 5 passed
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx: 18 passed
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx: 3 passed
+client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx: 9 passed
+client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx: 3 passed
+client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx: 12 passed
+client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx: 8 passed
+server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts: 6 passed
+server/routes/__tests__/mdx-qms-nonconforming-project.test.ts: 6 passed
+server/routes/__tests__/qms-change-approval-signature.test.ts: 8 passed
+server/routes/__tests__/qms-changes.test.ts: 21 passed
+server/routes/__tests__/qms-governed-writes-audited.test.ts: 21 passed
+server/routes/__tests__/qms-subrouters-governed.test.ts: 34 passed
+server/services/ana/__tests__/governed-reason-not-invented.test.ts: 75 passed
+server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts: 4 passed
+server/services/ana/__tests__/tool-record-scope.test.ts: 18 passed
+tests/concept2cure/design-system-surfaces-smoke.test.tsx: 7 passed
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx: 5 passed
+tests/schema-contract/nonconforming-products-program-key.pglite.test.ts: 7 passed
+
+ Test Files  37 passed (37)
+      Tests  451 passed (451)

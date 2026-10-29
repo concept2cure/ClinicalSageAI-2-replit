@@ -216,7 +216,7 @@ describe('EngineeringSurface — the blocker sub-head counts only what was read'
     expect(sub).not.toMatch(/\d+ hard blockers/);
     expect(sub).not.toMatch(/\d+ review-pending/);
     expect(sub).toMatch(
-      /Not counted until the design history file, risk file, change requests and non-conformances are read/,
+      /Not counted until the design history, risk file, change requests and non-conformances are read/,
     );
   });
 

@@ -1,0 +1,75 @@
+# Gates, on the finished tree (d140aefa5 + this change)
+
+### npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 445 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0
+### npm run ci:migration-drop-safety:selftest
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit 0
+### npm run ci:migration-set-order
+[ci:migration-set-order] OK — 445 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0
+### npm run ci:migration-deploy-path
+  Add it to C2C_MIGRATION_FILES in scripts/db/migration-set.mjs, above the
+  final tenant-sweep pair. It re-runs on every deploy (CLAUDE.md Rule 1), so it
+  must be replayable: IF NOT EXISTS, and no DROP of anything another file creates.
+exit 1
+### npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+exit 0
+### npm run ci:sql-interpolation
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+  the same change, with the reason in the commit. RLS does not contain injected
+  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+exit 1
+### npm run ci:sql-interpolation:selftest
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+exit 0
+
+### ci:purge-coverage on the database built from blank with the finished tree, and on the HEAD database
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_assembly_runs
+  - csr_narrative_runs
+  - qc_deviations
+exit 1 (green), exit 1 (HEAD); the findings are identical (diff empty): csr_assembly_runs, csr_narrative_runs, qc_deviations, other lanes' tables. This change adds none.
+### ci:purge-coverage:selftest
+[ci:purge-coverage:selftest] 53 passed — the gate fails on what it exists to catch.
+
+### node scripts/cre/prepare-public-reference-seed.mjs --check
+  "modelTrainingRun": false,
+  "migration": "migrations/20261029_cdi_public_reference_seed_v2.sql",
+  "migrationSha256": "a1e5e84aea0a52e3bc5125b3ef288a0aa5f42938a9a0eb177f30ef7b50cb5c2a",
+  "mode": "verified"
+exit 0
+### npm run ci:check-unrun-tests
+  covered extension. If it genuinely must not run, add it to ALLOWLIST in
+  scripts/ci/check-unrun-tests.mjs with the reason.
+exit 1
+### npm run ci:check-test-imports
+[ci:test-imports] 5969 test files · 15074 local imports checked · 14534 bare package specifiers skipped (out of scope).
+[ci:test-imports] OK — every local import in every test file resolves.
+exit 0
+### npm run ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+OK: no new unreachable modules.
+exit 0
+### npm run ci:db-test-isolation
+[ci:db-test-isolation] OK — 228 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+exit 0
+### npm run ci:runtime-ddl
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit 0
+### npm run ci:baseline-justifications
+[ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 115 inline tenant-isolation-safe suppression(s), every one with a reason.
+exit 0
+### npm run audit:repo-health:ceiling
+- files over line threshold: 113
+✅ repo health strict gate passed.
+exit 0

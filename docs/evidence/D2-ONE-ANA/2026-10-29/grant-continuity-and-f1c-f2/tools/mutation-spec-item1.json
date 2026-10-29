@@ -1,0 +1,82 @@
+[
+ {
+  "id": "M1",
+  "what": "the licence read derives no carried grant",
+  "file": "server/services/license-manager.ts",
+  "old": "heldThroughFolds: grantsHeldThroughFolds(enabledModules),",
+  "new": "heldThroughFolds: grantsHeldThroughFolds([]),",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M2",
+  "what": "canAccessModule ignores the carried grant",
+  "file": "server/services/license-manager.ts",
+  "old": "  const heldThrough = license.heldThroughFolds[moduleId];\n  if (heldThrough !== undefined) {\n    return { allowed: true, heldThrough };\n  }\n",
+  "new": "  const heldThrough = license.heldThroughFolds[moduleId];\n  if (heldThrough !== undefined && heldThrough === \"never\") {\n    return { allowed: true, heldThrough };\n  }\n",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M3",
+  "what": "the carried grant is read before the target's own revocation",
+  "file": "server/services/license-manager.ts",
+  "old": "  if (row.enabled === false && !opts.ignoreRevocation) {\n    return {\n      allowed: false,\n      reason: `Module '${moduleId}' has been turned off for this organization by an administrator`,\n    };\n  }\n\n  /*\n   * Grant continuity (decision P-61 item 4): a live grant of a module folded\n   * into this one entitles it, after this module's own row and before the plan.\n   * A revocation written on this module therefore still refuses, above; the\n   * admin toggle (ignoreRevocation) may switch it back on.\n   */\n  const heldThrough = license.heldThroughFolds[moduleId];\n  if (heldThrough !== undefined) {\n    return { allowed: true, heldThrough };\n  }\n",
+  "new": "  const heldThrough = license.heldThroughFolds[moduleId];\n  if (heldThrough !== undefined) {\n    return { allowed: true, heldThrough };\n  }\n\n  /*\n   * Grant continuity (decision P-61 item 4): a live grant of a module folded\n   * into this one entitles it, after this module's own row and before the plan.\n   * A revocation written on this module therefore still refuses, above; the\n   * admin toggle (ignoreRevocation) may switch it back on.\n   */\n  if (row.enabled === false && !opts.ignoreRevocation) {\n    return {\n      allowed: false,\n      reason: `Module '${moduleId}' has been turned off for this organization by an administrator`,\n    };\n  }\n",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M4",
+  "what": "the Apps catalogue ignores the carried grant",
+  "file": "server/services/license-manager.ts",
+  "old": "license.heldThroughFolds[m.module_id])",
+  "new": "undefined)",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M5",
+  "what": "the catalogue carries over the target's own revocation",
+  "file": "server/services/license-manager.ts",
+  "old": "if (own === 'none' && carriedBy !== undefined) {",
+  "new": "if (own !== 'enabled' && carriedBy !== undefined) {",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M6",
+  "what": "a lapsed grant of the folded module carries",
+  "file": "server/services/license-manager.ts",
+  "old": "heldThroughFolds: grantsHeldThroughFolds(enabledModules),",
+  "new": "heldThroughFolds: grantsHeldThroughFolds(modulesResult.rows.map((r: any) => r.module_id)),",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M7",
+  "what": "the operator console ignores the carried grant",
+  "file": "server/routes/admin/master-licensing.ts",
+  "old": "const heldThrough = ownState === 'none' ? heldThroughFolds[m.module_id] : undefined;",
+  "new": "const heldThrough = ownState === 'never' ? heldThroughFolds[m.module_id] : undefined;",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M8",
+  "what": "canAccessModule consults the mapping a second time (same answer)",
+  "file": "server/services/license-manager.ts",
+  "old": "const heldThrough = license.heldThroughFolds[moduleId];",
+  "new": "const heldThrough = grantsHeldThroughFolds(license.enabledModules)[moduleId];",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M9",
+  "what": "the mapping drops ectd-publishing",
+  "file": "server/services/entitlements/folded-module-successors.ts",
+  "old": "  'ectd-publishing': 'ectd-compile',\n",
+  "new": "",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "M10",
+  "what": "the mapping carries billing, which never had a catalogue row",
+  "file": "server/services/entitlements/folded-module-successors.ts",
+  "old": "  'ectd-publishing': 'ectd-compile',\n",
+  "new": "  'ectd-publishing': 'ectd-compile',\n  billing: 'licensing',\n",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ }
+]
