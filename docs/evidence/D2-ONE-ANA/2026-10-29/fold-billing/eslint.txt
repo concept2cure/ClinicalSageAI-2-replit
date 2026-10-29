@@ -1,0 +1,41 @@
+# ESLint, the 13 changed files: 0 errors. Per-file warnings HEAD -> now (tools/lint-net.sh.txt): no file gained one.
+shared/constants/permissions.ts: HEAD 0 -> now 0
+server/middleware/orgMembership.ts: HEAD 0 -> now 0
+server/routes/billing-dashboard.ts: HEAD 4 -> now 3
+server/routes/__tests__/billing-invoices-admin-gate.test.ts: HEAD 0 -> now 0
+server/middleware/__tests__/session-permissions.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx: HEAD 4 -> now 4
+client/src/concept2cure/v2/surfaces/UsageBilling.tsx: HEAD 3 -> now 2
+client/src/concept2cure/v2/Shell.tsx: HEAD 5 -> now 5
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx: HEAD 0 -> now 0
+NET: HEAD 16 -> now 14 (-2)
+
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/Shell.tsx
+   79:8  warning  Function 'Rail' has too many lines (177). Maximum allowed is 100         max-lines-per-function
+   79:8  warning  Function 'Rail' has a complexity of 28. Maximum allowed is 15            complexity
+  328:1  warning  Function 'AccountMenu' has too many lines (131). Maximum allowed is 100  max-lines-per-function
+  693:1  warning  File has too many lines (771). Maximum allowed is 500                    max-lines
+  716:8  warning  Function 'CmdK' has too many lines (257). Maximum allowed is 100         max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+   78:8   warning  Function 'LicensingSurface' has too many lines (435). Maximum allowed is 100  max-lines-per-function
+   78:8   warning  Function 'LicensingSurface' has a complexity of 19. Maximum allowed is 15     complexity
+  394:37  warning  Arrow function has a complexity of 20. Maximum allowed is 15                  complexity
+  473:38  warning  Arrow function has a complexity of 17. Maximum allowed is 15                  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/UsageBilling.tsx
+  183:8  warning  Function 'UsageBilling' has too many lines (237). Maximum allowed is 100  max-lines-per-function
+  183:8  warning  Function 'UsageBilling' has a complexity of 16. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing-dashboard.ts
+  376:80   warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+  652:1    warning  File has too many lines (769). Maximum allowed is 500               max-lines
+  799:130  warning  Async arrow function has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 14 problems (0 errors, 14 warnings)
+

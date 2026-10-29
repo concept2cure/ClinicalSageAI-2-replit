@@ -12,6 +12,11 @@
  * defect, so the balance, "Buy more" and auto-reload are no longer shown
  * (settings/integrity audit 2026-10-17, finding 4). The Stripe portal stays
  * reachable from Plans & licensing ("Manage billing").
+ *
+ * The Billing tab these cases opened is gone: its invoice list moved to
+ * Licensing, for billing administrators (fold billing into Licensing,
+ * 2026-10-29; licensingInvoices.test.tsx). The cases still hold, on every tab
+ * the screen has left.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,45 +35,48 @@ const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b } as Re
 function route(reloadRequested = false, portal: unknown = { portalUrl: 'https://billing.stripe.test/s/1' }) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === '/api/billing/credits') return ok({ ...credits, autoReload: { ...credits.autoReload, requestedEnabled: reloadRequested } });
-    if (method === 'GET' && url === '/api/billing/invoices') return ok({ invoices: [] });
     if (method === 'GET') return ok({});
     if (method === 'POST' && url === '/api/billing/portal') return ok(portal);
     if (method === 'PUT' && url === '/api/billing/credits/auto-reload') return ok({ autoReload: { ...credits.autoReload }, auditTrail: { persisted: true, chained: true } });
     throw new Error(`unexpected ${method} ${url}`);
   });
 }
-const props = { surface: { id: 'billing' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
+const props = { surface: { id: 'usage' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
 beforeEach(() => { apiRequest.mockReset(); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-/** Opens the Billing tab. */
-async function mount() {
+const TABS = ['Usage', 'Rate limits'];
+
+/** Mounts the screen and visits each tab, returning the text every tab showed. */
+async function mount(): Promise<string> {
   /* `{...(props as never)}` typechecked as a spread of `never`, which TS
      rejects outright (TS2698). `props` is already shaped to the surface's
      contract above, so it spreads as itself. */
   render(<UsageBilling {...props} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/invoices'));
-  const billingTab = screen
-    .getAllByRole('button')
-    .find((b) => /^billing$/i.test((b.textContent ?? '').trim()));
-  expect(billingTab, 'the Billing tab must exist').toBeTruthy();
-  fireEvent.click(billingTab as HTMLButtonElement);
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/usage/limits'));
+  let seen = '';
+  for (const name of TABS) {
+    const tab = screen.getAllByRole('button').find((b) => (b.textContent ?? '').trim() === name);
+    expect(tab, `the ${name} tab must exist`).toBeTruthy();
+    fireEvent.click(tab as HTMLButtonElement);
+    seen += document.body.textContent ?? '';
+  }
+  return seen;
 }
 
 describe('credits are not presented as metered', () => {
   it('no balance, no Buy more, no auto-reload control, and no credits read', async () => {
     route();
-    await mount();
+    const seen = await mount();
     expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /turn on|turn off/i })).toBeNull();
-    expect(document.body.textContent).not.toMatch(/\$42\.00|Current balance|Auto-reload/i);
+    expect(seen).not.toMatch(/\$42\.00|Current balance|Auto-reload/i);
     expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits');
   });
 
   it('makes no price claim it cannot honour', async () => {
     route();
-    await mount();
-    expect(document.body.textContent).not.toMatch(/30% off/i);
+    expect(await mount()).not.toMatch(/30% off/i);
   });
 });
 
@@ -80,9 +88,9 @@ describe('the referral offer', () => {
        precisely because ledger credits move money-equivalent value. An offer of
        $10 the product cannot honour is a commitment, not a dead button. */
     route();
-    await mount();
-    expect(document.body.textContent).not.toMatch(/\$10 in usage credits/i);
-    expect(document.body.textContent).not.toMatch(/Give AnA, get more AnA/i);
+    const seen = await mount();
+    expect(seen).not.toMatch(/\$10 in usage credits/i);
+    expect(seen).not.toMatch(/Give AnA, get more AnA/i);
     expect(screen.queryByRole('button', { name: /copy link/i })).toBeNull();
   });
 });

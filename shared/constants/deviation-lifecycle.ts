@@ -1,5 +1,5 @@
 /**
- * A GMP deviation's lifecycle, its classes and its categories (P-50): one map
+ * A GMP deviation's lifecycle, its classes and its categories (P-57): one map
  * the server enforces (server/services/qms/deviations.ts) and the Quality
  * register offers, as CAPA's is (capa-lifecycle.ts).
  *

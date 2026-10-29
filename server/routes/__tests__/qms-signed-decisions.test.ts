@@ -155,7 +155,7 @@ describe("a supplier's approval standing is a signed act", () => {
 
 const closeDev = (body: Record<string, unknown>) => request(app()).post('/api/mdx/qms/deviations/5/close').send(body);
 
-describe('a deviation is closed by a signed act (P-50)', () => {
+describe('a deviation is closed by a signed act (P-57)', () => {
   it('commits the close with its ledger pair and signature, the signer named', async () => {
     const res = await closeDev({ reason: 'Investigation complete; seal replaced and room requalified.', meaning: 'approval', password: GOOD });
     expect(res.status).toBe(201);

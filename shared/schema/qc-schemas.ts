@@ -381,7 +381,7 @@ export const qcBatchReleases = pgTable('qc_batch_releases', {
 // DEVIATION MANAGEMENT
 // ============================================================================
 
-// Created by migrations/20261029g_qc_deviations.sql (P-50). The Quality deviation
+// Created by migrations/20261029g_qc_deviations.sql (P-57). The Quality deviation
 // record is the organization's, so client_workspace_id is optional there.
 export const qcDeviations = pgTable('qc_deviations', {
   id: serial('id').primaryKey(),

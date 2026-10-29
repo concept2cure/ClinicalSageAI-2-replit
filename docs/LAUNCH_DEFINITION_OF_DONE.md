@@ -902,7 +902,26 @@ Decided by the founder, 2026-10-29, answering MR-12's NEW-2 and NEW-3 and the di
 
 Not decided here: MR-12 NEW-4 (review quorum and the retirement meaning).
 
-### P-50 to P-56: decided under the founder's delegation of 2026-10-29
+### P-50 — Training: a 14-day grace for late assignment, assignment grants reading the released version, and personal training status is QA's to see
+
+Decided 2026-10-29 under the founder's delegation of that day ("You can make founder decisions"), answering the three
+questions `docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md` §1.4 left open within P-49:
+
+- **Q1, late assignment: 14 days.** Someone assigned after a version is already in force is due 14 days after they are
+  covered (`TRAINING_LATE_ASSIGNMENT_GRACE_DAYS = 14`). A version approved ahead of its effective date keeps P-49's
+  rule: due by the effective date. Due "today" would make every new hire overdue on their first day; Veeva offers
+  "N days after assignment" for the same reason.
+- **Q2, reading what you must train on: yes (the design's D3).** An active person covered by a live assignment may
+  read, through the training reader only, the immutable signed snapshot of that document's version in force and of
+  its pending version. It grants nothing on the editing copy, the editor, the versions route or the project. A task
+  nobody can complete is not distribution.
+- **Q3, who sees each person's training status: the person, administrators and designated QMS approvers.** Every
+  other member sees the coverage counts ("x of y assigned"), not names. Training status is a personnel record; a
+  colleague's lapse is QA's business, not the whole organisation's. The per-person reads (`GET /qms/training`, the
+  expiry list G10, the outstanding-training list) apply this when compliance moves onto assignments (the design's
+  slice 3).
+
+### P-51 to P-57: decided under the founder's delegation of 2026-10-29
 
 The founder delegated, on 2026-10-29: "make founder level decisions based on the best situation for the platform and
 our paying clients and human users … we're not ready for ETMF or CTMS. You could park those completely … We're
@@ -912,34 +931,11 @@ left open (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8,
 `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). Training assignment,
 training before the effective date and distribution (MR-12 NEW-2, NEW-3; parity §8 item 8) are P-49, the training
 lane's, and are not decided again here. *(Corrected 2026-10-29: this block first carried its own training entry and
-numbered the deviation decision P-49; it was written while P-49 landed from the training lane, which governs.)* The
+numbered the deviation decision P-49, then P-50; both numbers were taken by the training lane's P-49 and P-50 as these
+landed, and those govern. The deviation decision is P-57.)* The
 test for each was:
 does it complete something already in the catalog, for the client who pays for it, without widening the catalog?
 None widens it.
-
-### P-50 — Deviations are their own record in Quality
-
-A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
-Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
-out-of-window calibration. The nonconformance register is keyed to a product or material and a lot, so it cannot hold
-one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality app gains a deviation register:
-- classification as minor, major or critical;
-- what happened, where and when, and the procedure departed from;
-- immediate action, investigation and root cause;
-- the impact on product or batch, when there is one;
-- a CAPA raised from it, through the existing `raiseCapaFrom`;
-- closure as a signed decision, through the one signing ceremony.
-
-The store is `qc_deviations`, as `shared/schema/qc-schemas.ts` has defined it since the QC module. No migration had
-ever created it. `migrations/20261029g_qc_deviations.sql` creates it with `client_workspace_id` nullable, because a
-Quality record is the organisation's, and appends it to `C2C_MIGRATION_FILES` before the final sweep pair (Rule 1). It
-is public with `organization_id INTEGER NOT NULL`. *(Corrected on building: this entry first said "a new public table";
-the existing definition is reached instead, under Rule 3.)*
-
-The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage implementations behind them are deleted
-in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
-would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
-nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
 
 ### P-51 — Review and approval follow the review-routing decision; retirement has its own meaning (NEW-4)
 
@@ -1020,6 +1016,31 @@ PQ-DRAFT-001 stays unapproved until P-31's items 4 and 6 land:
 Then approval is a signature, with P-31 as its reasoning. Until then, production refuses governed drafting and every
 drafting claim says "staging". Approving a model without its evidence would give a paying client a qualification
 their own QA would reject. (Parity §8 Q1.)
+
+### P-57 — Deviations are their own record in Quality
+
+A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
+Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
+out-of-window calibration. The nonconformance register is keyed to a product or material and a lot, so it cannot hold
+one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality app gains a deviation register:
+- classification as minor, major or critical;
+- what happened, where and when, and the procedure departed from;
+- immediate action, investigation and root cause;
+- the impact on product or batch, when there is one;
+- a CAPA raised from it, through the existing `raiseCapaFrom`;
+- closure as a signed decision, through the one signing ceremony.
+
+The store is `qc_deviations`, as `shared/schema/qc-schemas.ts` has defined it since the QC module. No migration had
+ever created it. `migrations/20261029g_qc_deviations.sql` creates it with `client_workspace_id` nullable, because a
+Quality record is the organisation's, and appends it to `C2C_MIGRATION_FILES` before the final sweep pair (Rule 1). It
+is public with `organization_id INTEGER NOT NULL`. *(Corrected on building: this entry first said "a new public table";
+the existing definition is reached instead, under Rule 3.)*
+
+The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage implementations behind them are deleted
+in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
+would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
+nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
+
 
 ## How sessions run under this file
 

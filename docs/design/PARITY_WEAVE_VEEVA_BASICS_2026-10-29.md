@@ -866,7 +866,7 @@ Until PQ passes, every drafting improvement above can be tested only in staging,
 
 ## 8. Open questions for the founder
 
-**Decided 2026-10-29:** P-49 (the training lane's) and P-50 to P-56 (under the founder's delegation) in `docs/LAUNCH_DEFINITION_OF_DONE.md`. Q1 is P-56; Q2 is P-55; Q3, Q4, Q6, Q12, Q13 and Q14 are P-54; Q5 is P-50; Q7 is P-52; Q8 is P-49 (training and distribution) and P-51 (NEW-4); Q9, Q10 and Q11 are P-53. Q15 is an owner action.
+**Decided 2026-10-29:** P-49 and P-50 (the training lane's) and P-51 to P-57 (under the founder's delegation) in `docs/LAUNCH_DEFINITION_OF_DONE.md`. Q1 is P-56; Q2 is P-55; Q3, Q4, Q6, Q12, Q13 and Q14 are P-54; Q5 is P-57; Q7 is P-52; Q8 is P-49 and P-50 (training and distribution) and P-51 (NEW-4); Q9, Q10 and Q11 are P-53. Q15 is an owner action.
 
 1. **PQ.** Will you approve the Opus 5.5 PQ protocol and supply the product provider key? All 16 approved-model entries are `pending` (`approved-models.ts`). Until one passes, production refuses governed drafting, and no claim of parity with Weave on AI drafting holds there.
 2. **R-1 and AutoIND.** Which store links nonclinical studies to a project? R-1's records (`FOUNDER-DECISIONS-OWED-2026-10-26.md` row "2 (R-1)"; `docs/evidence/RULE2/2026-10-26-model-figures-audit/design.md`) recommend `nonclinical_studies`. The ingest path and the orchestrator's loader use `ctd_nonclinical_studies`. And may `/api/preclinical` ingest and review be admitted under Authoring, with both flags on (WEAVE_GAP decision 1)?

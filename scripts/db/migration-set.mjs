@@ -3635,7 +3635,7 @@ export const C2C_MIGRATION_FILES = [
   // when absent, as 20260926b does. Public with organization_id INTEGER NOT NULL,
   // so the sweeps below police it. Every statement guarded; no DROP.
   'migrations/20260505_saved_precedent_queries.sql',
-  // The GMP deviation record (D2, 2026-10-29, P-50): qc_deviations, as
+  // The GMP deviation record (D2, 2026-10-29, P-57): qc_deviations, as
   // shared/schema/qc-schemas.ts has defined it since the QC module and nothing
   // ever created (its /api/qc routes were a 501 stub), with client_workspace_id
   // nullable. After the base schema (organizations). Public with

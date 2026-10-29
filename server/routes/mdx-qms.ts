@@ -940,7 +940,7 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
 
 /* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
 router.use(qmsRecordsRouter);
-/* The GMP deviation register (mdx-qms-deviations.ts, P-50). */
+/* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
 router.use(qmsDeviationsRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
