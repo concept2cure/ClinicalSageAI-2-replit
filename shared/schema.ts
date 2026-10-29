@@ -9296,6 +9296,13 @@ export const csrBuildJobs = pgTable(
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+    // The retained Submission Center run that grounds the build (2026-10-29,
+    // CSR slice 3). Generated from the snapshot the runner writes at enqueue,
+    // so it cannot disagree with it; NULL when no run is bound.
+    sourceRunId: text('source_run_id').generatedAlwaysAs(
+      sql`(study_info_snapshot -> 'evidenceSource' ->> 'runId')`
+    ),
   },
   table => ({
     // Tenant-first index for status dashboards
@@ -9361,6 +9368,17 @@ export const csrSectionOutputs = pgTable(
     lineage: jsonb('lineage'), // which sources, prior section refs
 
     generatedAt: timestamp('generated_at').defaultNow().notNull(),
+
+    // Per-section review (2026-10-29, CSR slice 3; written only by
+    // server/services/csr/csr-section-review.ts). CHECKs in the SQL migration:
+    // review_status IN ('draft','in_review','approved'); a decided row carries
+    // review_decided_at and reviewed_content_hash. An approval is current only
+    // while reviewed_content_hash equals content_hash.
+    reviewStatus: text('review_status').notNull().default('draft'),
+    reviewerId: integer('reviewer_id').references(() => users.id, { onDelete: 'set null' }),
+    reviewDecidedAt: timestamp('review_decided_at', { withTimezone: true }),
+    reviewReason: text('review_reason'),
+    reviewedContentHash: text('reviewed_content_hash'),
   },
   table => ({
     // Tenant-first index for org-scoped section reads

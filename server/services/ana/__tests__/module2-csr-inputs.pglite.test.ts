@@ -37,10 +37,10 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_artifacts (id integer, organization_id integer, project_id integer);
     CREATE TABLE client_workspaces (id integer, organization_id integer);
     CREATE TABLE csr_build_jobs (id integer PRIMARY KEY, organization_id integer, project_id integer,
-      study_id text, status text, study_info_snapshot jsonb, created_at timestamp);
+      study_id text, status text, study_info_snapshot jsonb, created_at timestamp, source_run_id text GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED);
     CREATE TABLE csr_section_outputs (id serial PRIMARY KEY, organization_id integer, project_id integer, job_id integer,
       section_number text, content text, content_hash text, ai_generated boolean, model text, token_cost integer, lineage jsonb,
-      generated_at timestamp DEFAULT now());
+      generated_at timestamp DEFAULT now(), review_status text NOT NULL DEFAULT 'draft', reviewer_id integer, review_decided_at timestamptz, review_reason text, reviewed_content_hash text);
     INSERT INTO csr_build_jobs VALUES
       (1,7,11,'STUDY-A','complete','{"studyInfo":{"protocolNumber":"BX-301","phase":"3","sampleSize":600}}','2026-10-01');
   `);

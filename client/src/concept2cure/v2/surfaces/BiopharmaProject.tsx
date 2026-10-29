@@ -19,6 +19,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { CsrHeadingReview, type CsrBoardHeading } from './CsrBuildProgress';
 import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -68,6 +69,8 @@ function PageHead({ eyebrow, title, sub, actions }: {
 interface CsrBoard {
   program: CsrProgram | null;
   sections: CsrSection[];
+  /** Every heading of the canonical ICH E3 tree with the job's review state (CSR slice 3). */
+  headings?: CsrBoardHeading[];
   meta?: Record<string, unknown>;
   generatedAt?: string;
 }
@@ -321,7 +324,8 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
   // CSR build job yet (the sections still come back as the real ICH E3 catalog,
   // not started), and any unreachable/failed read is an honest error. No
   // CSR_PROGRAM / CSR_SECTIONS stand-in, no "Sample data" pill.
-  const boardRes = useLiveData<CsrBoard>(boardPath);
+  const [boardVersion, setBoardVersion] = useState(0);
+  const boardRes = useLiveData<CsrBoard>(boardPath, [boardPath, boardVersion]);
   const board = boardRes.data;
   const program: CsrProgram | null = board?.program ?? null;
   const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
@@ -553,6 +557,11 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
           );
         })}
       </div>
+
+      {canImport && Array.isArray(board?.headings) && (
+        <CsrHeadingReview jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)}
+          onImport={(sectionNumbers) => setImportSource({ kind: 'csr', jobId, sectionNumbers })} />
+      )}
 
       {graphOn && (
         <RegulatoryPanel

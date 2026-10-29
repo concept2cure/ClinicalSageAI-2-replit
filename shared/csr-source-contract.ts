@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CSR_SOURCE_FORMAT, CsrSourceEnvelopeSchema } from './csr-source-input.js';
+import { ADAM_DATASET_NAMES, CSR_ADAM_BUNDLE_FORMAT, CSR_EFFICACY_RESULTS_FORMAT, CsrAdamBundleSchema, CsrEfficacyResultsSchema } from './csr-adam-bundle.js';
 
 /** Documentation is derived from the same Zod contract as the loader. Semantic
  * cross-record rules below still require server validation of actual source. */
@@ -58,6 +59,26 @@ export function csrSourceContract() {
       'Primary endpoint results match StudyInfo.primaryEndpoint; recorded result values, display strings, confidence intervals and p-values are not computed or clinically verified by this adapter.',
       'A Bayesian result records its credible interval and the posterior probability of a named hypothesis (for example "OR > 1") as the SAP reports them. They are recorded, never computed or verified here, and they appear in the efficacy table only when a result carries them.',
       'Exposure and lab summaries use known arms without duplicate summaries. Lab counts do not exceed assessed denominators.',
+      'Declared disposition categories (optional) list every final status the source classifies subjects into: a declared category with no subject is a recorded zero, and a status neither declared nor used by any record is reported as not recorded, never 0. dispositionBasis says whether "completed" is study or treatment completion; a source that declares it reports discontinuations other than death and loss to follow-up as "Discontinued (other reasons)".',
+      'Vital signs (baseline and last on-treatment value, one per subject and parameter) and concomitant medications belong to a recorded subject in that arm’s safety population.',
       'A new package run requires the current, nonwithdrawn Vault version, exact preview digest and existing approved canonical lifecycle bound to those bytes.',
+    ],
+    adamBundle: csrAdamBundleContract() };
+}
+
+/** CSR slice 6 (2026-10-29): the ADaM route to the same source. */
+function csrAdamBundleContract() {
+  return { format: CSR_ADAM_BUNDLE_FORMAT,
+    description: 'Instead of a hand-built source, choose a manifest that names the study’s CDISC ADaM datasets (Dataset-JSON v1.0/v1.1 or SAS transport v5, one dataset per file) and the approved SAP efficacy output, each by Vault document and exact SHA-256. The engine derives the source above from them; efficacy results are imported as the SAP reports them, never computed.',
+    datasets: { required: ['ADSL', 'ADAE'], optional: ADAM_DATASET_NAMES.filter(n => n !== 'ADSL' && n !== 'ADAE') },
+    limits: { maximumDatasetBytes: 64 * 1024 * 1024 },
+    manifestSchema: jsonSchema(CsrAdamBundleSchema),
+    efficacyResults: { format: CSR_EFFICACY_RESULTS_FORMAT, schema: jsonSchema(CsrEfficacyResultsSchema) },
+    derivationRules: [
+      'Every named file must be the current, approved Vault version at the digest the manifest pins.',
+      'ADSL: one row per subject; arms from TRT01P through the manifest’s arm map; populations from RANDFL (or the declared flag), SAFFL, ITTFL or FASFL, and PPROTFL; disposition from EOSSTT and DCSREAS; demographics from AGE, SEX, RACE, ETHNIC, WEIGHTBL, BMIBL. A subject ongoing at the data cut, an unmapped treatment or a reassigned actual treatment is refused.',
+      'ADAE: treatment-emergent rows (TRTEMFL = Y) by AEBODSYS and AEDECOD, with ASEV/AESEV, AESER, AREL/AEREL, AEOUT or AESDTH, and AEACN (without them a fatal outcome or an AE discontinuation is unrecorded, so the file is refused rather than counted as 0). On a treatment-emergent row, AESDTH = N or a known AEOUT must establish a non-fatal event, and AEACN must not be blank or UNKNOWN; otherwise the row is refused. A row naming a subject ADSL does not list, or a treatment-emergent row outside the safety population, is refused.',
+      'ADEX: TRTDURD in days for every safety subject. ADLB: shift from the baseline range indicator (ANRIND) to the last on-treatment one. ADVS/ADEG: baseline and last on-treatment AVAL. ADCM: concomitant (CONCOMFL or ONTRTFL) coded medications.',
+      'The last on-treatment value is ordered by ADT, else ADY, else AVISITN, never by file order. Nothing is imputed: a blank required value is refused by variable and row.',
     ] };
 }

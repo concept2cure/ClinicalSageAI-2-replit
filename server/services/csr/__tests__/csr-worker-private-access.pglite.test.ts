@@ -82,11 +82,11 @@ beforeAll(async () => {
     CREATE TABLE csr_build_jobs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       study_id text NOT NULL, status text NOT NULL, progress integer NOT NULL,
       sections_to_generate text[], study_info_snapshot jsonb, error jsonb, requested_by integer,
-      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
+      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now(), source_run_id text GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED);
     CREATE TABLE csr_section_outputs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       job_id integer NOT NULL, section_number text NOT NULL, content text NOT NULL, content_hash text NOT NULL,
       ai_generated boolean NOT NULL DEFAULT false, model text, token_cost integer DEFAULT 0,
-      lineage jsonb, generated_at timestamp DEFAULT now(), UNIQUE(job_id,section_number));
+      lineage jsonb, generated_at timestamp DEFAULT now(), review_status text NOT NULL DEFAULT 'draft', reviewer_id integer, review_decided_at timestamptz, review_reason text, reviewed_content_hash text, UNIQUE(job_id,section_number));
     INSERT INTO client_workspaces VALUES (71,7);
   `);
 });
