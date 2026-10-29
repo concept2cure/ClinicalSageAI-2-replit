@@ -62,7 +62,7 @@ async function seedCsr(opts: { synopsisText?: string; synopsisReceipts?: boolean
 
 interface Verdict {
   verdict: string;
-  csrEvidence: { status: string; checkedClaims: number; checkedSections: number; issueCount: number; blockingUnclaimedFigureCount: number; runs: Array<{ source: string; code?: string }> };
+  csrEvidence: { status: string; checkedClaims: number; checkedSections: number; issueCount: number; blockingUnclaimedFigureCount: number; editedSectionCount?: number; runs: Array<{ source: string; code?: string }> };
   items: Array<Record<string, unknown>>;
 }
 async function critique(read: RetainedTableReader = async () => retained()): Promise<Verdict> {
@@ -85,9 +85,12 @@ describe('a saved CSR gets a number-to-source verdict from its retained run', ()
     const v = await critique();
     expect(v.csrEvidence.status).toBe('blocked');
     expect(v.verdict).toBe('revise');
+    // 2026-10-30 (edited-section re-check): the edited synopsis is re-checked by
+    // its text, not blocked on its hash. It was SECTION_VERSION_CHANGED plus
+    // CLAIM_NOT_STATED; the changed figure is now named against its cell.
+    expect(issues(v).some(i => i.code === 'SECTION_VERSION_CHANGED')).toBe(false);
     expect(issues(v)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ section: '2', code: 'SECTION_VERSION_CHANGED' }),
-      expect.objectContaining({ section: '2', code: 'CLAIM_NOT_STATED',
+      expect.objectContaining({ section: '2', code: 'FIGURE_CHANGED', stated: '15/305 (4.9%)',
         cell: { table: 'primaryEfficacy', row: 0, column: 2, claimed: CELL, current: CELL } }),
       expect.objectContaining({ section: '2', code: 'CROSS_SECTION_CONFLICT', stated: '15/305',
         cell: expect.objectContaining({ table: 'primaryEfficacy', row: 0, column: 2, current: CELL }), statedIn: ['11.4'] }),
@@ -177,6 +180,72 @@ describe('a saved CSR gets a number-to-source verdict from its retained run', ()
     expect(v.csrEvidence.status).toBe('blocked');
     expect(issues(v)).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'CROSS_SECTION_CONFLICT', stated: '15/305' }),
+    ]));
+  });
+});
+
+// 2026-10-30 (edited-section re-check): a medical writer edits an imported
+// section. The edited text is re-reconciled against its claim receipts and the
+// retained run instead of blocking forever on SECTION_VERSION_CHANGED.
+describe('a section edited after import is re-checked against its receipts and the retained run', () => {
+  const editEfficacy = (prose: string) => pg.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', [workflowCopySectionContent(prose), sectionId(2)]);
+  const edited = (v: Verdict) => v.items.filter(i => i.kind === 'csr-edited-section');
+
+  it('reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked', async () => {
+    await seedCsr();
+    await editEfficacy('In the LMN-201 arm, 16/305 (5.2%) subjects achieved global cure (Table 14.2.1).');
+    const v = await critique();
+    expect(v.csrEvidence).toMatchObject({ status: 'reconciled_pending_human_review', issueCount: 0, blockingUnclaimedFigureCount: 0, editedSectionCount: 1 });
+    expect(issues(v)).toEqual([]);
+    expect(edited(v)).toEqual([expect.objectContaining({ section: '11.4', state: 'edited after import, re-checked' })]);
+  });
+
+  it('blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be', async () => {
+    await seedCsr();
+    await editEfficacy(EFFICACY.replace('16/305', '18/305'));
+    const v = await critique();
+    expect(v.csrEvidence.status).toBe('blocked');
+    expect(issues(v)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ section: '11.4', code: 'FIGURE_CHANGED', stated: '18/305 (5.2%)',
+        cell: { table: 'primaryEfficacy', row: 0, column: 2, claimed: CELL, current: CELL } }),
+    ]));
+    expect(issues(v).some(i => i.code === 'SECTION_VERSION_CHANGED')).toBe(false);
+    expect(v.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'csr-unclaimed-figures', section: '11.4', blocking: true, figures: ['18'] }),
+    ]));
+  });
+
+  it('blocks an edit that adds an unsourced number in §11', async () => {
+    await seedCsr();
+    await editEfficacy(`${EFFICACY} Median time to cure was 12 days.`);
+    const v = await critique();
+    expect(v.csrEvidence.status).toBe('blocked');
+    expect(v.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'csr-unclaimed-figures', section: '11.4', blocking: true, figures: ['12'] }),
+    ]));
+    expect(issues(v).some(i => i.code === 'SECTION_VERSION_CHANGED')).toBe(false);
+    expect(edited(v)).toEqual([expect.objectContaining({ section: '11.4' })]);
+  });
+
+  // Decision 8 (2026-10-30): in a results section a removal cannot be told apart from a swap to a value
+  // another claim carries, so it blocks there; outside §2/§10-13 it is reported without blocking.
+  it('blocks on a claimed figure an edit removed from a results section, naming the cell', async () => {
+    await seedCsr();
+    await editEfficacy('Global cure was the primary endpoint (Table 14.2.1).');
+    const v = await critique();
+    expect(issues(v)).toEqual([expect.objectContaining({ section: '11.4', code: 'CLAIM_NOT_STATED',
+      cell: { table: 'primaryEfficacy', row: 0, column: 2, claimed: CELL, current: CELL } })]);
+    expect(issues(v)[0]).not.toHaveProperty('blocking', false);
+    expect(v.csrEvidence.status).toBe('blocked');
+  });
+
+  it('still blocks an edited section whose retained cell has since changed', async () => {
+    await seedCsr();
+    await editEfficacy('In the LMN-201 arm, 16/305 (5.2%) subjects achieved global cure (Table 14.2.1).');
+    const v = await critique(async () => retained('17/305 (5.6%)'));
+    expect(v.csrEvidence.status).toBe('blocked');
+    expect(issues(v)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ section: '11.4', code: 'NUMERIC_MISMATCH', cell: expect.objectContaining({ current: '17/305 (5.6%)' }) }),
     ]));
   });
 });

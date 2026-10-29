@@ -1,0 +1,16 @@
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 363ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 46ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 31ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 127ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 79ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 42ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a placement a stopped worker left as interrupted, not as being placed, and offers to place it again into that sequence (2026-10-30) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > marks a drafted section that keeps a data placeholder as blocking placement 23ms
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows what each file replaces in the chosen sequence, and places only once an earlier file left out is confirmed on file (2026-10-30) 5029ms
+   → Unable to find a label with the text of: Lifecycle of each file
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > offers to withdraw the partly placed CSR files with a reason, and shows a refusal as stated (2026-10-30) 5009ms
+   → Unable to find role="button" and name `/Withdraw the partly placed CSR files/`
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > states a withdrawal and offers a fresh placement (2026-10-30) 5009ms
+   → Unable to find an element with the text: /were withdrawn \(1 file\(s\)\) by user 5/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 8 passed (11)

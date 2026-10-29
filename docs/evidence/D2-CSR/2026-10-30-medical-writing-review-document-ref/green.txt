@@ -1,0 +1,201 @@
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > finds conflicting subject counts across actual saved sections in one pinned transaction
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not let a saved CSR evade evidence review through a protocol override
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > exposes CSR evidence as unassessed rather than silently passing saved prose
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > keeps frozen saved documents readable for oversight without edit permission or writes
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > excludes unaccepted insertion text while retaining the proposed deletion in the accepted record
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not hide a cross-section conflict merely because the conflicting saved prose is marked for deletion
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > the executed actor-email query reads only membership in the current organization
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses current project revocation after a successful review
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a revoked document grant even while current project access remains
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > resolves email-only document grants from the current user record
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > does not allow a section-only grant to authorize a whole-document read
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000042
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000051
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":7,"projectRef":null}
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":null,"projectRef":"11111111-2222-4333-8444-000000000011"}
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":null,"userId":7,"projectRef":"11111111-2222-4333-8444-000000000011"}
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a foreign program even if the prompt requests a document in this organization
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > walks every section and finding through bounded pages including escaped saved titles
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved content changes, even without a new timestamp
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved document title changes, even without a new timestamp
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rechecks document permission before returning a continuation
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1} before a database checkout
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":-1} before a database checkout
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":"1"} before a database checkout
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":0.5} before a database checkout
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1,"expected_snapshot":"unverified"} before a database checkout
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > resolves the registered eligible source in the current section
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > keeps another uploader’s unbound source unresolved for an otherwise permitted saved-document reviewer
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses a new cited-document verdict after requester membership revocation without reading source metadata
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not lend a sibling section association to an unregistered pasted marker
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual remove_data withdrawal as a high record finding
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual supersede withdrawal as a high record finding
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after source deleted
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after association removed
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses continuation of a formerly eligible source snapshot after data withdrawal
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > retains an eligible historical source already registered to this section
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not resolve a source that now belongs to another program
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports a registered source without printable metadata as unresolved
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses a saved document with no sections
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section title rather than reviewing the remaining valid section
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section updated_at rather than reviewing the remaining valid section
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses more than 512 saved sections before selecting their content
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > uses the eight MiB byte limit, including non-ASCII content, before selecting the body
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > rejects mixing a saved document with caller-supplied replacement sections
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > returns the evidence finding for a saved CSR section whose figure differs from its retained cell
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > reconciles a section whose stated figure is its cell, as transcription agreement only
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > names a figure another section contradicts, by the section's id as well as its number
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > records an unreadable retained run as blocked, never as agreement
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > is not_assessed for a CSR that carries no claim receipts, and still lists the section's figures
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > refuses rather than guesses: a non-CSR document, an unknown section, draft_text with a reference, no project
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > manuscriptHeadings is byte-identical to the trunk output
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > csrFreeText is byte-identical to the trunk output
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > csrPreDraft is byte-identical to the trunk output
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > unknownType is byte-identical to the trunk output
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > missingType is byte-identical to the trunk output
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2)
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated"
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault"
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected"
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold)
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined)
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > returns a pre-draft checklist (structure as review) when no draft is given
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > flags missing sections when a thin draft is reviewed
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > never treats narrative mentions of every heading keyword as complete structure
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual markdown headings without certifying scientific completeness
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual numbered headings without certifying scientific completeness
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual html headings without certifying scientific completeness
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > recognizes actual plain headings without certifying scientific completeness
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > does not promote a partial heading or heading-only skeleton to substantive completion
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing protocol standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing csr standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing ib standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing clinical_overview standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing clinical_summary standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing cer standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing pmcf standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing per standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing manuscript standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing plain_language_summary standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing regulatory_response standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing rmp standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting > uses the existing meeting_package standard rather than a second heading catalog
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > asks bounded source, study/SAP and population/units questions for an unverified clinical draft
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > asks for CMC material, methods and stability conditions only when relevant to the draft
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > keeps device inquiries on the indexed writing standard, not a medicinal-product preparation plan
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > preserves separately supplied canonical headings without treating prose as a heading
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > ignores fenced examples, list items and hidden HTML instead of promoting them to headings
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > does not silently stop checking after the search extractor default of forty headings
+ ✓ server/services/ana/__tests__/medical-writing-review.test.ts > reviewMedicalWriting — unresolved evidence and honest scope > handles an unknown document type without throwing
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > save_document_to_vault (confirm) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > approve_qms_document (refuse) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > convene_drafting_council (self) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > execute_platform_command (command) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_self: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_confirm: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_command: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a tool nobody classified is refused as not-a-read, not proposed
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a read runs
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a real read tool runs (check_numerical_integrity)
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > deeper still is refused the same way
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > a self-class tool runs at depth 0
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > explicit user read-only scope > refuses zz_rule0_self even with confirmation
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > explicit user read-only scope > refuses zz_rule0_confirm even with confirmation
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > explicit user read-only scope > refuses zz_rule0_command even with confirmation
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > explicit user read-only scope > still runs classified reads
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a write the scanner took for a read is proposed, not run
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a person's own act is refused, and a confirmation does not change that
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a conditional tool is refused only on the call that would take the person’s act
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > is proposed rather than run — it fails closed
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > runs once a person has confirmed it
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > never takes the confirmation from what the model wrote
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > an unconfirmed write by a viewer is still a proposal — the role is not read
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > a person's own act is refused as such for a viewer too — the role is not read
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > a confirmed write by a viewer is refused for its role, and the handler does not run
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > list_vault_documents {} → UNGOVERNED
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > answer_intelligence_question {"answer":"x"} → UNGOVERNED
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > raise_monitoring_signal {"title":"t"} → NEEDS_APPROVAL
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > cast_committee_vote {"vote":"approve"} → REFUSED
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"closed"} → REFUSED
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"verification"} → NEEDS_APPROVAL
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > puts a write to a person at the confirm tier, carrying the call
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > does not ask a person about an act that is not AnA’s to take
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > a write it cannot read is refused, not proposed
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess keeps the same dispatch and scope without device-workstream
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run keeps the same dispatch and scope without device-workstream
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess describes the selected project and its existing confirmation gate
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run describes the selected project and its existing confirmation gate
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > accepts an exact qualified section and source receipt without claiming approval
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on edited saved text
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on different section identity or AnA run
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on missing, duplicate, extra or cross-section claim receipts
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on withdrawn or changed source evidence
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails closed on missing binding and empty claims
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > exposes saved-record and versioned continuation inputs on the existing tool
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > refuses saved-document review with no authorized conversation scope
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > refuses a malformed supplied section instead of reviewing the filtered subset
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > surfaces heading-only evidence and unassessed scientific/approval states
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > does not certify prose or invent a standard for an unsupported type
+ ✓ server/services/ana/__tests__/medical-writing-review-tool.test.ts > medical_writing_review existing tool output > describes the actual limits rather than expert conformance or approval
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > checks the complete manifest
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects missing sections
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects duplicate and unexpected sections
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects changed content, missing binding and withdrawn evidence
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects empty manifest and content
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects a reused claim identifier across different sections
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects duplicate source fact identifiers in the document ledger
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > never implies a heading-only review is scientific approval
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > reconciles qualified numerical receipts but still requires human review
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > blocks a changed denominator or source version
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > does not promote withdrawn evidence
+ Test Files  14 passed (14)
+      Tests  199 passed (199)

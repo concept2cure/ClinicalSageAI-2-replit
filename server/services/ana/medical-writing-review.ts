@@ -217,7 +217,7 @@ export function reviewCsrSectionWithEvidence(
   evidence: readonly CsrEvidenceFact[],
 ): {
   writing: MedicalWritingReview;
-  evidence: { status: 'blocked' | 'reconciled_pending_human_review'; issues: CsrBindingIssue[]; checkedClaims: number };
+  evidence: { status: 'blocked' | 'reconciled_pending_human_review'; issues: CsrBindingIssue[]; checkedClaims: number; findings: CsrClaimFinding[] };
   readyForApproval: false;
 } {
   const writing = reviewMedicalWriting('csr', snapshot.savedContent);
@@ -228,6 +228,8 @@ export function reviewCsrSectionWithEvidence(
       status: checked.accepted ? 'reconciled_pending_human_review' : 'blocked',
       issues: checked.issues,
       checkedClaims: checked.checkedClaims,
+      // 2026-10-30 (medical_writing_review with a document reference): the claim-level findings name the cell.
+      findings: checked.findings,
     },
     readyForApproval: false,
   };

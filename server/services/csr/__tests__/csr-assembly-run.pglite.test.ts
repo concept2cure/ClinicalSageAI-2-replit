@@ -133,6 +133,9 @@ function placementDeps(seq: Partial<PlacementSequence>, programId: string | null
       writes.push(input);
       return { id: 1000 + writes.length };
     },
+    // No earlier sequence holds this study's CSR files here (the lifecycle runs on the real writer in csr-assembly-lifecycle.pglite.test.ts).
+    priorStudyLeaves: async () => [],
+    removeLeaf: async () => { throw new Error('not used by these placements'); },
   };
 }
 const place = (d: CsrPlacementDeps, assemblyId: number, reason = 'CSR for the Part B data cut') =>

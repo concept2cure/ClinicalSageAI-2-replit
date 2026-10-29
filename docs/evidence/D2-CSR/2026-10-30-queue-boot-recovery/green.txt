@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > two instances booting together resume each stalled item once, as its requester; a live run is left alone 439ms
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > a requester whose project access was removed gets a typed failure in each queue, and nothing runs 70ms
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > a requester who no longer exists, or an archived project, is a typed failure too 56ms
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > an organization not permitted background work is left as it is 35ms
+stdout | server/jobs/__tests__/csrQueueRecovery.test.ts
+{
+  "timestamp": "2026-10-29T16:02:52.059Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T16:02:52.063Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/jobs/__tests__/csrQueueRecovery.test.ts
+{
+  "timestamp": "2026-10-29T16:02:52.063Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/csrQueueRecovery.test.ts
+[database] Database connection successful
+
+stdout | server/jobs/__tests__/csrQueueRecovery.test.ts > CSR queue boot recovery wiring > does not run in tests
+{
+  "timestamp": "2026-10-29T16:02:52.152Z",
+  "level": "info",
+  "message": "[csr-queue-recovery] disabled",
+  "context": {
+    "controlledBy": "CSR_QUEUE_RECOVERY_DISABLED",
+    "reason": "test environment"
+  }
+}
+
+ ✓ server/jobs/__tests__/csrQueueRecovery.test.ts > CSR queue boot recovery wiring > is started by the server once it listens 2ms
+ ✓ server/jobs/__tests__/csrQueueRecovery.test.ts > CSR queue boot recovery wiring > does not run in tests 1ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  16:02:41
+   Duration  10.32s (transform 2.64s, setup 128ms, import 5.94s, tests 3.73s, environment 0ms)
+
