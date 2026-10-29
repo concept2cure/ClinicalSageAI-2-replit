@@ -1,0 +1,9 @@
+# recorded-downloads.contract.test.ts at HEAD (from the release-gate change's affected run)
+ FAIL  server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/report-os.ts': `'router.post(\'/bundles/:bundleId/expo…'` records before it delivers, or is listed 
+AssertionError: server/routes/report-os.ts POST /bundles/:bundleId/export.zip delivers a file and records nothing: expected false to be true // Object.is equality
+ FAIL  server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/ivdr-binder-routes.ts' `'get(\'/packs/:packId/download\''` still delivers unrecorded, and is not serv
+AssertionError: /api/ivdr/packs/1/download is served in production (launch): record it: expected true to be false // Object.is equality
+ FAIL  server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/ivdr-routes.ts' `'get(\'/classify/:id/report\''` still delivers unrecorded, and is not served
+AssertionError: /api/ivdr/classify/1/report is served in production (launch): record it: expected true to be false // Object.is equality
+ FAIL  server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/rtm-export.ts' `'get(\'/programs/:programId/rtm/csv\''` still delivers unrecorded, and is not served
+AssertionError: /api/programs/1/rtm/csv is served in production (launch): record it: expected true to be false // Object.is equality
