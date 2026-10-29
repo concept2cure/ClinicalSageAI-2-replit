@@ -16,7 +16,9 @@
  * CDISC pilot defect D8): DCSREAS, DCTREAS and DCDECOD, and the manifest's
  * declared subject-level flag (conventions.aeDiscontinuationFlag). With that
  * flag declared, a study that never collected AEACN is not refused on it; a
- * recorded DRUG WITHDRAWN still qualifies its event.
+ * recorded DRUG WITHDRAWN still qualifies its event. Such a subject also keeps
+ * every treatment-emergent ADAE row (subjectLevelWithdrawal), so its narrative
+ * can list the events that preceded the withdrawal without naming a cause (D17).
  */
 import type { CsrAdamBundle } from '../../../shared/csr-adam-bundle.js';
 import type { AdamDataset, AdamRow } from './adam-dataset-reader.js';
@@ -40,6 +42,12 @@ export interface SelectedSubject {
   diedPerAdsl: boolean;
   /** ADSL records discontinuation for an adverse event (DCSREAS, DCTREAS, DCDECOD or the declared flag). */
   discontinuedForAePerAdsl: boolean;
+  /**
+   * Set only when the manifest declares AE withdrawal per subject (conventions.aeDiscontinuationFlag)
+   * and ADSL records it for this subject (D17, 2026-10-30): the flag, the declared ADSL withdrawal date
+   * variable (conventions.aeDiscontinuationDate; never guessed) and every treatment-emergent ADAE row of the subject.
+   */
+  subjectLevelWithdrawal?: { flag: string; dateVariable?: string; teae: Array<{ row: AdamRow; index: number }> };
 }
 export interface NarrativeSelection {
   subjects: SelectedSubject[];
@@ -83,17 +91,34 @@ function eventCategories(ds: AdamDataset, row: AdamRow, i: number, aesi: CsrAdam
   return categories;
 }
 
-function subjectSkeleton(adsl: AdamDataset, row: AdamRow, i: number, bundle: CsrAdamBundle, aeFlag: string | undefined): SelectedSubject {
+interface WithdrawalBasis { aeFlag?: string; dateVariable?: string }
+
+/**
+ * The declared subject-level AE withdrawal flag and its declared date variable; never guessed (D17). EOSDT is
+ * not assumed (review 2026-10-30): the flag may record treatment, not study, withdrawal, and an end-of-study
+ * date would then list events after the withdrawal as before it.
+ */
+function withdrawalBasis(bundle: CsrAdamBundle, adsl: AdamDataset, adae: AdamDataset): WithdrawalBasis {
+  const aeFlag = bundle.conventions?.aeDiscontinuationFlag;
+  const declaredDate = bundle.conventions?.aeDiscontinuationDate;
+  requireColumns(adsl, 'USUBJID', 'TRT01P', ...(aeFlag ? [aeFlag] : []), ...(aeFlag && declaredDate ? [declaredDate] : []));
+  requireColumns(adae, 'USUBJID', 'AEDECOD', 'AESER', ...(aeFlag ? ['TRTEMFL'] : ['AEACN']), has(adae, 'AESDTH') ? 'AESDTH' : 'AEOUT');
+  return { aeFlag, dateVariable: declaredDate };
+}
+
+function subjectSkeleton(adsl: AdamDataset, row: AdamRow, i: number, bundle: CsrAdamBundle, { aeFlag, dateVariable }: WithdrawalBasis): SelectedSubject {
   const treatment = (has(adsl, 'TRT01A') && text(row, 'TRT01A')) || text(row, 'TRT01P');
   const armOrder = bundle.arms.findIndex(a => a.treatment === treatment);
   if (armOrder < 0) refuse('ARM_UNMAPPED', 'A subject’s treatment (TRT01A, else TRT01P) is not mapped to an arm in the manifest.', where(adsl, i, 'TRT01P'));
   const reasons = ADSL_REASON_VARIABLES.filter(v => has(adsl, v)).map(v => text(row, v).toUpperCase());
   const flagged = aeFlag ? yesNoBlank(adsl, row, i, aeFlag) : false;
+  const discontinuedForAePerAdsl = flagged || reasons.some(r => AE_REASON.test(r));
   return {
     subjectId: required(adsl, row, i, 'USUBJID'), adsl: row, adslIndex: i, armOrder, armName: bundle.arms[armOrder].armName,
     categories: [], events: [],
     diedPerAdsl: (has(adsl, 'DTHFL') && text(row, 'DTHFL').toUpperCase() === 'Y') || reasons.includes('DEATH'),
-    discontinuedForAePerAdsl: flagged || reasons.some(r => AE_REASON.test(r)),
+    discontinuedForAePerAdsl,
+    ...(aeFlag && discontinuedForAePerAdsl ? { subjectLevelWithdrawal: { flag: aeFlag, ...(dateVariable ? { dateVariable } : {}), teae: [] } } : {}),
   };
 }
 
@@ -104,14 +129,13 @@ function addCategories(subject: SelectedSubject, categories: NarrativeCategory[]
 /** Every subject the E3 §12.3.2 rule selects, in treatment-group then subject order. */
 export function selectNarrativeSubjects(bundle: CsrAdamBundle, datasets: Pick<AdamDatasets, 'ADSL' | 'ADAE'>): NarrativeSelection {
   const { ADSL: adsl, ADAE: adae } = datasets;
-  const aeFlag = bundle.conventions?.aeDiscontinuationFlag;
-  requireColumns(adsl, 'USUBJID', 'TRT01P', ...(aeFlag ? [aeFlag] : []));
-  requireColumns(adae, 'USUBJID', 'AEDECOD', 'AESER', ...(aeFlag ? [] : ['AEACN']), has(adae, 'AESDTH') ? 'AESDTH' : 'AEOUT');
+  const basis = withdrawalBasis(bundle, adsl, adae);
+  const aeFlag = basis.aeFlag;
   const aesi = bundle.adverseEventsOfSpecialInterest;
   if (aesi?.flagVariable) requireColumns(adae, aesi.flagVariable);
   const all = new Map<string, SelectedSubject>();
   adsl.rows.forEach((row, i) => {
-    const subject = subjectSkeleton(adsl, row, i, bundle, aeFlag);
+    const subject = subjectSkeleton(adsl, row, i, bundle, basis);
     if (all.has(subject.subjectId)) refuse('DUPLICATE_SUBJECT', 'ADSL lists a subject more than once.', where(adsl, i, 'USUBJID'));
     all.set(subject.subjectId, subject);
   });
@@ -119,6 +143,7 @@ export function selectNarrativeSubjects(bundle: CsrAdamBundle, datasets: Pick<Ad
     const subject = all.get(text(row, 'USUBJID'))
       ?? refuse('SUBJECT_NOT_IN_ADSL', 'An ADAE row names a subject that ADSL does not list.', where(adae, i, 'USUBJID'));
     const categories = eventCategories(adae, row, i, aesi, !aeFlag);
+    if (subject.subjectLevelWithdrawal && yesNoBlank(adae, row, i, 'TRTEMFL')) subject.subjectLevelWithdrawal.teae.push({ row, index: i });
     if (!categories.length) return;
     subject.events.push({ row, index: i, categories });
     addCategories(subject, categories);

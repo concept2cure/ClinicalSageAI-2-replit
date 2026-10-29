@@ -26,7 +26,7 @@ const issuesOf = (issues: Array<{ path: (string | number)[]; code: string; messa
 function parseBundle(raw: unknown) {
   const parsed = CsrAdamBundleSchema.safeParse(raw);
   if (!parsed.success) throw new CsrSourceInputError(422, 'CSR_ADAM_BUNDLE_INVALID', 'The ADaM bundle manifest does not meet its documented contract. No tables were saved.', issuesOf(parsed.error.issues));
-  const ids = [...Object.values(parsed.data.datasets), parsed.data.efficacyResults].map(r => r!.documentId);
+  const ids = [...Object.values(parsed.data.datasets), parsed.data.efficacyResults].filter(r => r !== undefined).map(r => r.documentId);
   if (new Set(ids).size !== ids.length) throw new CsrSourceInputError(422, 'CSR_ADAM_BUNDLE_INVALID', 'Each dataset and the efficacy results must be a different Vault document.');
   return parsed.data;
 }
@@ -65,8 +65,9 @@ export async function loadAdamBundleDatasets(raw: unknown, loadComponent: LoadCo
 /** The derived source, and whether every file the manifest names is lifecycle-approved at its pinned version. */
 export async function loadAdamBundleEnvelope(raw: unknown, loadComponent: LoadComponent): Promise<{ envelope: CsrSourceEnvelope; componentsApproved: boolean }> {
   const { bundle, datasets, componentsApproved: datasetsApproved } = await loadAdamBundleDatasets(raw, loadComponent);
-  const efficacyFile = await loadComponent(bundle.efficacyResults);
-  const componentsApproved = datasetsApproved && efficacyFile.approved;
-  const envelope = deriveCsrSourceFromAdam(bundle, datasets, await readEfficacy(efficacyFile));
+  // A manifest without an efficacy file derives a source that states efficacy was not supplied (D10, 2026-10-30).
+  const efficacyFile = bundle.efficacyResults ? await loadComponent(bundle.efficacyResults) : null;
+  const componentsApproved = datasetsApproved && (efficacyFile?.approved ?? true);
+  const envelope = deriveCsrSourceFromAdam(bundle, datasets, efficacyFile ? await readEfficacy(efficacyFile) : undefined);
   return { envelope, componentsApproved };
 }

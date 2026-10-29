@@ -25,6 +25,8 @@
 
 import type { GeneratedTable } from './module3Composer.js';
 import { roundHalfUp } from './csr-figure-format.js';
+import { buildDescriptiveDemographicsTable } from './csr/csr-demographics-descriptive.js';
+import { buildEfficacyTable } from './csr/csr-efficacy-table.js';
 export { roundHalfUp };
 
 // ── Input shape (study database extract) ────────────────────────────────────
@@ -60,6 +62,16 @@ export interface StudyData {
   vitalSigns?: VitalSignRecord[];
   /** Concomitant medications, one record per subject and medication */
   concomitantMedications?: ConcomitantMedicationRecord[];
+  /** 'not-supplied': the source carries no efficacy results, and §11.4 states so (D10, 2026-10-30). */
+  efficacyStatus?: 'not-supplied';
+  /** Further named populations with per-arm counts, shown under their label in §11.1 (D11). */
+  additionalPopulations?: Array<{ key: string; label: string; counts: Record<string, number> }>;
+  /** The descriptive §11.2 table with a Total column (D12); undeclared keeps the compact table. */
+  demographicsPresentation?: 'descriptive';
+  /** The source's age groups in reporting order (D12). */
+  ageGroups?: string[];
+  /** Further baseline characteristics, in reporting order (D12). */
+  baselineCharacteristics?: Array<{ key: string; label: string; kind: 'continuous' | 'categorical'; categories?: string[] }>;
 }
 
 export interface TreatmentArm {
@@ -98,12 +110,18 @@ export interface DemographicRecord {
   ethnicity?: string;
   weight?: number;
   bmi?: number;
+  /** Descriptive presentation only (D12): height in cm, age group, declared characteristics by key. */
+  height?: number;
+  ageGroup?: string;
+  baselineValues?: Record<string, number>;
+  baselineCategories?: Record<string, string>;
 }
 
 export interface EfficacyResult {
   endpointName: string;
   endpointType: 'primary' | 'secondary' | 'exploratory';
-  armId: string;
+  /** Absent for an armless result, such as a dose-response test across arms (D10), which states method and population. */
+  armId?: string;
   /** Numerical result (mean, median, % responders, hazard ratio, etc.) */
   value: number;
   /** Result interpretation (string) */
@@ -118,6 +136,9 @@ export interface EfficacyResult {
   credibleInterval?: { lower: number; upper: number; level: string };
   /** Posterior probability of the named hypothesis (for example "OR > 1") */
   posteriorProbability?: { value: number; hypothesis: string };
+  /** The analysis method and population, as the SAP output states them (required for an armless result). */
+  method?: string;
+  population?: string;
 }
 
 export interface AdverseEvent {
@@ -298,6 +319,9 @@ export function buildAnalysisPopulationsTable(study: StudyData): GeneratedTable 
         ...arms.map(a => String(a.populations.perProtocol ?? '—')),
         arms.some(a => a.populations.perProtocol === undefined) ? '—' : String(arms.reduce((s, a) => s + a.populations.perProtocol!, 0)),
       ]] : []),
+      // Declared further populations (D11), under their own label; present only when declared.
+      ...(study.additionalPopulations ?? []).map(p => [p.label, ...arms.map(a => String(p.counts[a.armId] ?? '—')),
+        arms.some(a => p.counts[a.armId] === undefined) ? '—' : String(arms.reduce((s, a) => s + p.counts[a.armId], 0))]),
       ['Completed', ...arms.map(a => String(a.populations.completed)), String(arms.reduce((s, a) => s + a.populations.completed, 0))],
     ],
   };
@@ -315,6 +339,7 @@ function meanSd(values: number[]): string {
 }
 
 export function buildDemographicsTable(study: StudyData): GeneratedTable {
+  if (study.demographicsPresentation === 'descriptive') return buildDescriptiveDemographicsTable(study);
   const arms = study.treatmentArms;
   const byArm = new Map<string, DemographicRecord[]>();
   for (const arm of arms) byArm.set(arm.armId, []);
@@ -355,61 +380,9 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
 }
 
 // ── §11.4 Efficacy ──────────────────────────────────────────────────────────
-
-const interval = (i: { lower: number; upper: number; level: string }) => `${i.lower.toFixed(2)}–${i.upper.toFixed(2)} (${i.level})`;
-/** Three places, as p-values are; never rounded up to certainty or down to impossibility. */
-const probability = (p: number) => (p > 0.999 && p < 1 ? '>0.999' : p > 0 && p < 0.001 ? '<0.001' : p.toFixed(3));
-
-function efficacyRow(endpoint: string, r: EfficacyResult, armIdToName: Map<string, string>, bayesian: boolean): string[] {
-  return [
-    endpoint,
-    armIdToName.get(r.armId) || r.armId,
-    r.display,
-    r.ci ? interval(r.ci) : '—',
-    r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
-    ...(bayesian ? [
-      r.credibleInterval ? interval(r.credibleInterval) : '—',
-      r.posteriorProbability ? probability(r.posteriorProbability.value) : '—',
-      r.posteriorProbability ? r.posteriorProbability.hypothesis : '—',
-    ] : []),
-    r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
-  ];
-}
-
-export function buildEfficacyTable(
-  study: StudyData,
-  type: 'primary' | 'secondary'
-): GeneratedTable {
-  const results = study.efficacy.filter(e => e.endpointType === type);
-  const byEndpoint = new Map<string, EfficacyResult[]>();
-  for (const r of results) {
-    const list = byEndpoint.get(r.endpointName) || [];
-    list.push(r);
-    byEndpoint.set(r.endpointName, list);
-  }
-
-  const armIdToName = new Map(study.treatmentArms.map(a => [a.armId, a.armName]));
-
-  // The Bayesian columns appear only when a result carries them, so a table
-  // built from a source without them is byte-identical to before (its
-  // scientific-review receipts hash these cells).
-  const bayesian = results.some(r => r.credibleInterval || r.posteriorProbability);
-  const rows: string[][] = [];
-  for (const [endpoint, armResults] of byEndpoint) {
-    for (const r of armResults) rows.push(efficacyRow(endpoint, r, armIdToName, bayesian));
-  }
-
-  const headers = ['Endpoint', 'Arm', 'Result', 'CI', 'p-value',
-    ...(bayesian ? ['Credible interval', 'Posterior probability', 'Posterior hypothesis'] : []), 'vs Comparator'];
-  return {
-    title: type === 'primary'
-      ? '§11.4 — Primary Efficacy Endpoint Results'
-      : '§11.4 — Secondary Efficacy Endpoint Results',
-    headers,
-    rows: rows.length > 0 ? rows : [['No data', ...headers.slice(1).map(() => '')]],
-  };
-}
-
+// In server/services/csr/csr-efficacy-table.ts since the D10 change (armless
+// results, efficacy not supplied, 2026-10-30); re-exported here unchanged.
+export { buildEfficacyTable };
 
 // ── §12.1 Extent of exposure ────────────────────────────────────────────────
 

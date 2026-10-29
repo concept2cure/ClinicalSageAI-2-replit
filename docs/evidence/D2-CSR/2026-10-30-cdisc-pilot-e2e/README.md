@@ -339,3 +339,240 @@ Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data In
 - `reader-vs-pandas.json`: per-dataset cell counts.
 - Run 2: `pilot-run-v2.json`, `engine-vs-oracle-v2.json`, `engine-vs-published.json`, `reader-vs-pandas-v2.json`, `reader-memory-synthetic.txt` and `measure-reader-memory.mts` (synthetic data only), `fix-red.txt`, `fix-green.txt`.
 - `oracle-vs-published.json`: counts by table, the 12 mismatching cells, the narrative-set sizes and the latent-issue counts.
+
+## Run 3 (2026-10-30): D10, D11 and D12 fixed
+
+Launch rows D2 and D4, workstream W1. This run fixes three defects that run 2 left open: D10 (efficacy contract), D11 (declared populations) and D12 (demographics depth). Each fix is opt-in, so a source or manifest that uses none of them tabulates byte-identically to before, and existing receipts still verify. That claim is tested, not asserted.
+
+### What already exists
+
+These were searched before any change: `buildDemographicsTable`, `buildAnalysisPopulationsTable`, `buildEfficacyTable`, `mitt`, `EFFFL`, `COMP24FL`, `AGEGR1`, `HEIGHTBL`, `median`, `Total`, `efficacyResults`, `completeDomains`, `armId`, `dose`, `not supplied` and `CsrEfficacyResultSchema`, across `server/`, `shared/` and `client/src`. `git log --all --diff-filter=D` was also run on `*demograph*` and `*efficacy*`. No second demographics, populations or efficacy table exists anywhere. Every change below **extends the module named**.
+
+| Piece | Path | Before | Now |
+|---|---|---|---|
+| Source contract | `shared/csr-source-input.ts` | Efficacy needs ≥ 1 result, each with an arm. Populations are fixed. Demographics carry age, sex, race, ethnicity, weight and BMI. | Adds an armless result (`method` and `population` required, no comparator) and `efficacyStatus: 'not-supplied'`. Adds `additionalPopulations` with per-arm counts, checked against participant flags. Adds the `demographicsPresentation: 'descriptive'` fields: `height`, `ageGroup` with declared `ageGroups`, and declared `baselineCharacteristics`. Every new field is optional and validated. |
+| Bundle contract | `shared/csr-adam-bundle.ts` | `efficacyResults` is mandatory. | `efficacyResults` is optional. Adds `conventions.populations` (flag + define.xml label) and `conventions.demographics` (descriptive, plus declared characteristics). |
+| Derivation | `server/services/csr/adam-source-derivation.ts`, new `adam-baseline.ts` (93 lines) | No route for any of these. | Reads the declared flags and characteristics, AGEGR1 when ADSL has it, and HEIGHTBL. Refuses: a population flag already reported as randomized, safety, ITT or per-protocol (`CONVENTION_CONFLICT`); a missing column; a non-Y/N flag; a value outside its declared categories; and a manifest and efficacy file that disagree (`EFFICACY_MISSING` / `EFFICACY_UNDECLARED`). |
+| Bundle load | `server/services/csr/adam-bundle-load.ts` | Always loads the efficacy file. | Loads it only when the manifest names one. |
+| Tables | `server/services/csr-tabulation-builders.ts`, new `csr/csr-demographics-descriptive.ts` (84 lines), `csr/csr-efficacy-table.ts` (the §11.4 builder moved out unchanged, so the builder file stays under its line limit) | Compact §11.2, no Total column. The populations table lists only fixed rows. An empty §11.4 shows "No data" with blank cells. | **§11.2 (descriptive):** n, mean (SD), median and min/max, with a Total column. Categories cover age group, sex, race, ethnicity and the declared characteristics. A subject without a value counts on a "Not recorded" row. **§11.1:** each declared population is a row under its label. **§11.4:** shows Method and Population columns only when a result states them. When efficacy is declared not supplied, it shows one row: "Efficacy results not supplied", with "—" in the other cells. |
+
+Design choices, stated so a reviewer can check them:
+- **Age groups** come only from ADSL AGEGR1, in AGEGR1N order. Without AGEGR1N, they are ordered by the youngest age in each group. With no AGEGR1, there are no age-group rows, and no band is ever invented.
+- **Declared categories** print in their declared order. A declared category with no subject is a recorded 0.
+- **Precision:** means, medians, min and max print to one place, SDs to two, and percentages to one. All are rounded half up.
+- **An armless result** prints "—" in the Arm column. Its method and population are the SAP's text, imported unchanged, and nothing is computed.
+
+### Red, then green (SYNTHETIC)
+
+Tests:
+- `server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts`: 17 tests, run against the run-2 legacy synthetic ADSL plus invented columns (AGEGR1/N, HEIGHTBL, RACE, ETHNIC, EFFFL, COMP24FL and two invented characteristics) and `source-input-fixture.ts`.
+- `csr-table-byte-identity.test.ts`: 1 test.
+
+No pilot value is used in either. Red output is in `d10-d12-fix-red.txt`: 15 failed, 3 passed. Two of the three passed vacuously before the change, because the strict schema rejected the unknown `populations` key and nothing could reach mITT. The third is the byte-identity test, which is meant to pass before the change. Green output is in `d10-d12-fix-green.txt`: 18 of 18.
+
+**Byte identity, proved.** The digests of `buildCSRTables` output were taken at `7e4c7f479e`, before any edit, and pinned in `csr-table-byte-identity.test.ts`. They cover:
+- the source fixture
+- the LMN-201 seed source
+- a 300-subject scale envelope
+- the legacy and LMN-201 ADaM derivations, both the envelope and the tables
+
+After the change, all 7 digests are equal. Shown failing: forcing the new Method/Population columns on unconditionally changed 5 of the 7 digests (`d10-d12-byte-identity-red.txt`). The two that did not change are the derived envelopes, which this perturbation does not touch. On the pilot itself, the run-2 manifest (no new declarations) gives the same tables digest before and after the change: `4a09d058…`.
+
+### On the pilot (`run3-d10-d12.json`; counts only)
+
+The manifest is run 2's, plus:
+- `populations`: EFFFL "Efficacy Population Flag" and COMP24FL "Completers of Week 24 Population Flag". These are the define.xml labels, transcribed.
+- `demographics`: descriptive, with MMSETOT, EDUCLVL and DURDIS (continuous) and DURDSGR1 `<12`, `>=12` and BMIBLGR1 `<25`, `25-<30`, `>=30` (categorical), each under its define.xml label.
+- The efficacy file adds the armless Table 14-3.01 dose-response result: p = 0.245, with the method from the table's footnotes [1][2] and the Efficacy population (LOCF). It is transcribed, not computed.
+
+Derivation plus tables took 225 ms. A run without the efficacy file derives, and §11.4 reads "Efficacy results not supplied".
+
+| Comparison | Cells | Matched | Mismatched | Shown failing |
+|---|---|---|---|---|
+| Engine against a new independent oracle (`oracle3/tables3.py`; `pandas.read_sas` only, no product code, no run-2 oracle import): descriptive §11.2 176, §11.1 with the new rows 24, the dose-response row 3 | 203 | 203 | 0 | One demographics cell and one population cell perturbed gave 201 / 2. |
+| Engine against the published CSR: **14-2.01: 208**, **14-1.01: 20**, **14-3.01 dose-response p: 1** | 229 | **229** | 0 | One SD perturbed gave 228 / 1. |
+| Run-2 oracle over the run-2 manifest (regression) | 1,436 | 1,436 | 0 | — |
+| Run-2 oracle over the declared manifest | 1,514 | 1,421 | 93 | Not a defect. The run-2 oracle encodes the compact §11.2 (15 cells) and the 4 fixed population rows. All 93 differences are in those two tables: the new layout and the 8 new population cells. Every other table matches. |
+
+Published 14-2.01 is now produced in full, all 208 cells:
+- age, weight, height, BMI, MMSE, years of education and duration of disease: n, mean, SD, median, min and max for 3 arms plus Total
+- AGEGR1, sex, BMIBLGR1 and DURDSGR1 counts
+
+Published 14-1.01's Efficacy and Complete Week 24 rows are produced, completing its 20 cells. The published 14-2.01 race rows (8 cells) are still not compared. They remain the data-version difference recorded in run 1, because the 2006 CSR folds ETHNIC into race. The engine prints RACE and ETHNIC separately, as the updated ADSL records them.
+
+### Not done, and why
+
+- Published **percentages** are not compared. The published table prints whole percentages, and the engine prints one decimal place. Only the counts are compared.
+- The published **p-values for 14-2.01** (ANOVA and chi-square) are not produced. They are inferential statistics that the SAP output would supply. The engine computes none (decision 2).
+- `ci:tenant-isolation` reports one finding at `server/services/vault/vault-placement.service.ts`. That file was last changed in `1371823ee0` and is untouched by this change. `ci:sql-interpolation` is OK.
+
+### Commands (run 3)
+
+```
+npx vitest run server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts server/services/csr/__tests__/csr-table-byte-identity.test.ts   # d10-d12-fix-red.txt / -green.txt
+npx tsx <scratch>/d10-12/run-pilot-v3.mts <dir> <scratch>/d10-12 base|declared|noefficacy
+python -I <scratch>/oracle3/tables3.py <dir> <scratch>/d10-12/engine-tables-declared.json <out>
+python -I <scratch>/oracle3/engine_vs_published3.py <scratch>/d10-12/engine-tables-declared.json <scratch>/pilot-out/oracle-pub.json <csr.txt> <out>
+```
+
+The harness and oracles stay in the scratch directory, as in runs 1 and 2. Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), <https://github.com/cdisc-org/sdtm-adam-pilot-project>.
+
+## D17 fixed (2026-10-30): narratives for a withdrawal recorded per subject only
+
+Product decision (taken): a subject withdrawn for an AE, where the data record the withdrawal per subject only, gets a complete narrative, not a refusal. That means a declared `aeDiscontinuationFlag` and no event-level AEACN. The narrative states the withdrawal. It lists every treatment-emergent AE with onset on or before it, each attribute taken from its row. It says plainly: "The data do not record which adverse event led to withdrawal." It never names one event as the cause. Launch rows: D2 / D4, workstream W1.
+
+**Outcome on the pilot:** the narrative job composed **95 of 95** narratives and refused 0, against 6 composed and 89 refused in run 2. **95 of 95** reconcile with their facts under the fact gate (5,043 facts). §14.3.3 and §12.3.2 are written. All 11 tables and the 95-subject selection are **identical to run 2**. Engine against the oracle: **1,436 / 1,436**. Engine against the published CSR: **174 / 174**. One new defect was found and is not fixed: D18, below.
+
+### What already exists
+
+These searches ran before any change: `refusalReason`, `discontinuedForAePerAdsl`, `aeDiscontinuationFlag`, `RFENDT`, `EOSDT`, `DSRAEFL`, `led to`, `withdraw` and `causal` across `server/`, `shared/` and `client/src`. `git log --all --diff-filter=D` also ran on `*narrative*`. No narrative path for a subject-level withdrawal existed anywhere. The composer refused it (`narrative-compose.ts` `refusalReason`), and the fact gate had no rule about causal attribution. Each change below **extends the module named**; nothing was rebuilt beside it. `server/services/ana/safety-narrative.ts` (D5 lane) and `shared/authoring/csr-scientific-review.ts` were not touched.
+
+| Piece | Path | Change |
+|---|---|---|
+| Bundle | `shared/csr-adam-bundle.ts` | Adds an optional `conventions.aeDiscontinuationDate`, the ADSL withdrawal date. It is declared, never guessed. (The first version fell back to ADaMIG `EOSDT` when it was not declared. The review below removed that fallback.) The change is one field. |
+| Selection | `narrative-subject-selection.ts` | When the flag is declared, a flagged subject keeps every TEAE row (`TRTEMFL = Y`) as `subjectLevelWithdrawal`. TRTEMFL is then required. |
+| Facts | `narrative-subject-facts.ts` | `withdrawal` is read only when no ADAE event records the withdrawal. It holds the date, sourced to `ADSL[i].RFENDT`. It holds the study day, computed from the date (`RFENDT − TRTSDT + 1`) and named as computed. It holds the TEAEs with onset on or before the withdrawal, compared by date and otherwise by study day. TEAEs with no recorded onset are listed for QC and not placed. Facts are kept only for the events listed. |
+| Composer | `narrative-compose.ts` | Adds a subject sentence (when no qualifying event introduces the subject) and the withdrawal paragraph. Each listed event is one sentence: onset, severity, seriousness, relatedness and outcome. A TEAE with no recorded onset gets its own sentence. When no TEAE precedes the withdrawal, the narrative says so, and the QC list records it. The narrative is refused by name only when no withdrawal date is recorded, because then the preceding events cannot be identified. |
+| Fact gate | `narrative-reconciliation.ts` | The listed TEAEs are checked like any other event: dates, days, severity, grade, death, and each one must still be named. Two new codes. `NARRATIVE_CAUSE_STATEMENT_MISSING`: the narrative must state that the data do not record which event led to withdrawal. `NARRATIVE_CAUSE_UNSOURCED`: a sentence with a withdrawal word is refused when it also has a causal phrase ("due to", "led to", "resulted in", "because", "following", …) or names an event as the "reason". Pronoun forms are caught too ("This resulted in discontinuation"). These rules apply only to a subject-level withdrawal. |
+
+### Red, then green (SYNTHETIC)
+
+Test: `server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts` (11 tests). Its four invented subjects cover a TEAE before withdrawal, one on the withdrawal day, one after it, one that is not treatment-emergent, one with no recorded onset, a subject with no TEAE before withdrawal, and a subject with no withdrawal date. No pilot row was used.
+
+- Red (`d17-fix-red.txt`): 9 failed. The key one: a model rewrite reading "The subject was withdrawn due to Syncope." was **accepted as model prose** (`prose: 'model'`). The gate had no rule against it.
+- Green (`d17-fix-green.txt`): 11 of 11 pass. These rewrites are refused: "withdrawn due to <event>", "<event> led to the withdrawal", "This resulted in discontinuation" and "<event> was the reason for discontinuation". In each case the template is kept and the refusal is recorded. A rewrite is also refused when it drops a listed event, adds an event dated after the withdrawal, moves the withdrawal day, or changes a severity. A connective-only rewrite passes.
+- **Byte identity for sources that do not use the feature** (`d17-byte-identity.txt`). A SHA-256 was taken over every selected subject's facts, `factsDigest` and composed narrative, on the slice-7 synthetic fixture (120 and 1,000 subjects) and on the legacy fixture with event-level AEACN. The hashes are **identical before and after the change**. So a stored narrative's facts digest still matches, and a resume does not recompose. The tables are untouched: the table code was not changed, and on the pilot all 11 tables equal run 2's.
+- `npx vitest run server/services/csr shared`: 120 files, **1,533 passed**. ESLint reports no warnings on the changed files. No file exceeds 1,500 lines (the largest is 267). `ci:sql-interpolation` OK. `ci:tenant-isolation`: the same single `vault-placement.service.ts` finding reported above, in a file this change does not touch. `ci:tenant-entry-points` fails on `server/routes/mdx-admin.ts` (untouched here). `tsc --noEmit -p .`: no error in any file of this change. One error at `adam-source-derivation.ts:72` belongs to the concurrent D10–D12 work in that file.
+
+### On the pilot (`d17-pilot.json`; counts only)
+
+The manifest adds `aeDiscontinuationDate: 'RFENDT'`. Per define.xml, ADSL.RFENDT is "Date of Discontinuation/Completion" (RFENDTC as a SAS date). Every other declaration is run 2's.
+
+| Check | Result | Shown failing |
+|---|---|---|
+| Narrative job | complete: 95 selected, **95 composed, 0 refused**; §14.3.3 and §12.3.2 written | — |
+| Fact gate over every composed narrative | **95 ok, 0 failed** (5,043 facts) | — |
+| Independent pandas oracle (`python -I <scratch>/d17/narr_oracle.py`, `pandas.read_sas` only). For each of the 92 DSRAEFL subjects it recomputes RFENDT, the study day and the TEAEs with onset on or before RFENDT. It then checks each subject's facts and text: the withdrawal sentence, the cause statement, no causal phrase, the exact candidate set, and each listed event's sentence (term, onset day, severity, seriousness, relatedness and outcome, parsed from the text) | **1,104 checks, 1,104 matched**. 484 listed events, 484 sentences checked. | One onset day shifted in one narrative: 1,103 / 1. The cause statement replaced by "withdrawn due to <event>" in one narrative: 1,102 / 2. |
+| Spot check of 10 narratives read whole against pandas (`spot10.py`): age, sex, arm, study, first dose, recorded reason, withdrawal date and day, each listed TEAE, nothing after the withdrawal, each SAE's onset; 2 of the 10 also have an SAE | **132 / 132** | One shifted day and one dropped statement: 130 / 2, naming both |
+| Fact gate on the pilot, model rewrites (`gate-pilot.mts`): a "withdrawn from the study due to <event>" rewrite, a pronoun "This event resulted in discontinuation", and a connective-only rewrite, on each of the 92 | 92 / 92 refused, 92 / 92 refused, 92 / 92 accepted | — |
+| Tables against run 2 | identical (11 tables, the selection) | — |
+| Engine against oracle (`oracle2/tables2.py`) | **1,436 / 1,436**, 0 mismatched | as run 2 |
+| Engine against the published CSR (`oracle2/engine_vs_published.py`) | **174 / 174**, 0 mismatched | as run 2 |
+
+On the pilot, no TEAE starts after RFENDT for a withdrawn subject, every withdrawn subject has at least one TEAE before RFENDT, and no TEAE lacks an onset. Those three branches are therefore proven on the synthetic test only. Three of the six narratives composed in run 2 also carry a subject-level withdrawal (an SAE together with DSRAEFL). Their narratives now include the withdrawal paragraph. The QC list now carries `withdrawalEventN.action` for every listed event, because AEACN was not collected, and it states that rather than filling it in.
+
+### D18 (new, found by this run): a landed §14.3.3 is not placed in the assembled CSR. Not fixed.
+
+With the narratives written, `assembleCsr` reports **one unresolved reference**: §12.3.2's "Section 14.3.3". `pdftotext` finds no narrative text in any of the 8 leaves. `csr-assembly-body.ts` `bodyHeadings` draws a §14.x heading only when it is a planned TFL heading. So a drafted §14.3.3 is dropped from the body, and no leaf carries it. The production path (`workflow-source-import.ts` `materializeCsrAssemblySource`) passes `csr_section_outputs`, §14.3.3 included, as the same `sections`, so the same drop would follow. It is not silent: the assembly status is `incomplete`, and the reference is listed as unresolved. The fix belongs to assembly placement (where §14.3.3 is drawn, in the §14 leaf or the body), not to the narrative lane, and this change left it alone.
+
+### Commands (D17)
+
+```
+npx vitest run server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts      # d17-fix-red.txt / d17-fix-green.txt
+npx tsx <scratch>/d17/baseline.mts                                                           # d17-byte-identity.txt (before and after)
+NODE_OPTIONS="--expose-gc --max-old-space-size=8192" npx tsx <scratch>/pilot-out-v3/run-pilot-v3.mts <dir> <scratch>/pilot-out-v3
+python -I <scratch>/d17/narr_oracle.py <dir> <scratch>/pilot-out-v3/narratives.json <out> [day|cause]
+python -I <scratch>/d17/spot10.py <dir> <scratch>/pilot-out-v3/narratives.json
+npx tsx <scratch>/d17/gate-pilot.mts <dir>
+python -I <scratch>/oracle2/tables2.py <dir> <scratch>/pilot-out-v3/engine-tables.json <out>
+python -I <scratch>/oracle2/engine_vs_published.py <scratch>/pilot-out-v3/engine-tables.json <scratch>/pilot-out/oracle-pub.json <out>
+```
+
+The harness, the narrative dump and the oracles stay in the scratch directory, because the dump holds pilot narratives. The evidence files hold counts only. Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), <https://github.com/cdisc-org/sdtm-adam-pilot-project>, used under its terms.
+
+## D17 adversarial review (2026-10-30): the cause gate tightened, the EOSDT fallback removed
+
+A second session reviewed D17 against six questions:
+
+- Does any sentence imply a cause of withdrawal?
+- Is any event after the withdrawal listed?
+- Is any band, category or population invented?
+- Does any existing source lose byte identity?
+- Does a blank stand in for "not supplied"?
+- Was any pilot data committed?
+
+Two defects were found and fixed in D17's own files. Nothing was loosened.
+
+**1. The cause gate accepted 9 of 14 attribution forms.** The reviewer tested these rewrites on the synthetic subject. The first gate refused none of them:
+
+- "The subject was withdrawn for Syncope."
+- "Syncope was followed by withdrawal."
+- "The subject experienced Syncope. This was the reason for withdrawal."
+- "…in view of Syncope", "In response to Syncope, …"
+- "Syncope necessitated withdrawal.", "Syncope required discontinuation of study drug."
+- "Syncope; the subject was then withdrawn."
+- "…discontinued from treatment as Syncope occurred."
+
+The first gate needed a causal phrase from a short list, or a named event together with the word "reason". The fix is in `narrative-reconciliation.ts`. For a subject-level withdrawal, a sentence that holds a withdrawal word is now refused when it does either of these:
+
+- it names any listed event, so an event is never placed beside the withdrawal;
+- it uses a causal, consequential or sequencing word. The list now adds "for", "reason", "why", "follow…", "then", "in view/response of", "necessitat…", "requir…", "consequen…", "as", "so", "since", "given" and others.
+
+Only the template's own sentences are exempt, matched exactly as they are built from the facts:
+
+- the withdrawal sentence;
+- the undated-onset sentence;
+- the ADSL "recorded reason for discontinuation" sentence;
+- the no-cause statement.
+
+The composer now takes the withdrawal and undated-onset sentences from the gate, so the two cannot drift apart. Event terms are taken out of a sentence before the withdrawal and causal words are tested, so a term such as "Drug withdrawal syndrome" does not refuse the template (tested).
+
+One limit remains. Two sentences side by side ("Syncope occurred. The subject was withdrawn.") carry no marker the gate can read. That is why the model writes connective prose only.
+
+**2. The withdrawal date fell back to ADSL `EOSDT` when it was not declared.** The flag may record withdrawal from treatment rather than from the study. In that case an end-of-study date lists events that started after the withdrawal as if they came before it. That is the "event after withdrawal" this review hunts for. It also contradicted "declared, never guessed". The date is now taken only from `conventions.aeDiscontinuationDate`. Without that declaration the subject is refused by name ("declare conventions.aeDiscontinuationDate; it is never guessed"). The change is in `narrative-subject-selection.ts` (the fallback), `narrative-compose.ts` (the refusal text), `narrative-subject-facts.ts` (the QC text) and the schema doc comment in `shared/csr-adam-bundle.ts`.
+
+**Checked and found sound:**
+
+- A blank AESER is never read as "not serious". The selection already refuses a blank AESER on every ADAE row, and a test now pins this. The red file records a first test that wrongly assumed otherwise. That test was replaced by the assertion of the existing refusal, and the engine was not changed.
+- No band, category or population is invented.
+- No pilot value is in any committed file. The new evidence holds counts only.
+
+**Behaviour change, named.** A source that declares `aeDiscontinuationFlag` but not `aeDiscontinuationDate` now gets a refusal by name for a flagged subject. This includes a flagged subject who also has an SAE, which run 2 composed with no mention of the withdrawal. On the pilot, that is the run 2 manifest. `aeDiscontinuationFlag` was introduced in this same pilot work (543e4e1a80). No other source declares it, and the pilot run 3 manifest declares the date.
+
+| Check | Result |
+|---|---|
+| Red (`d17-review-red.txt`) | 3 of 15 failed: the attribution forms, the `EOSDT` guess, and the mistaken AESER test (see above) |
+| Green (`d17-review-green.txt`) | 15 of 15 pass |
+| `npx vitest run server/services/csr shared` | 120 files, **1,537 passed** |
+| Byte identity (`d17-byte-identity.txt`, section "after the adversarial review") | the same three SHA-256 values as before D17: slice-7 synthetic at 120 and at 1,000 subjects, and the legacy event basis |
+| ESLint `--max-warnings 0` on the changed files; `ci:sql-interpolation` | clean; OK |
+| `tsc --noEmit -p .` | one error, `adam-source-derivation.ts:72`, in the concurrent D10–D12 file; none in a D17 file |
+| Pilot pipeline re-run | 95 selected, **95 composed, 0 refused**, 95 of 95 reconcile (5,043 facts). The narratives and engine tables are byte-identical to run 3. |
+| D17 narrative oracle (`narr_oracle.py`) | 1,104 / 1,104 |
+| Reviewer's own pandas oracle: 6 DSRAEFL subjects × 5 cells (date = RFENDT, day = RFENDT − TRTSDT + 1, listed set = TEAEs with ASTDT ≤ RFENDT, no later TEAE named, no-cause statement and no causal phrase) | **30 / 30**. Shown failing: a shifted day gave 29/1; "withdrawn for this event" in place of the statement gave 29/1. |
+| Pilot gate with the review's forms ("withdrawn for <event>"; "<event> was followed by withdrawal") on all 92 | 92 / 92 refused, 92 / 92 refused; connective-only rewrite 92 / 92 accepted |
+| Engine against the table oracle; against the published TLFs | **1,436 / 1,436**; **174 / 174**; 0 mismatched |
+
+Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), <https://github.com/cdisc-org/sdtm-adam-pilot-project>.
+
+## D10–D12 adversarial review (2026-10-30)
+
+A second session reviewed run 3 against the same questions as the D17 review: an implied cause of withdrawal, an event after withdrawal, an invented band, category or population, a receipt that no longer verifies, a blank or zero standing in for "not supplied", pilot data committed, a loosened test, and lint or gate failures. Two defects were found and fixed in run 3's own files. No test was loosened.
+
+**1. A recorded HEIGHTBL that was not a positive number was dropped from n without notice.** `adam-baseline.ts` read HEIGHTBL with `numeric()`, which returns null for text. So a value such as "tall", 0 or −170 left the subject out of the height n, and nothing reported it. A declared continuous characteristic was already refused in that case. HEIGHTBL is now refused by variable and row (`CSR_ADAM_VALUE_UNMAPPED`, `ADSL[i].HEIGHTBL`). A blank HEIGHTBL is still not recorded, and n shows it (tested: n 3 / 4 / 7).
+
+**2. A declared population could reuse a built-in row's label.** A label such as "Safety" or "mITT" would print a second row of that name with different counts. `shared/csr-source-input.ts` now refuses a declared label that repeats Randomized, Safety, ITT, mITT, Per-Protocol or Completed, ignoring case. This covers a hand-built source and the ADaM route, which parses the same contract.
+
+**Checked and found sound:**
+- **Receipts.** Byte identity was checked independently, not taken from the pinned test. The seven pinned digests were recomputed on a `git archive` of HEAD `7e4c7f479e` in scratch, and they equal the values in `csr-table-byte-identity.test.ts`. The pilot run-2 manifest was also run on that HEAD tree and on the working tree. Both give tables digest `4a09d058…`, and the two files are byte-identical (`cmp`).
+- **"Not supplied".** §11.4 prints "Efficacy results not supplied" with "—" in every other cell, never blank and never 0. An empty efficacy list without the declaration is refused. So is the declaration with any results present.
+- **Nothing invented.** Age groups come only from AGEGR1, so with no AGEGR1 there are no age-group rows. Declared populations are never mapped onto mITT. An armless result prints "—" for its arm and names no comparator.
+- **No pilot data committed.** The new evidence holds counts and digests only, and both review tests are synthetic.
+- **Withdrawal.** D10–D12 do not touch narratives, so no withdrawal cause or post-withdrawal event can enter through them.
+
+| Check | Result |
+|---|---|
+| Red (`d10-d12-review-red.txt`) | HEIGHTBL "tall" accepted ("expected a refusal"). A "Safety" label accepted. 1 failed each time. |
+| Green (`d10-d12-review-green.txt`) | 18 of 18, with the 7 byte-identity digests unchanged |
+| Pilot tables digests after the fixes | base `4a09d058…` (= HEAD), declared `7670fc7c…`, no-efficacy `e4504e2b…`: all unchanged from run 3 |
+| Reviewer's own pandas oracle, 30 cells chosen independently. EFFFL and COMP24FL per arm and Total (8). Height mean (SD) (4). Disease-duration median (4). MMSE min, max (2). Education mean (SD) (2). AGEGR1 >80 n (%) (4). BMIBLGR1 ≥30 (2). Hispanic or Latino (2). Low-dose weight n = 83 (1). BMI Total mean (SD) (1). | **30 / 30**. Shown failing: an EFFFL count off by one gave 29 / 1. |
+| Run-3 oracle (`oracle3/tables3.py`); engine against the published CSR (`engine_vs_published3.py`) | **203 / 203**; **229 / 229** |
+| Run-2 oracle and published comparison on the run-2 manifest | **1,436 / 1,436**; **174 / 174** |
+| ESLint `--max-warnings 0` on the changed files; `ci:sql-interpolation` | clean; OK |
+| `ci:tenant-isolation` | the same single finding in `vault-placement.service.ts`, a file this work does not touch |
+
+**Not fixed, and outside these files:**
+- With efficacy not supplied, the source still asserts `completeDomains.efficacy: true`, a literal in the contract. Nothing in assembly or readiness marks such a CSR as lacking efficacy. Only §11.4 states it.
+- The published contract text in `shared/csr-source-contract.ts` (`validationRules`, `derivationRules`) does not yet describe armless results, `efficacyStatus`, `conventions.populations` or `conventions.demographics`. Its JSON schema is generated from the Zod schemas and does include them.
+
+Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), <https://github.com/cdisc-org/sdtm-adam-pilot-project>.
