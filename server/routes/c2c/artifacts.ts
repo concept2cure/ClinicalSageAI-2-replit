@@ -1858,6 +1858,11 @@ router.get(
         .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
         .orderBy(desc(concept2cureArtifactVersions.version));
 
+      /* Who made each version, as the tenant may name them (fold F3 slice B,
+         2026-10-29: the project Vault's artifact leaf lists these versions).
+         A lookup that fails fails the read rather than return an unnamed list. */
+      const authors = await resolveActorNames(versions.map(v => v.createdById));
+
       return sendSuccess(res, {
         artifactId: artifact.artifactId,
         title: artifact.title,
@@ -1869,6 +1874,7 @@ router.get(
           contentHash: v.contentHash,
           changeDescription: v.changeDescription,
           createdById: v.createdById,
+          createdBy: actorLabel(authors, v.createdById),
           createdAt: v.createdAt,
         })),
       });

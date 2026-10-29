@@ -121,7 +121,7 @@ import type { CreateContext } from '../services/authoring/authoring-documents';
 import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
-  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance,
+  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance, readQmsTrainingExpiring,
   QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
 } from '../services/qms/training';
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
@@ -134,6 +134,7 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
+import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
 
@@ -890,16 +891,12 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
+  /* G10 (2026-10-29). Each active member whose current training on a release in
+     force lapses within the window, read as coverage reads it. This listed every
+     record with an expiry inside the window: a superseded version, a receipt
+     its member had renewed, a departed member's. No client called it. */
   try {
-    const { rows } = await qmsClient(req).query(`SELECT t.*, d.title AS document_title, d.doc_number
-         FROM qms_training_records t
-         JOIN qms_documents d ON d.id = t.document_id
-        WHERE t.organization_id = $1
-          AND t.expires_at IS NOT NULL
-          AND t.expires_at < NOW() + ($2 || ' days')::interval
-        ORDER BY t.expires_at ASC LIMIT 500`,
-      [orgId, withinDays],
-    );
+    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
     return ok(res, rows, { count: rows.length, withinDays });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
@@ -943,6 +940,16 @@ const supplierCreate = z.object({
 });
 const supplierPatch = supplierCreate.partial();
 
+/* A supplier's quality agreement names a controlled document. Until 2026-10-29
+   any integer was stored, including another organisation's document id; it is
+   now admitted only for a live document of this organisation. Null clears it. */
+async function qualityAgreementRefusal(req: Request, orgId: number, documentId: number | null | undefined): Promise<string | null> {
+  if (documentId == null) return null;
+  const { rows } = await qmsClient(req).query(
+    `SELECT id FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [documentId, orgId]);
+  return rows.length === 1 ? null : 'qualityAgreementId must name a controlled document of this organization.';
+}
+
 router.get('/qms/suppliers', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -974,6 +981,8 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
+    const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
+    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
     const { rows } = await qmsClient(req).query(`INSERT INTO qms_suppliers (
          organization_id, supplier_name, supplier_code, scope, criticality,
          approval_status, approval_date, reapproval_date, quality_agreement_id,
@@ -992,6 +1001,8 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
       resourceType: 'qms_supplier', resourceId: rows[0]?.id,
       details: { supplierName: p.supplierName, criticality: p.criticality },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, [], actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
@@ -1020,6 +1031,8 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
+    const agreementRefusal = await qualityAgreementRefusal(req, orgId, parsed.data.qualityAgreementId);
+    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
     const { rows } = await qmsClient(req).query(`UPDATE qms_suppliers SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
         RETURNING *`,
@@ -1037,6 +1050,8 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
       resourceType: 'qms_supplier', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, Object.keys(parsed.data), actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-patch', err); }
 });
@@ -1099,6 +1114,8 @@ router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, re
       resourceType: 'qms_internal_audit', resourceId: String(rows[0].id),
       details: { auditNumber: p.auditNumber, auditStandard: p.auditStandard ?? null, scope: p.scope },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0] as InternalAuditTaskSource, actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-create', err); }
 });
@@ -1143,6 +1160,8 @@ router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Reques
       resourceType: 'qms_internal_audit', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0] as InternalAuditTaskSource, actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-patch', err); }
 });

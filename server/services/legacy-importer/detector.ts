@@ -34,6 +34,7 @@ import { promises as fs } from 'fs';
 import { createHash } from 'crypto';
 import * as path from 'path';
 import JSZip from 'jszip';
+import { ArchiveLimitError, assertZipWithinLimits } from '../archive/safeZip';
 
 export type DetectedFormat =
   | 'fda_ectd' | 'ema_ectd' | 'pmda_ectd'
@@ -190,6 +191,17 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
     ]};
   }
   const buffer = await fs.readFile(archivePath);
+
+  /* Every entry below is read whole to be hashed and classified: the archive
+     is bounded before any of it inflates (SEC-17). A refused archive lists no
+     files, so nothing in it is mapped or imported. */
+  try {
+    await assertZipWithinLimits(buffer);
+  } catch (err) {
+    if (!(err instanceof ArchiveLimitError)) throw err;
+    return { format: 'unknown', region: null, applicationId: null, sequence: null, sponsor: null, files: [],
+      findings: [{ severity: 'error', code: 'archive_limits_exceeded', message: err.message }] };
+  }
 
   /* Only zip / docx (zip) supported in v1. Tar / rar route through a
      follow-up unpack step that lives in import-runner — kept out of this

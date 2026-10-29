@@ -37,6 +37,7 @@ import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
 import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
 import { ADAPTER_UNSOURCED } from './transport-refusals';
+import { archiveSentPackage, type SentPackageRecord } from './sent-package-archive';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -45,6 +46,7 @@ export { platformTransmittalRecord, acknowledgementFilename } from './acknowledg
 export { packageEctdSubmission } from './regional-packager';
 export type { EctdLeaf, PackagerInput } from './regional-packager';
 export { readVerifiedBundle } from './bundle-integrity';
+export { SentPackageNotArchivedError, type SentPackageRecord } from './sent-package-archive';
 
 const REGISTRY: Record<string, SubmissionGateway> = {
   'fda:esg':                       new FdaEsgGateway(),
@@ -252,6 +254,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       let pre: ReturnType<typeof evaluatePreTransmit>;
       let leafSecurity: Awaited<ReturnType<typeof assertBundleLeafSecurity>>;
       let account: ResolvedGatewayAccount;
+      let sentPackage: SentPackageRecord;
       try {
         assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
         assertDispatchBinding(req);
@@ -293,17 +296,23 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         const spec = specFor(impl.region, impl.gateway);
         const refusal = spec ? clientAccountRefusal(spec, account, req.environment) : null;
         if (refusal) throw refusal;
+        // The exact bytes, kept before they leave: the last step here, so a
+        // package refused above is not stored, and a copy that cannot be kept
+        // refuses the send (sent-package-archive.ts, 2026-10-29 W5/D7).
+        sentPackage = await archiveSentPackage(req, impl.region, impl.gateway);
       } catch (err) {
         throw markRefusedBeforeWire(err);
       }
       // Stamped server-side, after the caller's metadata, so the record of which
-      // account sent it cannot be supplied by a caller.
+      // account sent it, and where its bytes are kept, cannot be supplied by a
+      // caller.
       const result = await impl.transmit({
         ...req,
         account,
         metadata: {
           ...(req.metadata ?? {}),
           gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
+          sentPackage,
         },
       });
       // What was checked travels with the result — including checks that
@@ -312,6 +321,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         ...result,
         gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
         preTransmit: { checks: pre.checks, warnings: pre.warnings, leafSecurity },
+        sentPackage,
       };
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),

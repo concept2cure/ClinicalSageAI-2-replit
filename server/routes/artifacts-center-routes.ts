@@ -57,7 +57,14 @@ import { generateDocxBuffer } from '../services/docxGenerator.js';
 import { shouldEnforceExportReviewGate } from '../services/export/exportReviewGate.js';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence.js';
 import { authedUserId } from '../utils/authedActor.js';
-import { artifactGovernance, readArtifactRegistry } from '../services/artifact-registry-read.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+} from '../services/artifact-registry-read.js';
+import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
@@ -85,18 +92,23 @@ interface ArtifactCenterRow {
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+  /* The row facts the converged CSV manifest writes, from the same read the
+     project Vault's leaves are built from (fold F3 slice B, 2026-10-29). Null
+     where the row records none. */
+  ctdSection: string | null;
+  /** The registry status in the Vault's vocabulary (artifactRegistryStatus). */
+  status: string;
+  origin: ArtifactOrigin | null;
+  author: string | null;
+  /** The hash the writer recorded, not a SHA-256 of a rendered file. */
+  contentHash: string | null;
 }
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
 
-/** Human byte size from the stored content's octet length (real, not a
- *  rendered-file size). Matches the fixture style: '182 KB', '1.4 MB'. */
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+/* The byte size of the stored content is formatContentBytes in the shared read
+   (services/artifact-registry-read.ts), where it moved on 2026-10-29 so the
+   project Vault's leaves state it the same way. */
 
 /** Relative "Updated" label derived from the real updated_at timestamp. Matches
  *  the fixture style: '30 min ago', '2 h ago', 'yesterday', '3 d ago'. */
@@ -158,7 +170,7 @@ export default function createArtifactsCenterRoutes(): Router {
           name: r.title ?? '',
           kind: g.kind,
           fmt: g.fmt,
-          size: formatBytes(Number(r.content_bytes)),
+          size: formatContentBytes(Number(r.content_bytes)),
           model: g.model,
           when: r.updated_at == null ? '' : relativeTime(r.updated_at),
           ver: `v${Number.isFinite(version) ? version : 1}`,
@@ -171,6 +183,11 @@ export default function createArtifactsCenterRoutes(): Router {
           sigVersion: g.sigVersion,
           sigStale: g.sigStale,
           prog: r.program || `proj_${r.project_id}`,
+          ctdSection: artifactCtdSection(r.ctd_section),
+          status: artifactRegistryStatus(r.status),
+          origin: g.origin,
+          author: r.author_name ?? null,
+          contentHash: r.content_hash ?? null,
         };
       });
 

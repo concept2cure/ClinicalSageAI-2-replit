@@ -1,0 +1,152 @@
+# Red: the new and extended suites at HEAD 6b70fd0a4, before any product change (fold F3 slice B, 2026-10-29).
+# Each run is npx vitest run <file(s)>, trimmed to the verdict lines and the first assertion of each failure.
+#
+# Notes on what was edited after this run, and why each edit keeps the red honest:
+#  - vaultArtifactLeaf.test.tsx: the Ask AnA case first matched two buttons ("Ask AnA to import" in the header);
+#    it was scoped to the detail pane's action bar and re-run (the run below is that re-run). The editor case was
+#    later strengthened (the stashed directive is performed by the editor's handler, by title); its first
+#    assertion already failed here. Two cases were added after main's decision of 2026-10-29 and are not in this
+#    run: the versions read refused as "not enabled" under module enforcement (red under M1, M2, M3) and an
+#    archived gallery row's status (red under M26).
+#  - vault-artifact-leaf-gate.test.ts: the first version derived its requests from the walk, so at HEAD (no calls
+#    in the code) three verdict cases passed over an empty list. It was rewritten to name its requests; the second
+#    run below shows the Vault-only organization refused all three at HEAD. After main declined the
+#    /api/concept2cure/projects claim, the file was narrowed to the three cases main asked for (M23, M24, M25
+#    show it red in each direction).
+
+## 1. client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx — 18 of 18 fail
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project 5352ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history 5194ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 5139ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 5141ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 5139ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 5133ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact 661ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 603ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 592ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 638ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Vault exports the branch’s rows as CSV, with their governance 58ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns 15ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document 181ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance 121ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault 1ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives 36ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 24ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions 29ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-versions"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-versions"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-versions"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-audit"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-audit"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-artifact-audit"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Download DOCX/`
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Download DOCX/`
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Download DOCX/`
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Download DOCX/`
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Vault exports the branch’s rows as CSV, with their governance
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Export manifest/`
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'authoring' ]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance
+AssertionError: expected 'Summarize Clinical overview and list …' to match /governed artifact “Clinical overview”/
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault
+AssertionError: expected false to be true // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives
+Error: Unknown surface action "vault.focus-document".
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss
+Error: Unknown surface action "vault.focus-document".
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions
+AssertionError: expected 'Open a document to see its detail, ve…' to match /Select a named document/
+ Test Files  1 failed (1)
+      Tests  18 failed (18)
+
+## 2. Server suites, first run — 7 of 23 fail (artifacts-center-manifest-fields 2/2, project-vault-governed-artifacts 1 new case of 12, artifact-versions-name-their-author 2/3, vault-artifact-leaf-gate 2/6)
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD section, grouped by CTD module 22ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin 5ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest) 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > names an origin only where the row records one 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reports the status breakdown and the count, and the count joins documentCount 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the organization and the program, newest first, one past the window 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total 4ms
+ × server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > names each version’s author, or says the user id when no name may be shown 24ms
+ × server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > a name lookup that fails fails the read, never an unnamed list 5ms
+ ✓ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > still answers 404 for an artifact that is not this project’s 4ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code 7ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export, the versions and the audit report to an organization entitled to the Vault only 1ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export to an organization entitled to the Artifacts center only, as before 3ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses all three to an organization entitled to neither 0ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > the versions and audit read are refused to an Artifacts-center-only organization, as before 0ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: both prefixes keep their earlier claimants 2ms
+ × server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read 24ms
+ × server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > says not recorded as null, never a filled-in value 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code
+AssertionError: expected [] to deeply equal [ …(3) ]
+ ❯ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts:75:26
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: both prefixes keep their earlier claimants
+AssertionError: expected [ 'artifacts-center' ] to deeply equal [ 'artifacts-center', 'vault' ]
+ ❯ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts:100:59
+ FAIL  server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read
+AssertionError: expected { id: 'artifact_9', …(13) } to match object { Object (id, size, ...) }
+ ❯ server/routes/__tests__/artifacts-center-manifest-fields.test.ts:69:30
+ FAIL  server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > says not recorded as null, never a filled-in value
+AssertionError: expected { id: 'artifact_9', …(13) } to match object { ctdSection: null, …(4) }
+ ❯ server/routes/__tests__/artifacts-center-manifest-fields.test.ts:85:30
+ FAIL  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > names each version’s author, or says the user id when no name may be shown
+AssertionError: expected [ [ 5, 12, undefined ], …(2) ] to deeply equal [ [ 5, 12, 'R. Writer' ], …(2) ]
+ ❯ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts:101:93
+ FAIL  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > a name lookup that fails fails the read, never an unnamed list
+AssertionError: expected 200 to be 500 // Object.is equality
+ ❯ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts:112:24
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)
+AssertionError: expected [ [ 'art-9', undefined ], …(1) ] to deeply equal [ [ 'art-9', '2 KB' ], …(1) ]
+ ❯ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts:191:57
+ Test Files  4 failed (4)
+      Tests  7 failed | 16 passed (23)
+
+## 3. vault-artifact-leaf-gate.test.ts with named requests — 3 of 6 fail; the Vault-only organization (501) at HEAD:
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code 7ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export, the versions and the audit report to an organization entitled to the Vault only 6ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export to an organization entitled to the Artifacts center only, as before 1ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses all three to an organization entitled to neither 2ms
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > the versions and audit read are refused to an Artifacts-center-only organization, as before 2ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: both prefixes keep their earlier claimants 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code
+AssertionError: expected [] to deeply equal [ …(3) ]
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export, the versions and the audit report to an organization entitled to the Vault only
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: both prefixes keep their earlier claimants
+AssertionError: expected [ 'artifacts-center' ] to deeply equal [ 'artifacts-center', 'vault' ]
+      Tests  3 failed | 3 passed (6)
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "/api/artifacts-center/x1/export": "served",
+-   "/api/concept2cure/projects/x1/artifacts/x1/audit-report": "served",
+-   "/api/concept2cure/projects/x1/artifacts/x1/versions": "served",
++   "/api/artifacts-center/x1/export": "403 MODULE_NOT_LICENSED",
++   "/api/concept2cure/projects/x1/artifacts/x1/audit-report": "403 MODULE_NOT_LICENSED",
++   "/api/concept2cure/projects/x1/artifacts/x1/versions": "403 MODULE_NOT_LICENSED",
+  }

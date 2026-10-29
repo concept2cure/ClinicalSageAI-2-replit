@@ -1,0 +1,20 @@
+# Gates, run on the tree with the fix (71a10fe2b + this change), 2026-10-29
+=== npm run ci:sql-interpolation
+  server/services/vault/vault-search.ts:190:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1065 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit=0
+=== npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit=0
+=== npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (44 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+exit=0
+=== npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 13 entry point(s); 7 consider tenant entitlement, 6 do not (baseline 6)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0
+=== npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined; 8 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 8 fix(es).
+exit=0

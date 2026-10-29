@@ -20,22 +20,15 @@
  *
  * @module server/services/qms/periodic-review-task
  */
-import { and, eq, isNull, notInArray } from 'drizzle-orm';
-import { db } from '../../db';
-import * as schema from '../../../shared/schema';
-import unifiedTaskService from '../unifiedTaskService';
-import { createScopedLogger } from '../../utils/logger';
+import { replaceSourceTask, type SourceTaskOutcome } from '../tasking/source-task';
 import type { QmsDocumentRow } from './document-approval-signature';
-
-const log = createScopedLogger('qms-periodic-review-task');
 
 export const PERIODIC_REVIEW_TASK_SOURCE = 'qms_periodic_review';
 /** Notice the owner gets before the date (taskDueSweep reads it). */
 export const PERIODIC_REVIEW_REMIND_DAYS = 30;
-const CLOSED = ['completed', 'cancelled'];
 
 export type PeriodicReviewTaskKind = 'review' | 'revise';
-export type PeriodicReviewTaskOutcome = 'scheduled' | 'unchanged' | 'closed' | 'failed';
+export type PeriodicReviewTaskOutcome = SourceTaskOutcome;
 
 export interface SchedulePeriodicReviewTask {
   organizationId: number;
@@ -67,32 +60,19 @@ function descriptionOf(kind: PeriodicReviewTaskKind, doc: SchedulePeriodicReview
 
 /**
  * Close the document's open review task and, when a date is given, write the
- * next. Never throws: the governed act it follows has committed.
+ * next (services/tasking/source-task.ts). Never throws: the governed act it
+ * follows has committed.
  */
-export async function schedulePeriodicReviewTask(input: SchedulePeriodicReviewTask): Promise<PeriodicReviewTaskOutcome> {
+export function schedulePeriodicReviewTask(input: SchedulePeriodicReviewTask): Promise<PeriodicReviewTaskOutcome> {
   const { organizationId, document: doc, due, kind } = input;
-  try {
-    const openTasks = await db
-      .select({ taskId: schema.unifiedTasks.taskId, status: schema.unifiedTasks.status, metadata: schema.unifiedTasks.metadata })
-      .from(schema.unifiedTasks)
-      .where(and(
-        eq(schema.unifiedTasks.organizationId, organizationId),
-        eq(schema.unifiedTasks.sourceEntityType, PERIODIC_REVIEW_TASK_SOURCE),
-        eq(schema.unifiedTasks.sourceEntityId, sourceId(Number(doc.id))),
-        notInArray(schema.unifiedTasks.status, CLOSED),
-        isNull(schema.unifiedTasks.deletedAt),
-      ));
-    const same = (m: unknown) => {
-      const meta = (m ?? {}) as Record<string, unknown>;
-      return meta.version === String(doc.version) && meta.nextReviewDue === due && meta.kind === kind;
-    };
-    if (due && openTasks.length === 1 && same(openTasks[0].metadata)) return 'unchanged';
-    for (const task of openTasks) {
-      await unifiedTaskService.updateTaskStatus(task.taskId, input.closeAs, input.createdById,
-        { organizationId, expectedStatus: String(task.status) });
-    }
-    if (!due) return 'closed';
-    await unifiedTaskService.createUnifiedTask({
+  return replaceSourceTask({
+    organizationId,
+    sourceEntityType: PERIODIC_REVIEW_TASK_SOURCE,
+    sourceEntityId: sourceId(Number(doc.id)),
+    same: (meta) => meta.version === String(doc.version) && meta.nextReviewDue === due && meta.kind === kind,
+    closeAs: input.closeAs,
+    actorId: input.createdById,
+    next: !due ? null : {
       moduleType: 'Quality',
       title: titleOf(kind, doc),
       description: descriptionOf(kind, doc, due),
@@ -101,19 +81,9 @@ export async function schedulePeriodicReviewTask(input: SchedulePeriodicReviewTa
       ...(doc.author_id ? { assigneeId: Number(doc.author_id) } : {}),
       priority: 'medium',
       dueDate: new Date(`${due}T00:00:00Z`),
-      sourceEntityType: PERIODIC_REVIEW_TASK_SOURCE,
-      sourceEntityId: sourceId(Number(doc.id)),
       tags: ['qms', 'periodic-review'],
       metadata: { documentId: Number(doc.id), version: String(doc.version), nextReviewDue: due, kind,
         remindDaysBefore: PERIODIC_REVIEW_REMIND_DAYS },
-      organizationId,
-      createdById: input.createdById,
-    });
-    return 'scheduled';
-  } catch (err) {
-    log.warn('The periodic review task could not be written; the governed act stands', {
-      organizationId, documentId: doc.id, err: err instanceof Error ? err.message : String(err),
-    });
-    return 'failed';
-  }
+    },
+  });
 }

@@ -20,9 +20,18 @@
  * route's rows (routeStanding forUpdate), then the audit chain (the first
  * ledger row). Notices are returned for the caller to send after COMMIT.
  *
+ * RR3 adds the two acts that change who is named on an open route:
+ * reassignMember (the sender or an administrator hands an unsigned member's
+ * assignment to another person, through assignTaskInTx, with the send's
+ * validator) and handBackMember (a member returns their own assignment to the
+ * sender, with a reason; they stay named until the sender reassigns).
+ *
  * @module server/services/review/review-route
  */
+import type { Request } from 'express';
 import { createTaskInTx, type TaskInsertRunner } from '../tasking/create-task';
+import { assignTaskInTx, TaskAssignmentError } from '../tasking/task-assignment';
+import type { RequestSqlClient } from '../../db/requestDb';
 import { auditTaskActionInTx } from '../tasking/task-audit';
 import type { TaskEventNotice } from '../tasking/task-side-effects';
 import { recordGovernedAction } from '../../routes/c2c/actions';
@@ -369,13 +378,14 @@ export async function closeReviewRoute(
   }
   let actId: string | null = null;
   if (p.status !== 'complete') {
+    const actorName = await printedNameOf(q, p.organizationId, p.actorUserId);
     const gov = await recordGovernedAction(q, {
       orgId: p.organizationId,
       userId: p.actorUserId,
       command: p.status === 'returned' ? 'review-route.return' : 'review-route.withdraw',
       target,
       reason: p.reason,
-      payload: { routeId: route.id, round: route.round, status: p.status, returnedBy: p.returner?.userId ?? null, cancelled: open.map((m) => m.taskId) },
+      payload: { routeId: route.id, round: route.round, status: p.status, actorName, returnedBy: p.returner?.userId ?? null, cancelled: open.map((m) => m.taskId) },
       domain: 'regulatory',
       surface: 'document-lifecycle',
     });
@@ -433,4 +443,188 @@ export async function routeRemindRefusal(
   }
   if (Number(route.sender_id) === p.actorUserId || (await isOrgAdmin(q, p.organizationId, p.actorUserId))) return null;
   return { status: 403, code: 'ROUTE_REMIND_NOT_PERMITTED', message: 'Only the person who sent this review route, or an administrator, reminds its members. Nothing was sent.' };
+}
+
+// ── RR3: reassign and hand back (§2.10, B9, B11, M2, M3, M6) ────────────────
+
+/** The subject a reassignment or hand-back is on, as the route's caller read it under its row lock. */
+export interface RouteActSubject {
+  type: RouteSubjectType;
+  id: string;
+  title: string;
+  /** The regulatory program whose project anchors the subject. */
+  programId: string | null;
+}
+
+const changed = (status: 400 | 403 | 404 | 409, code: string, message: string) =>
+  new ReviewRouteRefusal(status, code, `${message} Nothing was changed.`);
+
+/** A member's assignment that can still change hands: named on this route, and neither signed nor returned. */
+function reassignableMember(standing: RouteStanding, taskId: string): RouteMember {
+  const member = standing.members.find((m) => m.taskId === taskId);
+  if (!member) throw changed(404, 'ROUTE_MEMBER_NOT_FOUND', 'That assignment is not on this document’s open review route.');
+  if (member.outcome === 'signed') {
+    throw changed(409, 'ROUTE_MEMBER_SIGNED', `${member.printedName ?? 'This member'} has signed, so their assignment stays theirs.`);
+  }
+  if (member.outcome === 'returned') {
+    throw changed(409, 'ROUTE_MEMBER_RETURNED', `${member.printedName ?? 'This member'} returned the document for revision, so their assignment is not reassigned.`);
+  }
+  return member;
+}
+
+/** The validator's refusal, said as a reassignment's ("Nothing was changed", not "sent"). */
+function asReassignRefusal(err: unknown): never {
+  if (err instanceof ReviewRouteRefusal) {
+    throw new ReviewRouteRefusal(err.status, err.code, err.message.replace(/ Nothing was sent\.$/, ' Nothing was changed.'));
+  }
+  if (err instanceof TaskAssignmentError && (err.status === 400 || err.status === 403 || err.status === 404 || err.status === 409)) {
+    throw changed(err.status, err.code, err.message.replace(/ Nothing was changed\.$/, ''));
+  }
+  throw err;
+}
+
+/** A member's status on an open route: their step open, pending; otherwise waiting (blocked). */
+const routeStatusOf = (m: RouteMember): 'pending' | 'blocked' => (m.stepOpen ? 'pending' : 'blocked');
+
+/** The new member's notice: a reviewer is asked to review; an approver is told it is their turn, or that it will be. */
+function assignedNotice(organizationId: number, m: RouteMember, userId: number, title: string): TaskEventNotice {
+  if (m.role === 'reviewer') return { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Review requested: ${title}`, taskId: m.taskId };
+  return m.stepOpen
+    ? { organizationId, recipientUserId: userId, category: 'task_assigned', title: `It is your turn: approve ${title}`, taskId: m.taskId }
+    : { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Approval requested: ${title}`, body: 'Your approval opens once every named reviewer has signed.', taskId: m.taskId };
+}
+
+/**
+ * Reassign a named member's assignment on an open route (§2.10). The caller
+ * holds the subject's row lock (which every route writer takes first, so the
+ * standing it read is current) and has checked the reason. In order, each
+ * refusal with nothing written:
+ *
+ *   1. the actor is the sender or an organization administrator;
+ *   2. the assignment is on this route, unsigned and not returned;
+ *   3. validateRouteMember, exactly as at send: the route's sender is the
+ *      sender, the actor is the actor (who cannot name themselves), and
+ *      everyone on the route is already named;
+ *
+ * then assignTaskInTx, route-owned: the same task id, role and step, the
+ * reminder markers cleared, a task.assign row with the reason. The member row
+ * takes the printed name at naming, and a handed-back assignment is open
+ * again (its act cleared from the row, kept in the ledger). One
+ * review-route.reassign row on the subject records the route, from, to, role,
+ * reason and both printed names. Returns the notices to send after COMMIT:
+ * the new member's, and the old member's.
+ */
+export async function reassignMember(
+  tx: RouteTx,
+  req: Request,
+  p: { organizationId: number; actorUserId: number; reason: string; subject: RouteActSubject; standing: RouteStanding; taskId: string; assigneeId: number },
+): Promise<{ notices: TaskEventNotice[]; actId: string; member: RouteMember; to: ValidatedMember }> {
+  const q = queryableFromDrizzle(tx);
+  const route = p.standing.route!;
+  if (route.senderId !== p.actorUserId && !(await isOrgAdmin(q, p.organizationId, p.actorUserId))) {
+    throw changed(403, 'ROUTE_REASSIGN_NOT_PERMITTED', 'Only the person who sent this review route, or an administrator, reassigns its members.');
+  }
+  const member = reassignableMember(p.standing, p.taskId);
+  const to = await validateRouteMember(q, {
+    organizationId: p.organizationId, subjectTarget: routeSubjectTarget(p.subject.type, p.subject.id), programId: p.subject.programId,
+    contentDigest: route.contentDigest, role: member.role, candidateId: p.assigneeId, senderId: route.senderId, actorId: p.actorUserId,
+    named: new Set(p.standing.members.map((m) => m.userId)),
+  }).catch(asReassignRefusal);
+  await enterRouteWriter(q);
+  await assignTaskInTx(req, q as unknown as RequestSqlClient, { taskId: member.taskId, method: 'named', assigneeId: to.userId, reason: p.reason }, { routeOwned: true })
+    .catch(asReassignRefusal);
+  const status = routeStatusOf(member);
+  const reopened = await q.query(
+    `UPDATE unified_tasks SET assignee_name = $1, route_act_id = NULL, status = $2, updated_at = now()
+      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND assignee_id = $6
+      RETURNING task_id`,
+    [to.printedName, status, p.organizationId, member.taskId, route.id, to.userId],
+  );
+  if (reopened.rows.length !== 1) throw new Error(`Route member ${member.taskId} was not reassigned to ${to.userId}`);
+  const actorName = await printedNameOf(q, p.organizationId, p.actorUserId);
+  const gov = await recordGovernedAction(q, {
+    orgId: p.organizationId,
+    userId: p.actorUserId,
+    command: 'review-route.reassign',
+    target: routeSubjectTarget(p.subject.type, p.subject.id),
+    reason: p.reason,
+    payload: {
+      routeId: route.id, taskId: member.taskId, role: member.role, step: member.step, actorName,
+      from: { userId: member.userId, printedName: member.printedName }, to: { userId: to.userId, printedName: to.printedName },
+      handedBackActId: member.outcome === 'handed back' ? member.actId : null,
+    },
+    domain: 'regulatory',
+    surface: 'document-lifecycle',
+  });
+  if (member.outcome === 'handed back') {
+    await auditTaskActionInTx(q, {
+      orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: member.taskId,
+      payload: { from: 'blocked', to: status, routeId: route.id, cause: 'reassigned-after-hand-back', actId: gov.actionId },
+      reason: p.reason,
+      summary: `Reassigned after ${member.printedName ?? 'the member'} handed it back`,
+    });
+  }
+  const notices: TaskEventNotice[] = [assignedNotice(p.organizationId, member, to.userId, p.subject.title)];
+  if (member.userId !== p.actorUserId) {
+    notices.push({
+      organizationId: p.organizationId, recipientUserId: member.userId, category: 'task_update',
+      title: `${member.role === 'reviewer' ? 'Review' : 'Approval'} reassigned: ${p.subject.title}`,
+      body: `${actorName} gave your ${member.role === 'reviewer' ? 'review' : 'approval'} to ${to.printedName}: ${p.reason}`,
+    });
+  }
+  return { notices, actId: gov.actionId, member, to };
+}
+
+/**
+ * Hand back (§2.10, M6): a named member who cannot do their assignment
+ * returns it to the sender, with a reason. Nobody signs on their behalf: the
+ * act is stamped on their row (route_act_id), their task waits (blocked) on
+ * the sender, they stay named until the sender reassigns, and they neither
+ * sign nor complete their step meanwhile. The caller holds the subject's row
+ * lock and has checked the reason. Returns the sender's notice.
+ */
+export async function handBackMember(
+  tx: RouteTx,
+  p: { organizationId: number; actorUserId: number; reason: string; subject: RouteActSubject; standing: RouteStanding },
+): Promise<{ notices: TaskEventNotice[]; actId: string; member: RouteMember }> {
+  const q = queryableFromDrizzle(tx);
+  const route = p.standing.route!;
+  const member = p.standing.members.find((m) => m.userId === p.actorUserId);
+  if (!member) throw changed(403, 'ROUTE_NOT_NAMED', 'You are not named on this document’s review route, so there is nothing to hand back.');
+  if (member.outcome === 'signed') throw changed(409, 'ROUTE_MEMBER_SIGNED', 'You have signed, so your assignment is done and is not handed back.');
+  if (member.outcome === 'handed back') throw changed(409, 'ROUTE_HANDED_BACK', 'You have already handed this back; the sender reassigns it.');
+  if (member.outcome === 'returned') throw changed(409, 'ROUTE_MEMBER_RETURNED', 'You returned this document for revision.');
+  const printedName = member.printedName ?? (await printedNameOf(q, p.organizationId, member.userId));
+  await enterRouteWriter(q);
+  const gov = await recordGovernedAction(q, {
+    orgId: p.organizationId,
+    userId: p.actorUserId,
+    command: 'review-route.hand-back',
+    target: routeSubjectTarget(p.subject.type, p.subject.id),
+    reason: p.reason,
+    payload: { routeId: route.id, taskId: member.taskId, role: member.role, step: member.step, userId: member.userId, printedName, actorName: printedName },
+    domain: 'regulatory',
+    surface: 'document-lifecycle',
+  });
+  const stamped = await q.query(
+    `UPDATE unified_tasks SET route_act_id = $1, status = 'blocked', updated_at = now(), last_modified_by = $2
+      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND assignee_id = $2
+        AND route_act_id IS NULL AND route_signature_id IS NULL
+      RETURNING status`,
+    [gov.actionId, p.actorUserId, p.organizationId, member.taskId, route.id],
+  );
+  if (stamped.rows.length !== 1) throw new Error(`Route member ${member.taskId} could not record its hand-back`);
+  await auditTaskActionInTx(q, {
+    orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: member.taskId,
+    payload: { from: routeStatusOf(member), to: 'blocked', routeId: route.id, cause: 'hand-back', actId: gov.actionId },
+    reason: p.reason,
+    summary: 'Handed back to the sender, who reassigns it',
+  });
+  const notices: TaskEventNotice[] = [{
+    organizationId: p.organizationId, recipientUserId: route.senderId, category: 'task_update',
+    title: `Handed back by ${printedName}: ${p.subject.title}`,
+    body: `${printedName} cannot do their ${member.role === 'reviewer' ? 'review' : 'approval'} and handed it back to you to reassign: ${p.reason}`,
+    taskId: member.taskId,
+  }];
+  return { notices, actId: gov.actionId, member };
 }

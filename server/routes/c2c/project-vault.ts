@@ -47,7 +47,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { createReadStream, promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
@@ -93,7 +93,14 @@ import { StorageIntegrityError } from '../../services/storage/storage-provider.j
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
-import { artifactGovernance, readArtifactRegistry, type ArtifactRegistryRow } from '../../services/artifact-registry-read.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+  type ArtifactRegistryRow,
+} from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
@@ -128,6 +135,7 @@ interface VaultDoc {
   docId?: string;
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  /** An upload's stored file size; on an artifact, its stored content's size (formatContentBytes). */
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -438,6 +446,66 @@ export async function recordVaultDownload(
   } finally {
     client?.release();
   }
+}
+
+/**
+ * Record a seal's closing archive BEFORE it is sent, with the SHA-256 of the
+ * exact file that will leave (VR-20), as a download is recorded
+ * (recordVaultDownload). False when it could not be recorded; the caller then
+ * sends nothing.
+ */
+export async function recordVaultArchive(
+  req: Request,
+  d: { orgId: number; userId: number | undefined; programId: string; sealId: string; manifestSha256: string;
+    archiveSha256: string; archiveSize: number; documentCount: number; withheldCount: number },
+): Promise<boolean> {
+  let client: PoolClient | undefined;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await setTenantContextTx(client, d.orgId);
+    await writeChainedAuditRow(client, {
+      tenantId: d.orgId, userId: d.userId, action: 'vault.data_room.archive',
+      resourceType: 'vault_data_room_seal', resourceId: d.sealId,
+      ipAddress: req.ip, userAgent: req.headers['user-agent'],
+      details: { programId: d.programId, manifestSha256: d.manifestSha256, archiveSha256: d.archiveSha256,
+        archiveSize: d.archiveSize, documentCount: d.documentCount, withheldCount: d.withheldCount },
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (auditErr) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    logger.error('vault closing archive refused: audit write failed', {
+      sealId: d.sealId, err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  } finally {
+    client?.release();
+  }
+}
+
+/** Why a sealed document's file is not in its closing archive: the single download refuses it too. */
+const WITHHELD_BY_DISPOSITION = 'Its original file was removed under a data disposition; the record and its data are kept.';
+
+/** Stream a finished archive with its recorded SHA-256, then remove its staging directory. */
+function sendStagedArchive(
+  res: Response,
+  built: { path: string; size: number; sha256: string },
+  stage: { cleanup(): Promise<void> },
+  fileName: string,
+): void {
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Length', String(built.size));
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('X-Content-SHA256', built.sha256);
+  res.setHeader('Cache-Control', 'no-store');
+  const stream = createReadStream(built.path);
+  res.on('close', () => { stream.destroy(); void stage.cleanup(); });
+  stream.on('error', (err) => {
+    logger.error('vault closing archive stream failed', { fileName, err: err.message });
+    res.destroy(err);
+  });
+  stream.pipe(res);
 }
 
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
@@ -1087,23 +1155,13 @@ type ArtifactsBranchResult =
   | { kind: 'empty'; block: GovernedArtifactsBlock }
   | { kind: 'unaddressable'; reason: string };
 
-/** The registry's status in the Vault chip's vocabulary. An unrecognised value
- *  is passed through, and the chip says "Status unavailable" rather than a
- *  status nobody recorded. */
-function artifactLeafStatus(raw: string | null): string {
-  switch (raw) {
-    case 'draft': return 'draft';
-    case 'review': return 'review';
-    case 'approved': return 'approved';
-    case 'locked': return 'final';
-    default: return raw || 'unknown';
-  }
-}
+/* The registry's status in the Vault chip's vocabulary is artifactRegistryStatus
+   in the shared read, where it moved (slice B, 2026-10-29) so the Artifacts
+   center's rows say it the same way in the shared manifest. */
 
 export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
   const g = artifactGovernance(row);
-  const raw = row.ctd_section?.trim() || null;
-  const section = normalizeCtdCode(raw) ?? raw;
+  const section = artifactCtdSection(row.ctd_section);
   const title = row.title || section || 'Untitled artifact';
   const author = row.author_name ?? null;
   const version = row.version == null ? null : Number(row.version);
@@ -1113,7 +1171,7 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     num: section ?? '—',
     title,
     type: g.kind,
-    status: artifactLeafStatus(row.status),
+    status: artifactRegistryStatus(row.status),
     // The one completion definition the rest of this read uses (approved or
     // locked is 100, anything else 0).
     pct: sectionCompletionPct(row.status),
@@ -1122,6 +1180,9 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     updated: relativeTime(row.updated_at),
     preview: [title, section ? `CTD §${section}` : null, origin].filter(Boolean).join(' · '),
     src: 'artifact',
+    // The stored content's size, as the Artifacts center states it (slice B: the
+    // two screens share one manifest). Not a rendered file's size: none is stored.
+    sizeLabel: formatContentBytes(Number(row.content_bytes)),
     artifact: {
       artifactId: row.artifact_id,
       kind: g.kind,
@@ -2596,6 +2657,28 @@ export default function createProjectVaultRoutes(): Router {
     return numbers;
   };
 
+  /** The organisation, project and seal a seal route names, or null once the refusal is sent. */
+  const readSealRequest = (req: Request, res: Response): { orgId: number; id: string; sealId: string } | null => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) { res.status(403).json({ success: false, error: 'FORBIDDEN' }); return null; }
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const sealId = String(req.params.sealId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return null; }
+    return { orgId, id, sealId };
+  };
+
+  /** A sealed version's stored file, through the one verified reader, against its recorded hash. */
+  const readSealedBytes = async (orgId: number, documentId: string, row: Record<string, unknown>):
+    Promise<{ ok: true; bytes: Buffer } | { ok: false; why: string }> => {
+    const read = await readVerifiedVaultBytes({
+      storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
+      storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
+      storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
+      organizationId: orgId,
+    }, typeof row.content_hash === 'string' ? row.content_hash : null, documentId);
+    return read.ok ? { ok: true, bytes: read.bytes } : { ok: false, why: read.message ?? 'The stored file could not be read.' };
+  };
+
   router.get('/:id/seals', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
@@ -2638,23 +2721,16 @@ export default function createProjectVaultRoutes(): Router {
   });
 
   router.get('/:id/seals/:sealId/verify', async (req: Request, res: Response) => {
-    const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
-    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
-    const sealId = String(req.params.sealId ?? '');
-    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
     const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
     try {
       // With ?bytes=1 each sealed file is re-read through the one verified reader.
       const checkBytes = req.query.bytes === '1'
         ? async (doc: { id: string }, row: Record<string, unknown>) => {
-          const read = await readVerifiedVaultBytes({
-            storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
-            storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
-            storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
-            organizationId: orgId,
-          }, typeof row.content_hash === 'string' ? row.content_hash : null, doc.id);
-          return read.ok ? null : (read.message ?? 'The stored file could not be read.');
+          const read = await readSealedBytes(orgId, doc.id, row);
+          return read.ok ? null : read.why;
         }
         : undefined;
       const { seal, verification } = await verifySeal(pool, { organizationId: orgId, programId: id, sealId, checkBytes });
@@ -2663,6 +2739,69 @@ export default function createProjectVaultRoutes(): Router {
       if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
       logger.error('vault seal verify failed', { sealId, err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'SEAL_VERIFY_UNAVAILABLE', message: 'The seal could not be verified. This is not a verdict.' });
+    }
+  });
+
+  /* The seal's closing archive (VR-20, docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md).
+     The seal is verified with its files re-read, and the bytes that made the
+     verdict are staged as they are read; an archive is built only for an intact
+     seal. A chained row carrying the archive's SHA-256 is committed before a
+     byte is sent, and a failed write sends nothing. */
+  router.get('/:id/seals/:sealId/archive', async (req: Request, res: Response) => {
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
+    const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
+    const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
+    const { buildSealArchiveContents, SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
+    let sending = false;
+    // A sealed document whose original file a data disposition removed is
+    // listed as withheld; its file is not read, as the download refuses it.
+    const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    try {
+      stage = await openVaultArchive();
+      const staging = stage;
+      const { seal, manifest, verification } = await verifySeal(pool, {
+        organizationId: orgId, programId: id, sealId,
+        checkBytes: async (doc, row) => {
+          if (row.binary_available === false) {
+            withheld.push({ id: doc.id, title: doc.title, sha256: doc.contentHash, why: WITHHELD_BY_DISPOSITION });
+            return null;
+          }
+          const read = await readSealedBytes(orgId, doc.id, row);
+          if (!read.ok) return read.why;
+          return staging.put({ id: doc.id, title: doc.title, fileName: typeof row.file_name === 'string' ? row.file_name : null,
+            indexNumber: doc.indexNumber, sha256: doc.contentHash }, read.bytes);
+        },
+      });
+      if (verification.verdict !== 'intact') {
+        return res.status(409).json({ success: false, error: 'SEAL_NOT_INTACT', verification,
+          message: 'This seal does not verify intact, so no closing archive was built. Nothing was sent.' });
+      }
+      const actorId = governedActorId(req) ?? undefined;
+      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
+      const built = await stage.finish(contents);
+      const recorded = await recordVaultArchive(req, {
+        orgId, userId: actorId, programId: id, sealId: seal.id, manifestSha256: seal.manifestSha256,
+        archiveSha256: built.sha256, archiveSize: built.size, documentCount: built.files.length, withheldCount: withheld.length,
+      });
+      if (!recorded) {
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The archive could not be recorded in the audit trail, so it was not sent.' });
+      }
+      sending = true;
+      res.setHeader('X-Archive-Withheld', String(withheld.length));
+      sendStagedArchive(res, built, stage, `vault-seal-${seal.id.slice(0, 8)}-closing-archive.zip`);
+      return undefined;
+    } catch (err) {
+      if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
+      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault closing archive failed', { sealId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'ARCHIVE_UNAVAILABLE',
+        message: 'The closing archive could not be built. Nothing was sent.' });
+    } finally {
+      if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
 

@@ -1,0 +1,31 @@
+# At 57ac612a9 (HEAD before RR3): merge 63236b89a (and a5f137f03/416df4131 before it) resolved
+# server/services/tasking/task-assignment.ts to the side without RR1a's assignTaskInTx, route guard and marker clearing.
+# RLS_ENFORCE=off npx vitest run server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH status: 409, the task and the ledger unchanged 96ms
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged 57ms
+   → expected 'CONFLICT_STALE' to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned 75ms
+   → {"success":true,"data":[{"taskId":"ROUTE-R","assignedTo":"Owner","assigneeId":5}],"count":1}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > DELETE (archive): 409, not archived 44ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the predecessor: 409, no edge, nothing blocked 40ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the successor: 409, no edge, nothing blocked 39ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the completion cascade skips a route member as a dependent 64ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the remind route, which writes nothing on the row, still serves a route member 41ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > the sender reminds a member whose step is open 47ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member who neither sent the route nor administers the organization is refused, and nobody is told 47ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member whose step is not open yet is not reminded (ROUTE_TASK_NOT_OPEN) 42ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > nobody is reminded on a withdrawn route (ROUTE_NOT_OPEN) 34ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks with reviewRouteId: 400, no row 34ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/bulk-create with a task naming review_route_id: 400, nothing created 27ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created 23ms
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata 47ms
+   → expected { …(3) } to deeply equal { note: 'kept' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged
+AssertionError: expected 'CONFLICT_STALE' to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned
+AssertionError: {"success":true,"data":[{"taskId":"ROUTE-R","assignedTo":"Owner","assigneeId":5}],"count":1}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata
+AssertionError: expected { …(3) } to deeply equal { note: 'kept' }
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)

@@ -13,7 +13,9 @@
  * The row's step control is here too: Approve for a translation in review,
  * Advance before that, nothing once approved, and nothing at all for a role
  * that cannot write (canGovernedWrite; the server's requireEditorAccess
- * refuses that role every labeling write). AnA is offered the same steps.
+ * refuses that role every labeling write). For a translation's own creator,
+ * Approve is shown disabled with the reason, as the approval refuses them. AnA
+ * is offered the same steps.
  *
  * @module client/src/concept2cure/v2/surfaces/LabelingTranslationApproval
  */
@@ -109,17 +111,26 @@ export function TranslationApprovalDialog({ translation, label, onClose, onSigne
   );
 }
 
-/** A translation row's next step. `canWrite` is canGovernedWrite for the signed-in role; without it nothing is offered. */
-export function TranslationStepControl({ status, canWrite, onApprove, onAdvance }: {
+/**
+ * A translation row's next step. `canWrite` is canGovernedWrite for the
+ * signed-in role; without it nothing is offered. `ownNoteId` names the
+ * sentence saying the signed-in user added this translation: the approval
+ * refuses its creator (separation of duties), so Approve is shown disabled and
+ * described by that sentence, not offered as if it would work
+ * (LabelingSignatures.tsx; the server's refusal stays the authority).
+ */
+export function TranslationStepControl({ status, canWrite, onApprove, onAdvance, ownNoteId = null }: {
   status: string;
   canWrite: boolean;
   onApprove: () => void;
   onAdvance: () => void;
+  ownNoteId?: string | null;
 }) {
   if (!canWrite || status === 'approved') return null;
-  return status === 'review'
-    ? <button className="btn ghost" style={{ height: 26 }} onClick={onApprove}>{I.penLine} Approve</button>
-    : <button className="btn ghost" style={{ height: 26 }} onClick={onAdvance}>{I.arrowRight} Advance</button>;
+  if (status !== 'review') return <button className="btn ghost" style={{ height: 26 }} onClick={onAdvance}>{I.arrowRight} Advance</button>;
+  return ownNoteId
+    ? <button className="btn ghost" style={{ height: 26 }} disabled aria-describedby={ownNoteId}>{I.penLine} Approve</button>
+    : <button className="btn ghost" style={{ height: 26 }} onClick={onApprove}>{I.penLine} Approve</button>;
 }
 
 /** What AnA may offer for the translations: the same steps the screen offers this role. */

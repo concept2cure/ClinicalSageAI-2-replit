@@ -69,7 +69,7 @@ Fixed during this review, each shown failing first (evidence under
 | | Path | State |
 |---|---|---|
 | Projects, programs, IND lifecycle | Submission Center, `server/services/csr/project-scope.ts` | Works. A CSR now refuses an organization-wide build and needs a project (`6f57de780`). |
-| Study register | the study register's zod schema and the AnA tool schema | **Gap:** it accepts device phases only. "Phase 2/3" cannot be recorded truthfully. |
+| Study register | `clinical_ops.studies` (`server/routes/clinical-operations-routes.ts`), and the device register `clinical_studies` (`mdx-clinical-studies.ts`, AnA `create_clinical_study`) | **Corrected 2026-10-29.** This row first said the register accepts device phases only. That is the *device* register, scoped to device programs by design. The drug study register, `clinical_ops.studies`, already accepts "Phase 2/3". Neither feeds the CSR, which takes its phase from its own source's study information (free text, read as written since `cb14dfc51`). **Gap:** no client form creates a `clinical_ops.studies` row. **Found, handed on:** Clinical Ops (`ClinicalOps.tsx`, outside the launch catalog) prefixes "Phase " and "Ph " to a value that already says "Phase", so "Phase 2/3" reads "Phase Phase 2/3"; `shared/clinical-phase.ts` `phaseLabel` is the fix. |
 | Study design store | the study design store | **Gap:** no NCT number field and no Fast Track designation field. |
 | Filing type "Clinical Study Report" | project creation | **Gap:** a project of this type can never be sequenced. A CSR is filed as an information amendment to the IND. |
 | Sequence numbering | Submission Center | **Gap:** the first platform sequence is always 0000. LMN-201's IND already has sequences, so the next sequence number must be entered. |
@@ -128,7 +128,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | Dispatch readiness, release signature, pre-transmit checks | the submission gateways | Work, offline, against local mTLS fixtures. 567 tests pass. |
 | FDA ESG | ESG REST, SFTP and AS2 clients | **Gap:** never run against FDA. ACK2 and ACK3 are not ingested. |
-| Archive | the transmit path | **Defect:** the package is deleted after transmit, so no copy of what was sent is kept. |
+| Archive | the guarded transmit, `submission-gateways/sent-package-archive.ts` | **Fixed** (D7, `docs/evidence/D7/2026-10-29-sent-package-kept/`): the guard stores the package's exact bytes before the wire and refuses to send when it cannot. Every transmittal row, the `ECTD_TRANSMITTED` row and the sign record name the copy. The **Package** action in Gateway transmittals downloads it, under project access and recorded (`docs/evidence/D7/2026-10-29-sent-package-download/`). **Gap:** packages above the 25 MiB download limit are refused (413), though kept. |
 | The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here. |
 | ClinicalTrials.gov results | — | **Gap:** no path to post results for NCT05330182 under 42 CFR Part 11. |
 
@@ -169,6 +169,7 @@ and are not used.
    at all; both need the official specification, not recall.
 5. ~~Signing: the whitespace reason and the protected export history~~: done
    (`56504daea`, `239bf4214`).
-6. Transmission: archive the package sent, and ingest the acknowledgments.
+6. Transmission: ~~archive the package sent, and download it~~: done (D7).
+   Open: ingesting the acknowledgments, and a streamed download above 25 MiB.
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5
    capture, PDF/A, and the 16.x appendices.

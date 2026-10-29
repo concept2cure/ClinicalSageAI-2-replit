@@ -1,0 +1,5 @@
+The review-route guard's bypass, set by the runtime role itself (psql as app_service on the deploy-shaped database):
+SELECT current_user, rolsuper ...; SELECT set_config('c2c.review_route_writer', 'on', false); SHOW c2c.review_route_writer;
+app_service|f
+on
+on

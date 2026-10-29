@@ -213,6 +213,9 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
 });
 
 const dbCalls: string[] = [];
+// The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
+vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+
 vi.mock('../../../db', () => ({
   db: {},
   pool: {

@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5197/api/c2c/project-vault/4c6b4398-3fbc-43c9-b046-0c868ce1fd4a/search?q=oqlibrary20261029121031",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 80,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "oqlibrary20261029121031",
+        "mode": "search",
+        "filters": {},
+        "total": 0,
+        "limit": 25,
+        "offset": 0,
+        "includeSuperseded": false,
+        "results": []
+      }
+    }
+  }
+}

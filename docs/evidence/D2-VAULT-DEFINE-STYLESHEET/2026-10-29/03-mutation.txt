@@ -1,0 +1,44 @@
+# Mutations: each applied alone, its suite run, the source restored
+
+## M1 ingest stores the declared type
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xsl, read as text, and stored as the type its name binds 94ms
+   → expected { mime_type: 'text/xsl', …(2) } to match object { file_name: 'define2-1.xsl', …(1) }
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xml, read as text, and stored as the type its name binds 83ms
+   → expected { mime_type: 'text/xml', …(2) } to match object { file_name: 'define2-1.xsl', …(1) }
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xml, read as text, and stored as the type its name binds 83ms
+   → expected { mime_type: 'application/xml', …(2) } to match object { file_name: 'define2-1.xsl', …(1) }
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > a SAS transport file > a browser sends as octet-stream is stored as the transport type its name binds 107ms
+   → expected 'application/octet-stream' to be 'application/x-sas-xport' // Object.is equality
+      Tests  4 failed | 4 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+## M2 application/xslt+xml is admitted for any name
+ × server/utils/__tests__/fileSignature.test.ts > every format the Vault admits is checked by its bytes and bound to its name (MR-08 Stage 3 step 3) > admits the define.xml stylesheet as text under the types it is sent a
+   → expected true to be false // Object.is equality
+      Tests  1 failed | 51 passed (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M3 XSLT has no text signature check
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xslt+xml, read as text, and stored as the type its name binds 2150ms
+   → {"error":{"code":"FILE_SIGNATURE_MISMATCH","message":"File content does not match declared type"}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xsl, read as text, and stored as the type its name binds 41ms
+   → {"error":{"code":"FILE_SIGNATURE_MISMATCH","message":"File content does not match declared type"}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xml, read as text, and stored as the type its name binds 27ms
+   → {"error":{"code":"FILE_SIGNATURE_MISMATCH","message":"File content does not match declared type"}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xml, read as text, and stored as the type its name binds 24ms
+   → {"error":{"code":"FILE_SIGNATURE_MISMATCH","message":"File content does not match declared type"}}: expected 400 to be 201 // Object.is equality
+      Tests  4 failed | 4 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+## M4 a stylesheet is not read as text
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xslt+xml, read as text, and stored as the type its name binds 4742ms
+   → .toMatch() expects to receive a string, but got object
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xsl, read as text, and stored as the type its name binds 74ms
+   → .toMatch() expects to receive a string, but got object
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xml, read as text, and stored as the type its name binds 63ms
+   → .toMatch() expects to receive a string, but got object
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xml, read as text, and stored as the type its name binds 68ms
+   → .toMatch() expects to receive a string, but got object
+      Tests  4 failed | 4 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+

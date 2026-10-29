@@ -41,7 +41,7 @@
  * @module server/services/tenant-export/tenant-full-export
  */
 
-import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
+import { PURGE_PARENT_SCOPED, EXPORT_DERIVED_TABLES } from '../tenant/purge-parent-scope';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { readCompanyExportOrganization, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
@@ -117,6 +117,8 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
 export const EXPORT_WITHHELD_COLUMNS: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
   c2c_mailbox_connections: { token_reference: 'a mailbox token or credential-store reference' },
   connector_credentials: { credentials: 'connector credentials' },
+  // Exported through its document since 2026-10-29 (purge-parent-scope.ts).
+  document_locks: { lock_token: "a document lock's token, which lets its holder act on the lock" },
   document_sessions: { session_token: 'a session token' },
   gate_approvals: { verification_token: 'a one-time verification token' },
   integration_tokens: { access_token: 'an OAuth access token', refresh_token: 'an OAuth refresh token' },
@@ -183,18 +185,30 @@ const MAX_ROWS_PER_TABLE = 50_000;
 /**
  * Tables whose tenant rows are NOT "the tenant column equals the org id", with
  * the predicate that selects them instead — the SAME predicate the purge
- * deletes by, so an export never contains less than the erasure it authorizes
- * destroys. `$1` is the organization id as an integer.
+ * deletes by (../tenant/purge-parent-scope, one map read by both), so an export
+ * never contains less than the erasure it authorizes destroys. `$1` is the
+ * organization id as an integer.
  *
- * vault.document_chunks is deliberately absent: it has no tenant column, so it
- * is not discovered, and it is derived — the passages are cut from the
- * documents' extracted_text, which IS exported with each document. The purge
- * removes chunks with their parent; the data return carries the text they were
- * cut from.
+ * Most have no tenant column at all: legacy children scoped by their parent
+ * (2026-10-29). Until then the export did not discover them, so a customer's
+ * legacy document versions, CER sections and the like never came back; the
+ * purge now erases them, so it must return them. A wrong predicate here hands
+ * one customer another's rows, so each is the parent and key of the table's
+ * row-level-security policy, and tests/db/tenant-purge-blocking-keys.dbtest.ts
+ * checks, table by table, that a tenant's export holds its own row and not
+ * another tenant's.
+ *
+ * vault.document_chunks is deliberately absent (EXPORT_DERIVED_TABLES): it is
+ * derived — the passages are cut from the documents' extracted_text, which IS
+ * exported with each document. The purge removes chunks with their parent; the
+ * data return carries the text they were cut from.
  */
-const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze({
-  'vault.documents': VAULT_DOCUMENT_TENANCY,
-});
+const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(Object.entries(PURGE_PARENT_SCOPED).filter(([table]) => !EXPORT_DERIVED_TABLES.includes(table))),
+);
+
+/** The tenant column a parent-scoped table is reported with: its rows are selected through their parent. */
+export const PARENT_SCOPED_TENANT_COLUMN = 'parent';
 
 export interface ExportedTable {
   table: string;
@@ -276,6 +290,27 @@ export async function discoverTenantTables(
      applied per schema — an excluded `public.audit_logs` must not silently
      exclude a same-named table in another schema nobody considered. */
   for (const excluded of EXPORT_EXCLUDED_TABLES) seen.delete(`public.${excluded}`);
+
+  /* The parent-scoped tables with no tenant column of their own, when this
+     database has them: read through EXPORT_SCOPED_PREDICATES, never by a column. */
+  const scoped = Object.keys(EXPORT_SCOPED_PREDICATES)
+    .map((label) => (label.includes('.') ? label : `public.${label}`))
+    .filter((key) => !seen.has(key));
+  if (scoped.length) {
+    const { rows: present } = await client.query<{ table_schema: string; table_name: string }>(
+      `SELECT table_schema, table_name FROM information_schema.tables
+        WHERE table_type = 'BASE TABLE' AND table_schema || '.' || table_name = ANY($1::text[])
+        ORDER BY 1, 2`,
+      [scoped]
+    );
+    for (const row of present) {
+      seen.set(`${row.table_schema}.${row.table_name}`, {
+        schema: row.table_schema,
+        table: row.table_name,
+        tenantColumn: PARENT_SCOPED_TENANT_COLUMN,
+      });
+    }
+  }
 
   return [...seen.values()];
 }

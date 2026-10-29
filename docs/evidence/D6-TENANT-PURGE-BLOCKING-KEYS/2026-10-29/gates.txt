@@ -1,0 +1,23 @@
+Gates, on the finished tree (71a10fe2b + this change). DATABASE_URL for the live-schema gates: the deploy-shaped database of red.txt.
+
+ci:purge-coverage — exit 0 — ✅ purge-coverage: 464 org-keyed tables outside the purge reach (baseline 469, new 0, 5 now covered).
+ci:purge-coverage:selftest — exit 0 — [ci:purge-coverage:selftest] 53 passed — the gate fails on what it exists to catch.
+ci:sql-interpolation — exit 0 — [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1065 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+ci:sql-interpolation:selftest — exit 0 — [ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+ci:baseline-justifications — exit 0 — [ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 116 inline tenant-isolation-safe suppression(s), every one with a reason.
+ci:tenant-isolation:no-regression — exit 0 — [ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+ci:tenant-column-types — exit 0 — [ci:tenant-column-types] OK — all tenant columns are integer-typed
+ci:tenant-entry-points — exit 0 — [ci:tenant-entry-points] OK — no unclassified tenant entry points.
+ci:db-test-isolation — exit 0 — [ci:db-test-isolation] OK — 222 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+ci:regulated-delete-audit — exit 0 — [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+ci:check-test-imports — exit 0 — [ci:test-imports] OK — every local import in every test file resolves.
+ci:unreferenced-modules — exit 0 — OK: no new unreachable modules.
+ci:runtime-ddl — exit 0 — [ci:runtime-ddl] ✅ no new runtime DDL.
+ci:session-scoped-rls-bypass — exit 0 — [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may 
+ci:drizzle-tenant-scope — exit 0 — [ci:drizzle-tenant-scope] OK — 98 site(s), all baselined.
+ci:unkeyed-request-tables — exit 0 — [ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+ci:check-unrun-tests — exit 1 —   These do not show up as skipped. They do not show up at all — the suite
+
+audit:repo-health:ceiling — ✅ repo health strict gate passed.
+
+ci:check-unrun-tests fails at HEAD as well: the three files are tracked and unchanged by this work (8b58354af feat(cortex): preserve CSR aggregates and ground A).

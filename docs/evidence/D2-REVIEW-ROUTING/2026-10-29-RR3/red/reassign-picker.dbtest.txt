@@ -1,0 +1,6 @@
+# The reassign picker's read, with the handler not yet passing for=reassign to the validator (the picker read as at send)
+# tests/db/review-route-vault-rr3.dbtest.ts -t 'reassign picker', app_service, RLS_ENFORCE=on
+ × tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered 9186ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'MEMBER_ALREADY_NAMED' // Object.is equality
+      Tests  1 failed | 16 skipped (17)

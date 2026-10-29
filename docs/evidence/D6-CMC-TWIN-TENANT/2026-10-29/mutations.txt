@@ -1,0 +1,42 @@
+# Mutations: each applied alone to the fixed server/routes/c2c/program-twin.ts, the test run, the file restored.
+# npx vitest run server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+
+## M1 — drop the access check (the router.param admission line removed)
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot read its CMC data or context
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot write its CMC data
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer can read the CMC data and cannot write it
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member without edit permission on the project cannot write it
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project takes no CMC write
+  RED  a check that could not run is not an answer > when the membership read fails, GET and PUT answer 503 and nothing is supplied or written
+  RED  a check that could not run is not an answer > when the project read fails, GET and PUT answer 503 and nothing is supplied or written
+      Tests  7 failed | 23 passed (30)
+
+## M2 — drop the organization predicate on the project read (organizationProject: id only)
+  RED  every statement on a tenant table these routes read carries the organization predicate > GET …/cmc (projects)
+  RED  every statement on a tenant table these routes read carries the organization predicate > PUT …/cmc (projects)
+  RED  every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks)
+      Tests  3 failed | 27 passed (30)
+
+## M3 — drop the organization predicate on the CMC write (UPDATE by id only)
+  RED  every statement on a tenant table these routes read carries the organization predicate > PUT …/cmc (projects)
+      Tests  1 failed | 29 passed (30)
+
+## M4 — drop the organization predicate on the context's project_tasks read
+  RED  every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks)
+  RED  every statement on a tenant table these routes read carries the organization predicate > a task row keyed to this project id under another organization is not in its context
+      Tests  2 failed | 28 passed (30)
+
+## M5 — drop the role gate (admission with forWrite: false, so a PUT is admitted as a read)
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer can read the CMC data and cannot write it
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member without edit permission on the project cannot write it
+  RED  inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project takes no CMC write
+      Tests  3 failed | 27 passed (30)
+
+## M6 — drop the organization predicate on program-twin's signature read
+  RED  every statement on a tenant table these routes read carries the organization predicate > GET …/program-twin (concept2cure_signatures|concept2cure_review_comments)
+      Tests  1 failed | 29 passed (30)
+
+## M7 — drop the organization predicate on verification's review-comment read
+  RED  every statement on a tenant table these routes read carries the organization predicate > GET …/verification (concept2cure_signatures|concept2cure_review_comments)
+      Tests  1 failed | 29 passed (30)
+

@@ -1,0 +1,18 @@
+# At 18c718e3c, RLS_ENFORCE=off: RR3's client suite, RR1b's route/inbox/board suites and every Vault client suite
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 5129ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 45 passed (46)
+      Tests  1 failed | 370 passed (371)
+
+# vaultSurfaceAnaContext.test.tsx alone (its search test timed out at 5 s in the 46-file run above; it passed in the earlier 38-file run; RR1b's README records the same search-test timeouts at its base):
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 5135ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+
+# The same file three more times at 18c718e3c, then three times with RR3's client files put back to 57ac612a9
+# (VaultReviewRoute.tsx, VaultLifecycle.tsx, VaultVersions.tsx, journey-v2.css), then restored:
+#   at 18c718e3c:    9 passed / 9 passed / 9 passed
+#   at the base:     9 passed / 1 failed, 8 passed / 9 passed
+# Its failure ("Found multiple elements with the role alert", or the 5 s timeout) is timing-dependent and
+# occurs at the base too: pre-existing, not caused by RR3.

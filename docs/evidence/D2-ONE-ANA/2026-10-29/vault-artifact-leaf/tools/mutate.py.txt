@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Apply each mutation to product code, run its tests, restore, hash-check.
+
+usage: python3 -I mutate.py.txt <spec.json> <out.txt> [ids...]
+spec: [{ "id", "what", "file", "old", "new", "tests": [..], "grep": optional }]
+"""
+import hashlib, json, subprocess, sys, re
+ROOT = '/home/user/ClinicalSageAI-2-replit/'
+spec = json.load(open(sys.argv[1]))
+out = open(sys.argv[2], 'a')
+only = set(sys.argv[3:])
+def sha(p):
+    return hashlib.sha256(open(p, 'rb').read()).hexdigest()
+for m in spec:
+    if only and m['id'] not in only:
+        continue
+    path = ROOT + m['file']
+    before = sha(path)
+    original = open(path, 'rb').read()
+    text = original.decode('utf8')
+    n = text.count(m['old'])
+    if n != 1:
+        out.write(f"## {m['id']} SKIPPED: anchor found {n} times in {m['file']}\n\n"); out.flush(); continue
+    open(path, 'w', encoding='utf8').write(text.replace(m['old'], m['new']))
+    try:
+        r = subprocess.run(['npx', 'vitest', 'run', *m['tests']], cwd=ROOT, capture_output=True, text=True, timeout=900)
+        log = r.stdout + r.stderr
+    finally:
+        open(path, 'wb').write(original)
+    after = sha(path)
+    lines = [l for l in log.splitlines() if re.match(r'^\s*(FAIL|×)\s', l) or re.match(r'^\s+Tests\s', l) or 'AssertionError' in l]
+    seen = []
+    for l in lines:
+        if l not in seen: seen.append(l)
+    red = r.returncode != 0
+    out.write(f"## {m['id']} — {m['what']}\n")
+    out.write(f"file: {m['file']}\n")
+    out.write(f"tests: {' '.join(m['tests'])}\n")
+    out.write(f"verdict: {'RED (caught)' if red else 'GREEN (SURVIVED)'}\n")
+    out.write('\n'.join(x[:300] for x in seen[:14]) + '\n')
+    out.write(f"restored: sha256 before {before[:16]} after {after[:16]} {'match' if before == after else 'MISMATCH'}\n\n")
+    out.flush()
+    print(m['id'], 'RED' if red else 'SURVIVED', 'restored' if before == after else 'MISMATCH', flush=True)

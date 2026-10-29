@@ -1,0 +1,5 @@
+# Spreadsheets of 60,000 rows x 20 columns written by exceljs: the largest entry's compression ratio, against the 100:1 rule for entries over 1 MiB
+
+dense listing (USUBJID, visit, values) | 5.8 MiB file | xl/worksheets/sheet1.xml 36.9 MiB ratio 6.4
+sparse sheet (one value per row, 20 columns) | 0.5 MiB file | xl/worksheets/sheet1.xml 4.9 MiB ratio 10.6
+repeated constant cells | 1.2 MiB file | xl/worksheets/sheet1.xml 21.5 MiB ratio 17.7

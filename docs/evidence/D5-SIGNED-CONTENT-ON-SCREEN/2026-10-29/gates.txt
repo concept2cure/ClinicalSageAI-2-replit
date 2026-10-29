@@ -1,0 +1,46 @@
+# CI gates over the working tree at 6b70fd0a4 + this change, 2026-10-29T11:35:10Z. First lines of each gate's output and its exit code.
+
+=== npm run ci:sign-ceremony
+  [ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+  [ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0
+
+=== npm run ci:sql-interpolation
+  [ci:sql-interpolation] 25 fixed canonical predicate(s) proved separately; no value allowance added:
+    server/routes/c2c/project-vault.ts:1507:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+    server/routes/c2c/project-vault.ts:1526:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+exit 0
+
+=== npm run ci:server-error-leaks
+  [ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit 0
+
+=== npm run ci:undefined-css-classes
+  [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+
+=== npm run ci:ana-surface-context
+  [ci:ana-surface-context] OK — 112 of 117 routable surface ids publish screen state (baseline 112 exact), 5 exempt, 0 still blind.
+    109 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+    publish saved context and hand requests to the canonical conversation.
+exit 0
+
+=== npm run ci:unreferenced-modules
+  Unreferenced modules: 74 (baseline 74)
+  OK: no new unreachable modules.
+exit 0
+
+=== npm run ci:unverified-verdicts
+  [ci:unverified-verdicts] inspector self-test OK — catches the seven fabricated shapes WO-16B found, accepts the six honest ones
+  [ci:unverified-verdicts] running 8 surface file(s) under tests/gates/unverified-verdicts
+   RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+exit 0
+
+=== npm run ci:unauthenticated-fetch
+  ✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit 0
+
+=== npm run ci:class-vocabulary
+  [ci:class-vocabulary] OK — 5698 file(s) scanned, no restated class vocabulary.
+exit 0
+
