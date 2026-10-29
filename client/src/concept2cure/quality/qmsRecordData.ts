@@ -85,7 +85,11 @@ export interface CapaRow {
   targetCloseDate: string | null;
   problemStatement: string | null;
   closedAt: string | null;
+  /** The records it was raised from, as { kind, id, label } (shared/schema/capa-mdr.ts). */
+  sourceRefs: CapaSourceRef[] | null;
 }
+
+export interface CapaSourceRef { kind: string; id: string; label: string }
 
 /* shared/schema/capa-mdr.ts CAPA_TYPES, CAPA_SOURCES, RISK_LEVELS, CAPA_STATES,
    ACTION_TYPES; the state record is typed by CapaState so it cannot drift. */
@@ -198,7 +202,7 @@ export const createManagementReview = (v: { reviewDate: string; period: string; 
 
 export const createCapa = (v: {
   programId: string; title: string; type: string; source: string; riskLevel?: string;
-  targetCloseDate?: string; problemStatement?: string;
+  targetCloseDate?: string; problemStatement?: string; sourceRefs?: CapaSourceRef[];
 }) => capaWrite<CapaRow>('capa', compact(v));
 
 export const transitionCapa = (id: string, v: { to: CapaState; reason: string; effectiveness?: string }) =>
