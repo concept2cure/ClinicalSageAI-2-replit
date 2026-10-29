@@ -4,11 +4,11 @@
  * Provides organization usage statistics and metrics
  */
 import { Router } from 'express';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, desc, ne } from 'drizzle-orm';
 import {
   organizations,
   organizationUsers,
-  cerProjects,
+  projects,
   projectDocuments,
 } from '../../shared/schema';
 import { authMiddleware } from '../auth';
@@ -53,11 +53,19 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
 
     const userCount = userCountResult[0]?.count || 0;
 
-    // Count projects in the tenant
+    // Count projects in the tenant. `projects` is the store the canonical
+    // creator (POST /api/c2c/projects → program-project-anchor) writes, counted
+    // as client-journey counts it: archived projects excluded. This read
+    // `cer_projects` until 2026-10-29; fb73f05f8 retired the last writer there,
+    // so it answered 0 projects for every tenant (ci:writerless-stores).
+    const liveProjects = and(
+      eq(projects.organizationId, tenantId),
+      ne(projects.status, 'archived')
+    );
     const projectCountResult = await db
       .select({ count: count() })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, tenantId));
+      .from(projects)
+      .where(liveProjects);
 
     const projectCount = projectCountResult[0]?.count || 0;
 
@@ -79,14 +87,14 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
     // Get recent projects
     const recentProjects = await db
       .select({
-        id: cerProjects.id,
-        name: cerProjects.name,
-        createdAt: cerProjects.createdAt,
-        // Typically you would have an 'updatedAt' field to track last activity
+        id: projects.id,
+        name: projects.name,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
       })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, tenantId))
-      .orderBy(cerProjects.createdAt)
+      .from(projects)
+      .where(liveProjects)
+      .orderBy(desc(projects.createdAt))
       .limit(5);
 
     // Calculate quota percentages
@@ -113,30 +121,15 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
       },
     };
 
-    // Format recent projects
-    const formattedProjects = await Promise.all(
-      recentProjects.map(async project => {
-        // Count documents for this project
-        const docsCountResult = await db
-          .select({ count: count() })
-          .from(projectDocuments)
-          .where(
-            and(
-              eq(projectDocuments.organizationId, tenantId),
-              eq(projectDocuments.projectId, project.id)
-            )
-          );
-
-        return {
-          id: project.id,
-          name: project.name,
-          createdAt: project.createdAt?.toISOString(),
-          // In a real system, you would track and return lastActivity date
-          lastActivity: project.createdAt?.toISOString(), // Using createdAt as placeholder
-          docsCount: docsCountResult[0]?.count || 0,
-        };
-      })
-    );
+    // Format recent projects. No per-project document count: project_documents
+    // .project_id references cer_projects, not projects, so matching it against
+    // a project id would count another project's documents.
+    const formattedProjects = recentProjects.map(project => ({
+      id: project.id,
+      name: project.name,
+      createdAt: project.createdAt?.toISOString(),
+      lastActivity: project.updatedAt?.toISOString() ?? null,
+    }));
 
     res.json({
       userCount,

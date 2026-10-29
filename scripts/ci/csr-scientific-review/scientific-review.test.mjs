@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
-const root = process.env.CSR_REVIEW_TEST_BUILD;
-if (!root) throw new Error('Use the included test runner; no production services are substituted silently.');
+import { buildCsrReviewModules } from './build.mjs';
+// The real server/services/authoring modules, transpiled; a build failure fails this file.
+const build = buildCsrReviewModules();
+test.after(build.cleanup);
+const root = build.dir;
 const core = await import(pathToFileURL(join(root, 'csr-scientific-review-core.js')));
 const service = await import(pathToFileURL(join(root, 'csr-scientific-review.js')));
 const uid = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;

@@ -156,7 +156,7 @@ async function recipient(q: RequestSqlClient, ctx: Admission, userId: number): P
     await q.query(`SELECT ra.artifact_id FROM concept2cure_review_assignments ra JOIN concept2cure_artifacts a ON a.id=ra.artifact_id WHERE ra.organization_id=$1 AND a.organization_id=$1 AND a.project_id=$2 AND ra.reviewer_id=$3 AND ra.status='pending' FOR SHARE OF ra,a`, [ctx.organizationId, ctx.task.project_id, userId]);
     if (!await canAccessReportProject(ctx.organizationId, actor, Number(ctx.task.project_id), q)) throw denied();
   }
-  const { rows } = await q.query('SELECT id,name,email FROM users WHERE id=$1 AND status=\'active\'', [userId]);
+  const { rows } = await q.query(`/* task-assignment:recipient */ SELECT u.id,u.name,u.email FROM organization_users ou JOIN users u ON u.id=ou.user_id WHERE ou.organization_id=$1 AND u.id=$2 AND u.status='active'`, [ctx.organizationId, userId]);
   if (rows.length !== 1) throw denied();
   return { id: userId, role: String(actor.role), name: typeof rows[0].name === 'string' ? rows[0].name : null, email: typeof rows[0].email === 'string' ? rows[0].email : null };
 }

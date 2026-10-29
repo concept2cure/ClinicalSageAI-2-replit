@@ -134,9 +134,11 @@ async function readFacets(
     const where = whereFor(vaultFilterSql(vaultFiltersWithout(p.filters, dimension), params, 'd'));
     // Two fixed fragments: the dimension's value expression (a code map, no
     // request value) and the search's own predicate, whose values are bound.
+    // The tenant predicate is written here as well as inside `where`, so this
+    // statement is tenant-bound on its own text: $1 is the organisation in `base`.
     const counted = await db.query(`SELECT ${vaultFacetValueSql(dimension, 'd')} AS value, count(*)::int AS count
        FROM vault.documents d
-      WHERE ${where}
+      WHERE d.organization_id = $1 AND ${where}
       GROUP BY 1 ORDER BY 2 DESC, 1`, params);
     facets[VAULT_FILTER_PARAMETERS[dimension]] = counted.rows.map((r) => ({ value: r.value ?? null, count: Number(r.count) }));
   }
@@ -173,9 +175,11 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   const where = whereFor(filterSql);
 
   // The count and the page share `where`, each on its own line after FROM.
+  // Count and page each carry the tenant predicate on their own text as well as
+  // through `where` ($1 is the organisation), so neither depends on the fragment.
   const counted = await db.query(`SELECT count(*)::int AS total
        FROM vault.documents d
-      WHERE ${where}`, params);
+      WHERE d.organization_id = $1 AND ${where}`, params);
   const page = [...params, p.limit, p.offset];
   const rows = await db.query(
     `SELECT d.id, d.content_hash, d.document_title, d.file_name, d.document_type, d.file_size,
@@ -199,7 +203,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
                         'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
        FROM vault.documents d
        JOIN regulatory_programs prog ON prog.id = d.program_id AND prog.organization_id = $1
-      WHERE ${where}
+      WHERE d.organization_id = $1 AND ${where}
       ORDER BY rank DESC, d.created_at DESC, d.id
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,

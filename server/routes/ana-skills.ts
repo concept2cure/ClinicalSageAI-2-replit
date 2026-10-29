@@ -66,7 +66,6 @@ import { readProjectSkillSettings, setProjectSkillState } from '../services/ana/
 import { orgSkillsForProject } from '../services/ana/skills/turn-skills';
 import { availableSkills, projectSettingsDto } from '../services/ana/skills/admin-view';
 import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
-import { getPool } from '../db';
 import { AnaProjectScopeError, admitAnaProjectScope } from '../services/ana/project-scope-admission';
 
 const router = Router();
@@ -261,7 +260,7 @@ router.get('/usage', writeGuard, async (req: Request, res: Response) => {
  */
 async function projectOf(req: Request, res: Response, ref: unknown, forWrite: boolean): Promise<number | null> {
   try {
-    const admitted = await admitAnaProjectScope(getPool(), {
+    const admitted = await admitAnaProjectScope(requestPgClient(req), {
       projectRef: ref,
       organizationId: (req as any).user?.organizationId,
       userId: (req as any).user?.id,

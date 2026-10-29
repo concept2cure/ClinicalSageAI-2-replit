@@ -77,6 +77,7 @@ import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js'
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools.js';
 import {
   getDeficienciesBySubmissionType,
   getCriticalDeficiencies,
@@ -6704,8 +6705,19 @@ function ivdComputed(result: unknown, instruction: string): string {
   return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction }));
 }
 
+// The IVD calculators' required inputs come from their own schema module, not
+// from getRequiredInputKeys(): that one reads the whole tool catalog
+// (AnaToolDefinitions), whose agentic-workflow tools reach the model gateway.
+// Required keys are a schema fact; a deterministic engine handler should not
+// import a model to learn them (check-step-presentation ENGINE).
+function ivdRequiredInputKeys(name: string): string[] {
+  const def = IVD_LIFECYCLE_TOOLS.find(tool => tool.name === name);
+  const required = (def?.input_schema as { required?: string[] } | undefined)?.required;
+  return Array.isArray(required) ? required : [];
+}
+
 function ivdError(name: string, err: any, input: Record<string, unknown>): string {
-  const missing = getRequiredInputKeys(name).filter(key => input[key] == null);
+  const missing = ivdRequiredInputKeys(name).filter(key => input[key] == null);
   if (missing.length > 0) {
     return JSON.stringify({
       status: 'needs_parameters',
