@@ -1,8 +1,10 @@
 /**
- * How a Vault review route is said: UTC times, printed names, lists of names
- * and the word for a role's work. Shared by the round (VaultReviewRoute.tsx)
- * and its naming acts (VaultRouteReassign.tsx), so both say them alike. Moved
- * out of VaultReviewRoute.tsx unchanged in RR3.
+ * How a review route is said: UTC times, printed names, lists of names and the
+ * word for a role's work. Shared by every surface that shows a route (the
+ * Vault's VaultReviewRoute.tsx and VaultRouteReassign.tsx, the Quality
+ * register's QmsReviewRoute.tsx), so all of them say it the same way. Moved out of
+ * VaultReviewRoute.tsx unchanged in RR3, and out of v2/surfaces (as
+ * vaultRouteText.ts) into this neutral module unchanged in RR2.
  */
 
 /** An instant as "YYYY-MM-DD HH:MM:SS UTC"; a missing or unreadable one says so. */

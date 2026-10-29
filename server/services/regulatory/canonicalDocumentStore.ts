@@ -79,14 +79,22 @@ export class LifecycleRecordRefusal extends Error {
  * in_review and closes on approval or on the revision transition, which clears
  * the column (the sign-off itself stays in the trail).
  */
-export function reviewSignatureRefusal(doc: Pick<ProjectionInput, 'stage' | 'reviewSignature'>): LifecycleRecordRefusal | null {
+export function reviewSignatureRefusal(
+  doc: Pick<ProjectionInput, 'stage' | 'reviewSignature'>,
+  opts: { routed?: boolean } = {},
+): LifecycleRecordRefusal | null {
   if (doc.stage !== 'in_review') {
     return new LifecycleRecordRefusal(
       'SIGNATURE_STAGE_MISMATCH',
       `A review sign-off is recorded while the document is in review; it is ${doc.stage}.`,
     );
   }
-  if (doc.reviewSignature) {
+  // A live review route (RR2, design §2.8) admits one review signature per
+  // named reviewer, and refuses a second one by the same person itself
+  // (SIGNATURE_ALREADY_RECORDED on the member). The column below is still
+  // written once per round, by the signature that first completes the review.
+  // A reviewer added to the route after that signs without rewriting it.
+  if (doc.reviewSignature && !opts.routed) {
     return new LifecycleRecordRefusal(
       'SIGNATURE_ALREADY_RECORDED',
       'This review round already has its sign-off. It cannot be replaced; a revision starts a new round.',

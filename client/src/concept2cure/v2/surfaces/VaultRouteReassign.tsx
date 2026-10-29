@@ -9,9 +9,9 @@
  *     not offered, and asking for the reason. The server validates again
  *     under the record's lock (POST …/review-route/reassign) and refuses in
  *     its own words.
- *   - RouteHistory: the route's naming history by printed name — who sent it
- *     naming whom, who handed back, who reassigned what from whom to whom,
- *     who withdrew or returned it — each with its UTC time and reason.
+ *   - The naming history (RouteHistory) moved to
+ *     ../reviewRoute/RouteHistory.tsx in RR2, shared with the Quality
+ *     register.
  *
  * Hand back is a reason-only act, so it is RouteActDialog's (VaultReviewRoute.tsx).
  */
@@ -21,37 +21,10 @@ import { useDialog } from '../useDialog';
 import { PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } from '../editor/reviewFields';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { lifecyclePost } from './vaultLifecyclePost';
-import { useRouteCandidates, type RouteCandidateView } from './vaultRouteCandidates';
-import { list, nameOf, utc, work } from './vaultRouteText';
-import type { RouteHistoryEntryView, RouteMemberView } from './VaultReviewRoute';
-
-// ── The naming history (§2.12, M3) ───────────────────────────────────────────
-
-/** One naming act in words: who did what to whom, when (UTC) and why. */
-export function historyLine(h: RouteHistoryEntryView): string {
-  const who = h.actorName ?? `Account #${h.actorId}`;
-  const what = {
-    send: () => `${who} sent it for review naming ${list((h.members ?? []).map((m) => `${m.printedName ?? `Account #${m.userId}`} (${m.role})`)) || 'no one'}`,
-    'hand-back': () => `${who} handed back their ${work(h.role)}`,
-    reassign: () => `${who} reassigned the ${work(h.role)} from ${h.fromName ?? 'a member'} to ${h.toName ?? 'another member'}`,
-    withdraw: () => `${who} withdrew the route`,
-    return: () => `${who} returned it for revision`,
-  }[h.action]();
-  return `${what} · ${utc(h.at)}${h.reason ? ` · ${h.reason}` : ''}`;
-}
-
-/** The naming history of the route, oldest first, by printed name (§2.12, M3). */
-export function RouteHistory({ history }: { history: RouteHistoryEntryView[] | undefined }) {
-  if (!history || history.length === 0) return null;
-  return (
-    <>
-      <span className="vr-round-m vr-history">Naming history</span>
-      <ol className="vr-members" data-testid="vault-route-history" aria-label="Naming history of this review route">
-        {history.map((h, i) => <li key={`${h.action}-${h.at}-${i}`} className="vr-member">{historyLine(h)}</li>)}
-      </ol>
-    </>
-  );
-}
+import { useRouteCandidates } from './vaultRouteCandidates';
+import { nameOf, work } from '../reviewRoute/routeText';
+import type { RouteMemberView } from '../reviewRoute/routeRound';
+import { NotOfferedForRole } from '../reviewRoute/AddReviewer';
 
 // ── Reassign (§2.10) ─────────────────────────────────────────────────────────
 
@@ -62,20 +35,6 @@ export function reassignMissing(to: string | null, reason: string): string[] {
   const problem = reviewReasonProblem(reason);
   if (problem) missing.push(problem);
   return missing;
-}
-
-/** The members not offered for this role, each with the validator's sentence. */
-function NotOfferedForRole({ candidates, role }: { candidates: RouteCandidateView[]; role: 'reviewer' | 'approver' }) {
-  const out = candidates.filter((c) => c[role] !== null);
-  if (out.length === 0) return null;
-  return (
-    <details className="de-field" data-testid="vr-reassign-not-offered">
-      <summary className="de-desc">{out.length === 1 ? 'One member is not offered' : `${out.length} members are not offered`}, and why</summary>
-      <ul className="vr-members">
-        {out.map((c) => <li key={c.id} className="vr-member de-desc">{c[role]!.message}</li>)}
-      </ul>
-    </details>
-  );
 }
 
 /**

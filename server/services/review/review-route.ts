@@ -26,6 +26,16 @@
  * validator) and handBackMember (a member returns their own assignment to the
  * sender, with a reason; they stay named until the sender reassigns).
  *
+ * RR2 adds reviewers one after another and more than one approver (§3, NEW-4).
+ * Each step opens (openReadySteps) only when every member of the steps before
+ * it has a verified signature, and only then is its member told. Each step has
+ * its own due date, and every named approver signs. It also adds
+ * addRouteReviewer: the sender or an administrator names one more reviewer on
+ * an open route, with a reason and a due date and through the send's
+ * validator. The approvers are then blocked again and told, and this is refused
+ * once any approval is signed. What a request may say, and the reads behind it,
+ * moved to review-route-rules.ts, so this file holds the writes.
+ *
  * @module server/services/review/review-route
  */
 import type { Request } from 'express';
@@ -45,8 +55,15 @@ import {
   type RouteStanding,
   type RouteSubjectType,
 } from './review-route-standing';
+import {
+  addedMemberTaskId, addedReviewerDue, dueInstants, isOrgAdmin, placed, printedNameOf, routeLedgerScope, type RouteRequest,
+} from './review-route-rules';
 
 export { ReviewRouteRefusal } from './review-route-member';
+export {
+  isOrgAdmin, parseRouteRequest, printedNameOf, routeLedgerScope, routeRemindRefusal, senderTimeZone,
+  type RouteRequest, type RouteRequestRules,
+} from './review-route-rules';
 
 /** A Drizzle transaction: the member rows are inserted through createTaskInTx. */
 export type RouteTx = TaskInsertRunner;
@@ -64,119 +81,6 @@ export interface RouteSubject {
   programId: string | null;
   /** The digest the route is about: the version's content hash. */
   contentDigest: string;
-}
-
-export interface RouteRequest {
-  reviewers: number[];
-  approvers: number[];
-  order: 'parallel' | 'sequential';
-  /**
-   * Calendar dates (YYYY-MM-DD), each the end of that day in the sender's time
-   * zone. The review date is null only on a route that names no reviewer (a
-   * QMS route may name none, NEW-4).
-   */
-  reviewDueDate: string | null;
-  approvalDueDate: string;
-}
-
-/**
- * The floor a subject's route keeps (NEW-4, §4): a Vault version names at
- * least one reviewer and one approver; a QMS controlled document names at
- * least one approver, and reviewers are optional (RR4).
- */
-export interface RouteRequestRules {
-  reviewersOptional?: boolean;
-}
-
-/** The ledger's domain and surface for a subject's naming history. */
-export function routeLedgerScope(type: RouteSubjectType): { domain: string; surface: string } {
-  return type === 'qms_document' ? { domain: 'qms', surface: 'quality' } : { domain: 'regulatory', surface: 'document-lifecycle' };
-}
-
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const positiveIds = (v: unknown): v is number[] =>
-  Array.isArray(v) && v.every((x) => Number.isSafeInteger(x) && (x as number) > 0 && (x as number) <= 2_147_483_647);
-
-const refusal = (status: 400 | 409, code: string, message: string) => new ReviewRouteRefusal(status, code, `${message} Nothing was sent.`);
-
-/** The people a request names, each list of account ids; approvers non-empty, and reviewers too unless the subject's rules make them optional. */
-function namedPeople(r: Record<string, unknown>, rules: RouteRequestRules): { reviewers: number[]; approvers: number[] } {
-  const reviewers = r.reviewers ?? [];
-  const approvers = r.approvers ?? [];
-  if (!positiveIds(reviewers) || !positiveIds(approvers)) throw refusal(400, 'ROUTE_INVALID', 'Reviewers and approvers are lists of account ids.');
-  if (reviewers.length === 0 && !rules.reviewersOptional) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
-  if (approvers.length === 0) throw refusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver.');
-  return { reviewers, approvers };
-}
-
-/** The order, which RR1a sends parallel with one approver; sequential steps and several approvers arrive with their own refusals and tests (RR2). */
-function routeOrder(r: Record<string, unknown>, approvers: number[]): 'parallel' {
-  const order = r.order ?? 'parallel';
-  if (order !== 'parallel' && order !== 'sequential') throw refusal(400, 'ROUTE_INVALID', 'The review order is "parallel" or "sequential".');
-  if (order !== 'parallel' || approvers.length > 1) {
-    throw refusal(409, 'ROUTE_SHAPE_NOT_AVAILABLE', 'Reviewers one after another, and more than one approver, are not available yet.');
-  }
-  return order;
-}
-
-const isDate = (v: unknown): v is string => typeof v === 'string' && DATE.test(v);
-
-/** The route a request names, or the refusal that says what is wrong with it. Nothing is read. */
-export function parseRouteRequest(raw: unknown, rules: RouteRequestRules = {}): RouteRequest {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const { reviewers, approvers } = namedPeople(r, rules);
-  const order = routeOrder(r, approvers);
-  if (reviewers.length === 0) {
-    if (!isDate(r.approvalDueDate)) throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give an approval due date.');
-    return { reviewers, approvers, order, reviewDueDate: null, approvalDueDate: r.approvalDueDate };
-  }
-  if (!isDate(r.reviewDueDate) || !isDate(r.approvalDueDate)) {
-    throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date and an approval due date.');
-  }
-  return { reviewers, approvers, order, reviewDueDate: r.reviewDueDate, approvalDueDate: r.approvalDueDate };
-}
-
-/** The sender's notification time zone, the one every due date is the end of a day in (UTC when unset or unknown). */
-export async function senderTimeZone(q: RouteQueryable, senderId: number): Promise<string> {
-  // tenant-isolation-safe: notification_preferences is keyed by user only (no tenant column); the sender is the session user.
-  const pref = await q.query(`SELECT timezone FROM notification_preferences WHERE user_id = $1 ORDER BY id LIMIT 1`, [senderId]);
-  const wanted = String(pref.rows[0]?.timezone ?? 'UTC') || 'UTC';
-  const known = await q.query(`SELECT 1 FROM pg_timezone_names WHERE name = $1`, [wanted]);
-  return known.rows.length ? wanted : 'UTC';
-}
-
-/** End of each day in the sender's notification time zone (UTC when unset or unknown), as instants; no review instant on a route with no reviewer. */
-async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<{ review: Date | null; approval: Date; timeZone: string }> {
-  const timeZone = await senderTimeZone(q, senderId);
-  const { rows } = await q.query(
-    `SELECT CASE WHEN $1::date IS NULL THEN NULL ELSE ((($1::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') END AS review,
-            ((($2::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') AS approval,
-            now() AS now`,
-    [req.reviewDueDate, req.approvalDueDate, timeZone],
-  );
-  const review = rows[0].review == null ? null : new Date(rows[0].review);
-  const approval = new Date(rows[0].approval);
-  const first = review ?? approval;
-  if (first.getTime() <= new Date(rows[0].now).getTime()) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_DUE_IN_PAST', `The ${review ? 'review' : 'approval'} due date has passed. Nothing was sent.`);
-  }
-  if (review && approval.getTime() < review.getTime()) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_DUE_ORDER', 'The approval is due on or after the review. Nothing was sent.');
-  }
-  return { review, approval, timeZone };
-}
-
-/** A member's step: reviewers are step 1; approvers the step after the last reviewer, step 1 when nobody reviews (§3). */
-const stepOf = (role: 'reviewer' | 'approver', reviewers: number) => (role === 'reviewer' || reviewers === 0 ? 1 : 2);
-
-/** A member's printed name, as a route records it at naming (users.name, else the e-mail's local part). */
-export async function printedNameOf(q: RouteQueryable, organizationId: number, userId: number): Promise<string> {
-  const { rows } = await q.query(
-    `SELECT u.name, u.email FROM organization_users ou JOIN users u ON u.id = ou.user_id WHERE ou.organization_id = $1 AND ou.user_id = $2`,
-    [organizationId, userId],
-  );
-  const r = rows[0];
-  return String(r?.name || (r?.email ? String(r.email).split('@')[0] : `Account #${userId}`));
 }
 
 /** Every person named, validated in order (reviewers, then approvers), before anything is written. */
@@ -202,14 +106,12 @@ async function validateMembers(
 /** One member row and its task.create row; a member whose step is open gets a task_assigned notice. */
 async function writeMemberRow(
   tx: RouteTx,
-  p: { organizationId: number; senderId: number; reason: string; subject: RouteSubject; routeId: string; member: ValidatedMember;
-    due: { review: Date | null; approval: Date }; projectId: number | undefined; reviewers: number },
+  p: { organizationId: number; senderId: number; reason: string; subject: RouteSubject | RouteActSubject; routeId: string; member: ValidatedMember;
+    step: number; open: boolean; dueDate: Date; projectId: number | undefined; taskId?: string },
 ): Promise<TaskEventNotice | null> {
-  const { member: m, subject, routeId } = p;
+  const { member: m, subject, routeId, step, open } = p;
   const reviewer = m.role === 'reviewer';
-  const step = stepOf(m.role, p.reviewers);
-  const open = step === 1;
-  const taskId = `ROUTE-${routeId.slice(0, 8)}-${m.userId}`;
+  const taskId = p.taskId ?? `ROUTE-${routeId.slice(0, 8)}-${m.userId}`;
   await createTaskInTx(tx, {
     organizationId: p.organizationId,
     actorUserId: p.senderId,
@@ -225,7 +127,7 @@ async function writeMemberRow(
       assigneeName: m.printedName,
       assignedBy: p.senderId,
       assignedAt: new Date(),
-      dueDate: reviewer ? p.due.review ?? p.due.approval : p.due.approval,
+      dueDate: p.dueDate,
       projectId: p.projectId,
       sourceEntityType: subject.type,
       sourceEntityId: subject.id,
@@ -271,18 +173,19 @@ export async function sendReviewRoute(
   await enterRouteWriter(q);
   const inserted = await q.query(
     `INSERT INTO review_routes (organization_id, subject_type, subject_id, round, sender_id, sender_name, review_order,
-       review_due_at, approval_due_at, content_digest)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+       review_due_at, reviewer_step_due_at, approval_due_at, content_digest)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
     [p.organizationId, p.subject.type, p.subject.id, Number(prior.rows[0].n) + 1, p.senderId, senderName, p.request.order,
-      due.review, due.approval, p.subject.contentDigest],
+      due.review, due.steps, due.approval, p.subject.contentDigest],
   );
   const routeId = String(inserted.rows[0].id);
   const anchor = p.subject.programId
     ? await readProgramAnchorRow(q, { programId: p.subject.programId, orgId: p.organizationId, context: 'review-route-send' })
     : null;
   const notices: TaskEventNotice[] = [];
-  for (const m of members) {
-    const notice = await writeMemberRow(tx, { ...p, routeId, member: m, due, projectId: anchor?.id ?? undefined, reviewers: p.request.reviewers.length });
+  const steps = placed(members, p.request, due);
+  for (const { member, step, dueDate } of steps) {
+    const notice = await writeMemberRow(tx, { ...p, routeId, member, step, open: step === 1, dueDate, projectId: anchor?.id ?? undefined });
     if (notice) notices.push(notice);
   }
   await recordGovernedAction(q, {
@@ -294,8 +197,9 @@ export async function sendReviewRoute(
     payload: {
       routeId, order: p.request.order, contentDigest: p.subject.contentDigest,
       reviewDueAt: due.review?.toISOString() ?? null, approvalDueAt: due.approval.toISOString(), timeZone: due.timeZone,
+      reviewStepDueAt: due.steps?.map((d) => d.toISOString()) ?? null,
       senderName,
-      members: members.map((m) => ({ userId: m.userId, role: m.role, step: stepOf(m.role, p.request.reviewers.length), printedName: m.printedName })),
+      members: steps.map(({ member: m, step, dueDate }) => ({ userId: m.userId, role: m.role, step, dueAt: dueDate.toISOString(), printedName: m.printedName })),
     },
     ...routeLedgerScope(p.subject.type),
   });
@@ -336,27 +240,35 @@ export async function closeRouteTaskOnSignature(
     : [{ organizationId: p.organizationId, recipientUserId: sender, category: 'task_completed', title: `${p.member.printedName ?? 'A member'} signed: ${p.subjectTitle}`, taskId: p.member.taskId }];
 }
 
-/** The review is complete: the approvers' rows move from blocked to pending, and each is told it is their turn. */
-export async function openApproverStep(
+/**
+ * The steps whose turn has come (§3): every member who has not signed or acted,
+ * whose step is now open (every member of every earlier step has a verified
+ * signature), moves from blocked to pending, and each is told it is their
+ * turn: the next reviewer one after another, or the approvers once the review
+ * is complete. A member already pending is left alone, so this is called after
+ * every signature. `standing` is read after the signature, under the lock.
+ */
+export async function openReadySteps(
   tx: RouteTx,
   p: { organizationId: number; standing: RouteStanding; actorUserId: number; subjectTitle: string },
 ): Promise<TaskEventNotice[]> {
   const q = queryableFromDrizzle(tx);
   await enterRouteWriter(q);
   const notices: TaskEventNotice[] = [];
-  for (const m of p.standing.members.filter((x) => x.role === 'approver' && x.outcome === 'pending')) {
+  for (const m of p.standing.members.filter((x) => x.outcome === 'pending' && x.stepOpen)) {
     const { rows } = await q.query(
       `UPDATE unified_tasks SET status = 'pending', updated_at = now()
         WHERE organization_id = $1 AND task_id = $2 AND review_route_id = $3::uuid AND status = 'blocked' RETURNING task_id`,
       [p.organizationId, m.taskId, p.standing.route!.id],
     );
     if (!rows.length) continue;
+    const approver = m.role === 'approver';
     await auditTaskActionInTx(q, {
       orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: m.taskId,
-      payload: { from: 'blocked', to: 'pending', routeId: p.standing.route!.id, cause: 'review-complete' },
-      summary: 'The review is complete: the approval step is open',
+      payload: { from: 'blocked', to: 'pending', routeId: p.standing.route!.id, step: m.step, cause: approver ? 'review-complete' : 'previous-step-signed' },
+      summary: approver ? 'The review is complete: the approval step is open' : `Step ${m.step - 1} has signed: step ${m.step} is open`,
     });
-    notices.push({ organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_update', title: `It is your turn: approve ${p.subjectTitle}`, taskId: m.taskId });
+    notices.push({ organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_update', title: `It is your turn: ${approver ? 'approve' : 'review'} ${p.subjectTitle}`, taskId: m.taskId });
   }
   return notices;
 }
@@ -438,37 +350,6 @@ export async function closeReviewRoute(
   return { notices, actId };
 }
 
-/** The sender or an organization admin may withdraw; the sender or a named member whose step is open may return. */
-export async function isOrgAdmin(q: RouteQueryable, organizationId: number, userId: number): Promise<boolean> {
-  const { rows } = await q.query(`SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2`, [organizationId, userId]);
-  return String(rows[0]?.role ?? '').trim().toLowerCase() === 'admin';
-}
-
-/**
- * Remind (RR1b, §2.3, §2.11): POST /api/tasks/tasks/:taskId/notify on a route
- * member writes nothing on the row, and is the route sender's or an
- * administrator's, for a member whose step is open on an open route. The
- * refusal to answer, or null when the reminder may go.
- */
-export async function routeRemindRefusal(
-  q: RouteQueryable,
-  p: { organizationId: number; actorUserId: number; reviewRouteId: string; taskStatus: string },
-): Promise<{ status: 403 | 409; code: string; message: string } | null> {
-  const { rows } = await q.query(
-    `SELECT sender_id, status FROM review_routes WHERE organization_id = $1 AND id = $2::uuid`,
-    [p.organizationId, p.reviewRouteId],
-  );
-  const route = rows[0];
-  if (!route || route.status !== 'open') {
-    return { status: 409, code: 'ROUTE_NOT_OPEN', message: 'This review route is no longer open, so nobody on it is reminded. Nothing was sent.' };
-  }
-  if (p.taskStatus !== 'pending' && p.taskStatus !== 'in-progress') {
-    return { status: 409, code: 'ROUTE_TASK_NOT_OPEN', message: 'It is not this person’s turn on the route, or they have finished, so they are not reminded. Nothing was sent.' };
-  }
-  if (Number(route.sender_id) === p.actorUserId || (await isOrgAdmin(q, p.organizationId, p.actorUserId))) return null;
-  return { status: 403, code: 'ROUTE_REMIND_NOT_PERMITTED', message: 'Only the person who sent this review route, or an administrator, reminds its members. Nothing was sent.' };
-}
-
 // ── RR3: reassign and hand back (§2.10, B9, B11, M2, M3, M6) ────────────────
 
 /** The subject a reassignment or hand-back is on, as the route's caller read it under its row lock. */
@@ -496,8 +377,8 @@ function reassignableMember(standing: RouteStanding, taskId: string): RouteMembe
   return member;
 }
 
-/** The validator's refusal, said as a reassignment's ("Nothing was changed", not "sent"). */
-function asReassignRefusal(err: unknown): never {
+/** The validator's refusal, said as a change to an open route's ("Nothing was changed", not "sent"): a reassignment's or an addition's. */
+function asChangeRefusal(err: unknown): never {
   if (err instanceof ReviewRouteRefusal) {
     throw new ReviewRouteRefusal(err.status, err.code, err.message.replace(/ Nothing was sent\.$/, ' Nothing was changed.'));
   }
@@ -512,7 +393,11 @@ const routeStatusOf = (m: RouteMember): 'pending' | 'blocked' => (m.stepOpen ? '
 
 /** The new member's notice: a reviewer is asked to review; an approver is told it is their turn, or that it will be. */
 function assignedNotice(organizationId: number, m: RouteMember, userId: number, title: string): TaskEventNotice {
-  if (m.role === 'reviewer') return { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Review requested: ${title}`, taskId: m.taskId };
+  if (m.role === 'reviewer') {
+    return m.stepOpen
+      ? { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Review requested: ${title}`, taskId: m.taskId }
+      : { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Review requested: ${title}`, body: 'Your review opens once the reviewer before you has signed.', taskId: m.taskId };
+  }
   return m.stepOpen
     ? { organizationId, recipientUserId: userId, category: 'task_assigned', title: `It is your turn: approve ${title}`, taskId: m.taskId }
     : { organizationId, recipientUserId: userId, category: 'task_assigned', title: `Approval requested: ${title}`, body: 'Your approval opens once every named reviewer has signed.', taskId: m.taskId };
@@ -553,10 +438,10 @@ export async function reassignMember(
     organizationId: p.organizationId, subjectTarget: routeSubjectTarget(p.subject.type, p.subject.id), programId: p.subject.programId,
     contentDigest: route.contentDigest, role: member.role, candidateId: p.assigneeId, senderId: route.senderId, actorId: p.actorUserId,
     named: new Set(p.standing.members.map((m) => m.userId)),
-  }).catch(asReassignRefusal);
+  }).catch(asChangeRefusal);
   await enterRouteWriter(q);
   await assignTaskInTx(req, q as unknown as RequestSqlClient, { taskId: member.taskId, method: 'named', assigneeId: to.userId, reason: p.reason }, { routeOwned: true })
-    .catch(asReassignRefusal);
+    .catch(asChangeRefusal);
   const status = routeStatusOf(member);
   const reopened = await q.query(
     `UPDATE unified_tasks SET assignee_name = $1, route_act_id = NULL, status = $2, updated_at = now()
@@ -649,4 +534,115 @@ export async function handBackMember(
     taskId: member.taskId,
   }];
   return { notices, actId: gov.actionId, member };
+}
+
+// ── RR2: add a reviewer to an open route (§2.10, M6) ────────────────────────
+
+/**
+ * The approvers move after the new reviewer's step; any whose turn had come
+ * waits again (blocked), and is told. A handed-back approver keeps waiting on
+ * the sender. Returns the task ids blocked again and their notices.
+ */
+async function reblockApprovers(
+  q: RouteQueryable,
+  p: { organizationId: number; actorUserId: number; reason: string; standing: RouteStanding; approverStep: number; subjectTitle: string; notice: string },
+): Promise<{ reblocked: string[]; notices: TaskEventNotice[] }> {
+  const route = p.standing.route!;
+  const reblocked: string[] = [];
+  const notices: TaskEventNotice[] = [];
+  for (const m of p.standing.members.filter((x) => x.role === 'approver')) {
+    const turnHadCome = m.outcome === 'pending' && m.stepOpen;
+    await q.query(
+      `UPDATE unified_tasks SET review_step = $1, status = CASE WHEN $2::boolean THEN 'blocked' ELSE status END, updated_at = now(), last_modified_by = $3
+        WHERE organization_id = $4 AND task_id = $5 AND review_route_id = $6::uuid`,
+      [p.approverStep, turnHadCome, p.actorUserId, p.organizationId, m.taskId, route.id],
+    );
+    if (!turnHadCome) continue;
+    reblocked.push(m.taskId);
+    await auditTaskActionInTx(q, {
+      orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: m.taskId,
+      payload: { from: 'pending', to: 'blocked', routeId: route.id, step: p.approverStep, cause: 'reviewer-added' },
+      reason: p.reason,
+      summary: 'A reviewer was added: the approval waits for their review',
+    });
+    notices.push({
+      organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_update',
+      title: `Waiting on a new reviewer: ${p.subjectTitle}`, body: p.notice, taskId: m.taskId,
+    });
+  }
+  return { reblocked, notices };
+}
+
+/**
+ * Add a reviewer to an open route (§2.10). The caller holds the subject's row
+ * lock, has read the standing FOR UPDATE and checked the reason. In order,
+ * each refusal with nothing written:
+ *
+ *   1. the actor is the sender or an organization administrator;
+ *   2. no approver has signed (ROUTE_APPROVAL_STARTED): an approval is given
+ *      on a complete review, so the review closes once one is signed;
+ *   3. validateRouteMember, as at a reassignment: the route's sender is the
+ *      sender, the actor the actor, and everyone on the route already named;
+ *   4. the due date: the end of that day in the sender's time zone, not past,
+ *      by the approval, and (one after another) not before the last step.
+ *
+ * Then the new member row: step 1 on a parallel route, the next step on a
+ * sequential one, pending (and told) when every earlier step has signed. The
+ * approvers move to the step after it, and any whose turn had come are blocked
+ * again and told. The header's review due date (and a sequential route's
+ * step dates) take the new step, and a review-route.add row on the subject
+ * records it by printed name. Returns the notices to send after COMMIT.
+ */
+export async function addRouteReviewer(
+  tx: RouteTx,
+  p: { organizationId: number; actorUserId: number; reason: string; subject: RouteActSubject; standing: RouteStanding; assigneeId: number; dueDate: unknown },
+): Promise<{ notices: TaskEventNotice[]; actId: string; taskId: string; step: number; to: ValidatedMember }> {
+  const q = queryableFromDrizzle(tx);
+  const route = p.standing.route!;
+  if (route.senderId !== p.actorUserId && !(await isOrgAdmin(q, p.organizationId, p.actorUserId))) {
+    throw changed(403, 'ROUTE_ADD_NOT_PERMITTED', 'Only the person who sent this review route, or an administrator, adds a reviewer to it.');
+  }
+  if (p.standing.members.some((m) => m.role === 'approver' && m.outcome === 'signed')) {
+    throw changed(409, 'ROUTE_APPROVAL_STARTED', 'An approver has signed, so no reviewer is added to this route. Withdraw it and send a new one to add a reviewer.');
+  }
+  const target = routeSubjectTarget(p.subject.type, p.subject.id);
+  const to = await validateRouteMember(q, {
+    organizationId: p.organizationId, subjectTarget: target, programId: p.subject.programId, contentDigest: route.contentDigest,
+    role: 'reviewer', candidateId: p.assigneeId, senderId: route.senderId, actorId: p.actorUserId, named: new Set(p.standing.members.map((m) => m.userId)),
+  }).catch(asChangeRefusal);
+  const due = await addedReviewerDue(q, route, p.dueDate);
+  const reviewers = p.standing.members.filter((m) => m.role === 'reviewer');
+  const step = route.order === 'sequential' ? Math.max(0, ...reviewers.map((m) => m.step)) + 1 : 1;
+  const open = reviewers.filter((m) => m.step < step).every((m) => m.outcome === 'signed');
+  const actorName = await printedNameOf(q, p.organizationId, p.actorUserId);
+  const anchor = p.subject.programId ? await readProgramAnchorRow(q, { programId: p.subject.programId, orgId: p.organizationId, context: 'review-route-add' }) : null;
+  await enterRouteWriter(q);
+  const { reblocked, notices } = await reblockApprovers(q, {
+    organizationId: p.organizationId, actorUserId: p.actorUserId, reason: p.reason, standing: p.standing, approverStep: step + 1, subjectTitle: p.subject.title,
+    notice: `${actorName} added ${to.printedName} as a reviewer, so the approval waits for their review: ${p.reason}`,
+  });
+  const taskId = await addedMemberTaskId(q, p.organizationId, route.id, to.userId);
+  const assigned = await writeMemberRow(tx, {
+    organizationId: p.organizationId, senderId: p.actorUserId, reason: p.reason, subject: p.subject, routeId: route.id, member: to,
+    step, open, dueDate: due, projectId: anchor?.id ?? undefined, taskId,
+  });
+  await q.query(
+    `UPDATE review_routes SET review_due_at = GREATEST(COALESCE(review_due_at, $1::timestamptz), $1::timestamptz),
+            reviewer_step_due_at = CASE WHEN review_order = 'sequential' THEN array_append(COALESCE(reviewer_step_due_at, '{}'::timestamptz[]), $1::timestamptz) ELSE reviewer_step_due_at END
+      WHERE organization_id = $2 AND id = $3::uuid AND status = 'open'`,
+    [due, p.organizationId, route.id],
+  );
+  const gov = await recordGovernedAction(q, {
+    orgId: p.organizationId,
+    userId: p.actorUserId,
+    command: 'review-route.add',
+    target,
+    reason: p.reason,
+    payload: {
+      routeId: route.id, taskId, role: 'reviewer', step, dueAt: due.toISOString(), actorName,
+      member: { userId: to.userId, printedName: to.printedName }, approverStep: step + 1, reblocked,
+    },
+    ...routeLedgerScope(p.subject.type),
+  });
+  return { notices: assigned ? [assigned, ...notices] : notices, actId: gov.actionId, taskId, step, to };
 }

@@ -1,0 +1,2486 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > the route form names reviewers one after another, and more than one approver (RR2, §2.6, §3) > orders the reviewers with earlier and later buttons, dates each step, names two approvers, and sends the sequential route 1403ms
+   → Unable to find an element by: [data-testid="vr-order-sequential"]
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"vr-form-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"vault-route-form"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"vr-form-title"[39m
+      [36m>[39m
+        [0mSend for review[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mstability-summary-24m v2.0. The review covers this version’s stored file as it is now (SHA-256 bbbbbbbbbbbb…). Because you start its review record, a different person reviews and approves it.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"vr-reviewers"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mReviewers[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mEach named reviewer signs the review of this version. Only members the route would admit are listed.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"vr-reviewer-search"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a reviewer"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-5"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-6"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-8"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-10"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"vr-approver"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mApprover[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mThe approver signs once every reviewer has; their signature approves the version.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find the approver"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"vr-approver-search"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+          [33mplaceholder[39m=[32m"Find the approver"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find the approver"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"vr-approver-note-5"[39m
+                [33mdata-testid[39m=[32m"vr-approver-5"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"vr-approver-note-5"[39m
+              [33mid[39m=[32m"vr-approver-note-5"[39m
+            [36m>[39m
+              [0mChosen as a reviewer.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"vr-approver-note-6"[39m
+                [33mdata-testid[39m=[32m"vr-approver-6"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"vr-approver-note-6"[39m
+              [33mid[39m=[32m"vr-approver-note-6"[39m
+            [36m>[39m
+              [0mChosen as a reviewer.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-approver-8"[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-approver-10"[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"route-not-offered"[39m
+    [36m>[39m
+      [36m<summary[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0m3 members are not offered[0m
+        [0m, and why[0m
+      [36m</summary>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mUma Uploader is an author of this document (Vault uploader), so cannot review or approve it.[0m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mYou are sending this document, so you cannot also review or approve it.[0m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mMo Member does not hold signing authority, so cannot be named to review or approve.[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</details>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vr-due"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"vr-review-due"[39m
+        [36m>[39m
+          [0mReviews due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vr-review-due"[39m
+          [33mid[39m=[32m"vr-review-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"vr-approval-due"[39m
+        [36m>[39m
+          [0mApproval due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vr-approval-due"[39m
+          [33mid[39m=[32m"vr-approval-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"vr-zone"[39m
+    [36m>[39m
+      [0mEach date is the end of that day in [0m
+      [0mAmerica/New_York[0m
+      [0m, your notification time zone.[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"vr-reason"[39m
+      [36m>[39m
+        [0mReason for sending[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+        [33mid[39m=[32m"vr-reason-note"[39m
+      [36m>[39m
+        [0mRecorded on this version’s audit trail with who you named. At least 8 characters.[0m
+      [36m</div>[39m
+      [36m<textarea[39m
+        [33maria-describedby[39m=[32m"vr-reason-note"[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mdata-testid[39m=[32m"vr-reason"[39m
+        [33mid[39m=[32m"vr-reason"[39m
+        [33mplaceholder[39m=[32m"e.g. Ready for medical and QA review before the pre-IND package."[39m
+        [33mstyle[39m=[32m"width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"vr-send-note"[39m
+      [33mid[39m=[32m"vr-send-note"[39m
+    [36m>[39m
+      [0mChoose the approver. Give the date the reviews are due. Give the date the approval is due. A reason of at least 8 characters is required.[0m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-describedby[39m=[32m"vr-send-note"[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+      [33mdata-testid[39m=[32m"vr-send"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSend for review[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > adding a reviewer to the open route (RR2, §2.10) > the sender adds one: the sheet offers whom the addition admits and posts the person, the due date and the reason 194ms
+   → Unable to find an accessible element with the role "button" and name "Add a reviewer"
+
+Here are the accessible roles:
+
+  list:
+
+  Name "Named on this review route":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"vault-route-member-5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"vault-route-member-8"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Remind Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Remind Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"vr-round"[39m
+  [33mdata-testid[39m=[32m"vault-route-round"[39m
+[36m>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"vr-round-h"[39m
+    [33mdata-testid[39m=[32m"vault-route-headline"[39m
+  [36m>[39m
+    [0mWaiting for Ann Approver.[0m
+  [36m</span>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"vr-round-m"[39m
+  [36m>[39m
+    [0mReview route 1 · sent by you · 2026-10-29 09:00:00 UTC[0m
+  [36m</span>[39m
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m>[39m
+    [36m<li[39m
+      [33mclass[39m=[32m"vr-member"[39m
+      [33mdata-testid[39m=[32m"vault-route-member-5"[39m
+    [36m>[39m
+      [36m<span>[39m
+        [0mRae Reviewer · reviewer · Reviewed · meaning: reviewed · 2026-10-29 14:02:31 UTC[0m
+      [36m</span>[39m
+    [36m</li>[39m
+    [36m<li[39m
+      [33mclass[39m=[32m"vr-member"[39m
+      [33mdata-testid[39m=[32m"vault-route-member-8"[39m
+    [36m>[39m
+      [36m<span>[39m
+        [0mAnn Approver · approver · Waiting for their approval · due 2026-11-03 03:59:59 UTC[0m
+      [36m</span>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Remind Ann Approver"[39m
+        [33mclass[39m=[32m"sp-ask"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRemind[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+        [33mclass[39m=[32m"sp-ask"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReassign[0m
+      [36m</button>[39m
+    [36m</li>[39m
+  [36m</ul>[39m
+[36m</span>[39m
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > adding a reviewer to the open route (RR2, §2.10) > is not offered once an approver has signed, nor to a reader who neither sent it nor administers 448ms
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > an approver's dialog says which approval theirs is (RR2, NEW-4) > "Your approval is 1 of 2 required" while another approver is still to sign 398ms
+   → expected 'Electronic signature21 CFR Part 11 · …' to contain 'Your approval is 1 of 2 required'
+ × client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > orders the reviewers, dates each step, names two QMS approvers, and PATCHes the sequential route 395ms
+   → Unable to find an element by: [data-testid="qms-order-sequential"]
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"qms-route-form-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"qms-route-form"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"qms-route-form-title"[39m
+      [36m>[39m
+        [0mSend for review[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSOP-021 Deviation handling v1.0. The route covers this version's controlled text as it is now; the QMS approver's signature makes it effective once every reviewer named has signed.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-approver"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mQMS approver[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mOne of this organization's QMS approvers. Their signature makes the document effective.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find the QMS approver"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"qms-approver-search"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find the QMS approver"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find the QMS approver"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-approver-8"[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-approver-10"[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva QA[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-approver-note-5"[39m
+                [33mdata-testid[39m=[32m"qms-approver-5"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-approver-note-5"[39m
+              [33mid[39m=[32m"qms-approver-note-5"[39m
+            [36m>[39m
+              [0mRae Reviewer is not designated as a QMS approver in this organization.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-approver-note-6"[39m
+                [33mdata-testid[39m=[32m"qms-approver-6"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-approver-note-6"[39m
+              [33mid[39m=[32m"qms-approver-note-6"[39m
+            [36m>[39m
+              [0mRob Reviewer is not designated as a QMS approver in this organization.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-reviewers"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mReviewers [0m
+        [36m<span[39m
+          [33mclass[39m=[32m"de-desc"[39m
+        [36m>[39m
+          [0m(optional)[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mEach reviewer named signs the review before the approval.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"qms-reviewer-search"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+          [33mplaceholder[39m=[32m"Find a reviewer"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-5"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-8"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-6"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-reviewer-note-10"[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-10"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva QA[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-reviewer-note-10"[39m
+              [33mid[39m=[32m"qms-reviewer-note-10"[39m
+            [36m>[39m
+              [0mChosen as the QMS approver.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-not-offered"[39m
+    [36m>[39m
+      [36m<summary[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mOne member is not offered[0m
+        [0m, and why[0m
+      [36m</summary>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mSam Sender is an author of this document (QMS document author), so cannot review or approve it.[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</details>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vr-due"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"qms-review-due"[39m
+        [36m>[39m
+          [0mReviews due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"qms-review-due"[39m
+          [33mid[39m=[32m"qms-review-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"qms-approval-due"[39m
+        [36m>[39m
+          [0mApproval due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"qms-approval-due"[39m
+          [33mid[39m=[32m"qms-approval-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"qms-route-zone"[39m
+    [36m>[39m
+      [0mEach date is the end of that day in [0m
+      [0mEurope/London[0m
+      [0m, your notification time zone.[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"qms-route-reason"[39m
+      [36m>[39m
+        [0mReason for sending[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+        [33mid[39m=[32m"qms-route-reason-note"[39m
+      [36m>[39m
+        [0mRecorded on this document's audit trail with who you named. At least 8 characters.[0m
+      [36m</div>[39m
+      [36m<textarea[39m
+        [33maria-describedby[39m=[32m"qms-route-reason-note"[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mdata-testid[39m=[32m"qms-route-reason"[39m
+        [33mid[39m=[32m"qms-route-reason"[39m
+        [33mplaceholder[39m=[32m"e.g. Ready for QA review before the site rollout."[39m
+        [33mstyle[39m=[32m"width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"qms-route-note"[39m
+      [33mid[39m=[32m"qms-route-note"[39m
+    [36m>[39m
+      [0mGive the date the reviews are due. Give the date the approval is due. A reason of at least 8 characters is required.[0m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-describedby[39m=[32m"qms-route-note"[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+      [33mdata-testid[39m=[32m"qms-route-send"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSend for review[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > the sender adds a reviewer to the open route 244ms
+   → Unable to find an accessible element with the role "button" and name "Add a reviewer"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close"[39m
+    [33mclass[39m=[32m"de-x"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Named on this review route":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m/>[39m
+
+  Name "Naming history of this review route":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Naming history of this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+    [33mdata-testid[39m=[32m"vault-route-history"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"qms-route-member-5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"qms-route-member-8"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Remind Rae Reviewer":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Remind Rae Reviewer"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Rae Reviewer":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Rae Reviewer"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Return for revision":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+    [33mdata-testid[39m=[32m"qms-route-return"[39m
+  [36m/>[39m
+
+  Name "Withdraw the route":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+    [33mdata-testid[39m=[32m"qms-route-withdraw"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"qms-route-panel-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"qms-route-panel"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"qms-route-panel-title"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSOP-021 Deviation handling v1.0[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"vr-round"[39m
+      [33mdata-testid[39m=[32m"qms-route-round"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-h"[39m
+        [33mdata-testid[39m=[32m"qms-route-headline"[39m
+      [36m>[39m
+        [0mWaiting for Rae Reviewer.[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-m"[39m
+      [36m>[39m
+        [0mReview route 1 · sent by you · 2026-10-29 09:00:00 UTC[0m
+      [36m</span>[39m
+      [36m<ul[39m
+        [33maria-label[39m=[32m"Named on this review route"[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+          [33mdata-testid[39m=[32m"qms-route-member-5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mRae Reviewer · reviewer · Waiting for their review · due 2026-11-03 23:59:59 UTC[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Remind Rae Reviewer"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRemind[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Reassign Rae Reviewer"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReassign[0m
+          [36m</button>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+          [33mdata-testid[39m=[32m"qms-route-member-8"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mAnn Approver · approver · Waits for the review · due 2026-11-03 23:59:59 UTC[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReassign[0m
+          [36m</button>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-m vr-history"[39m
+      [36m>[39m
+        [0mNaming history[0m
+      [36m</span>[39m
+      [36m<ol[39m
+        [33maria-label[39m=[32m"Naming history of this review route"[39m
+        [33mclass[39m=[32m"vr-members"[39m
+        [33mdata-testid[39m=[32m"vault-route-history"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+        [36m>[39m
+          [0mSam Sender sent it for review naming Rae Reviewer (reviewer) and Ann Approver (approver) · 2026-10-29 09:00:00 UTC · Ready for QA review[0m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</span>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-route-acts"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"de-btn ghost"[39m
+        [33mdata-testid[39m=[32m"qms-route-return"[39m
+      [36m>[39m
+        [0mReturn for revision[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"de-btn ghost"[39m
+        [33mdata-testid[39m=[32m"qms-route-withdraw"[39m
+      [36m>[39m
+        [0mWithdraw the route[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > an approver whose approval is not the last is told so before signing 77ms
+   → expected 'v1.0 becomes effective when you sign.…' to contain 'Your approval is 1 of 2 required'
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts [ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts ]
+Error: Cannot find module '../reviewRoute/routeShape' imported from /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts
+ ❯ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts:17:1
+     15| import { historyLine } from '../reviewRoute/RouteHistory';
+     16| import { approvalShare, memberLine, routeHeadline, type RouteHistoryEn…
+     17| import { moveReviewer, routeShapeBody, routeShapeMissing, withSteps, t…
+       | ^
+     18|
+     19| const sig = (name: string, meaning: string, at: string) => ({ id: 1, p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > orders the reviewers, dates each step, names two QMS approvers, and PATCHes the sequential route
+TestingLibraryElementError: Unable to find an element by: [data-testid="qms-order-sequential"]
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"qms-route-form-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"qms-route-form"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"qms-route-form-title"[39m
+      [36m>[39m
+        [0mSend for review[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSOP-021 Deviation handling v1.0. The route covers this version's controlled text as it is now; the QMS approver's signature makes it effective once every reviewer named has signed.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-approver"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mQMS approver[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mOne of this organization's QMS approvers. Their signature makes the document effective.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find the QMS approver"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"qms-approver-search"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find the QMS approver"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find the QMS approver"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-approver-8"[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-approver-10"[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva QA[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-approver-note-5"[39m
+                [33mdata-testid[39m=[32m"qms-approver-5"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-approver-note-5"[39m
+              [33mid[39m=[32m"qms-approver-note-5"[39m
+            [36m>[39m
+              [0mRae Reviewer is not designated as a QMS approver in this organization.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-approver-note-6"[39m
+                [33mdata-testid[39m=[32m"qms-approver-6"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"qms-route-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-approver-note-6"[39m
+              [33mid[39m=[32m"qms-approver-note-6"[39m
+            [36m>[39m
+              [0mRob Reviewer is not designated as a QMS approver in this organization.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-reviewers"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mReviewers [0m
+        [36m<span[39m
+          [33mclass[39m=[32m"de-desc"[39m
+        [36m>[39m
+          [0m(optional)[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mEach reviewer named signs the review before the approval.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"qms-reviewer-search"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+          [33mplaceholder[39m=[32m"Find a reviewer"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-5"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-8"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-6"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"qms-reviewer-note-10"[39m
+                [33mdata-testid[39m=[32m"qms-reviewer-10"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva QA[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"qms-reviewer-note-10"[39m
+              [33mid[39m=[32m"qms-reviewer-note-10"[39m
+            [36m>[39m
+              [0mChosen as the QMS approver.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"qms-route-not-offered"[39m
+    [36m>[39m
+      [36m<summary[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mOne member is not offered[0m
+        [0m, and why[0m
+      [36m</summary>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mSam Sender is an author of this document (QMS document author), so cannot review or approve it.[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</details>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vr-due"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"qms-review-due"[39m
+        [36m>[39m
+          [0mReviews due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"qms-review-due"[39m
+          [33mid[39m=[32m"qms-review-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"qms-approval-due"[39m
+        [36m>[39m
+          [0mApproval due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"qms-approval-due"[39m
+          [33mid[39m=[32m"qms-approval-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"qms-route-zone"[39m
+    [36m>[39m
+      [0mEach date is the end of that day in [0m
+      [0mEurope/London[0m
+      [0m, your notification time zone.[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"qms-route-reason"[39m
+      [36m>[39m
+        [0mReason for sending[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+        [33mid[39m=[32m"qms-route-reason-note"[39m
+      [36m>[39m
+        [0mRecorded on this document's audit trail with who you named. At least 8 characters.[0m
+      [36m</div>[39m
+      [36m<textarea[39m
+        [33maria-describedby[39m=[32m"qms-route-reason-note"[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mdata-testid[39m=[32m"qms-route-reason"[39m
+        [33mid[39m=[32m"qms-route-reason"[39m
+        [33mplaceholder[39m=[32m"e.g. Ready for QA review before the site rollout."[39m
+        [33mstyle[39m=[32m"width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"qms-route-note"[39m
+      [33mid[39m=[32m"qms-route-note"[39m
+    [36m>[39m
+      [0mGive the date the reviews are due. Give the date the approval is due. A reason of at least 8 characters is required.[0m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-describedby[39m=[32m"qms-route-note"[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+      [33mdata-testid[39m=[32m"qms-route-send"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSend for review[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx:115:34
+    113|     fireEvent.click(within(form).getByTestId('qms-reviewer-6'));
+    114|     fireEvent.click(within(form).getByTestId('qms-reviewer-5'));
+    115|     fireEvent.click(within(form).getByTestId('qms-order-sequential'));
+       |                                  ^
+    116|     const steps = within(form).getByTestId('qms-steps');
+    117|     fireEvent.click(within(steps).getByRole('button', { name: 'Move Ra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > the sender adds a reviewer to the open route
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Add a reviewer"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close"[39m
+    [33mclass[39m=[32m"de-x"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Named on this review route":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m/>[39m
+
+  Name "Naming history of this review route":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Naming history of this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+    [33mdata-testid[39m=[32m"vault-route-history"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"qms-route-member-5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"qms-route-member-8"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Remind Rae Reviewer":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Remind Rae Reviewer"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Rae Reviewer":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Rae Reviewer"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Return for revision":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+    [33mdata-testid[39m=[32m"qms-route-return"[39m
+  [36m/>[39m
+
+  Name "Withdraw the route":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+    [33mdata-testid[39m=[32m"qms-route-withdraw"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"de-btn ghost"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"qms-route-panel-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"qms-route-panel"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"qms-route-panel-title"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSOP-021 Deviation handling v1.0[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"vr-round"[39m
+      [33mdata-testid[39m=[32m"qms-route-round"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-h"[39m
+        [33mdata-testid[39m=[32m"qms-route-headline"[39m
+      [36m>[39m
+        [0mWaiting for Rae Reviewer.[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-m"[39m
+      [36m>[39m
+        [0mReview route 1 · sent by you · 2026-10-29 09:00:00 UTC[0m
+      [36m</span>[39m
+      [36m<ul[39m
+        [33maria-label[39m=[32m"Named on this review route"[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+          [33mdata-testid[39m=[32m"qms-route-member-5"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mRae Reviewer · reviewer · Waiting for their review · due 2026-11-03 23:59:59 UTC[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Remind Rae Reviewer"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRemind[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Reassign Rae Reviewer"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReassign[0m
+          [36m</button>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+          [33mdata-testid[39m=[32m"qms-route-member-8"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0mAnn Approver · approver · Waits for the review · due 2026-11-03 23:59:59 UTC[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+            [33mclass[39m=[32m"sp-ask"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mReassign[0m
+          [36m</button>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"vr-round-m vr-history"[39m
+      [36m>[39m
+        [0mNaming history[0m
+      [36m</span>[39m
+      [36m<ol[39m
+        [33maria-label[39m=[32m"Naming history of this review route"[39m
+        [33mclass[39m=[32m"vr-members"[39m
+        [33mdata-testid[39m=[32m"vault-route-history"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member"[39m
+        [36m>[39m
+          [0mSam Sender sent it for review naming Rae Reviewer (reviewer) and Ann Approver (approver) · 2026-10-29 09:00:00 UTC · Ready for QA review[0m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</span>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-route-acts"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"de-btn ghost"[39m
+        [33mdata-testid[39m=[32m"qms-route-return"[39m
+      [36m>[39m
+        [0mReturn for revision[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"de-btn ghost"[39m
+        [33mdata-testid[39m=[32m"qms-route-withdraw"[39m
+      [36m>[39m
+        [0mWithdraw the route[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx:136:35
+    134|     fireEvent.click(within(rowOf('SOP-021')).getByTestId('qms-route-op…
+    135|     const panel = await screen.findByTestId('qms-route-panel');
+    136|     fireEvent.click(within(panel).getByRole('button', { name: 'Add a r…
+       |                                   ^
+    137|     const sheet = await screen.findByTestId('qms-route-add');
+    138|     await waitFor(() => expect(calls.some((c) => c.url === '/api/mdx/q…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > an approver whose approval is not the last is told so before signing
+AssertionError: expected 'v1.0 becomes effective when you sign.…' to contain 'Your approval is 1 of 2 required'
+
+Expected: "Your approval is 1 of 2 required"
+Received: "v1.0 becomes effective when you sign. The author cannot approve their own document."
+
+ ❯ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx:160:66
+    158|     fireEvent.click(within(panel).getByTestId('qms-route-approve'));
+    159|     const dialog = await screen.findByRole('dialog', { name: 'Approve …
+    160|     expect(within(dialog).getByTestId('esign-meta').textContent).toCon…
+       |                                                                  ^
+    161|     expect(within(dialog).getByTestId('esign-meta').textContent).toCon…
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > the route form names reviewers one after another, and more than one approver (RR2, §2.6, §3) > orders the reviewers with earlier and later buttons, dates each step, names two approvers, and sends the sequential route
+TestingLibraryElementError: Unable to find an element by: [data-testid="vr-order-sequential"]
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"vr-form-title"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mdata-testid[39m=[32m"vault-route-form"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mReview route[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+        [33mid[39m=[32m"vr-form-title"[39m
+      [36m>[39m
+        [0mSend for review[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mstability-summary-24m v2.0. The review covers this version’s stored file as it is now (SHA-256 bbbbbbbbbbbb…). Because you start its review record, a different person reviews and approves it.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"vr-reviewers"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mReviewers[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mEach named reviewer signs the review of this version. Only members the route would admit are listed.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"vr-reviewer-search"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a reviewer"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find a reviewer"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-5"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-6"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-8"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-reviewer-10"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<fieldset[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"vr-approver"[39m
+    [36m>[39m
+      [36m<legend[39m
+        [33mclass[39m=[32m"de-label"[39m
+      [36m>[39m
+        [0mApprover[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</legend>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0mThe approver signs once every reviewer has; their signature approves the version.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rf-picker"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"Find the approver"[39m
+          [33mclass[39m=[32m"c2c-input rf-search"[39m
+          [33mdata-testid[39m=[32m"vr-approver-search"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+          [33mplaceholder[39m=[32m"Find the approver"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find the approver"[39m
+          [33mclass[39m=[32m"rf-opts"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mstyle[39m=[32m"max-height: 220px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"vr-approver-note-5"[39m
+                [33mdata-testid[39m=[32m"vr-approver-5"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRae Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"vr-approver-note-5"[39m
+              [33mid[39m=[32m"vr-approver-note-5"[39m
+            [36m>[39m
+              [0mChosen as a reviewer.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt is-disabled"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-describedby[39m=[32m"vr-approver-note-6"[39m
+                [33mdata-testid[39m=[32m"vr-approver-6"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mRob Reviewer[0m
+              [36m</span>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"de-desc rf-note"[39m
+              [33mdata-testid[39m=[32m"vr-approver-note-6"[39m
+              [33mid[39m=[32m"vr-approver-note-6"[39m
+            [36m>[39m
+              [0mChosen as a reviewer.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-approver-8"[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAnn Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"rf-opt"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mdata-testid[39m=[32m"vr-approver-10"[39m
+                [33mname[39m=[32m"vr-approver"[39m
+                [33mtype[39m=[32m"radio"[39m
+              [36m/>[39m
+              [36m<span>[39m
+                [0mAva Approver[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</fieldset>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"de-field"[39m
+      [33mdata-testid[39m=[32m"route-not-offered"[39m
+    [36m>[39m
+      [36m<summary[39m
+        [33mclass[39m=[32m"de-desc"[39m
+      [36m>[39m
+        [0m3 members are not offered[0m
+        [0m, and why[0m
+      [36m</summary>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"vr-members"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mUma Uploader is an author of this document (Vault uploader), so cannot review or approve it.[0m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mYou are sending this document, so you cannot also review or approve it.[0m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"vr-member de-desc"[39m
+        [36m>[39m
+          [0mMo Member does not hold signing authority, so cannot be named to review or approve.[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</details>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vr-due"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"vr-review-due"[39m
+        [36m>[39m
+          [0mReviews due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vr-review-due"[39m
+          [33mid[39m=[32m"vr-review-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-field"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"de-label"[39m
+          [33mfor[39m=[32m"vr-approval-due"[39m
+        [36m>[39m
+          [0mApproval due[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"req"[39m
+          [36m>[39m
+            [0m*[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<input[39m
+          [33maria-required[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vr-approval-due"[39m
+          [33mid[39m=[32m"vr-approval-due"[39m
+          [33mmin[39m=[32m"2026-10-29"[39m
+          [33mtype[39m=[32m"date"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"vr-zone"[39m
+    [36m>[39m
+      [0mEach date is the end of that day in [0m
+      [0mAmerica/New_York[0m
+      [0m, your notification time zone.[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"vr-reason"[39m
+      [36m>[39m
+        [0mReason for sending[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-desc"[39m
+        [33mid[39m=[32m"vr-reason-note"[39m
+      [36m>[39m
+        [0mRecorded on this version’s audit trail with who you named. At least 8 characters.[0m
+      [36m</div>[39m
+      [36m<textarea[39m
+        [33maria-describedby[39m=[32m"vr-reason-note"[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"c2c-input"[39m
+        [33mdata-testid[39m=[32m"vr-reason"[39m
+        [33mid[39m=[32m"vr-reason"[39m
+        [33mplaceholder[39m=[32m"e.g. Ready for medical and QA review before the pre-IND package."[39m
+        [33mstyle[39m=[32m"width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-desc"[39m
+      [33mdata-testid[39m=[32m"vr-send-note"[39m
+      [33mid[39m=[32m"vr-send-note"[39m
+    [36m>[39m
+      [0mChoose the approver. Give the date the reviews are due. Give the date the approval is due. A reason of at least 8 characters is required.[0m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-describedby[39m=[32m"vr-send-note"[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+      [33mdata-testid[39m=[32m"vr-send"[39m
+      [33mdisabled[39m=[32m""[39m
+    [36m>[39m
+      [0mSend for review[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx:116:34
+    114|     expect(within(form).queryByTestId('vr-order-sequential'), 'no orde…
+    115|     fireEvent.click(within(form).getByTestId('vr-reviewer-5'));
+    116|     fireEvent.click(within(form).getByTestId('vr-order-sequential'));
+       |                                  ^
+    117|     expect(within(form).queryByTestId('vr-review-due'), 'one after ano…
+    118|     const steps = within(form).getByTestId('vr-steps');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > adding a reviewer to the open route (RR2, §2.10) > the sender adds one: the sheet offers whom the addition admits and posts the person, the due date and the reason
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Add a reviewer"
+
+Here are the accessible roles:
+
+  list:
+
+  Name "Named on this review route":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"vault-route-member-5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"vr-member"[39m
+    [33mdata-testid[39m=[32m"vault-route-member-8"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Remind Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Remind Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reassign Ann Approver":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"vr-round"[39m
+  [33mdata-testid[39m=[32m"vault-route-round"[39m
+[36m>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"vr-round-h"[39m
+    [33mdata-testid[39m=[32m"vault-route-headline"[39m
+  [36m>[39m
+    [0mWaiting for Ann Approver.[0m
+  [36m</span>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"vr-round-m"[39m
+  [36m>[39m
+    [0mReview route 1 · sent by you · 2026-10-29 09:00:00 UTC[0m
+  [36m</span>[39m
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Named on this review route"[39m
+    [33mclass[39m=[32m"vr-members"[39m
+  [36m>[39m
+    [36m<li[39m
+      [33mclass[39m=[32m"vr-member"[39m
+      [33mdata-testid[39m=[32m"vault-route-member-5"[39m
+    [36m>[39m
+      [36m<span>[39m
+        [0mRae Reviewer · reviewer · Reviewed · meaning: reviewed · 2026-10-29 14:02:31 UTC[0m
+      [36m</span>[39m
+    [36m</li>[39m
+    [36m<li[39m
+      [33mclass[39m=[32m"vr-member"[39m
+      [33mdata-testid[39m=[32m"vault-route-member-8"[39m
+    [36m>[39m
+      [36m<span>[39m
+        [0mAnn Approver · approver · Waiting for their approval · due 2026-11-03 03:59:59 UTC[0m
+      [36m</span>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Remind Ann Approver"[39m
+        [33mclass[39m=[32m"sp-ask"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRemind[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Reassign Ann Approver"[39m
+        [33mclass[39m=[32m"sp-ask"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mReassign[0m
+      [36m</button>[39m
+    [36m</li>[39m
+  [36m</ul>[39m
+[36m</span>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx:160:35
+    158|     mount();
+    159|     const panel = await screen.findByTestId('vault-route-round');
+    160|     fireEvent.click(within(panel).getByRole('button', { name: 'Add a r…
+       |                                   ^
+    161|     const sheet = await screen.findByTestId('vault-route-add');
+    162|     await waitFor(() => expect(calls.some((c) => c.url === ADD_CANDIDA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > an approver's dialog says which approval theirs is (RR2, NEW-4) > "Your approval is 1 of 2 required" while another approver is still to sign
+AssertionError: expected 'Electronic signature21 CFR Part 11 · …' to contain 'Your approval is 1 of 2 required'
+
+Expected: "Your approval is 1 of 2 required"
+Received: "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingstability-summary-24m v2.0Your approval applies to this version's stored file as it is now. No earlier version of this document is approved, so none is superseded. When this dialog opened: The open annotations on this document could not be read, so none are listed here. Signing does not resolve annotations; they stay on each version's record.AAAbe Approverabe@example.testSignature meaning · §11.50ApprovalYou approve this content for useReason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit"
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx:209:32
+    207|     fireEvent.click(screen.getByRole('button', { name: /^Approve:/ }));
+    208|     const dialog = await screen.findByRole('dialog');
+    209|     expect(dialog.textContent).toContain('Your approval is 1 of 2 requ…
+       |                                ^
+    210|     expect(dialog.textContent).toContain('approved once every named ap…
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 1 passed (7)
+   Start at  18:00:34
+   Duration  11.01s (transform 4.06s, setup 368ms, import 5.29s, tests 3.17s, environment 1.44s)
+

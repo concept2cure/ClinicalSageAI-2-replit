@@ -87,6 +87,7 @@ import { signerReverificationDeps } from '../services/part11/reverify-signer-dep
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   approveQmsDocumentSigned,
+  type ApproveQmsDocumentSignedResult,
   retireQmsDocumentSigned,
   QmsApprovalRefusedError,
   QMS_DOCUMENT_APPROVAL_MEANING,
@@ -743,6 +744,17 @@ async function verifyRoutedApprovalSigner(
   } catch (err) { serverError(res, log, 'doc-approve-verify', err); return null; }
 }
 
+/**
+ * The version now in force is due on the date its approval signed; the
+ * previous version's task, if any, ends with it. Best effort, after commit. An
+ * approval that leaves other named approvers to sign (RR2) puts nothing in force.
+ */
+async function scheduleInForceReview(orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
+  if (!result.approvalComplete) return;
+  await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
+    kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+}
+
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
@@ -778,13 +790,11 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     commitAttempted = true;
     await client.query('COMMIT');
     for (const n of notices) notifyTaskEvent(n);
-    // The version now in force is due on the date its approval signed; the
-    // previous version's task, if any, ends with it. Best effort, after commit.
-    await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
-      kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+    await scheduleInForceReview(orgId, userId, result);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
+      approvalComplete: result.approvalComplete,
     });
   } catch (err) {
     if (commitAttempted) {

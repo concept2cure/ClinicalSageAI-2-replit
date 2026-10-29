@@ -84,7 +84,7 @@ export interface RouteMember {
 }
 
 /** What the naming history records: each governed act on a route, by printed name (§2.12, M3; RR3). */
-export type RouteHistoryAction = 'send' | 'reassign' | 'hand-back' | 'withdraw' | 'return';
+export type RouteHistoryAction = 'send' | 'reassign' | 'hand-back' | 'withdraw' | 'return' | 'add';
 export interface RouteHistoryEntry {
   action: RouteHistoryAction;
   /** UTC instant the act was recorded. */
@@ -95,7 +95,7 @@ export interface RouteHistoryEntry {
   reason: string | null;
   /** For a reassign or a hand-back: the role of the assignment. */
   role?: RouteRole;
-  /** For a reassign: who it was taken from and given to, at naming. */
+  /** For a reassign: who it was taken from and given to, at naming; for an add (RR2): who was added, as toName. */
   fromName?: string | null;
   toName?: string | null;
   /** For a send: everyone named, in the order named. */
@@ -241,7 +241,7 @@ export interface RouteRound {
   members: RouteMember[];
   reviewComplete: boolean;
   approvalComplete: boolean;
-  /** Every naming act on this route, oldest first (send, reassign, hand-back, withdraw, return). */
+  /** Every naming act on this route, oldest first (send, reassign, hand-back, add, withdraw, return). */
   history: RouteHistoryEntry[];
 }
 
@@ -251,6 +251,7 @@ const HISTORY_ACTIONS: Record<string, RouteHistoryAction> = {
   'review-route.hand-back': 'hand-back',
   'review-route.withdraw': 'withdraw',
   'review-route.return': 'return',
+  'review-route.add': 'add',
 };
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
@@ -284,6 +285,7 @@ function historyEntry(row: Record<string, any>, known: Map<number, string>): Rou
     entry.fromName = str(payload.from?.printedName);
     entry.toName = str(payload.to?.printedName);
   }
+  if (action === 'add') entry.toName = str(payload.member?.printedName);
   if (action === 'send' && Array.isArray(payload.members)) {
     entry.members = payload.members
       .filter((m: any) => m && isRole(m.role) && Number.isSafeInteger(Number(m.userId)))
@@ -304,6 +306,7 @@ function knownNames(rows: Array<Record<string, any>>, header: RouteHeader): Map<
     if (Array.isArray(p.members)) for (const m of p.members) add(m?.userId, m?.printedName);
     add(p.from?.userId, p.from?.printedName);
     add(p.to?.userId, p.to?.printedName);
+    add(p.member?.userId, p.member?.printedName);
     add(p.userId, p.printedName);
   }
   return known;

@@ -1,0 +1,105 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T17:16:03.457Z","pid":1733,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:16:03.458Z","pid":1733,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:16:03.459Z","pid":1733,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/review-route-qms-rr2.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-qms-rr2.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/review-route-qms-rr2.dbtest.ts > QMS reviewers one after another (RR2, §3) > opens the second reviewer on the first one’s signature, telling them only then 120ms
+   → {"error":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent.","details":{"code":"ROUTE_SHAPE_NOT_AVAILABLE"}}: expected 409 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr2.dbtest.ts > two QMS approvers (RR2, NEW-4: every named approver) > the first approval leaves the document in review; the last makes it effective; one digest throughout 20ms
+   → {"error":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent.","details":{"code":"ROUTE_SHAPE_NOT_AVAILABLE"}}: expected 409 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > re-blocks the approver, who then waits for the new reviewer 126ms
+   → expected 404 to be 400 // Object.is equality
+ × tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > is refused once an approval is signed, with nothing written 21ms
+   → expected 409 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > QMS reviewers one after another (RR2, §3) > opens the second reviewer on the first one’s signature, telling them only then
+AssertionError: {"error":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent.","details":{"code":"ROUTE_SHAPE_NOT_AVAILABLE"}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ tests/db/review-route-qms-rr2.dbtest.ts:175:52
+    173|     const id = await draft('SEQ');
+    174|     const sent = await send(id, ['r1', 'r2'], ['qa'], 'author', sequen…
+    175|     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+       |                                                    ^
+    176|     expect((await latestRoute(id)).review_order).toBe('sequential');
+    177|     expect((await members(id)).map((m) => [m.review_role, m.review_ste…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > two QMS approvers (RR2, NEW-4: every named approver) > the first approval leaves the document in review; the last makes it effective; one digest throughout
+AssertionError: {"error":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent.","details":{"code":"ROUTE_SHAPE_NOT_AVAILABLE"}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ tests/db/review-route-qms-rr2.dbtest.ts:203:52
+    201|     const id = await draft('MULTI');
+    202|     const sent = await send(id, ['r1'], ['qa', 'qa2']);
+    203|     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+       |                                                    ^
+    204|     expect((await signReview('r1', id)).status).toBe(201);
+    205|     await noticeFor('qa', /^It is your turn: approve /);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > re-blocks the approver, who then waits for the new reviewer
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ tests/db/review-route-qms-rr2.dbtest.ts:247:29
+    245|     const before = await ledgerCount();
+    246|     const noReason = await addReviewer('author', id, 'r1', null);
+    247|     expect(noReason.status).toBe(400);
+       |                             ^
+    248|     expect(codeOf(noReason)).toBe('REASON_REQUIRED');
+    249|     expect(await ledgerCount()).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > is refused once an approval is signed, with nothing written
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ tests/db/review-route-qms-rr2.dbtest.ts:267:56
+    265|   it('is refused once an approval is signed, with nothing written', as…
+    266|     const id = await draft('ADD-LATE');
+    267|     expect((await send(id, [], ['qa', 'qa2'])).status).toBe(200);
+       |                                                        ^
+    268|     expect((await approve('qa', id)).status).toBe(200);
+    269|     const before = { ledger: await ledgerCount(), members: await membe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  17:16:00
+   Duration  9.37s (transform 5.34s, setup 98ms, import 327ms, tests 8.58s, environment 0ms)
+

@@ -1,0 +1,1072 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > orders the reviewers, dates each step, names two QMS approvers, and PATCHes the sequential route 565ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > the sender adds a reviewer to the open route 148ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > an approver whose approval is not the last is told so before signing 95ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 689ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review on a named route, after saying what that means: starts its record, then moves it to In review 962ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 945ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 814ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 1017ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 1009ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 610ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 767ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a server failure shows the reference its sentence asks the user to quote 642ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > Send waits for reviewers, an approver, both due dates and a reason, and then sends the route 1274ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > a refusal is said in the server's words, and the form stays open 608ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > a candidate list that could not be read offers no one, and says so 473ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > every member with printed name, meaning, UTC time and outcome; "You signed at …; waiting for B" 346ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > the approver reads "Approved (1 of 1 required)" 118ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > "Reviewers could not be read" on a failed read: never "no reviewers", and no step is offered 246ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > a named approver whose turn it is approves by signing on the route 425ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > Withdraw asks for a reason and refuses without one 592ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > Return for revision asks for a reason and refuses without one 556ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > the sender reminds a member whose turn it is, through the task notify route 557ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > a version in review with no route (legacy, §2.13) > keeps "Not assigned to one person" and offers Name reviewers, which names a route on its record 575ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project 690ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history 323ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 307ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 247ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 295ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 245ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 268ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact 525ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 427ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 407ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 387ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault’s project and organization views > the Vault exports the branch’s rows as CSV, with their governance 72ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document 462ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance 244ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions 68ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 1053ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 200ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 1036ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 435ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 113ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 115ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) pre-fills a confirmed filing's section, says where it came from, and files at it 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) stops saying "pre-filled" once the person changes the code 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (b) leaves a suggested section for the person to enter, and says what was suggested 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) no filing leaves the section blank and claims nothing 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a null filing leaves the section blank and claims nothing 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with no section leaves the section blank and claims nothing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with a blank section leaves the section blank and claims nothing 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) an unfiled document leaves the section blank and claims nothing 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled code is judged like a typed one: a container keeps Place disabled 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled CTD code is judged in the chosen submission's vocabulary 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (e) an in-review version: its stage, and the server's reason it would not be transmitted 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > says it is reading while the read is in flight 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (f) an approved, current version says so and warns of nothing 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "superseded by a later version", printed verbatim 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "approved for different content than these bytes", printed verbatim 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (h) a Delete leaf ships no content: no approval is checked and nothing is warned of 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (i) an unapproved version can still be placed, and the verdict says it will not be transmitted 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (j) an approved, current version's placement claims nothing about transmission 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a failed read says the stage could not be read, and placement stays open 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a list without this version says the stage could not be read, and placement stays open 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a version the server gave no verdict for says the stage could not be read, and placement stays open 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (l) without a project it reads nothing and says the stage is not shown 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > a file that can never be filed is not read for its stage 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > blocks retry after a lost write reply and offers the existing filing workspace 112ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > after a confirmed placement, Open in Submission Center opens that sequence in the Builder (break 13) 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt null 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt false 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {} 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":0} 124ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":1.5} 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sequenceId":999} 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentUuid":"33333333-3333-4333-8333-333333333333"} 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentTable":"coauthor_documents"} 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sectionCode":"3.2.P.8.1"} 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"lifecycleOp":"replace"} 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation undefined without denying the placed leaf 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation null without denying the placed leaf 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":false} without denying the placed leaf 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":true,"chained":false} without denying the placed leaf 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > allows retry after a known pre-write refusal 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching source document 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching the source project 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > locks filing fields while the write is pending 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > who is offered Reassign (RR3, §2.10) > the sender: on every member who has not signed, never on one who signed 543ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > who is offered Reassign (RR3, §2.10) > an administrator who did not send it is offered it; any other reader is not 319ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > offers only those admitted for the role, says why the others are not, waits for a person and a reason, and posts them 860ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > an approver is reassigned from the people admitted as approver; a refusal is said in the server’s words 669ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > who may be named could not be read: no one is offered, and it says so 683ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > a named member is offered Hand back, which asks for a reason and posts it 887ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > once handed back: no signature is offered to them, and the round says who waits on whom 888ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > the naming history, by name (RR3, §2.12, M3) > says who sent it naming whom, who handed back, and who reassigned what from whom to whom, each with the time and reason 172ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > offers the exact receiver candidate formats, including raw structured text and signature-supported images 230ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 118ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 72ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > names the person whose filing it is, and when, in UTC 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > gives a suggestion no filer: nobody decided it yet 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 171ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 308ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 131ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 660ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the exact notification record even when the register has no matching row 481ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > preserves a refused exact notification target without opening a different register row 364ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > queues a new notification target while the current canonical editing copy remains open 164ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > shows the exact unbound controlled record before offering its explicit authored revision 86ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 180ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 185ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads 229ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 144ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 205ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > Send for review opens the review route form; nothing is sent until it is complete (RR4) 115ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 142ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 181ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 140ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 104ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 133ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 430ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 132ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a type alone browses: sent with an empty query, shown as filtered, with the server total 458ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > each control sends its own parameter, and "Approved" covers every approved stage 250ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a CTD section is normalised and sent once it is a code; text that is not one is said, and not sent 195ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a failed filtered read is a failure, never "no documents match these filters" 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > a verified empty filtered read says the filters matched nothing 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > the text and the filters narrow together 172ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > Clear filters returns to the folder, and asks nothing more of the search 256ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > the find view filters by metadata on the server > the library search takes the same filters, and its headline says what it matched 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > versions still being read (MR-08 Stage 3) > a search says how many documents it cannot see yet, and says nothing when there are none 257ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > asks for counts, and shows each value's count from the verified read; a stage choice sums its stages 140ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > a failed read shows no counts 125ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > facet counts in the options > malformed counts are not shown as counts 138ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx > vaultFilterParams > is empty with no filter, and encodes repeated values in a stable order 0ms
+stderr | client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a library card opens the same create form with its template chosen
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 552ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a library card opens the same create form with its template chosen 157ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 111ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 144ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 117ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the pre-inspection check says it is a request to AnA 106ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 331ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 137ms
+stderr | client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the forms gallery is the server library, and a card opens the create form
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 281ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the forms gallery is the server library, and a card opens the create form 224ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a gallery document with the selected program and reason, then opens its bound editing copy 303ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the health check says it is a request to AnA 195ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx > signing a Vault review is offered only to someone the server says can sign > disables Sign review, says why, and names who can sign, when the server says this reader cannot 1034ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx > signing a Vault review is offered only to someone the server says can sign > says plainly when nobody in the organization can sign it 607ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx > signing a Vault review is offered only to someone the server says can sign > leaves Sign review open for a signer, and to the server when the answer is unknown 1060ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: one document at a time > shows one Details block, for the document selected, however many documents were opened 335ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a saved change > shows the server confirmation, and still shows it after the Vault has re-read the save and settled 313ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a removal decision > shows the recorded decision after the Vault has re-read the document and settled 1538ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault document history > shows the reason recorded with a change, not only its event name 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > starts on "Not stated — choose" and records nothing until a decision is chosen (P-21) 745ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition 287ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds 315ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > re-reads the board after the decision, so the row comes from the record 389ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > says the decision was NOT recorded when the server refuses, and stays open 244ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign 163ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board 251ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none 92ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board 139ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open 204ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > the hero call to action > "Open the queue" selects a document still in review instead of doing nothing 113ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 511ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 288ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 277ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 64ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 104ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 21ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 147ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 277ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 22ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 58ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > the route form names reviewers one after another, and more than one approver (RR2, §2.6, §3) > orders the reviewers with earlier and later buttons, dates each step, names two approvers, and sends the sequential route 1324ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > adding a reviewer to the open route (RR2, §2.10) > the sender adds one: the sheet offers whom the addition admits and posts the person, the due date and the reason 244ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > adding a reviewer to the open route (RR2, §2.10) > is not offered once an approver has signed, nor to a reader who neither sent it nor administers 539ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx > an approver's dialog says which approval theirs is (RR2, NEW-4) > "Your approval is 1 of 2 required" while another approver is still to sign 352ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked 424ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no version 394ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier 170ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again 244ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says when a recorded file’s text is still being read (MR-08 Stage 3) 133ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it 302ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles 220ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 410ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > the confirmation is still shown once the Vault has re-read, and the list shows the new annotation 215ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > a refused refresh after the post keeps the confirmation, and says only that the list could not be read 176ms
+stderr | client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > one post makes one annotation read and one Vault re-read after it
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > one post makes one annotation read and one Vault re-read after it 302ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > saves all current sections with version, digest, reason and canonical transport 313ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > requires the stated reason on button and keyboard save paths 56ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not save under another account whose token replaces storage before the reader rerenders 48ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a effective record 4ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a superseded record 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a retired record 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not offer viewers a governed edit 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > uses the existing standard skeleton only when sections have not been provided 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits a supported legacy section with its canonical label 44ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > preserves an untouched sibling body exactly instead of reserializing it 38ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits bodies without submitting server-owned provenance attributes 31ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body 7 without replacing its structure 8ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body null without replacing its structure 8ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body {} without replacing its structure 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body undefined without replacing its structure 8ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps edits on cancel and explicitly discards the scoped device drafts 66ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps focus inside the nested discard dialog and Escape cancels the pending close 64ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > clears cached sibling drafts only after their whole snapshot is confirmed 39ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not save when a dirty editor unmounts 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm missing audit in a successful transport response 42ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign document in a successful transport response 39ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign tenant in a successful transport response 47ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm wrong saved body in a successful transport response 73ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm stale digest in a successful transport response 56ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a stale-write refusal distinct from confirmation and preserves the draft 32ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 0 as an unconfirmed outcome 34ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 408 as an unconfirmed outcome 34ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 503 as an unconfirmed outcome 31ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats a returned timeout as unconfirmed too 24ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a confirmed save distinct from a failed subsequent refresh 26ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not let repeated clicks or a late old-scope response refresh another record 27ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > the actual canonical editor has no implicit save in Quality > mounts the canonical text editor and leaves a dirty unmount unwritten 683ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > reads the organization listing and shows each artifact’s governance 143ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says the signature on the current version in words, four states 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > carries the gallery’s cited-source and review line, verbatim 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says whose projects it covers, and when the window is full, that it is 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > none in the projects the caller can open is said as that 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a failed read is an error, never an empty registry, and can be tried again 227ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a refusal says what it is, with no retry a retry cannot change 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > exports the listing through the one manifest builder, with the same columns 99ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > downloads a row’s governed DOCX, and says a refusal in words 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > opens a row in the editor through authoring.open-document, by title 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > asks AnA about a row by name, project and version 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero 146ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with a project open, the organization view is one click away and reads nothing until opened > reads the listing only when asked 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > is in the registry with an artifact id and no title 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with a project open, selects the leaf whose artifact id it is, the state a person’s click drives 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > an artifact saved after the tree was read is found on one re-read, then selected 147ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > one that is not in this project’s Vault after the re-read is an honest miss, never a guess 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with no project open, focuses the row in the organization view, by id or by name 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with neither a title nor an id, refuses 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > opens a new document where it landed, in place of the one that was open 457ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not the folder’s first document 335ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a response that names no document opens nothing: the document is not guessed 566ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a recorded document the re-read does not hold is said, not silently ignored 368ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection 421ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null} 157ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0} 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding 127ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > names the open annotations on every version, and leaves Approve to the approver 1005ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > a read that failed is said as such, never as none open 757ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has 205ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read 81ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not 262ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end 266ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history 207ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > the empty state claims only what the product does 33ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed, in UTC 301ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says what is wrong with the date, on the field, and keeps the dialog open 170ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "remains current" with meaning review, posts the decision, and names what was attested once signed 179ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date, saying the document keeps the date its approval set 157ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a refused password signed nothing, said once, and nothing is refreshed as if it had 168ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a review the server refuses as the document now stands reads the register again 145ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a dropped connection is not "nothing was signed": it says to check before signing again 157ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the register row shows and takes a review beyond the panel > names the last review on the Next review cell and offers Record review there 82ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > focus returns where the review started > to the Record review control on Cancel, and to the panel heading once a review from the panel is recorded 203ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > no longer hands approval to AnA 93ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > opens the e-signature dialog, offering the approval meaning only 287ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > posts the signature to the signed route and shows the server’s time 174ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > shows a refused password as not signed 137ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > Send for review opens the review route form, which names the QMS approver before anything is sent (RR4) 121ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > opens the e-signature dialog for Retire, offering the approval meaning only 70ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > posts the signature to the signed retire route and shows the server’s time 117ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > shows a refused password as not retired 117ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear 68ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading 17ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a register that answered empty as empty, not as a failure 14ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents" 71ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0% 24ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > lists nonconformances and dispositions one only through a signature, its reason the rationale 436ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows a failed supplier read as a failure, not an empty register 19ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > names a supplier's quality agreement by its controlled document, and records a new one by id 119ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > signs a supplier's standing, and sends nothing before the signature 102ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a supplier's quality agreement is unread when the controlled documents could not be read 14ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result 207ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > refuses to raise a CAPA with no project open 134ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source 132ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > completes a CAPA action only with its evidence, along the server action lifecycle 211ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a management-review action and closes it only with its note 140ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register 38ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > tells the shell for AnA what the register read, and that a failed read is a failure 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > offers a checkbox only for sources not yet filed 212ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > files the chosen sources and answers for each one, saying the batch was not complete 416ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a refusal of the whole request says nothing was filed, and gives the reason 206ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a dropped connection says the outcome is not known 198ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > can select every source not yet filed in one step 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > offers the recorded document, and files the source as its next version 259ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > a refusal that is not a conflict offers no new version 200ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > already in the Vault names the version and what replaced it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a source the classifier could not place says it is not in a folder yet 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a complete batch has no caveat 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > lists the branch in the tree, grouped by CTD module 196ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > states the branch’s status breakdown and signature and review counts 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > the header names governed artifacts beside authored documents 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > opens an artifact on its governance: kind, format, origin, model, author, signature, review, sources, hash 489ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > an artifact with no recorded origin or model says so, rather than naming one 318ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a branch the server could not read is said as a failure, never as no artifacts 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a project with no artifacts says so plainly 36ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a window over a larger registry says the counts cover what is listed 99ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > does not carry the unbacked retention subtitle 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > tells AnA what the branch holds, and what it could not read 87ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 479ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 155ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 124ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 522ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 217ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > renders exact section text escaped, names its revision, and requires an unchecked personal declaration 314ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > allows a viewer to personally acknowledge without requesting a password or signature 171ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > shows a current server receipt without offering a duplicate acknowledgement 34ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > refuses a token account swap before React rerenders without posting the checked declaration under another actor 67ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > prevents same-tick duplicate submissions and closing during a pending write 49ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when outline only has no verified released bodies 30ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when artifact only has no verified released bodies 24ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when unverified release has no verified released bodies 20ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > does not let a viewer edit an unreleased document 33ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a in-review reader read recorded text without a release claim or acknowledgement 20ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a read-only standing reader read recorded text without a release claim or acknowledgement 22ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > gives an authorized writer the existing controlled-text editor for a draft 56ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > keeps a controlled-text save confirmed while independently rereading after a coverage-refresh failure 79ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > requires fresh server editing availability even when the cached session has a writer permission 21ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after missing audit 59ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after unchained audit 57ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after foreign actor 55ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different revision 62ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different digest 55ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after malformed success 53ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > shows a stale-release refusal and requires rereading rather than retrying a stale declaration 50ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > reconciles a lost write response by explicitly reloading the authoritative current receipt 72ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > keeps a confirmed receipt when the following refresh fails 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > treats a refused initial read as unreadable, including a resolved session 401 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > rejects a foreign user receipt returned by a successful GET 12ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a delayed old-document read after the selected document changes 12ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-organization write result and never refreshes the replacement scope 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-user write result and never refreshes the replacement scope 50ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > does not refresh or render a confirmed old-document write after switching documents 46ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 156ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage 464ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 207ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 107ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > explains raising changes without asking AnA to attest for a person
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn 228ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > explains raising changes without asking AnA to attest for a person 161ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 49ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 19ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 189ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 247ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 234ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty related list makes no claim about inaccessible documents 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an empty search is limited to other accessible documents 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > a successful search with no results field reports failure instead of no matches 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope undefined offers no empty finding or candidate 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope organization-wide offers no empty finding or candidate 104ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > governed relationship removal > removing one needs a reason of the required length, sends it, and then re-reads the list 122ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 602ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 253ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 160ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 180ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 163ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict 300ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history 122ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden, at the entry the server names 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a break in another organisation's row is reported without naming it 173ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > nothing to verify reads as not verified, with the reason: neither verified nor failed 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a valid generic relationship description retains its recorded hash, row and actual chain verdict 132ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > an empty history does not claim that the document has no recorded events 148ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a truncated history labels its returned accessible window without claiming a global history count 147ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a malformed history row is a failed read, not an empty history or a render crash 119ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 962ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 104ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint 75ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board 480ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill 104ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'approved' } reads "Reviewers approved, sign-off pending", never the raw code 81ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'APPROVED', state: 'approved' } reads "Approved", never the raw code 45ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'changes-requested' } reads "Changes requested", never the raw code 53ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'rejected' } reads "Declined", never the raw code 46ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'in-review' } reads "In review", never the raw code 49ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default 12ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked 80ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter 82ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails 13ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a viewer reads the document and its filing, and is offered no write 899ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a member is offered each control, and no view-only note 381ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a session that carries no permissions is offered the controls; the server decides 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a viewer selects nothing and files nothing, and is told why 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a member selects and files 14ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 529ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 340ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 252ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > waits for a QMS approver, the approval date and a reason; reviewers are optional; then PATCHes the route 538ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > says the server’s refusal and keeps the form open 139ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > shows the round under the status, every member in the sheet, and the sender’s acts; Approve is not the sender’s 158ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the reviewer whose turn it is signs the review with meaning REVIEWED; they may hand back, not approve 59ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the approver at their turn approves through the existing signed approval 58ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > a document in review with no route keeps today’s Approve and offers Name reviewers; an unread route says so 164ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens the existing Submission Center to check a lost placement reply 664ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage 211ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > leaves a suggested filing's section for the person to enter 171ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the header counts what awaits confirmation, as the server counted it 181ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > holds the action back until a reason is given, sends one reason for the set, and answers per document 512ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > a refused request says nothing was confirmed, with the reason 250ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > which documents are offered > only uploads suggested into a folder; unfiled, confirmed and folderless suggestions are not 1ms
+ ✓ client/src/concept2cure/v2/__tests__/adminQmsApprover.test.tsx > designating a QMS approver (RR4, D-Q) > says the Approver role stands in while nobody is designated, and designates with a reason 502ms
+ ✓ client/src/concept2cure/v2/__tests__/adminQmsApprover.test.tsx > designating a QMS approver (RR4, D-Q) > removes a designation, and says a refusal in the server’s words 137ms
+ ✓ client/src/concept2cure/v2/__tests__/adminQmsApprover.test.tsx > designating a QMS approver (RR4, D-Q) > is not offered on the administrator’s own row 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > refuses unverified current-version metadata (undefined) rather than offering a current version 340ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > refuses unverified current-version metadata (null) rather than offering a current version 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > refuses unverified current-version metadata (true) rather than offering a current version 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > refuses unverified current-version metadata (1) rather than offering a current version 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > retries the same scoped page after a refusal, preserving its version and hash contract 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > can repeat a successful query, go back and start another query at its first page 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > does not expose a late result after its program or signed-in session changes 43ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > Canonical Vault version picker > allows an earlier version only when requested and retains caller labels and focus 77ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > lets an active viewer read the actual release instead of delegating a team acknowledgement to AnA 519ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > opens the same personal reader from a real training row 110ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > qualifies unavailable releases instead of presenting them as assessed roster coverage 31ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > distinguishes documents without an active roster from an empty controlled-document list 22ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > closes the selected reader immediately when the authenticated organization changes 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count when no project is open and nothing was read 132ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states the count once the read succeeds 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > an authored build with no files reads as one authored document and no uploads 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > a folder count says what it counts 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > names governed artifacts only when there are some, and claims no upload count it could not read 74ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 403 says access was refused, not that the store did not respond 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 5xx says the store did not respond, and offers a retry 282ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > names document types for a reader, not by wire token 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > with no project open, Upload is disabled and says why 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 273ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 104ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 338ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 289ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not report a clear queue when a refresh fails under a stale queue 569ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not say nothing is in review when the response carried no board 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > still reports a clear queue when the rows were read and none is waiting on the caller 43ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > names a document awaiting my review, and one at my sign-off step, and says nothing is in review when nothing is 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > a review or sign-off the caller does not own is not reported as 'yours' 32ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 603ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 152ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 57ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board 504ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > the confirmation shows the signature the server recorded: its printed name and its time 89ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > a success that does not carry the recorded signature is not shown as one, and closing re-reads the task 92ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > shows AnA's suggestion with its model, and every key data value 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > confirms the revision it was shown, and claims it only once the server says so 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > will not save a correction without a reason of the required length 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a reader is told their role cannot decide, and gets no button 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a failed read is said, not shown as no description 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a version with no description says so 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a version whose text is still being read says so, not that it could not be read (MR-08 Stage 3) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > keeps legacy human attribution while disclosing the limits of key data checks 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > does not invent a past context check when an older record has no scope fields 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > binds confirmation to the exact extraction shown when its digest is available 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > shows a changed-extraction refusal without claiming that confirmation was recorded 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > treats a failure envelope as a refusal even if its HTTP status is successful 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > does not claim a decision when the server gives no matching recorded-state receipt 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > keeps a corrected historical record visible while explaining withdrawal and withholding actions 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > does not invite cataloging an unavailable source with no historical description 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > binds corrections to the extraction shown and preserves the whole-record reason 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > requires a successful scoped readback before retrying an unconfirmed decision 287ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > does not adopt a late catalog response from a different programme and document scope 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > names a search hit's document type in words, not the stored wire token 282ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > the upload type picker offers the shared labels, not the wire tokens with underscores swapped for spaces 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — an evidence kind is named in words (VR-04) > the detail pane's 'Looks like' says 'Clinical study report', not 'csr' 134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — what AnA is told about a selected file > a search hit is not "0% complete": no authoring completion was assessed 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > frames a PDF version through the audited download, typed application/pdf, with the served hash 343ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > releases the object URL when the viewer is closed 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > does not frame HTML saved under a .pdf name; it downloads it and says why 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > says what the Vault said when it refuses, and frames nothing 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx > Vault Versions — View > offers no view for a version whose file is not named as a PDF 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > Vault — opens on the document File to Vault named > CONTROL: with no target the Vault opens on its first node, away from the filed record 209ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > Vault — opens on the document File to Vault named > with the filed document named, opens on its row with "Place into filing…" on screen 199ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > Vault — opens on the document File to Vault named > a target named for another project is not applied here, and says where the document is 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > Vault — opens on the document File to Vault named > a filed document the read model does not hold is said, not silently ignored 127ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > locateVaultDocument > finds the row and the folder that holds it by the document uuid 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 299ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no invented class when it shows a pre-filled section, a version's stage and the server's transmit verdict 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 46ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that another document already holds the section, and still allows the placement as a second New leaf 363ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that this document is already placed at that section, and does not offer to place it again 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > when the same document is already placed there under another operation, it says how to change that, and does not offer the placement 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says nothing about occupancy when the section is free 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > lists each seal with when, who, how many documents, its hash and why 75ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > says a Vault never sealed is not sealed, and a failed read is a failure, never "not sealed" 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > seals through the ceremony with approval or responsibility, and lists the new seal 235ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > offers no seal to a role that may not write the Vault 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > verifies on demand and says the verdict in words, naming what changed 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is offered once the seal verifies intact, is checked against the recorded SHA-256, saved, and the hash stated 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > says when a sealed document’s file was removed under a data disposition and is not in the archive 16ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not saved when the file received does not match the recorded hash, or no hash was stated 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not offered for a seal that does not verify, and a refusal says the server's verdict 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the verdict sentence > never reads intact when anything could not be read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > an empty placement read makes no claim about inaccessible submissions, and an omitted read claims nothing 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names the CMC records a version is evidence for, with the Module 3 sections that read them 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W2 says nothing when the agency already holds that sequence 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W3 says nothing when the only leaf is a Delete, which carries no content 18ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W4 says nothing when only an earlier version is placed 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a malformed placement field reports a failed read and exposes no version actions 190ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a downloaded export without a recorded row count claims no zero audit history 90ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board 261ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it 21ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is 18ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks 90ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > the first task, closed by the change request, belongs to the earlier request; it is not called closed without a verdict 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > after the approval, the first task does not take the new verdict as its own 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > a task with no recorded creation time is judged against the current request, as before 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > an approval-gated review task says the verdict does not complete it: a signature does 14ms
+stderr | client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it
+An update to VaultVersions inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RecordHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ScopedVaultCatalogRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultAnnotations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultRelationships inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 211ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 156ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > the name button carries its cap as a class, not an inline style 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > on a desktop the cap is unchanged: at most 45% of the row, and it may shrink 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > at a phone width the row wraps, so the name keeps a line of its own width 11ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > runs the check and names every version that could not be proven 438ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > a check that did not run says so, with the reason, and shows no result 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > all intact, and a capped run, read as such 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > clicking the second hit shows the second hit, not the first 304ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > a hit for a filed document keeps its filing actions 209ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a full window shows exact counts, says the list is the newest, and AnA is told 264ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a refused source is shown as needing review, not as classified 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > an earlier version compares with the current one: bytes, details and the changed lines 398ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > the current version offers no comparison with itself 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > a comparison that could not be read is an error, not an empty difference 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > text that could not be compared says why; a capped comparison says so 1ms
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads 388ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links the CAPA chosen from the register, with its own number and title 305ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > says so when the register could not be read, and keeps the typed reference 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > the shared contract admits the Vault version, only with its project, and a route task id 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > opening it publishes the project and the Vault target, then navigates to the Vault 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a named member whose turn it is reads "Your turn", with their due date 31ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > the sender's row carries every member's outcome and Remind; Open the version opens that version 209ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a route that could not be read says so, and names nobody 6ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a withdrawn route says nothing is signed until a new one is sent 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > says what an approver waits on, and opens the Review board 43ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > an ordinary task still opens on the task board 33ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > lists it with the people who can sign it, and does not claim nothing is in review 303ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > says plainly when nobody in the organization can sign it 23ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > a failed Vault read is said, never shown as an empty list 18ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > downloads what the server sent, from the artifact’s export, and says it is recorded 246ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > a refusal is reported in the server’s words, and nothing is downloaded 39ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > a thread without its document is offered no export 4ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > clears previously loaded procedure and roster rows before the replacement tenant reads settle 245ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > aborts old reads and ignores their late successful bodies after the new tenant renders 75ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > passes the initial exact record and a later same-surface request through QualityRoute 188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > shows the recorded title, type and classification 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > will not save without a change and a reason of the required length 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > sends only the changed fields with the reason, and says it was recorded once the server says so 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > reports a refusal as a refusal, keeps the form, and claims nothing 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > says nothing changed when the values were already recorded, and does not reload 36ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterInForce.test.tsx > a controlled document under revision > shows the version in force beside its draft, dated by that version 145ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx > opening one Vault document > reads each panel endpoint once, not once per panel mount 103ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > takes integer session identities without a fallback organization 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":""} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":" 42 "} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"07","organizationId":"42"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":true,"organizationId":"42"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"1.5"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"2147483648"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 0 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id -1 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 1.5 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id NaN 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id Infinity 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 2147483648 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > uses canonical authenticated GET and retains exact released text 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > accepts this person’s unexpired receipt for the exact released revision 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > treats the canonical transport’s resolved 401 as a failed read 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":[]} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":{"id":31,"organization_id":42,"version":"2.0","status":"effective"},"meta":{}} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an unreadable JSON response 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign tenant 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different version 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different release status 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unreleased state 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unverified content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with no readable bodies 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with outline only 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with blank body 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unavailable release 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > returns unavailable controlled content honestly without making it eligible 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another revision 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to other content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expired receipt 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expiry at the present instant 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to unverified legacy method 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > posts only the exact released version, digest and personal declaration through canonical transport 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unavailable content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unverified content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing audit confirmation unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unpersisted audit unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unchained audit unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps malformed data unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing envelope unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a successful status with lost JSON unconfirmed 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another revision 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for other content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for an expired receipt 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > accepts an already-current receipt without claiming another audited insertion 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not accept the already-current flag for another person 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 400 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 403 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 404 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 409 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 422 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > recognizes the canonical transport’s resolved 401 as a refusal 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a confirmed audit rollback as a refusal even at HTTP 500 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a network failure 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a request timeout 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an upstream failure 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 500 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 409 1ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > names the person, the document and when their training lapses 45ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says a failed read failed, and never that no one lapses 23ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx > CommentByline > shows a comment AnA wrote as AnA’s, on the person’s behalf 44ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx > CommentByline > shows a person’s own comment under their name and role 12ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > retains the canonical binding and program rather than losing them between the service and Open control 21ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > keeps legacy absence explicit so an unbound draft opens binding setup 3ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the date due after the last signed review, not the date the approval signed 7ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the row date when the server sends no review 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > uses fresh bearer and organization headers with cookies for reads and the strict personal write 15ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > rejects the actual transport’s resolved session refusal before displaying controlled content 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not equate an actual successful HTTP response with a confirmed audit record 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another account in the same organization before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another organization before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses missing identity claims before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses malformed bearer before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not dispatch a personal write after the canonical token is removed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the naming history (RR2, §2.10, §2.12) > says who added a reviewer to the open route, when and why 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > more than one approver (RR2, §2.12: "Approved (1 of 2 required)") > an earlier approver reads 1 of 2; the other waits for their approval 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > more than one approver (RR2, §2.12: "Approved (1 of 2 required)") > once both have signed, each reads the order they signed in, and the route says every approver signed 12ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > more than one approver (RR2, §2.12: "Approved (1 of 2 required)") > the reader's share of the approval: which signature theirs would be, of how many 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > reviewers one after another (RR2, §3) > a waiting reviewer reads who they wait for, with their own due date 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the route form's shape (RR2, §2.6, §3) > parallel: one review date; sequential: each step its date, in the reviewers’ order 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the route form's shape (RR2, §2.6, §3) > says what Send waits for: each step’s date, the steps in order, and the approval after the last 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the route form's shape (RR2, §2.6, §3) > moves a reviewer up or down, keeping each step’s date with its step; a new reviewer gets an empty step date 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > flags a proposed change the server says is past its target 2ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say 2ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > claims nothing for a row that carries no verdict 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > useChangeRegister > carries the server verdict and the linked records onto each row 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map covers resolves to its own chip > resolves every key in the map to itself 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map covers resolves to its own chip > keeps the filing vocabulary distinct from the authoring one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map does not cover says so > does not claim "Draft" for an unrecognised value 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map does not cover says so > returns a usable chip, not undefined 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "constructor" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "toString" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "valueOf" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "hasOwnProperty" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "__proto__" as unknown, never as a chip 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > keeps `minmax(0, 1fr)` whole rather than splitting it on its inner space 3ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > gives every flexible track the floor, not just the first 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > is the sum of fixed tracks, floors, gaps and padding for the SOP register 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > does not need a minimum when the tracks already fit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > SOP register asks for more than a surface pane gives, so the title needs the floor 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > change control asks for more than a surface pane gives, so the title needs the floor 0ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > names the rows and counts read 4ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > never reads a failed register as empty, and never borrows another tab's rows 1ms
+ ✓ client/src/concept2cure/quality/__tests__/reviewOverdueToday.test.ts > review overdue is judged against today > marks a review due 2026-07-01 overdue on 2026-10-29, in the register and in the Record review row 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts > sections that cite a Vault version > lists, on the current version, the sections that cite only an earlier one 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts > sections that cite a Vault version > names a section once even when several earlier versions cite it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts > sections that cite a Vault version > accepts the server shape with citing sections and refuses a malformed citation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts > rolesCannotAuthor > admits an approver and a reviewer, as the sign-in session carries them 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts > rolesCannotAuthor > still withholds from a viewer, and leaves an unknown-only session to the server 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts > roomStageLabel (VR-16) > names the version, and what superseded it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts > roomStageLabel (VR-16) > says only what it knows: an older server, or a stage before filing 1ms
+
+ Test Files  88 passed (88)
+      Tests  766 passed (766)
+   Start at  18:08:11
+   Duration  249.26s (transform 12.00s, setup 9.46s, import 47.75s, tests 113.67s, environment 59.02s)
+

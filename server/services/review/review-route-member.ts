@@ -4,7 +4,10 @@
  * §2.5, finding B9). It refuses, in this order, each with nothing written:
  *
  *   1. not an active member of this organization  (MEMBER_NOT_IN_ORGANIZATION)
- *   2. no signing authority, from the membership role (MEMBER_CANNOT_SIGN)
+ *   2. no signing authority, from the membership role (MEMBER_CANNOT_SIGN),
+ *      asked of the platform's one policy, checkSigningAuthority, on this
+ *      transaction; a lookup that cannot run throws (fail closed: nobody is
+ *      named on an authority that could not be read)
  *   2a. (RR4, NEW-4, D-Q) a QMS document's approver who is not one of the
  *       organization's QMS approvers           (MEMBER_NOT_QMS_APPROVER)
  *   3. no access to the subject's project           (MEMBER_NO_PROJECT_ACCESS)
@@ -23,7 +26,8 @@
  *
  * @module server/services/review/review-route-member
  */
-import { isSigningAuthorized } from '../part11/signing-authority';
+import { checkSigningAuthority } from '../part11/signing-authority-gate';
+import type { SignerRoleExec } from '../part11/resolve-signer-role';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { canAccessReportProject } from '../report-os/project-access';
 import { resolveTargetAuthors } from '../governance/separation-of-duties';
@@ -64,6 +68,31 @@ async function refuseNonQmsApprover(
   }
 }
 
+/**
+ * The candidate as an active member of this organization who holds signing
+ * authority: their membership row and printed name, or the refusal. Authority
+ * is the platform's one policy, checkSigningAuthority, asked on this
+ * transaction; a lookup that cannot run throws (fail closed).
+ */
+async function activeSigner(q: RouteQueryable, organizationId: number, candidateId: number): Promise<{ member: Record<string, any>; printedName: string }> {
+  const { rows } = await q.query(
+    `SELECT u.id, u.name, u.email, ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id
+      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active'`,
+    [organizationId, candidateId],
+  );
+  if (rows.length !== 1) {
+    throw new ReviewRouteRefusal(409, 'MEMBER_NOT_IN_ORGANIZATION', `Account #${candidateId} is not an active member of this organization. ${NOTHING}`);
+  }
+  const member = rows[0];
+  const printedName = String(member.name || (member.email ? String(member.email).split('@')[0] : `Account #${candidateId}`));
+  const authority = await checkSigningAuthority(candidateId, organizationId, q as unknown as SignerRoleExec);
+  if (authority?.status === 503) throw new Error(`The signing authority of account #${candidateId} could not be read`);
+  if (authority) {
+    throw new ReviewRouteRefusal(409, 'MEMBER_CANNOT_SIGN', `${printedName} does not hold signing authority, so cannot be named to review or approve. ${NOTHING}`);
+  }
+  return { member, printedName };
+}
+
 export async function validateRouteMember(
   q: RouteQueryable,
   p: {
@@ -87,19 +116,7 @@ export async function validateRouteMember(
     authorship?: { authors: readonly number[]; sources: readonly string[] };
   },
 ): Promise<ValidatedMember> {
-  const { rows } = await q.query(
-    `SELECT u.id, u.name, u.email, ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id
-      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active'`,
-    [p.organizationId, p.candidateId],
-  );
-  if (rows.length !== 1) {
-    throw new ReviewRouteRefusal(409, 'MEMBER_NOT_IN_ORGANIZATION', `Account #${p.candidateId} is not an active member of this organization. ${NOTHING}`);
-  }
-  const member = rows[0];
-  const printedName = String(member.name || (member.email ? String(member.email).split('@')[0] : `Account #${p.candidateId}`));
-  if (!isSigningAuthorized(member.role)) {
-    throw new ReviewRouteRefusal(409, 'MEMBER_CANNOT_SIGN', `${printedName} does not hold signing authority, so cannot be named to review or approve. ${NOTHING}`);
-  }
+  const { member, printedName } = await activeSigner(q, p.organizationId, p.candidateId);
   await refuseNonQmsApprover(q, p, member.role, printedName);
   if (p.programId) {
     const anchor = await readProgramAnchorRow(q, { programId: p.programId, orgId: p.organizationId, context: 'review-route-member' });

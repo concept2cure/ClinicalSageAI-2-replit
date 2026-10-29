@@ -51,8 +51,8 @@ import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } 
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
 import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
-import { myTurn, qmsRouteView } from './qmsReviewRoute';
-import { routeHeadline } from '../v2/surfaces/VaultReviewRoute';
+import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
+import { approvalShare, routeHeadline } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { reviewRowOf, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';
@@ -602,7 +602,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           open
           action="Approve controlled document"
           target={`${approving.docNumber} ${approving.title}`}
-          targetMeta={`v${approving.version} becomes effective when you sign. The author cannot approve their own document.`}
+          targetMeta={qmsApprovalMeta(approving.version, approving.reviewRoute ? approvalShare(approving.reviewRoute, meId) : null)}
           defaultMeaning="approval"
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}

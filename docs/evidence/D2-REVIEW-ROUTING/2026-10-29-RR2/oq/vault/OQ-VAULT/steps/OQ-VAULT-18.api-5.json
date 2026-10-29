@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5201/api/c2c/project-vault/search?q=",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 41,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "",
+        "results": [],
+        "total": 0,
+        "limit": 25,
+        "offset": 0,
+        "reason": "EMPTY_QUERY",
+        "scope": "verified-accessible-programs"
+      }
+    }
+  }
+}

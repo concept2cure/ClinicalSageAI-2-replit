@@ -1,0 +1,56 @@
+HEAD 99675ac29; working tree: 1 changed path(s)
+== npm run --silent ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since 9764baaa9802e431a973fe4ea5a3894332f21816 (9764baaa9) -- 33 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 9764baaa9802e431a973fe4ea5a3894332f21816.
+exit 0
+== npm run --silent ci:pushed-lint-errors
+[ci:pushed-lint-errors] OK — no ESLint errors in 32 changed file(s) against origin/concept2cure-v2.
+exit 0
+== npm run --silent ci:sql-interpolation
+[ci:sql-interpolation] 27 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1567:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1586:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1587:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit 0
+== npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+== npm run --silent ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 32 file(s) resolves to a tracked file.
+exit 0
+== npm run --silent ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0
+== npm run --silent ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+exit 0
+== NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.check.json
+exit 0
+nonzero exits: 0
