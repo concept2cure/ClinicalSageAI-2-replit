@@ -15,6 +15,7 @@ import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { stopPersonsRuns } from '../services/account-standing';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { mountQmsApproverDesignation } from './tenant-users-qms-approver';
 import {
   issueInvitation,
   reissueForUnredeemedInvitee,
@@ -634,6 +635,9 @@ router.patch('/:organizationId/:userId', async (req, res) => {
     res.status(500).json({ error: 'Failed to update user role' });
   }
 });
+
+// PUT /:organizationId/:userId/qms-approver — the QMS approver designation (RR4, D-Q): tenant-users-qms-approver.ts.
+mountQmsApproverDesignation(router, { authorizeOrgAccess, getCallerId, reasonRequired });
 
 /**
  * DELETE /api/tenant-users/:organizationId/:userId

@@ -1,0 +1,132 @@
+# At 67b61128f, with the test only (Vault.tsx and misc-surfaces-v2.css unchanged).
+# RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 313ms
+stderr | client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it
+An update to VaultVersions inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RecordHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ScopedVaultCatalogRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultAnnotations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultRelationships inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 178ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 78ms
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > the name button carries its cap as a class, not an inline style 92ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > on a desktop the cap is unchanged: at most 45% of the row, and it may shrink 15ms
+   → expected '' to match /max-width:\s*45%/
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > at a phone width the row wraps, so the name keeps a line of its own width 13ms
+   → expected '' to match /flex-wrap:\s*wrap/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > the name button carries its cap as a class, not an inline style
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx:255:53
+    253|     const lane = await screen.findByTestId('vault-uploads-lane');
+    254|     const button = within(lane).getByText(DOC_TITLE).closest('button')…
+    255|     expect(button.classList.contains('vd-dr-open')).toBe(true);
+       |                                                     ^
+    256|     expect(button.getAttribute('style')).toBeNull();
+    257|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > on a desktop the cap is unchanged: at most 45% of the row, and it may shrink
+AssertionError: expected '' to match /max-width:\s*45%/
+
+- Expected:
+/max-width:\s*45%/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx:261:18
+    259|   it('on a desktop the cap is unchanged: at most 45% of the row, and i…
+    260|     const base = rulesOf('.vd-dr-open', 'base').join(';');
+    261|     expect(base).toMatch(/max-width:\s*45%/);
+       |                  ^
+    262|     expect(base).toMatch(/min-width:\s*0/);
+    263|     expect(base).toMatch(/flex-shrink:\s*1/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — the uploads lane at a phone width > at a phone width the row wraps, so the name keeps a line of its own width
+AssertionError: expected '' to match /flex-wrap:\s*wrap/
+
+- Expected:
+/flex-wrap:\s*wrap/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx:269:17
+    267|     const row = rulesOf('.vd-dr-row', { maxPx: 900 }).join(';');
+    268|     const open = rulesOf('.vd-dr-open', { maxPx: 900 }).join(';');
+    269|     expect(row).toMatch(/flex-wrap:\s*wrap/);
+       |                 ^
+    270|     expect(open).toMatch(/max-width:\s*none/);
+    271|     expect(open).toMatch(/flex:\s*1 1 \d+%/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  13:05:17
+   Duration  9.61s (transform 5.25s, setup 374ms, import 6.26s, tests 697ms, environment 1.66s)
+

@@ -5,6 +5,8 @@
  *
  *   1. not an active member of this organization  (MEMBER_NOT_IN_ORGANIZATION)
  *   2. no signing authority, from the membership role (MEMBER_CANNOT_SIGN)
+ *   2a. (RR4, NEW-4, D-Q) a QMS document's approver who is not one of the
+ *       organization's QMS approvers           (MEMBER_NOT_QMS_APPROVER)
  *   3. no access to the subject's project           (MEMBER_NO_PROJECT_ACCESS)
  *   4. separation of duties over the stage round:
  *        an author, contributor or uploader          (MEMBER_IS_AUTHOR)
@@ -26,6 +28,7 @@ import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { canAccessReportProject } from '../report-os/project-access';
 import { resolveTargetAuthors } from '../governance/separation-of-duties';
 import { ROUTE_SIGN_MEANING, type RouteQueryable, type RouteRole } from './review-route-standing';
+import { holdsQmsApproval, notQmsApproverMessage, readQmsApproverPolicy } from '../qms/qms-approver-designation';
 
 export class ReviewRouteRefusal extends Error {
   constructor(
@@ -45,6 +48,20 @@ export interface ValidatedMember {
   role: RouteRole;
   /** The printed name at naming (users.name, else the e-mail's local part). */
   printedName: string;
+}
+
+/** NEW-4 and D-Q (RR4): a QMS document's approver is one of the organization's QMS approvers. */
+async function refuseNonQmsApprover(
+  q: RouteQueryable,
+  p: { organizationId: number; subjectTarget: string; role: RouteRole; candidateId: number },
+  membershipRole: string | null | undefined,
+  printedName: string,
+): Promise<void> {
+  if (p.role !== 'approver' || !p.subjectTarget.startsWith('qms-document:')) return;
+  const policy = await readQmsApproverPolicy(q, p.organizationId);
+  if (!holdsQmsApproval(policy, p.candidateId, membershipRole)) {
+    throw new ReviewRouteRefusal(409, 'MEMBER_NOT_QMS_APPROVER', `${notQmsApproverMessage(printedName, policy)} ${NOTHING}`);
+  }
 }
 
 export async function validateRouteMember(
@@ -83,6 +100,7 @@ export async function validateRouteMember(
   if (!isSigningAuthorized(member.role)) {
     throw new ReviewRouteRefusal(409, 'MEMBER_CANNOT_SIGN', `${printedName} does not hold signing authority, so cannot be named to review or approve. ${NOTHING}`);
   }
+  await refuseNonQmsApprover(q, p, member.role, printedName);
   if (p.programId) {
     const anchor = await readProgramAnchorRow(q, { programId: p.programId, orgId: p.organizationId, context: 'review-route-member' });
     if (anchor && !(await canAccessReportProject(p.organizationId, { userId: p.candidateId, role: member.role }, anchor.id, q))) {

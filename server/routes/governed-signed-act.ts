@@ -27,6 +27,13 @@
  *      route's `meanings`; plan P1-51, DP-64), checked
  *      before the password so a refused meaning spends
  *      no guess                                         400 SIGNATURE_MEANING_* / MEANING_NOT_ALLOWED
+ *   3p. the act's own precheck, when it has one (RR4,
+ *      docs/design/REVIEW_ROUTING_2026-10-23.md §2.8,
+ *      B7), before 3a: a read that refuses a signer
+ *      the act will refuse anyway (not named on the
+ *      review route, not their turn), so the refusal
+ *      costs no credential check. It decides nothing:
+ *      `run` re-checks under its row lock            the act's own codes
  *   3a. the signer's role carries signing authority
  *      (§11.10(g): identity is not authority), read
  *      from the membership row, before the password     403 ESIGNATURE_NO_AUTHORITY
@@ -38,6 +45,9 @@
  *      first left it, and its domain write refuses), the domain write (a coded
  *      domain error refuses)
  *   6. the `sign` ledger pair and the electronic_signatures row, on the same client
+ *   6a. the act's afterSign, when it has one (RR4, B7), on the same
+ *      transaction: work that cites the signature row's id (a review route's
+ *      task closes on `esig:<id>`). A throw rolls the whole act back
  *   7. COMMIT: the act, its ledger pair and its signature land together or not at all
  *
  * In front of it, `signedActAttempts`: the per-signer limit on credential checks
@@ -137,8 +147,22 @@ export interface SignedAct {
   contentBasis?: BindingBasis;
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
   tenantRole?: string;
+  /**
+   * Asked before the signing authority check and the credential (RR4, B7): a
+   * read on the request's client, outside the transaction, that refuses a
+   * signer the domain write would refuse anyway, so the refusal spends no
+   * password guess. Throw an error with a `code` in `codeStatus` to refuse.
+   * It never authorizes: `run` re-checks what it read under its own lock.
+   */
+  precheck?: (client: RequestDbClient, orgId: number, userId: number) => Promise<void>;
   /** The domain write, on the signing transaction. Throw an error with a `code` to refuse. */
   run: (client: RequestDbClient, orgId: number, userId: number) => Promise<SignedActResult>;
+  /**
+   * Work on the signing transaction after the electronic_signatures row is
+   * written and before COMMIT (RR4, B7), so it can cite the row's id. A throw
+   * rolls back the act, its ledger pair and the signature together.
+   */
+  afterSign?: (client: RequestDbClient, signature: { id: number; signedAt: Date }, result: SignedActResult, orgId: number, userId: number) => Promise<void>;
   /**
    * Work that follows the committed act (a reminder, a task), run after COMMIT
    * and before the response. Best effort: a failure is logged and never
@@ -239,6 +263,16 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     return;
   }
 
+  // Step 3p (RR4, B7): the act's own refusal, before authority or any credential is asked.
+  if (act.precheck) {
+    try {
+      await act.precheck(client, orgId, userId);
+    } catch (err) {
+      answerFailure(res, act.codeStatus, err);
+      return;
+    }
+  }
+
   // Step 3a (§11.10(g)): the platform's one signing-authority policy
   // (checkSigningAuthority), from the persisted membership, never the token or
   // the body. Until 2026-10-01 these routes had none, so a viewer who knew their
@@ -298,6 +332,7 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
       ...(Object.keys(payload).length > 0 ? { extraManifest: { act: payload } } : {}),
       ...(act.contentBasis ? { requiredBasis: act.contentBasis } : {}),
     });
+    if (act.afterSign) await act.afterSign(client, { id: signature.id, signedAt: signature.signedAt }, result, orgId, userId);
     await client.query('COMMIT');
     await runAfterCommit(act, result, orgId, userId);
     res.status(201).json({ ...body, ...gov, signatureId: signature.id, signedAt: signature.signedAt.toISOString(), meaning });

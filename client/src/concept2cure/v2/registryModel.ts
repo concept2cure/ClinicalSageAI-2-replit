@@ -89,7 +89,6 @@ export const NAV_GROUP_OF: Record<string, string> = {
   'ectd-coauthor': 'biopharma',
   'ectd-compile': 'biopharma',
   pdev: 'biopharma',
-  setup: 'admin',
   'audit-trail': 'admin',
   billing: 'admin',
   licensing: 'admin',
@@ -994,6 +993,21 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      and the audit_events chain's from the console's own route, and AnA reads
      both in its facts. Old links, ⌘K hits and AnA's target land there. */
   'part11-console': 'audit-trail',
+  /* AnA memory folded into the conversation (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). Its two real reads,
+     how AnA is tuned to the person and the "Things I got wrong" ledger, are the
+     conversation's "What AnA remembers" (WhatAnaRemembers.tsx), with the
+     project-scoped notes for the conversation's project. Old links land there. */
+  'ana-memory': 'conversation-thread',
+  /* Setup folded into Admin and access (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). The organisation's name
+     and client type, and the gateway, session, PDF/A, retention and legal-hold
+     cards, are on admin-console's Settings tab; the Identity console door is on
+     its SSO tab; AnA reads the configuration in admin-console's context. Old
+     links and the screens that still say `setup` (Audit & compliance reports'
+     letterhead link, onboarding's "Organization setup", the locked-feature
+     notice) land on Settings through ALIAS_APPLIES below. */
+  setup: 'admin-console',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate
@@ -1026,6 +1040,7 @@ export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
   dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+  setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },
 };
 
 /** Home is the shell's landing, not a registry surface (V2App renders it for

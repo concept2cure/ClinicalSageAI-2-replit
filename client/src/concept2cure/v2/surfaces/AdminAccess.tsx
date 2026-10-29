@@ -10,9 +10,10 @@ import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
-import { CompanyDocumentSettings } from './CompanyDocumentSettings';
+import { AdminSettingsTab, IdentityConsoleDoor, type AdminSettingRow } from './AdminSettings';
+import type { OrganizationProfileContext } from './OrganizationProfileCard';
 import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
+import { AdminQmsApprover, qmsApproverStanding } from './AdminQmsApprover';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
 import { AdminPlatformGrants } from './AdminPlatformGrants';
@@ -29,6 +30,11 @@ import '../styles/admin-access.css';
  * a KPI row, and an always-visible 21 CFR
  * Part 11 admin-audit band. Reached from the bottom-left account menu
  * ("Admin"), gated to org admins.
+ *
+ * Settings holds every governed organisation setting, each its own card with
+ * its own read and its own reasoned, audited write (AdminSettings.tsx). Setup's
+ * settings folded in here (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/).
  *
  * Fixture-free by construction (GA real-data standard). The surface renders the
  * org's REAL admin estate from GET /api/mdx/admin — members/roles/grants,
@@ -65,7 +71,9 @@ import '../styles/admin-access.css';
 
 interface Kpi { label: string; metric: string; unit?: string; meta: string; tone?: string }
 /** `userId` and `self` are what the membership routes need (AdminMemberActions). */
-interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
+interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[];
+  /** QMS approver standing (RR4, decision D-Q): counts now, and designated by an administrator. */
+  qmsApprover?: boolean; qmsApproverDesignated?: boolean }
 interface Role { id: string; label: string; members: number; desc: string; scopes: string[] }
 interface Grant { user: string; program: string; scope: string; granted: string; expires?: string }
 interface Conn { kind: string; provider: string; status?: string; domain: string; users: number; lastSync?: string }
@@ -76,7 +84,7 @@ interface ApiKey { id: string; keyId?: number; prefix?: string; name: string; ow
 interface Audit { id: string; when: string; actor: string; action: string; target: string; sha: string }
 /** `kind: 'policy'` is a fact about the deployment no org setting changes
  *  (the second factor at sign-in), so it is shown, not offered for change. */
-interface Setting { id: string; label: string; value: string; kind?: string; desc: string }
+type Setting = AdminSettingRow;
 /** Shape of the GET /api/mdx/admin payload (server/routes/mdx-admin.ts). `sso`
  *  is nullable because the route degrades it to null if the stores are missing. */
 interface AdminData {
@@ -84,6 +92,8 @@ interface AdminData {
   organizationId?: number;
   kpis: Kpi[]; members: Member[]; roles: Role[]; grants: Grant[];
   sso: Sso | null; apiKeys: ApiKey[]; audit: Audit[]; settings: Setting[];
+  /** While nobody is designated, members with the Approver role stand in as QMS approvers (RR4, D-Q). */
+  qmsApprovers?: { standIn: boolean };
 }
 
 const TABS = [
@@ -110,6 +120,20 @@ function formatWhen(iso: string): string {
 }
 // + a trailing Action column for the explicit Revoke control.
 const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
+
+interface AnaView { summary: string; facts: Record<string, unknown>; availableActions: string[] }
+
+/** Adds the Settings tab's Profile card to what AnA sees, while that tab shows it (fold-setup). */
+function withConfiguration(view: AnaView, tab: string, configuration: OrganizationProfileContext | null): AnaView {
+  if (tab !== 'settings' || !configuration) return view;
+  return {
+    summary:
+      `${view.summary} ${configuration.summary} The session policy, gateway accounts, PDF/A, retention, legal-hold, ` +
+      'connector and company-document cards each show their own values on screen; those values are not published here.',
+    facts: { ...view.facts, configuration: configuration.facts },
+    availableActions: [...view.availableActions, ...configuration.availableActions],
+  };
+}
 
 export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
@@ -238,6 +262,9 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
 
   const [tab, setTab] = useState<TabId>('members');
   useEffect(() => { setCreatingKey(false); }, [tab]);
+  /* What the Settings tab's Profile card lets AnA be told (OrganizationProfileCard.tsx).
+     The card clears it when it unmounts, so it is published only while Settings shows it. */
+  const [profileContext, setProfileContext] = useState<OrganizationProfileContext | null>(null);
   const [selected, setSelected] = useState<string>('');
   const [roleFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
@@ -294,8 +321,11 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   /* WHAT ANA SEES HERE. Aggregates only: a per-member MFA/SSO list is a target
      list, so who-lacks-MFA is published as a count and never as names. No
      emails, no grants, no role scopes, no key ids/scopes/owners, no audit
-     hashes, no SSO domains, no setting values. roleFilter is dead state
-     (nothing sets it) and is not published. */
+     hashes, no SSO domains, no setting values — with one exception, carried
+     from Setup (fold-setup): while the Settings tab shows it, the Profile
+     card's name, client type, and whether a change is unsaved and its reason
+     entered, as `facts.configuration`, so AnA can summarise the configuration
+     on screen. roleFilter is dead state (nothing sets it) and is not published. */
   const anaContext = useMemo(() => {
     if (loading) {
       return { summary: 'Admin and access is still loading; the KPI counts read "--" and nothing on screen is final yet.' };
@@ -320,7 +350,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
       };
     }
     const tabLabel = TABS.find((t) => t.id === tab)?.label ?? tab;
-    return {
+    return withConfiguration({
       summary:
         `Admin and access, on the "${tabLabel}" tab: ${allMembers.length} member(s) (${activeMembers} active, ` +
         `${mfaMembers} with an authenticator app), ${roles.length} role(s), ` +
@@ -344,13 +374,15 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: [
         'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
         'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
-        'Invite members, change membership roles or revoke API keys. Project access is granted on a project\'s Plan, under Project sharing; organization settings are shown here, not changed',
+        'Invite members, change membership roles or revoke API keys. Project access is granted on a project\'s Plan, under Project sharing',
+        'On Settings, each organization setting is changed on its own card by the administrator, under a stated reason recorded in the audit trail: the name and client type, session policy, agency gateway accounts, Require PDF/A, the retention period, legal holds, the connector for Claude and company documents',
         'Open the audit trail, or open it searched for one member\'s activity from that member\'s panel',
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys, Skills and Settings tabs, or filter members by state (all / active / invited / disabled)',
         'On Skills, read the platform skill library and this organization’s own skills, and test which skills a question would load. Turning a skill on or off, and creating or changing one, are the administrator’s acts with a stated reason',
+        'From SSO + provisioning, open the Identity console, where SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist are governed',
       ],
-    };
-  }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+    }, tab, profileContext);
+  }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member, profileContext]);
   /* View state only. Administrative mutations require the person's explicit
      action; AnA cannot create a credential. Switching under an open invite,
      revoke or key-creation drawer would discard it or its one-time secret. */
@@ -515,6 +547,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                     <div><div className="k">SSO</div><div className="v">{member.sso === 'local' || member.sso === '' ? 'Local' : 'SSO'}</div></div>
                     <div><div className="k">Second factor</div><div className="v">{member.mfa ? 'Authenticator app' : 'Emailed code'}</div></div>
                     <div><div className="k">Last seen</div><div className="v">{formatWhen(member.lastSeen) || '—'}</div></div>
+                    <div><div className="k">QMS approver</div><div className="v" data-testid="member-qms-approver-standing">{qmsApproverStanding(member, a?.qmsApprovers?.standIn)}</div></div>
                     <div><div className="k">Groups</div><div className="v adm-groups">{member.groups.length ? member.groups.map((g) => <span key={g} className="adm-group mono tiny">{g}</span>) : '—'}</div></div>
                   </div>
                   <div className="drawer-section-lbl">Role scopes</div>
@@ -537,6 +570,8 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                         (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
                         the server's own answer. */}
                     <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} onInvitationOutcome={rememberInvitation} />
+                    {/* QMS approvers (RR4, D-Q): who approves controlled documents, designated with a reason. */}
+                    <AdminQmsApprover key={`qms-${member.id}`} member={member} organizationId={a?.organizationId} standIn={a?.qmsApprovers?.standIn} onChanged={reload} toast={fireToast} />
                   </div>
                 </aside>
               )}
@@ -599,6 +634,8 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
               </article>
             </div>
           )}
+
+          {tab === 'sso' && <IdentityConsoleDoor onNav={onNav} />}
 
           {tab === 'apikeys' && (
             <section className="section">
@@ -675,45 +712,14 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
           {tab === 'skills' && <AdminSkills onAsk={onAsk} />}
 
           {tab === 'settings' && (
-            <section className="section">
-              <div className="section-head"><h2>Org settings</h2><span className="section-sub">As set now. Nothing on this tab changes them yet.</span></div>
-              {facetDown('settings') && (
-                <div className="adm-facet-error">
-                  <EmptyState
-                    tone="error"
-                    icon={I.alertTriangle}
-                    title="Couldn't load org settings"
-                    hint="The organization's settings could not be read, so session timeout, single sign-on and branding are not shown."
-                    retry={reload}
-                  />
-                </div>
-              )}
-              {settings.length === 0 ? (
-                facetDown('settings') ? null : <div className="adm-empty">No org settings configured yet.</div>
-              ) : (
-                <div className="adm-settings">
-                  {settings.map((s) =>
-                    s.kind === 'policy' ? (
-                      <div key={s.id} className="adm-setting adm-setting-fixed">
-                        <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
-                        <div className="adm-setting-val"><span>{s.value}</span></div>
-                      </div>
-                    ) : (
-                      /* Slice 0: each row sent AnA "Change setting …"; no AnA tool changes an
-                         organization setting, so the row shows the value and offers nothing. */
-                      <div key={s.id} className="adm-setting adm-setting-fixed">
-                        <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
-                        <div className="adm-setting-val"><span>{s.value}</span></div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              )}
-              {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
-                  shown whether or not the settings above could be read. */}
-              <ClaudeConnectorSetting />
-              <CompanyDocumentSettings onNav={onNav} />
-            </section>
+            <AdminSettingsTab
+              settings={settings}
+              settingsDown={facetDown('settings')}
+              onRetry={reload}
+              onNav={onNav}
+              onAsk={onAsk}
+              onProfileContext={setProfileContext}
+            />
           )}
 
           <section className="section">

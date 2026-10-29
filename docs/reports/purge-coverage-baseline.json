@@ -178,6 +178,7 @@
     "risk_items",
     "qms_nonconforming_products",
     "vault_data_room_seals",
+    "saved_precedent_queries",
     "regulatory_programs",
     "file_uploads",
     "regulatory_twin_simulations",
@@ -210,7 +211,7 @@
     "coordination_leases",
     "citation_chains"
   ],
-  "count": 469,
+  "count": 468,
   "tables": [
     "account_projection",
     "activity_feed",
@@ -632,7 +633,6 @@
     "sap_amendments",
     "sap_comments",
     "sap_versions",
-    "saved_precedent_queries",
     "scim_ip_allowlist",
     "scim_tenants",
     "send_datasets",

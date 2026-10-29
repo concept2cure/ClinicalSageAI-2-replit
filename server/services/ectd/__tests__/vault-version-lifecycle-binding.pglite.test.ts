@@ -124,18 +124,18 @@ beforeAll(async () => {
       (8, 'beside its own',   'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}'),
       (9, 'new and delete',   'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}'),
       (10, 'declared append', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}');
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
-      (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (5, 3, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', ${ORG}, ${USER}, 'sent'),
-      (7, 3, 'fda', '0002', ${ORG}, ${USER}, NULL),
-      (8, 4, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (9, 4, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (10, 5, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (11, 5, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (12, 6, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (13, 6, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (14, 7, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (15, 7, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (16, 8, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (17, 8, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (18, 9, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (19, 9, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (20, 10, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (21, 10, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
+      (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (3, 2, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (5, 3, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'sent'),
+      (7, 3, 'fda', '0002', 'amendment', ${ORG}, ${USER}, NULL),
+      (8, 4, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (9, 4, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (10, 5, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (11, 5, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (12, 6, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (13, 6, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (14, 7, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (15, 7, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (16, 8, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (17, 8, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (18, 9, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (19, 9, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (20, 10, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (21, 10, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_uuid, organization_id, created_by) VALUES
       (2,  'm3.2.s.4.2', 'Analytical procedures', 'replace', 'vault_documents', '${V2}', ${ORG}, ${USER}),
       (4,  'm3.2.s.4.2', 'Analytical procedures', 'new',     'vault_documents', '${V2}', ${ORG}, ${USER}),

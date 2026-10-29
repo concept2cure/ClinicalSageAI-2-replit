@@ -1,0 +1,117 @@
+# Mutations — fold setup into admin-console, Part 1
+
+Runner: tools/mutate.py.txt. One exact single-occurrence replacement each, the six fold suites run, reversed by replacement, md5 checked after every reversal.
+
+M1 KILLED — the Profile card is not mounted on Settings — 22 failed | 29 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5090ms
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does 5034ms
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 5036ms
+M2 KILLED — the session-policy card is not mounted — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 643ms
+M3 KILLED — the gateway-account card is not mounted — 2 failed | 49 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5126ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 22ms
+M4 KILLED — the PDF/A card is not mounted — 2 failed | 49 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5128ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 25ms
+M5 KILLED — the retention card is not mounted — 8 failed | 43 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5129ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period 23ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > reads the period from the server and says when it is the 25-year default 5060ms
+M6 KILLED — the legal-holds card is not mounted — 2 failed | 49 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5161ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period 24ms
+M7 KILLED — the SSO tab has no Identity console door — 2 failed | 49 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it 5030ms
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed 146ms
+M8 KILLED — the door opens the wrong surface — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it 79ms
+M9 KILLED — the configuration is published on any tab — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab 49ms
+M10 KILLED — the configuration facts are not published — 4 failed | 47 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them 5045ms
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered 5067ms
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab 5046ms
+M11 KILLED — the profile saves without a reason — 3 failed | 48 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 5096ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > refuses to write without a reason, because the route audits one 5048ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > are not saved without a reason 47ms
+M12 KILLED — the rename PATCH drops the reason — 2 failed | 49 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 108ms
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > PATCHes the profile with the reason and the token’s org id, and writes no settings section 36ms
+M13 KILLED — the client type is saved without the reason — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > are saved by "Save to organization" with the page’s reason for change 32ms
+M14 KILLED — an unsaved change is not published — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered 5073ms
+M15 KILLED — a failed read is published as a profile — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name 5036ms
+M16 KILLED — an unreachable server reads as a refusal — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > reports an unreachable server as unreachable, not as a refusal 5044ms
+M17 KILLED — the tab still says nothing on it changes a setting — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does 60ms
+M18 KILLED — Ask AnA sends nothing — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab 70ms
+M19 KILLED — the server serves the session-timeout row again — 1 failed | 50 passed (51)
+    × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — the settings Setup folded into > serves no session-timeout row: the governed session-policy card replaces it 10ms
+M20 KILLED — the second-factor row loses the enrolment pointer — 1 failed | 50 passed (51)
+    × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — the settings Setup folded into > says where each person sets up an authenticator app 6ms
+M21 KILLED — the Settings tab drops the description of a record row — 1 failed | 50 passed (51)
+    × client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Settings → Second factor at sign-in > says what sign-in asks for, and where each person enrols an authenticator 123ms
+
+21/21 killed; every mutated file restored (md5 checked).
+
+# Part 2 — the retirement (tools/mutate2.py.txt)
+
+Checks per mutation: the fold guards (foldSetup.test.ts, launch-scope.test.ts) and, where the mutation is for a CI list, that gate. Reversed by replacement on the file as it stood; md5 of every file checked before and after (md5sum -c, all OK).
+
+P1 KILLED — the alias is gone
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P2 KILLED — the alias opens no tab
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 6ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P3 KILLED — the alias opens the wrong tab
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 7ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P4 KILLED — the old id keeps a view
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P5 KILLED — the old id keeps a registry entry (⌘K lists it)
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P6 KILLED — the old id stays a launch shell surface
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 3ms
+      × server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29) 5ms
+      FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+P7 KILLED — the old id keeps its rail group
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface
+P8 KILLED — admin-console does not claim the retention route
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call
+P9 KILLED — the discoverability list still names setup
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface
+      console.error(`\\n[ci:surface-discoverability] FAIL — ${failures.length} issue(s):\\n`);
+    by ci:surface-discoverability
+      [ci:surface-discoverability] FAIL — 1 issue(s):
+P10 KILLED — ID_BASELINE keeps the retired publisher
+    by ci:ana-surface-context
+      [ci:ana-surface-context] FAIL — 1 issue(s):
+P11 KILLED — Setup survives with its own AnA publisher
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 119ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P12 KILLED — the GAMP kit route is left unmapped
+    by ci:launch-scope-api
+
+12/12 killed; every mutated file restored (md5 checked).

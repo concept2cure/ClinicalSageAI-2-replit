@@ -228,6 +228,34 @@ describe('the folded Part 11 console', () => {
   });
 });
 
+describe('the folded setup', () => {
+  it('is in no scope list and no grant: Admin and access → Settings holds the organisation\'s setup (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/. It was a shell surface,
+       never a catalogue module; its name and client type, and the gateway,
+       session, PDF/A, retention and legal-hold cards, are on admin-console's
+       Settings tab. admin-console stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('setup')).toBe(false);
+    expect(isLaunchSurface('setup')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('setup');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('admin-console');
+    expect(isLaunchSurface('admin-console')).toBe(true);
+  });
+});
+
+describe('the folded AnA memory', () => {
+  it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on
+       2026-10-08 ('the shell no longer carries' above) and was never a catalogue
+       module; its two real reads are the conversation's "What AnA remembers".
+       The conversation is a launch shell surface, so a bought ana-memory row can
+       buy nothing. */
+    expect(LAUNCH_SURFACE_IDS.has('ana-memory')).toBe(false);
+    expect(isLaunchSurface('ana-memory')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ana-memory');
+    expect(isLaunchSurface('conversation-thread')).toBe(true);
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;

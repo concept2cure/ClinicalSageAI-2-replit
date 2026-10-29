@@ -32,8 +32,8 @@ export const MDX_SURFACE_IDS = [
   // same data is the double-rail problem one level down, so the kit's is deleted
   // and `precedent-intelligence` is the one precedent surface. Same reasoning
   // retired the kit's Templates tab (v2 `template-library`), its AnA Memory
-  // surface (v2 `ana-memory`, identical endpoint) and its project home
-  // (v2 `project-home`).
+  // surface (v2 `ana-memory`, identical endpoint, itself folded into the
+  // conversation on 2026-10-29) and its project home (v2 `project-home`).
   // No `device-vault`. The kit's document vault folded into the Vault (D2,
   // 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/): each
   // project's Governed artifacts branch lists every artifact of the project with

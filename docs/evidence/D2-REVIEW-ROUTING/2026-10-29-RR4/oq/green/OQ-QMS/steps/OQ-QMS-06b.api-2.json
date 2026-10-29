@@ -1,0 +1,113 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/mdx/qms/documents/34",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 34,
+        "organization_id": 6,
+        "doc_number": "SOP-OQ-B-20261029145843",
+        "title": "OQ-006 Second SOP 20261029145843",
+        "doc_type": "sop",
+        "category": "production",
+        "version": "1.0",
+        "status": "in_review",
+        "effective_date": null,
+        "next_review_date": "2026-11-03T00:00:00.000Z",
+        "author_id": 6,
+        "approver_id": null,
+        "approved_at": null,
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "sections": [
+            {
+              "key": "purpose",
+              "hint": "Why this document exists and what it governs.",
+              "label": "Purpose",
+              "order": 1
+            },
+            {
+              "key": "scope",
+              "hint": "What and who it applies to, with explicit exclusions.",
+              "label": "Scope",
+              "order": 2
+            },
+            {
+              "key": "responsibilities",
+              "hint": "Roles accountable for each step.",
+              "label": "Responsibilities",
+              "order": 3
+            },
+            {
+              "key": "definitions",
+              "hint": "Terms, abbreviations, and acronyms used.",
+              "label": "Definitions",
+              "order": 4
+            },
+            {
+              "key": "procedure",
+              "hint": "The step-by-step controlled process.",
+              "label": "Procedure",
+              "order": 5
+            },
+            {
+              "key": "references",
+              "hint": "Regulations, standards, and linked documents.",
+              "label": "References",
+              "order": 6
+            },
+            {
+              "key": "attachments",
+              "hint": "Forms, templates, and records this document produces.",
+              "label": "Attachments",
+              "order": 7
+            },
+            {
+              "key": "revision_history",
+              "hint": "Version, date, author, and a summary of each change.",
+              "label": "Revision history",
+              "order": 8
+            },
+            {
+              "key": "approval",
+              "hint": "Author, reviewer, and approver signatures.",
+              "label": "Approval",
+              "order": 9
+            }
+          ],
+          "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+          "templateKey": "sop"
+        },
+        "created_at": "2026-10-29T14:59:31.910Z",
+        "updated_at": "2026-10-29T14:59:32.868Z",
+        "deleted_at": null,
+        "authoring_document_id": "90af32b1-cff7-4eaa-acbd-abf5b3f3c87d"
+      },
+      "meta": {
+        "training": {
+          "documentId": 34,
+          "docNumber": "SOP-OQ-B-20261029145843",
+          "title": "OQ-006 Second SOP 20261029145843",
+          "documentVersion": "1.0",
+          "status": "in_review",
+          "contentDigest": "7cec8ed369dcfa6c83decb50dffdb37995004eae7029b082cb73915562d1dd30",
+          "eligible": false,
+          "canEditControlledText": false,
+          "unavailableReason": "Only an effective controlled document can be acknowledged.",
+          "sections": [],
+          "acknowledgement": null
+        }
+      }
+    }
+  }
+}

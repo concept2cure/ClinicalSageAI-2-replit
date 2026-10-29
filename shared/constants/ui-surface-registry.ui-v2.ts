@@ -276,7 +276,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ConversationThread.tsx exports and routes artifacts through the legacy project API.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
+    // '/api/mdx/ana/memory/profile' (2026-10-29, fold of ana-memory): WhatAnaRemembers.tsx reads the caller's own
+    // relational profile beside the conversation. Only that read: the rest of /api/mdx/ana/memory stays ana-memory's.
+    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -1364,7 +1366,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // settings writer (server/services/tenant/tenant-settings-writer.ts).
     // 2026-10-18 (ci:launch-scope-api): the Company documents panel, same rule — company
     // identity, letterhead and the legal-document library ARE organisation settings, and
-    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, AdminSurfaces.tsx).
+    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, through AdminSettings.tsx).
     // Both prefixes were refused in production: company-documents was claimed by no surface
     // at all, and templates/extract resolved to template-library + authoring-engine, neither
     // of which is a launch surface — so the letterhead import was a button that answered
@@ -1388,7 +1390,15 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
     // these two together — one condition across six prefixes, a packaging decision to make
     // deliberately rather than a line to widen here.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
+    // 2026-10-29 (D2, fold setup): Setup folded into Settings, so its claims that a Settings
+    // card calls moved here: the retention period (RetentionPeriodCard.tsx), claimed by setup
+    // alone, and the legal holds (LegalHoldsCard.tsx), shared with the Vault. The Profile
+    // card's /api/organizations and /api/mdx/industry-profile, and /api/gateway-accounts, are
+    // LAUNCH_PLATFORM_API. '/api/validation-kit' is named only by AdminSurfaces.tsx
+    // AdminConsole, the GAMP 5 kit no surface has mounted since af973c5e8 (2026-07-27); it is
+    // claimed here, where the kit belongs if the founder chooses to reach it, rather than
+    // left unmapped (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/README.md, "Not carried").
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

@@ -1,0 +1,542 @@
+{
+  "protocolId": "OQ-006",
+  "protocolTitle": "Operational Qualification — QMS controlled documents",
+  "app": "QMS",
+  "appLabel": "QMS controlled documents",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/qms/run.mjs",
+  "executedAt": "2026-10-29T14:35:15.568Z",
+  "finishedAt": "2026-10-29T14:35:35.403Z",
+  "environment": {
+    "baseUrl": "http://localhost:5198",
+    "node": "v22.22.0",
+    "chromium": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "618059d344054bd3119b8c158aabe755027badae"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "6",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "virusScan": "skipped",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+      }
+    }
+  },
+  "counts": {
+    "pass": 5,
+    "fail": 3,
+    "deviation": 0,
+    "not-executed": 13
+  },
+  "steps": [
+    {
+      "id": "OQ-QMS-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-QMS-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/mdx/qms/documents without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-10-29T14:35:16.852Z",
+      "finishedAt": "2026-10-29T14:35:17.114Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5198/api/mdx/qms/documents",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-02",
+      "title": "Controlled document creation validates its inputs",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents {docNumber, title} without docType",
+      "expected": "HTTP 422 with field errors",
+      "status": "fail",
+      "observed": {
+        "error": "Choose an owned project, document type and title, and state a reason of at least eight characters.",
+        "details": {
+          "code": "QMS_CREATE_INVALID"
+        }
+      },
+      "startedAt": "2026-10-29T14:35:17.114Z",
+      "finishedAt": "2026-10-29T14:35:17.632Z",
+      "evidence": [
+        "steps/OQ-QMS-02.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-02.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/mdx/qms/documents",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "expected 422, got 400",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-03",
+      "title": "Create an SOP; it is draft at version 1.0 and audited",
+      "urs": [
+        "URS-QMS-002",
+        "URS-QMS-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents {docNumber, title, docType:\"sop\", nextReviewDate:+10d}; GET list; GET detail",
+      "expected": "HTTP 201; status draft, version 1.0; meta.auditTrail reports the §11.10(e) row; listed and readable",
+      "status": "fail",
+      "observed": {
+        "error": "Choose an owned project, document type and title, and state a reason of at least eight characters.",
+        "details": {
+          "code": "QMS_CREATE_INVALID"
+        }
+      },
+      "startedAt": "2026-10-29T14:35:17.632Z",
+      "finishedAt": "2026-10-29T14:35:17.998Z",
+      "evidence": [
+        "steps/OQ-QMS-03.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/mdx/qms/documents",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "expected 201, got 400",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-04",
+      "title": "Duplicate document number refused",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents with the same docNumber",
+      "expected": "HTTP 409",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-03 did not pass",
+      "startedAt": "2026-10-29T14:35:17.998Z",
+      "finishedAt": "2026-10-29T14:35:17.998Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-05",
+      "title": "CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused",
+      "urs": [
+        "URS-QMS-004",
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first approve with {password} only; POST /api/mdx/qms/documents/:docA/approve {password, mfaToken?, meaning:\"APPROVED\", reason, effectiveDate}; approve again",
+      "expected": "A signer with a second factor enrolled: the password-only approval is refused 400 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded \"not executed — credential not supplied\".",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-03 did not pass",
+      "startedAt": "2026-10-29T14:35:17.998Z",
+      "finishedAt": "2026-10-29T14:35:17.998Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": "VSR-001 §8.3 P-2 / F-3: approval is a signing act (§11.50, §11.200); the runner's dev-login session holds no password, so the signer is a tester-supplied identity (tests/validation/lib/credentials.mjs). The two-person rule (§11.10(d)) means the signer must not be the author of SOP A (the run identity)."
+    },
+    {
+      "id": "OQ-QMS-05b",
+      "title": "Exactly one electronic_signatures row is bound to the approval; the §11.70 content digest recomputes from the stored document",
+      "urs": [
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/part11/signatures/by-target?target=qms-document:<docA>; GET /api/mdx/qms/documents/:docA; recompute sha256(canonicalJson(version content)) (tests/validation/lib/qms-digest.mjs — a re-implementation of computeQmsDocumentContentDigest)",
+      "expected": "One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true, second_factor_verified true when the signer has a second factor enrolled; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-10-29T14:35:17.999Z",
+      "finishedAt": "2026-10-29T14:35:17.999Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-06a",
+      "title": "Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "prerequisite",
+      "action": "POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:\"sop\", nextReviewDate:+5d}",
+      "expected": "HTTP 201, draft v1.0",
+      "status": "fail",
+      "observed": {
+        "error": "Choose an owned project, document type and title, and state a reason of at least eight characters.",
+        "details": {
+          "code": "QMS_CREATE_INVALID"
+        }
+      },
+      "startedAt": "2026-10-29T14:35:17.999Z",
+      "finishedAt": "2026-10-29T14:35:18.360Z",
+      "evidence": [
+        "steps/OQ-QMS-06a.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-06a.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/mdx/qms/documents",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "create expected 201, got 400",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-06",
+      "title": "Approval without any signature component is refused",
+      "urs": [
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "POST /documents/:docB/approve {} (no password, no meaning, no reason)",
+      "expected": "HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password, meaning and reason; docB stays draft",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-06a did not pass",
+      "startedAt": "2026-10-29T14:35:18.360Z",
+      "finishedAt": "2026-10-29T14:35:18.360Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-06b",
+      "title": "CREDENTIALED: a wrong password is refused and nothing is signed",
+      "urs": [
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "as the signer, POST /documents/:docB/approve {password:<wrong>, meaning:\"APPROVED\", reason}",
+      "expected": "HTTP 401 PASSWORD_VERIFICATION_FAILED; docB stays draft; no signature row for docB",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-06c",
+      "title": "CREDENTIALED: the author cannot approve their own document (two-person rule)",
+      "urs": [
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "as the signer, POST /api/mdx/qms/documents (SOP C, authored by the signer); then approve it with the signer's own valid password",
+      "expected": "HTTP 403 QMS_SELF_APPROVAL; SOP C stays draft; no signature row",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-06d",
+      "title": "CREDENTIALED: the signer approves SOP B (fixture — an effective document for the review-due and retire steps)",
+      "urs": [
+        "URS-QMS-004"
+      ],
+      "kind": "scripted",
+      "action": "as the signer, POST /documents/:docB/approve {password, meaning:\"APPROVED\", reason}",
+      "expected": "HTTP 200 effective with meta.signature; one signature row for docB",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-07",
+      "title": "Open a controlled revision (reason required; major version bump; back to draft)",
+      "urs": [
+        "URS-QMS-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /revise {} then POST /revise {reason}",
+      "expected": "Without reason → 422; with reason → version 2.0, status draft, prior approval cleared, audited",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-08",
+      "title": "Personal acknowledgement is bound to the exact readable released revision",
+      "urs": [
+        "URS-QMS-008"
+      ],
+      "kind": "scripted",
+      "action": "GET the released document; POST training-ack {documentVersion, contentDigest, understood:true, method:\"attestation\"}; GET training/compliance",
+      "expected": "HTTP 201 with exact documentVersion/contentDigest and chained audit; coverage HTTP 200",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-06d did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-09",
+      "title": "Review-due report lists effective documents approaching review",
+      "urs": [
+        "URS-QMS-009"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/mdx/qms/documents/review-due?within=30 (docB is effective with nextReviewDate +5d)",
+      "expected": "docB listed with overdue=false",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-06d did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-10b",
+      "title": "A reason alone does not retire a controlled document",
+      "urs": [
+        "URS-QMS-007"
+      ],
+      "kind": "scripted",
+      "action": "as the run identity (an editor), POST /documents/:docB/retire {reason} with no password and no meaning",
+      "expected": "HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password and meaning; docB keeps the status it had; no new signature row",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-06a did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": "Security review 2026-09-24, DP-32 / P1-29: until 2026-09-26 this request retired the document (OQ-QMS-10 as executed on 2026-09-23c is the record of that). Retirement is now the same electronic signature as approval (§11.50, §11.200); this step runs with or without the signer credential, so the refusal is observed on every execution."
+    },
+    {
+      "id": "OQ-QMS-10",
+      "title": "CREDENTIALED: the signer retires SOP B as an electronic signature; the retirement is stamped, audited and signed; a second retirement is refused",
+      "urs": [
+        "URS-QMS-007"
+      ],
+      "kind": "scripted",
+      "action": "as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:\"APPROVED\", reason}; read the signatures by target; recompute the §11.70 digest from the stored row; retire again",
+      "expected": "HTTP 200: status retired, metadata.retired {reason, meaning APPROVED, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-06d did not pass",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.361Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": "Security review 2026-09-24, DP-32 / P1-29. Retiring is the terminal transition of an effective procedure and a signed record (§11.50, §11.200), taken with the same ceremony as the approval: signing authority, password and enrolled second factor re-verified, the meaning, one electronic_signatures row bound to the version content, the UPDATE and the chained audit row in one transaction (server/services/qms/document-approval-signature.ts retireQmsDocumentSigned)."
+    },
+    {
+      "id": "OQ-QMS-11",
+      "title": "Change control: raise and list a change",
+      "urs": [
+        "URS-QMS-010"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/changes {changeNumber, title, reason}; GET /api/mdx/qms/changes; GET /changes/summary",
+      "expected": "HTTP 201 and the change is listed",
+      "status": "pass",
+      "observed": "change 1 listed (1)",
+      "startedAt": "2026-10-29T14:35:18.361Z",
+      "finishedAt": "2026-10-29T14:35:18.976Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-11.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/mdx/qms/changes",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-11.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5198/api/mdx/qms/changes",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-12",
+      "title": "Quality Management Plan create and list (governed: reason required)",
+      "urs": [
+        "URS-QMS-011"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/quality/plans {name, description} with no reason; again with a reason of at least 8 characters; GET /api/quality/plans",
+      "expected": "Without a reason: HTTP 400 REASON_REQUIRED and no plan created. With it: HTTP 201; plan listed with status draft",
+      "status": "pass",
+      "observed": "plan 1 status draft; 1 plans listed",
+      "startedAt": "2026-10-29T14:35:18.976Z",
+      "finishedAt": "2026-10-29T14:35:20.304Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-12.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/quality/plans",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-QMS-12.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5198/api/quality/plans",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-QMS-12.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5198/api/quality/plans",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-12.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5198/api/quality/plans",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-13",
+      "title": "Quality-system templates are served",
+      "urs": [
+        "URS-QMS-013"
+      ],
+      "kind": "ad-hoc",
+      "action": "GET /api/mdx/qms/templates",
+      "expected": "HTTP 200 with a non-empty template family",
+      "status": "pass",
+      "observed": "9 templates",
+      "startedAt": "2026-10-29T14:35:20.304Z",
+      "finishedAt": "2026-10-29T14:35:20.599Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-13.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5198/api/mdx/qms/templates",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-14",
+      "title": "Quality surface renders the SOP register and the Change control tab",
+      "urs": [
+        "URS-QMS-012"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/quality; find the SOP number; click the \"Change control\" tab",
+      "expected": "SOP register shows the created SOP; Change control tab renders (an unavailable store is an honest error state)",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-03 did not pass",
+      "startedAt": "2026-10-29T14:35:20.599Z",
+      "finishedAt": "2026-10-29T14:35:20.599Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-15",
+      "title": "QMP surface renders the plan",
+      "urs": [
+        "URS-QMS-011",
+        "URS-QMS-012"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/qmp",
+      "expected": "The plan name is visible",
+      "status": "pass",
+      "observed": "plan visible",
+      "startedAt": "2026-10-29T14:35:20.599Z",
+      "finishedAt": "2026-10-29T14:35:35.241Z",
+      "evidence": [
+        "steps/OQ-QMS-15.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

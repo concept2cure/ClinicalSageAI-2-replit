@@ -3,13 +3,14 @@
  * Protocol: docs/validation/OQ-006-QMS.md. Requirements: docs/validation/URS-006-QMS.md.
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
-import { prepareControlledQualificationText, qualifyPersonalAcknowledgement } from './personal-acknowledgement.mjs';
+import { qualifyPersonalAcknowledgement } from './personal-acknowledgement.mjs';
 import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 import {
   inDays, errCode, dataOf, isApprovalRow, isQmsSignatureRow, isRetirementStamp, signatureRowsFor,
   postSigned, approveSigned, retireSigned, retirementDigestReport,
 } from './signed-acts.mjs';
+import { asSigned, createAuthoredSop, expectRouteCompleteOn, qmsProgramId, qualifyRoutedSend, sendOnRoute, signerRoute } from './controlled-sop.mjs';
 
 const run = await createRun({
   app: 'QMS',
@@ -40,13 +41,16 @@ await step(
     id: 'OQ-QMS-02',
     urs: ['URS-QMS-002'],
     title: 'Controlled document creation validates its inputs',
-    action: 'POST /api/mdx/qms/documents {docNumber, title} without docType',
-    expected: 'HTTP 422 with field errors',
+    action: 'POST /api/mdx/qms/documents {docNumber, title, programId, reason} without docType',
+    expected: 'HTTP 400 QMS_CREATE_INVALID (v0.8: the controlled create, 2026-10-14); nothing created',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', '/api/mdx/qms/documents', { docNumber: `SOP-BAD-${stamp}`, title: 'no type' });
-    expect(r.status === 422, `expected 422, got ${r.status}`, r.json);
-    return `HTTP 422: ${JSON.stringify(r.json).slice(0, 160)}`;
+    const docNumber = `SOP-BAD-${stamp}`;
+    const r = await api('POST', '/api/mdx/qms/documents', { docNumber, title: 'no type', programId: qmsProgramId(), reason: 'OQ-006 step 02: missing type must be refused' });
+    expect(r.status === 400 && errCode(r) === 'QMS_CREATE_INVALID', `expected 400 QMS_CREATE_INVALID, got ${r.status}`, r.json);
+    const list = await api('GET', '/api/mdx/qms/documents');
+    expect(!(list.json?.data ?? []).some((x) => x.doc_number === docNumber), 'a refused create was registered', list.json?.meta);
+    return `HTTP 400 QMS_CREATE_INVALID: ${JSON.stringify(r.json).slice(0, 160)}; not registered`;
   },
 );
 
@@ -54,22 +58,15 @@ await step(
   {
     id: 'OQ-QMS-03',
     urs: ['URS-QMS-002', 'URS-QMS-003'],
-    title: 'Create an SOP; it is draft at version 1.0 and audited',
-    action: 'POST /api/mdx/qms/documents {docNumber, title, docType:"sop", nextReviewDate:+10d}; GET list; GET detail',
-    expected: 'HTTP 201; status draft, version 1.0; meta.auditTrail reports the §11.10(e) row; listed and readable',
+    title: 'Create an SOP; it is draft at version 1.0, audited, and its procedure text is written',
+    action: 'POST /api/mdx/qms/documents {docNumber, title, docType:"sop", programId, templateKey:"sop", reason, nextReviewDate:+10d}; write the first authored section (PATCH /api/authoring/sections/:id {content, changeReason}); GET list; GET detail',
+    expected: 'HTTP 201; status draft, version 1.0, bound to an authored copy; meta.auditTrail reports the §11.10(e) row; the section saves; listed and readable',
   },
   async ({ api, expect }) => {
     const docNumber = `SOP-OQ-${stamp}`;
-    const r = await api('POST', '/api/mdx/qms/documents', {
-      docNumber,
-      title: `OQ-006 Document control SOP ${stamp}`,
-      docType: 'sop',
-      category: 'validation',
-      nextReviewDate: inDays(10),
+    const { doc: d, response: r } = await createAuthoredSop(api, expect, {
+      docNumber, title: `OQ-006 Document control SOP ${stamp}`, nextReviewDate: inDays(10), reason: 'OQ-006 step 03: create the document control SOP',
     });
-    expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
-    const d = r.json?.data;
-    expect(d?.status === 'draft' && d?.version === '1.0', 'status/version wrong', d);
     state.docA = d;
     state.docNumber = docNumber;
     const list = await api('GET', '/api/mdx/qms/documents');
@@ -85,14 +82,30 @@ await step(
     id: 'OQ-QMS-04',
     urs: ['URS-QMS-002'],
     title: 'Duplicate document number refused',
-    action: 'POST /api/mdx/qms/documents with the same docNumber',
+    action: 'POST /api/mdx/qms/documents with the same docNumber (and its project and reason)',
     expected: 'HTTP 409',
     dependsOn: ['OQ-QMS-03'],
   },
   async ({ api, expect }) => {
-    const r = await api('POST', '/api/mdx/qms/documents', { docNumber: state.docNumber, title: 'dup', docType: 'sop' });
+    const r = await api('POST', '/api/mdx/qms/documents', { docNumber: state.docNumber, title: 'dup', docType: 'sop', programId: qmsProgramId(), reason: 'OQ-006 step 04: a duplicate number must be refused' });
     expect(r.status === 409, `expected 409, got ${r.status}`, r.json);
     return 'HTTP 409';
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-04b',
+    urs: ['URS-QMS-004'],
+    title: 'CREDENTIALED: SOP A is sent for review on a review route naming its QMS approver; a send without a route is refused',
+    action: 'resolve the signer (OQ_SIGNER_EMAIL); PATCH /api/mdx/qms/documents/:docA {status:"in_review", reason} with no route; then with route {reviewers:[], approvers:[signer], approvalDueDate:+5d}; GET /api/mdx/qms/documents/:docA/review-route',
+    expected: 'Without a route: HTTP 409 REVIEW_ROUTE_REQUIRED and SOP A stays draft. With it: HTTP 200, status in_review; the route is open, round 1, sent by the run identity, with one member: the signer, role approver, step open, outcome pending',
+    dependsOn: ['OQ-QMS-03'],
+    note: 'v0.8 (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md §2.7, NEW-4, D-Q): a QMS document is sent for review on a route that names one QMS approver (a designated one; while the organization has designated none, a member with the Approver role) and any reviewers. The signer is an Approver of the run organization, which designates none.',
+  },
+  async (ctx) => {
+    ctx.state.signer = ctx.state.signer ?? await requireSigner(ctx, ctx.baseUrl, ctx.auth.user.email);
+    return qualifyRoutedSend(ctx, state.docA.id, ctx.state.signer.session.user.id);
   },
 );
 
@@ -104,12 +117,12 @@ await step(
     action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first approve with {password} only; POST /api/mdx/qms/documents/:docA/approve {password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}; approve again',
     expected:
       'A signer with a second factor enrolled: the password-only approval is refused 400 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
-    dependsOn: ['OQ-QMS-03'],
+    dependsOn: ['OQ-QMS-04b'],
     note: 'VSR-001 §8.3 P-2 / F-3: approval is a signing act (§11.50, §11.200); the runner\'s dev-login session holds no password, so the signer is a tester-supplied identity (tests/validation/lib/credentials.mjs). The two-person rule (§11.10(d)) means the signer must not be the author of SOP A (the run identity).',
   },
   async (ctx) => {
     const { expect, auth, baseUrl } = ctx;
-    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
+    const signer = ctx.state.signer ?? await requireSigner(ctx, baseUrl, auth.user.email);
     expect(signer.session.user.email !== auth.user.email, 'signer session resolved to the author identity', signer.session.user.email);
     ctx.state.signer = signer;
     let secondFactor = 'no second factor enrolled';
@@ -151,7 +164,7 @@ await step(
     urs: ['URS-QMS-005'],
     title: 'Exactly one electronic_signatures row is bound to the approval; the §11.70 content digest recomputes from the stored document',
     action: 'GET /api/part11/signatures/by-target?target=qms-document:<docA>; GET /api/mdx/qms/documents/:docA; recompute sha256(canonicalJson(version content)) (tests/validation/lib/qms-digest.mjs — a re-implementation of computeQmsDocumentContentDigest)',
-    expected: 'One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true, second_factor_verified true when the signer has a second factor enrolled; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest',
+    expected: 'One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true, second_factor_verified true when the signer has a second factor enrolled; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest; (v0.8) the review route is complete, its approver signed with this row',
     dependsOn: ['OQ-QMS-05'],
   },
   async ({ api, expect, state, attach }) => {
@@ -170,7 +183,8 @@ await step(
     );
     const g = await api('GET', `/api/mdx/qms/documents/${state.docA.id}`);
     expect(g.status === 200, `document read expected 200, got ${g.status}`, g.json);
-    const stored = g.json?.data ?? {};
+    // v0.8: an authored document's prose is restored from its signed version record (controlled-sop.mjs asSigned).
+    const stored = await asSigned(api, expect, g.json?.data ?? {});
     const recomputed = computeQmsDocumentContentDigest(stored);
     const storedOnDocument = stored.metadata?.approval?.contentDigest ?? null;
     const report = {
@@ -184,7 +198,8 @@ await step(
     };
     attach('digest-recomputation.json', report);
     expect(report.match, 'recomputed §11.70 digest does not match the signature / the stored document', report);
-    return `1 row (id ${row.id}) by signer ${row.signer_id}, ${row.signature_meaning}, ${row.binding_basis}, second_factor_verified ${row.second_factor_verified}; recomputed digest ${recomputed.slice(0, 12)}… == signature == document (match true)`;
+    const routeId = await expectRouteCompleteOn(api, expect, state.docA.id, row.id); // v0.8 (RR4)
+    return `1 row (id ${row.id}) by signer ${row.signer_id}, ${row.signature_meaning}, ${row.binding_basis}, second_factor_verified ${row.second_factor_verified}; recomputed digest ${recomputed.slice(0, 12)}… == signature == document (match true); route ${routeId} complete on esig ${row.id}`;
   },
 );
 
@@ -193,15 +208,17 @@ await step(
     id: 'OQ-QMS-06a',
     kind: 'prerequisite',
     urs: ['URS-QMS-002'],
-    title: 'Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)',
-    action: 'POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:"sop", nextReviewDate:+5d}',
-    expected: 'HTTP 201, draft v1.0',
+    title: 'Create a second SOP and send it for review on its route (fixture for the credential refusals, training, review-due and retire steps)',
+    action: 'POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:"sop", programId, reason, nextReviewDate:+5d}; write its procedure text; PATCH status in_review with a route naming the signer as QMS approver',
+    expected: 'HTTP 201, draft v1.0; then in review on an open route',
+    dependsOn: ['OQ-QMS-04b'],
   },
   async ({ api, expect }) => {
-    const c = await api('POST', '/api/mdx/qms/documents', { docNumber: `SOP-OQ-B-${stamp}`, title: `OQ-006 Second SOP ${stamp}`, docType: 'sop', nextReviewDate: inDays(5) });
-    expect(c.status === 201, `create expected 201, got ${c.status}`, c.json);
-    state.docB = c.json.data;
-    state.docB = await prepareControlledQualificationText({ api, expect }, state.docB);
+    const { doc } = await createAuthoredSop(api, expect, {
+      docNumber: `SOP-OQ-B-${stamp}`, title: `OQ-006 Second SOP ${stamp}`, nextReviewDate: inDays(5), reason: 'OQ-006 step 06a: create the qualification fixture SOP',
+    });
+    const sent = await sendOnRoute(api, expect, doc.id, state.signer.session.user.id, 'OQ-006 step 06a: SOP B ready for QA approval');
+    state.docB = sent.json.data;
     return `doc ${state.docB.id} ${state.docB.doc_number} ${state.docB.status} v${state.docB.version}`;
   },
 );
@@ -212,7 +229,7 @@ await step(
     urs: ['URS-QMS-005'],
     title: 'Approval without any signature component is refused',
     action: 'POST /documents/:docB/approve {} (no password, no meaning, no reason)',
-    expected: 'HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password, meaning and reason; docB stays draft',
+    expected: 'HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password, meaning and reason; docB stays in review',
     dependsOn: ['OQ-QMS-06a'],
   },
   async ({ api, expect }) => {
@@ -221,8 +238,8 @@ await step(
     const fields = Object.keys(r.json?.details?.fieldErrors ?? {});
     expect(['password', 'meaning', 'reason'].every((f) => fields.includes(f)), 'fieldErrors do not name password, meaning and reason', r.json);
     const g = await api('GET', `/api/mdx/qms/documents/${state.docB.id}`);
-    expect(g.json?.data?.status === 'draft', 'docB left draft state on a refused approval', g.json?.data);
-    return `HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: ${fields.join(', ')}); docB still draft`;
+    expect(g.json?.data?.status === 'in_review', 'docB left review on a refused approval', g.json?.data);
+    return `HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: ${fields.join(', ')}); docB still in review`;
   },
 );
 
@@ -232,7 +249,7 @@ await step(
     urs: ['URS-QMS-005'],
     title: 'CREDENTIALED: a wrong password is refused and nothing is signed',
     action: 'as the signer, POST /documents/:docB/approve {password:<wrong>, meaning:"APPROVED", reason}',
-    expected: 'HTTP 401 PASSWORD_VERIFICATION_FAILED; docB stays draft; no signature row for docB',
+    expected: 'HTTP 401 PASSWORD_VERIFICATION_FAILED; docB stays in review; no signature row for docB',
     dependsOn: ['OQ-QMS-05', 'OQ-QMS-06a'],
   },
   async ({ api, apiAs, expect, state }) => {
@@ -244,10 +261,10 @@ await step(
     });
     expect(r.status === 401, `expected 401, got ${r.status}`, r.json);
     const g = await api('GET', `/api/mdx/qms/documents/${state.docB.id}`);
-    expect(g.json?.data?.status === 'draft', 'docB changed state on a refused credential', g.json?.data);
+    expect(g.json?.data?.status === 'in_review', 'docB changed state on a refused credential', g.json?.data);
     const s = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${state.docB.id}`)}`);
     expect(s.status === 200 && (s.json?.data ?? []).length === 0, 'a signature row exists for a refused approval', s.json);
-    return `HTTP 401 ${errCode(r) ?? ''}; docB still draft; 0 signature rows`;
+    return `HTTP 401 ${errCode(r) ?? ''}; docB still in review; 0 signature rows`;
   },
 );
 
@@ -255,30 +272,27 @@ await step(
   {
     id: 'OQ-QMS-06c',
     urs: ['URS-QMS-005'],
-    title: 'CREDENTIALED: the author cannot approve their own document (two-person rule)',
-    action: 'as the signer, POST /api/mdx/qms/documents (SOP C, authored by the signer); then approve it with the signer\'s own valid password',
-    expected: 'HTTP 403 QMS_SELF_APPROVAL; SOP C stays draft; no signature row',
-    dependsOn: ['OQ-QMS-05'],
+    title: 'CREDENTIALED: the author cannot be named to approve their own document, nor approve it (two-person rule)',
+    action: 'as the signer, create SOP C (authored by the signer) with its text; send it for review on a route naming the signer as its QMS approver; then approve it with the signer\'s own valid password (and code)',
+    expected: 'The send is refused HTTP 409 MEMBER_IS_AUTHOR (v0.8: the route refuses the author before anything is written) and SOP C stays draft; the approval is refused HTTP 409 QMS_INVALID_STATE (only a document under review is approved); no signature row',
+    dependsOn: ['OQ-QMS-04b'],
+    note: 'v0.8 (RR4, §2.5): the two-person rule is now enforced where the approver is named (validateRouteMember, MEMBER_IS_AUTHOR), so an author never reaches their own document\'s approval on a route. The approval\'s own refusal (QMS_SELF_APPROVAL) remains for a document that entered review before review routes (§2.13); no API creates such a document now.',
   },
   async ({ apiAs, expect, state }) => {
     const asSigner = apiAs(state.signer.session);
-    const c = await asSigner('POST', '/api/mdx/qms/documents', { docNumber: `SOP-OQ-C-${stamp}`, title: `OQ-006 Self-approval SOP ${stamp}`, docType: 'sop', nextReviewDate: inDays(30) });
-    expect(c.status === 201, `create expected 201, got ${c.status}`, c.json);
-    const docC = c.json.data;
+    const { doc: docC } = await createAuthoredSop(asSigner, expect, { docNumber: `SOP-OQ-C-${stamp}`, title: `OQ-006 Self-approval SOP ${stamp}`, nextReviewDate: inDays(30), reason: 'OQ-006 step 06c: the signer authors SOP C' });
     expect(String(docC.author_id) === String(state.signer.session.user.id), 'SOP C is not attributed to the signer', docC);
+    const send = await asSigner('PATCH', `/api/mdx/qms/documents/${docC.id}`, { status: 'in_review', reason: 'OQ-006 step 06c: self-routing must be refused', route: signerRoute(state.signer.session.user.id) });
+    expect(send.status === 409 && errCode(send) === 'MEMBER_IS_AUTHOR', `self-naming expected 409 MEMBER_IS_AUTHOR, got ${send.status}`, send.json);
     const selfToken = await signerCode(state.signer);
-    const r = await asSigner('POST', `/api/mdx/qms/documents/${docC.id}/approve`, {
-      password: state.signer.password,
-      ...(selfToken ? { mfaToken: selfToken } : {}),
-      meaning: 'APPROVED',
-      reason: 'OQ-006 step 06c: self-approval must be refused',
-    });
-    expect(r.status === 403 && errCode(r) === 'QMS_SELF_APPROVAL', `expected 403 QMS_SELF_APPROVAL, got ${r.status}`, r.json);
+    const r = await asSigner('POST', `/api/mdx/qms/documents/${docC.id}/approve`,
+      { password: state.signer.password, ...(selfToken ? { mfaToken: selfToken } : {}), meaning: 'APPROVED', reason: 'OQ-006 step 06c: self-approval must be refused' });
+    expect(r.status === 409 && errCode(r) === 'QMS_INVALID_STATE', `expected 409 QMS_INVALID_STATE, got ${r.status}`, r.json);
     const g = await asSigner('GET', `/api/mdx/qms/documents/${docC.id}`);
     expect(g.json?.data?.status === 'draft', 'SOP C changed state on the refused self-approval', g.json?.data);
     const s = await asSigner('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${docC.id}`)}`);
     expect(s.status === 200 && (s.json?.data ?? []).length === 0, 'a signature row exists for the refused self-approval', s.json);
-    return `SOP C ${docC.id} authored by ${docC.author_id}; self-approve → HTTP 403 QMS_SELF_APPROVAL; still draft; 0 signature rows`;
+    return `SOP C ${docC.id} authored by ${docC.author_id}; naming the author as approver → HTTP 409 MEMBER_IS_AUTHOR; self-approve → HTTP 409 QMS_INVALID_STATE; still draft; 0 signature rows`;
   },
 );
 
@@ -306,12 +320,12 @@ await step(
     urs: ['URS-QMS-006'],
     title: 'Open a controlled revision (reason required; major version bump; back to draft)',
     action: 'POST /revise {} then POST /revise {reason}',
-    expected: 'Without reason → 422; with reason → version 2.0, status draft, prior approval cleared, audited',
+    expected: 'Without reason → 400 QMS_REASON_REQUIRED (v0.8: the controlled revision, 2026-10-14); with reason → version 2.0, status draft, prior approval cleared, audited',
     dependsOn: ['OQ-QMS-05'],
   },
   async ({ api, expect }) => {
     const a = await api('POST', `/api/mdx/qms/documents/${state.docA.id}/revise`, {});
-    expect(a.status === 422, `no reason expected 422, got ${a.status}`, a.json);
+    expect(a.status === 400 && errCode(a) === 'QMS_REASON_REQUIRED', `no reason expected 400 QMS_REASON_REQUIRED, got ${a.status}`, a.json);
     const b = await api('POST', `/api/mdx/qms/documents/${state.docA.id}/revise`, { reason: 'OQ-006 step 07: periodic review found an obsolete reference' });
     expect(b.status === 200, `revise expected 200, got ${b.status}`, b.json);
     const d = b.json?.data;
@@ -397,7 +411,7 @@ await step(
     const row = rows.find((x) => x.signature_type === 'qms-document-retirement');
     expect(rows.length === 2 && row && isQmsSignatureRow(row, signerId, 'qms-document-retirement') && String(row.id) === String(sig.id), `expected 2 signature rows for docB with one valid retirement row id ${sig.id}, got ${rows.length}`, rows);
     // §11.70: the retirement digest is the version-content recipe with the stamp the retirement writes removed.
-    const report = retirementDigestReport(dataOf(await asSigner('GET', `/api/mdx/qms/documents/${d.id}`)), sig, retired, row);
+    const report = retirementDigestReport(await asSigned(asSigner, expect, dataOf(await asSigner('GET', `/api/mdx/qms/documents/${d.id}`))), sig, retired, row);
     attach('retirement-digest-recomputation.json', report);
     expect(report.match, 'recomputed §11.70 retirement digest does not match the signature / the stored document', report);
     const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused' });
@@ -475,13 +489,13 @@ await step(
     kind: 'unscripted',
     urs: ['URS-QMS-012'],
     title: 'Quality surface renders the SOP register and the Change control tab',
-    action: 'Open /concept2cure/quality; find the SOP number; click the "Change control" tab',
+    action: 'Open /concept2cure/quality?program=<OQ_QMS_PROGRAM_ID> (v0.8: Quality opens within a project); find the SOP number; click the "Change control" tab',
     expected: 'SOP register shows the created SOP; Change control tab renders (an unavailable store is an honest error state)',
     dependsOn: ['OQ-QMS-03'],
   },
   async (ctx) => {
     await ctx.newPage(null);
-    await ctx.goto('/concept2cure/quality');
+    await ctx.goto(`/concept2cure/quality?program=${qmsProgramId()}`);
     await ctx.expectText(state.docNumber);
     await ctx.screenshot('sop-register');
     const tab = ctx.page.getByRole('tab', { name: /change control/i });

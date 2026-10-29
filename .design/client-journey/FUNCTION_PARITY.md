@@ -590,8 +590,16 @@ Admitting RBM, or moving both screens into a project step, is a founder decision
 ### Into the conversation (`conversation-thread`)
 
 #### From `ana-memory`
-- [ ] See how AnA is tuned to me. From `AnaMemory.tsx:107,208-219`. Goes to: a read-only "What AnA remembers" panel in account settings or beside the conversation. Real today.
-- [ ] "Things I got wrong" ledger. From `AnaMemory.tsx:223-232`. Goes to: the same panel, including the project-scoped profile. Real today.
+Folded 2026-10-29 (D2): `ana-memory` is an alias of `conversation-thread`, and
+`AnaMemory.tsx` is deleted. The two real items are "What AnA remembers"
+(`WhatAnaRemembers.tsx`), opened from the conversation's header, with the
+project-scoped profile for the conversation's project. Evidence and the fold
+guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/`,
+`foldAnaMemory.test.ts`.
+
+Not carried, as below. The screen was the only caller of their routes
+(`mdx-ana-memory.ts`: the atom list, verify, supersede, and the thread list,
+read and pin), so those routes were deleted with it.
 - [ ] Organisation memory atoms. From `AnaMemory.tsx:119`. Goes to: held until a writer exists. Not real today.
 - [ ] Filter atoms. From `AnaMemory.tsx:243-252`. Goes to: with the list. Not real today.
 - [ ] Verify an atom. From `AnaMemory.tsx:136-149`. Goes to: with the list. Not real today.
@@ -619,18 +627,23 @@ Admitting RBM, or moving both screens into a project step, is a founder decision
 - [ ] AnA sees the library state. From `TemplateLibrary.tsx:459-515`. Goes to: company-design state in admin-console's context. Real today.
 
 #### From `setup`
-- [ ] Rename the organisation under a reason. From `AdminSurfaces.tsx:435-447`. Goes to: a Profile card in admin-console Settings. Real today.
-- [ ] Choose the client type. From `AdminSurfaces.tsx:472-483`. Goes to: admin-console Settings. Real today.
-- [ ] Open the Identity console. From `AdminSurfaces.tsx:536`. Goes to: a link on the SSO tab. Real today.
-- [ ] Choose the gateway account. From `GatewayAccountsSetting.tsx:100-150`. Goes to: mounted in Settings, and offered at Submit on the first transmit. Real today.
-- [ ] Gateway account status. From `GatewayAccountsSetting.tsx:166-180`. Goes to: with that mount. Real today.
-- [ ] Session timeout and concurrent sessions. From `SessionPolicySetting.tsx:56-98`. Goes to: mounted in Settings, replacing the row that only asks AnA. Real today.
-- [ ] Require PDF/A. From `PdfARequirementSetting.tsx:90-129`. Goes to: mounted in Settings. Real today.
-- [ ] See the retention period. From `RetentionPeriodCard.tsx:193`. Goes to: mounted in Settings. Real today.
-- [ ] Set the retention period. From `RetentionPeriodCard.tsx:130-181`. Goes to: mounted in Settings. Real today.
-- [ ] List, place and lift legal holds. From `LegalHoldsCard.tsx:140-240`. Goes to: mounted in Settings, with "Place legal hold" also in Vault. Real today.
-- [ ] Ask AnA to summarise the configuration. From `AdminSurfaces.tsx:300-376`. Goes to: admin-console's context. Real today.
-- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx:1762-1874`. Goes to: a card in Settings. Not real today.
+
+Folded 2026-10-29 (D2): `setup` is an alias of `admin-console` that opens its
+Settings tab, and Setup is deleted from `AdminSurfaces.tsx`. Evidence and the
+fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/`, `foldSetup.test.ts`.
+
+- [x] Rename the organisation under a reason: `OrganizationProfileCard.tsx` (moved from Setup), the Profile card first on admin-console Settings (`AdminSettings.tsx`). `PATCH /api/organizations/:id/profile` with the reason; a failed read leaves the fields read-only and offers Try again.
+- [x] Choose the client type: the same card, pending until saved under the same reason (`adminSettingsClientTypeGoverned.test.tsx`).
+- [x] Open the Identity console: `IdentityConsoleDoor` on the SSO tab, shown also when the SSO read failed.
+- [x] Choose the gateway account: `GatewayAccountsSetting` mounted on Settings. Not offered at Submit: `TransmitPanel` names the gap but the card lists every gateway and its PUT is owner or administrator only, so it does not fit there. Handed on.
+- [x] Gateway account status: with that mount.
+- [x] Session timeout and concurrent sessions: `SessionPolicySetting` mounted on Settings; `GET /api/mdx/admin` no longer serves the read-only "Session timeout" row it replaces.
+- [x] Require PDF/A: `PdfARequirementSetting` mounted on Settings.
+- [x] See the retention period: `RetentionPeriodCard` mounted on Settings.
+- [x] Set the retention period: the same card; admin-console claims `/api/vault/legal-holds/retention`.
+- [x] List, place and lift legal holds: `LegalHoldsCard` mounted on Settings. Vault does not offer "Place legal hold"; reaching it needs the form to take a preset project and document. Handed on.
+- [x] Ask AnA to summarise the configuration: admin-console's `facts.configuration` and summary sentence, only while Settings shows it, and "Ask AnA to summarise this configuration" in the tab head (`adminConsoleSettings.test.tsx`).
+- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx` `AdminConsole`, unmounted since `af973c5e8` (2026-07-27). Goes to: a card in Settings, if the founder chooses. Not real today; not carried.
 
 ### Into protocol development (`protocol-dev`)
 

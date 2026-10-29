@@ -5,6 +5,7 @@ import { computeQmsDocumentContentDigest, type QmsDocumentRow } from './document
 import { currentStanding, QmsTrainingRefused, withQmsTrainingTransaction, type TrainingSqlClient } from './training';
 import { trainingObject } from './training-content';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds, withQmsControlledTextAuthor } from './controlled-text-authorship';
+import { routeOpenEditRefusal } from './qms-review-route';
 
 interface ControlledTextSave {
   organizationId: number; userId: number; documentId: number;
@@ -46,6 +47,9 @@ export async function saveQmsControlledText(client: TrainingSqlClient, params: C
     if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
     if (document.authoring_document_id) throw new QmsTrainingRefused(409, 'QMS_EDIT_IN_AUTHORING', 'Open this controlled document in the Quality document workbench to edit its canonical authored sections.');
     if (!['draft', 'in_review'].includes(document.status)) throw new QmsTrainingRefused(409, 'QMS_DOCUMENT_CONTROLLED', 'Released controlled text changes only through a revision. Nothing was saved.');
+    // RR4 (§2.9): saving demotes a document in review to draft, an exit from review; refused while its route is open.
+    const routeOpen = await routeOpenEditRefusal(client, document);
+    if (routeOpen) throw new QmsTrainingRefused(409, 'QMS_ROUTE_OPEN', `${routeOpen} Nothing was saved.`);
     const beforeDigest = computeQmsDocumentContentDigest(document);
     if (input.controlledText.documentVersion !== document.version || input.controlledText.contentDigest !== beforeDigest) throw new QmsTrainingRefused(409, 'QMS_CONTROLLED_TEXT_STALE', 'The controlled document changed. Reload it before saving.');
     const metadata: Record<string, unknown> = { ...protectAuthorialMetadata(document, params.userId), sections: mergeControlledSections(document, input) };

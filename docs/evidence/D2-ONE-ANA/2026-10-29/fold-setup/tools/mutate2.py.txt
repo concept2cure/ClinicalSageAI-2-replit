@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Mutation runner for the setup fold, Part 2 (the retirement).
+
+Each mutation replaces one exact, single-occurrence string, runs its checks
+(the fold guards, and the CI gate the mutation is for), and is reversed by
+replacement. Every mutated file's md5 is checked after each reversal.
+"""
+import hashlib, os, re, subprocess, sys
+
+REPO = '/home/user/ClinicalSageAI-2-replit'
+RM = 'client/src/concept2cure/v2/registryModel.ts'
+SV = 'client/src/concept2cure/v2/surfaceViews.ts'
+REG = 'shared/constants/ui-surface-registry.ts'
+REG2 = 'shared/constants/ui-surface-registry.ui-v2.ts'
+LS = 'shared/constants/launch-scope.ts'
+DISC = 'scripts/ci/check-surface-discoverability.mjs'
+ANA = 'scripts/ci/check-ana-surface-context.mjs'
+ADM = 'client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx'
+GUARDS = ['npx', 'vitest', 'run', 'client/src/concept2cure/v2/__tests__/foldSetup.test.ts',
+          'server/services/entitlements/__tests__/launch-scope.test.ts']
+GATE = lambda name: ['npm', 'run', '--silent', name]
+
+OLD_ENTRY = """  {
+    id: 'setup',
+    label: 'Admin / setup',
+    navTier: 'admin',
+    layoutMode: 'setup',
+    icon: 'settings',
+    group: 'admin',
+    uiKit: null,
+    apiPrefixes: ['/api/setup'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Org profile.',
+  },
+"""
+
+MUTATIONS = [
+    ('P1', 'the alias is gone', RM, "  setup: 'admin-console',\n", "  /*MUT-P1*/\n", [GUARDS]),
+    ('P2', 'the alias opens no tab', RM,
+     "  setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },\n", "  /*MUT-P2*/\n", [GUARDS]),
+    ('P3', 'the alias opens the wrong tab', RM,
+     "  setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },",
+     "  setup: { actionId: 'admin-console.open-tab', params: { tab: 'members' } },", [GUARDS]),
+    ('P4', 'the old id keeps a view', SV,
+     "  'admin-console': { component: AdminAccess, full: true },\n",
+     "  'admin-console': { component: AdminAccess, full: true },\n  setup: { component: AdminAccess },\n", [GUARDS]),
+    ('P5', 'the old id keeps a registry entry (⌘K lists it)', REG,
+     "  {\n    id: 'audit-trail',\n", OLD_ENTRY + "  {\n    id: 'audit-trail',\n", [GUARDS]),
+    ('P6', 'the old id stays a launch shell surface', LS,
+     "  // setup folded into admin-console (D2, 2026-10-29): its settings are on Admin and access → Settings.\n",
+     "  setup: 'first-run configuration',\n", [GUARDS]),
+    ('P7', 'the old id keeps its rail group', RM,
+     "  'audit-trail': 'admin',\n", "  setup: 'admin',\n  'audit-trail': 'admin',\n", [GUARDS]),
+    ('P8', 'admin-console does not claim the retention route', REG2,
+     "'/api/tenant-config', '/api/vault/legal-holds/retention', ", "'/api/tenant-config', ", [GUARDS]),
+    ('P9', 'the discoverability list still names setup', DISC,
+     "  'admin-console': 'platform administration, reached from the admin area not subscribed to',\n",
+     "  'admin-console': 'platform administration, reached from the admin area not subscribed to',\n  setup: 'first-run configuration, reached before any catalog exists',\n",
+     [GUARDS, GATE('ci:surface-discoverability')]),
+    ('P10', 'ID_BASELINE keeps the retired publisher', ANA, "const ID_BASELINE = 108;", "const ID_BASELINE = 109;",
+     [GATE('ci:ana-surface-context')]),
+    ('P11', 'Setup survives with its own AnA publisher', ADM,
+     "/** The ledger route's `meta.chain`",
+     "export function Setup() {\n  usePublishSurfaceContext('setup', null);\n  return null;\n}\n\n/** The ledger route's `meta.chain`",
+     [GUARDS]),
+    ('P12', 'the GAMP kit route is left unmapped', REG2,
+     "'/api/vault/legal-holds', '/api/validation-kit'],", "'/api/vault/legal-holds'],",
+     [GATE('ci:launch-scope-api')]),
+]
+
+def md5(p):
+    return hashlib.md5(open(os.path.join(REPO, p), 'rb').read()).hexdigest()
+
+def run(cmds):
+    failed = []
+    for cmd in cmds:
+        p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, timeout=900)
+        out = re.sub(r'\x1b\[[0-9;]*m', '', p.stdout + p.stderr)
+        if p.returncode != 0:
+            fails = [l.strip() for l in out.splitlines() if l.strip().startswith('×') or 'FAIL' in l][:3]
+            failed.append((' '.join(cmd[-1:]), fails))
+    return failed
+
+only = set(sys.argv[1:])
+files = sorted({m[2] for m in MUTATIONS})
+before = {f: md5(f) for f in files}
+results = []
+for mid, what, path, old, new, cmds in MUTATIONS:
+    if only and mid not in only:
+        continue
+    full = os.path.join(REPO, path)
+    src = open(full).read()
+    assert src.count(old) == 1, f'{mid}: needle occurs {src.count(old)} times'
+    mutated = src.replace(old, new)
+    open(full, 'w').write(mutated)
+    try:
+        failed = run(cmds)
+    finally:
+        # Reverse by replacement on the file as it is now, so an edit another
+        # agent made meanwhile survives; md5 is then checked against the start.
+        cur = open(full).read()
+        assert cur.count(new) == 1, f'{mid}: mutation text not found once in {path}'
+        open(full, 'w').write(cur.replace(new, old, 1))
+        if cur != mutated:
+            print(f'    note: {path} changed during the run; reversed by replacement', flush=True)
+        else:
+            assert md5(path) == before[path], f'{mid}: {path} not restored byte-for-byte'
+    killed = bool(failed)
+    results.append(killed)
+    print(f'{mid} {"KILLED" if killed else "SURVIVED"} — {what}', flush=True)
+    for name, fails in failed:
+        print(f'    by {name}', flush=True)
+        for f in fails:
+            print(f'      {f}', flush=True)
+
+for f in files:
+    if md5(f) != before[f]:
+        print(f'note: {f} differs from the start (another edit, or a failed reversal) — check it', flush=True)
+print(f'\n{sum(results)}/{len(results)} killed; every mutated file restored (md5 checked).')

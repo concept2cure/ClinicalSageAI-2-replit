@@ -231,6 +231,40 @@ export interface ApproveQmsDocumentSignedParams {
   authenticationMethod: 'password' | 'password+totp';
   secondFactorVerified: boolean;
   ipAddress: string | null;
+  /**
+   * The review route's part in the approval (RR4, §2.8; services/qms/qms-review-route.ts):
+   * `before` runs under the row lock, after the content digest is computed and
+   * before anything is written, and refuses an approval the route does not admit
+   * (returning what `after` needs, or null for a document with no route);
+   * `after` runs on the same transaction once the signature row exists.
+   */
+  route?: QmsApprovalRoute;
+}
+
+/** What the review route contributes to an approval (RR4). */
+export interface QmsApprovalRoute {
+  before: (client: SignatureDbClient, row: QmsDocumentRow, contentDigest: string) => Promise<unknown>;
+  after: (client: SignatureDbClient, routed: unknown, signatureId: number) => Promise<void>;
+}
+const noRoute = async (): Promise<null> => null;
+
+/**
+ * The content a QMS approval signs, and its §11.70 digest: the version row as
+ * it stands, with the canonical authored sections captured under lock when the
+ * document is authored in the editor. One recipe, read by the approval, by the
+ * review route's send (the route's content_digest) and by the `qms-document`
+ * binder for a review signature (governed-target-binders.ts), so a review and
+ * the approval that follows it bind the same digest (RR4, §2.8: "the review
+ * digest equals the approval digest").
+ */
+export async function qmsSignedContent(
+  client: SignatureDbClient,
+  current: QmsDocumentRow,
+  requireText = true,
+): Promise<{ authoredContent: QmsAuthoringSnapshot | null; row: QmsDocumentRow; contentDigest: string }> {
+  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current, requireText) : null;
+  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
+  return { authoredContent, row, contentDigest: computeQmsDocumentContentDigest(row) };
 }
 
 export interface QmsApprovalSignatureRecord {
@@ -371,15 +405,14 @@ export async function approveQmsDocumentSigned(
   const { orgId, userId, documentId } = params;
   const current = await lockApprovableDocument(client, orgId, userId, documentId);
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
-  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current) : null;
+  const { authoredContent, row, contentDigest } = await qmsSignedContent(client, current);
   if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
     throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
   if (authoredContent) await authorizeQmsAuthoredSignature(client, orgId, userId, authoredContent);
   if (authoredContent) await refuseIfFilingDiverged(client, authoredContent.documentId, orgId);
-  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
+  const routed = await (params.route?.before ?? noRoute)(client, row, contentDigest);
   const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
-  const contentDigest = computeQmsDocumentContentDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
 
@@ -439,6 +472,9 @@ export async function approveQmsDocumentSigned(
     await client.query(`UPDATE authoring_documents SET status = 'APPROVED', approved_at = NOW(), updated_at = NOW()
       WHERE id = $1 AND tenant_id = $2`, [authoredContent.documentId, orgId]);
   }
+  // RR4 (§2.8): on a routed document, the approver's task closes on this
+  // signature and the route completes, on this transaction.
+  if (routed) await params.route!.after(client, routed, signed.id);
 
   return {
     document,
@@ -553,6 +589,8 @@ export async function retireQmsDocumentSigned(
   const contentDigest = computeQmsDocumentRetirementDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
+  // RR4 (§2.9): retiring a document in review is an exit from review; its open route is withdrawn below.
+  const routed = await (params.route?.before ?? noRoute)(client, row, contentDigest);
 
   const document = await applyRetirement(client, params, row.status, contentDigest, occurredAt);
 
@@ -602,6 +640,7 @@ export async function retireQmsDocumentSigned(
     complianceStatement:
       'QMS controlled-document retirement (21 CFR 820.40 / ISO 13485 §4.2.4 obsolete-document control) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
+  if (routed) await params.route!.after(client, routed, signed.id);
 
   return {
     document,

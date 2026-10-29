@@ -2656,6 +2656,11 @@ export const organizationUsers = pgTable(
     // control stays on `role`. Null = unset.
     persona: text('persona'),
     permissions: json('permissions'),
+    // The QMS approver designation (migrations/20261029f_qms_approver_designation.sql,
+    // decision D-Q of docs/design/REVIEW_ROUTING_2026-10-23.md, RR4): set and
+    // cleared together by server/services/qms/qms-approver-designation.ts only.
+    qmsApproverDesignatedAt: timestamp('qms_approver_designated_at', { withTimezone: true }),
+    qmsApproverDesignatedBy: integer('qms_approver_designated_by'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -18643,40 +18648,57 @@ export const authoringPlans = pgTable(
 
 export type AuthoringPlanRow = InferSelectModel<typeof authoringPlans>;
 
+/** A precedent search's scope hints (PrecedentEngine). */
+export type PrecedentQueryScope = {
+  deviceClass?: string;
+  productCode?: string;
+  pathway?: '510k' | 'pma' | 'cer' | 'de_novo';
+  dateFrom?: string;
+  dateTo?: string;
+  sources?: string[];
+};
+
+/** A Vault saved view's parameters, keyed by the search's own parameter names (P-46). */
+export type VaultSavedViewScope = {
+  v: 1;
+  filters: Partial<Record<'documentType' | 'classification' | 'evidenceKind' | 'folderId' | 'placementStatus' | 'ctdSection' | 'lifecycleStage', string[]>>;
+  includeSuperseded: boolean;
+};
+
 /**
- * Saved precedent queries — user-saved searches over the predicate /
- * precedent intelligence corpus. Each row stores the canonical search
- * params (query string + scope) and the most recent hit count, so the
- * PrecedentSurface "Saved queries" panel renders without re-running the
- * search on every page view. Re-running the search updates hits.
+ * The organisation's saved queries: precedent searches (surface 'precedent',
+ * PrecedentEngine) and Vault saved views (surface 'vault', P-46). A row stores
+ * search parameters only. Constraints and the project key are SQL-only
+ * (migrations/20260505_saved_precedent_queries.sql); see
+ * docs/design/VAULT_SAVED_VIEWS_2026-10-29.md. Every reader predicates on
+ * surface (saved-view-store-predicates.test.ts).
  */
 export const savedPrecedentQueries = pgTable('saved_precedent_queries', {
   id: serial('id').primaryKey(),
   organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  /** Owner — null for org-shared saved queries. */
+  /** Creator. Precedent: may be null (legacy). Vault: the owner, never null. */
   userId: integer('user_id').references(() => users.id),
-  /** Display label for the query (used in the kit's panel). */
+  surface: text('surface').$type<'precedent' | 'vault'>().default('precedent').notNull(),
+  visibility: text('visibility').$type<'private' | 'org_public'>().default('org_public').notNull(),
+  /** Vault project view: its project. Null: library view, and always for precedent. */
+  programId: uuid('program_id'),
+  /** Display label. */
   label: text('label').notNull(),
-  /** The search query string (free-text). */
+  /** The search text. */
   query: text('query').notNull(),
-  /** Optional scope hints: deviceClass, productCode, dateRange, etc. */
-  scope: json('scope').$type<{
-    deviceClass?: string;
-    productCode?: string;
-    pathway?: '510k' | 'pma' | 'cer' | 'de_novo';
-    dateFrom?: string;
-    dateTo?: string;
-    sources?: string[];
-  } | null>(),
-  /** Cached hit count from the last run; -1 means not yet run. */
+  scope: jsonb('scope').$type<PrecedentQueryScope | VaultSavedViewScope | null>(),
+  /** Precedent only: cached hit count; -1 for every Vault row. */
   hits: integer('hits').default(-1).notNull(),
-  /** When the search was last executed (for the cached hits). */
-  lastRunAt: timestamp('last_run_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  /** Precedent only: when the search last ran. */
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  /** Who last renamed, shared or re-parameterised a Vault view. */
+  updatedBy: integer('updated_by'),
 }, (table) => ({
   orgIdx: index('spq_org_idx').on(table.organizationId),
   userIdx: index('spq_user_idx').on(table.userId),
+  vaultListIdx: index('spq_vault_list_idx').on(table.organizationId, table.surface, table.programId),
 }));
 
 export type SavedPrecedentQuery = InferSelectModel<typeof savedPrecedentQueries>;

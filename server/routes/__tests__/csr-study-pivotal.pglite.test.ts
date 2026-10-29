@@ -14,8 +14,23 @@ import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ database: null as unknown, role: 'admin' }));
+const h = vi.hoisted(() => ({ database: null as unknown, role: 'admin', canEdit: true, admissions: [] as Array<[string, unknown]> }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
+// The project's own write admission (D6, c2c/project-access.ts): its sharing
+// decides edit permission. Stood in for here, with its real refusal.
+vi.mock('../c2c/project-access', async (orig) => {
+  const real = await orig<typeof import('../c2c/project-access')>();
+  return {
+    ...real,
+    requireProjectAdmission: vi.fn(async (_req: unknown, projectId: string, forWrite: unknown) => {
+      h.admissions.push([projectId, forWrite]);
+      if (forWrite === true && !h.canEdit) {
+        throw new real.ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current role and project permissions do not allow changes to this record.');
+      }
+      return { id: Number(projectId) };
+    }),
+  };
+});
 
 import csrStudyPivotalRouter from '../csr-study-pivotal';
 
@@ -50,7 +65,7 @@ beforeAll(async () => {
   await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
 });
 afterAll(async () => { await database?.close(); });
-beforeEach(() => { h.role = 'admin'; });
+beforeEach(() => { h.role = 'admin'; h.canEdit = true; h.admissions.length = 0; });
 
 const declare = (body: Record<string, unknown>) => request(app).post('/api/csr-workflow/pivotal').send({
   programId: PROGRAM, studyId: 'LMN-201-PART-B', pivotal: true, reason: 'Agreed with FDA at the Type B meeting', ...body,
@@ -63,6 +78,8 @@ describe('/api/csr-workflow/pivotal', () => {
     expect(before.body.studies).toEqual([{ studyId: 'LMN-201-PART-B', protocolNumber: 'LMN-201-CDI02', title: 'RePreve Part B', phase: 'Phase 2/3', declaration: null }]);
     const made = await declare({});
     expect(made.status).toBe(201);
+    // Through the project's own write admission, in write mode.
+    expect(h.admissions).toEqual([['11', true]]);
     expect(made.body.declaration).toMatchObject({ studyId: 'LMN-201-PART-B', pivotal: true, reason: 'Agreed with FDA at the Type B meeting', declaredBy: 5 });
     const after = await request(app).get('/api/csr-workflow/pivotal?projectId=11');
     expect(after.body.studies[0].declaration).toMatchObject({ pivotal: true, declaredBy: 5, declaredByName: 'Rena Author' });
@@ -70,6 +87,7 @@ describe('/api/csr-workflow/pivotal', () => {
 
   it.each([
     ['a role that may not write', () => { h.role = 'viewer'; }, {}, 403, undefined],
+    ['a member the project’s sharing does not let edit', () => { h.canEdit = false; }, {}, 403, 'PROJECT_WRITE_PERMISSION_DENIED'],
     ['an archived project', () => undefined, { programId: undefined, projectId: 13, studyId: 'ARCHIVED-STUDY' }, 409, 'CSR_PROJECT_ARCHIVED'],
     ['another organization’s project', () => undefined, { programId: undefined, projectId: 21, studyId: 'FOREIGN-STUDY' }, 404, 'CSR_PROJECT_NOT_FOUND'],
     ['a study the project has no CSR for', () => undefined, { studyId: 'NOT-A-STUDY' }, 404, 'STUDY_NOT_IN_PROJECT'],

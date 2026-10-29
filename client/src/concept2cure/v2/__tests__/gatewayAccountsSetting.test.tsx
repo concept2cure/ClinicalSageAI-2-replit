@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Agency gateway accounts in admin Setup and in onboarding (D7, founder
+ * Agency gateway accounts in Admin and access → Settings and in onboarding (D7, founder
  * decision 2026-10-01; evidence docs/evidence/D7/2026-10-01-gateway-account-choice/).
  *
  *  - Every gateway is listed with each environment's choice and whether it can send.
@@ -10,8 +10,8 @@
  *  - A refused change says it was not changed, in the server's words.
  *  - Choosing the platform account sends no identifier and no secret.
  *
- * That Setup and the onboarding wizard both render it is asserted where each is
- * rendered: adminSetupGoverned.test.tsx and onboardingActivatesPlan.test.tsx.
+ * That Settings and the onboarding wizard both render it is asserted where each is
+ * rendered: adminConsoleSettings.test.tsx and onboardingActivatesPlan.test.tsx.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

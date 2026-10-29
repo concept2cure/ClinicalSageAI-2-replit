@@ -1,4 +1,4 @@
-/** Setup's existing retention controls, connected to the governed Vault hold routes. */
+/** Admin and access → Settings: legal holds (Setup's, until it folded in, D2 2026-10-29), connected to the governed Vault hold routes. */
 import React, { useRef, useState } from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField, type C2CFormFieldOption } from '../C2CForm';
 import { EmptyState, isPendingStore, liveMutateOrNull, useLiveData, useLiveRows, type DataState, type ListState } from '../dataConnect';

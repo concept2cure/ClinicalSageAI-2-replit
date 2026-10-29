@@ -67,9 +67,9 @@ beforeAll(async () => {
     -- sequences that were actually transmitted, so a compilation whose sequence
     -- was never dispatched is a local draft and contributes nothing. 0001 is the
     -- sequence being built, so it is deliberately left undispatched.
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status)
-    VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'),
-           (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status)
+    VALUES (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'),
+           (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
 
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Drug Substance General', '<p>DS general v1</p>', '3.2'),

@@ -1,6 +1,6 @@
 /**
  * Integration tests for /api/mdx/notifications, /api/mdx/clinical-studies,
- * and /api/mdx/ana/* — auth gate, Zod validation, tenant scoping.
+ * and /api/mdx/ana/memory/profile — auth gate, Zod validation, tenant scoping.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -51,8 +51,7 @@ describe('auth gate', () => {
     ['POST', '/api/mdx/notifications'],
     ['GET', '/api/mdx/clinical-studies'],
     ['POST', '/api/mdx/clinical-studies'],
-    ['GET', '/api/mdx/ana/memory'],
-    ['GET', '/api/mdx/ana/threads'],
+    ['GET', '/api/mdx/ana/memory/profile'],
   ])('%s %s returns 403/401 without org context', async (method, url) => {
     const req = request(makeApp({ withAuth: false }));
     const res = await (method === 'GET' ? req.get(url)
@@ -188,74 +187,25 @@ describe('clinical studies routes', () => {
   });
 });
 
-/* ─── AnA memory + threads ──────────────────────────────────── */
+/* ─── AnA memory ────────────────────────────────────────────── */
 
-describe('AnA memory + threads', () => {
-  it('memory list survives missing table (42P01)', async () => {
-    const err = Object.assign(new Error('does not exist'), { code: '42P01' });
-    queryFn.mockRejectedValueOnce(err);
-    const res = await request(makeApp()).get('/api/mdx/ana/memory');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(0);
-  });
-
-  it('memory verify rejects when not found', async () => {
-    queryFn.mockResolvedValueOnce({ rows: [] });
-    const res = await request(makeApp())
-      .post('/api/mdx/ana/memory/999/verify')
-      .send({});
+/* The router serves the caller's own relational profile and nothing else since
+   ana-memory folded into the conversation (D2, 2026-10-29): its atom list,
+   verify, supersede and thread routes had only the retired screen as caller
+   (docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). The profile read is
+   tested on PostgreSQL in server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts. */
+describe('AnA memory', () => {
+  it.each([
+    ['GET', '/api/mdx/ana/memory'],
+    ['POST', '/api/mdx/ana/memory/999/verify'],
+    ['POST', '/api/mdx/ana/memory/1/supersede'],
+    ['GET', '/api/mdx/ana/threads'],
+    ['GET', '/api/mdx/ana/threads/t-1'],
+    ['POST', '/api/mdx/ana/threads/t-1/pin'],
+  ])('%s %s is no longer served, and reads nothing', async (method, url) => {
+    const req = request(makeApp());
+    const res = await (method === 'GET' ? req.get(url) : req.post(url).send({}));
     expect(res.status).toBe(404);
-  });
-
-  it('memory supersede requires supersededById', async () => {
-    const res = await request(makeApp())
-      .post('/api/mdx/ana/memory/1/supersede')
-      .send({});
-    expect(res.status).toBe(422);
-  });
-
-  it('threads list returns canonical envelope', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [{ id: 't-1', user_id: 1, organization_id: 99, title: 'Chat about K221847', metadata: {} }],
-    });
-    const res = await request(makeApp()).get('/api/mdx/ana/threads');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(1);
-  });
-
-  it('threads list by program reads program_id, the key bound at mint (PF-10 S2)', async () => {
-    const PID = '0f3c1a2b-1111-4222-8333-444455556666';
-    queryFn.mockResolvedValueOnce({ rows: [] });
-    const res = await request(makeApp()).get(`/api/mdx/ana/threads?program_id=${PID.toUpperCase()}`);
-    expect(res.status).toBe(200);
-    const [sql, params] = queryFn.mock.calls[queryFn.mock.calls.length - 1];
-    expect(sql).toMatch(/program_id = \$2/);
-    expect(sql).not.toMatch(/metadata->>'programId'/);
-    expect(params).toContain(PID);
-  });
-
-  it('threads list refuses a program id that is not a UUID', async () => {
-    const before = queryFn.mock.calls.length;
-    const res = await request(makeApp()).get('/api/mdx/ana/threads?program_id=42');
-    expect(res.status).toBe(422);
-    expect(queryFn.mock.calls.length).toBe(before);
-  });
-
-  it('threads list says the store is missing rather than answering an empty list', async () => {
-    queryFn.mockRejectedValueOnce(Object.assign(new Error('column "program_id" does not exist'), { code: '42703' }));
-    const res = await request(makeApp()).get('/api/mdx/ana/threads');
-    expect(res.status).toBe(503);
-    expect(res.body.code).toBe('THREAD_STORE_UNPROVISIONED');
-  });
-
-  it('thread pin toggles metadata.pinned', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [{ id: 't-1', metadata: { pinned: true } }],
-    });
-    const res = await request(makeApp())
-      .post('/api/mdx/ana/threads/t-1/pin')
-      .send({ pinned: true });
-    expect(res.status).toBe(200);
-    expect(res.body.data.metadata.pinned).toBe(true);
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });

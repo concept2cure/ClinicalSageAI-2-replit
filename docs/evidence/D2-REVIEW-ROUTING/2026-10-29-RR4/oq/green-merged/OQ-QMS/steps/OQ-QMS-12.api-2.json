@@ -1,0 +1,137 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/quality/plans",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 94,
+    "rateLimitRetries": 0,
+    "body": [
+      {
+        "id": 1,
+        "organizationId": 6,
+        "clientWorkspaceId": null,
+        "name": "OQ-006 QMP 20261029143516",
+        "description": "Validation exercise",
+        "version": "1.0",
+        "status": "draft",
+        "approvedById": null,
+        "approvedAt": null,
+        "effectiveDate": null,
+        "expiryDate": null,
+        "reviewFrequencyDays": 365,
+        "lastReviewDate": null,
+        "nextReviewDate": null,
+        "reviewReminderDays": 30,
+        "createdById": 6,
+        "settings": null,
+        "metadata": {
+          "allowWaivers": false
+        },
+        "createdAt": "2026-10-29T14:35:19.933Z",
+        "updatedAt": "2026-10-29T14:35:19.933Z"
+      },
+      {
+        "id": 2,
+        "organizationId": 6,
+        "clientWorkspaceId": null,
+        "name": "OQ-006 QMP 20261029143718",
+        "description": "Validation exercise",
+        "version": "1.0",
+        "status": "draft",
+        "approvedById": null,
+        "approvedAt": null,
+        "effectiveDate": null,
+        "expiryDate": null,
+        "reviewFrequencyDays": 365,
+        "lastReviewDate": null,
+        "nextReviewDate": null,
+        "reviewReminderDays": 30,
+        "createdById": 6,
+        "settings": null,
+        "metadata": {
+          "allowWaivers": false
+        },
+        "createdAt": "2026-10-29T14:39:32.776Z",
+        "updatedAt": "2026-10-29T14:39:32.776Z"
+      },
+      {
+        "id": 3,
+        "organizationId": 6,
+        "clientWorkspaceId": null,
+        "name": "OQ-006 QMP 20261029144026",
+        "description": "Validation exercise",
+        "version": "1.0",
+        "status": "draft",
+        "approvedById": null,
+        "approvedAt": null,
+        "effectiveDate": null,
+        "expiryDate": null,
+        "reviewFrequencyDays": 365,
+        "lastReviewDate": null,
+        "nextReviewDate": null,
+        "reviewReminderDays": 30,
+        "createdById": 6,
+        "settings": null,
+        "metadata": {
+          "allowWaivers": false
+        },
+        "createdAt": "2026-10-29T14:43:01.986Z",
+        "updatedAt": "2026-10-29T14:43:01.986Z"
+      },
+      {
+        "id": 4,
+        "organizationId": 6,
+        "clientWorkspaceId": null,
+        "name": "OQ-006 QMP 20261029144434",
+        "description": "Validation exercise",
+        "version": "1.0",
+        "status": "draft",
+        "approvedById": null,
+        "approvedAt": null,
+        "effectiveDate": null,
+        "expiryDate": null,
+        "reviewFrequencyDays": 365,
+        "lastReviewDate": null,
+        "nextReviewDate": null,
+        "reviewReminderDays": 30,
+        "createdById": 6,
+        "settings": null,
+        "metadata": {
+          "allowWaivers": false
+        },
+        "createdAt": "2026-10-29T14:47:32.164Z",
+        "updatedAt": "2026-10-29T14:47:32.164Z"
+      },
+      {
+        "id": 5,
+        "organizationId": 6,
+        "clientWorkspaceId": null,
+        "name": "OQ-006 QMP 20261029145843",
+        "description": "Validation exercise",
+        "version": "1.0",
+        "status": "draft",
+        "approvedById": null,
+        "approvedAt": null,
+        "effectiveDate": null,
+        "expiryDate": null,
+        "reviewFrequencyDays": 365,
+        "lastReviewDate": null,
+        "nextReviewDate": null,
+        "reviewReminderDays": 30,
+        "createdById": 6,
+        "settings": null,
+        "metadata": {
+          "allowWaivers": false
+        },
+        "createdAt": "2026-10-29T15:01:31.944Z",
+        "updatedAt": "2026-10-29T15:01:31.944Z"
+      }
+    ]
+  }
+}
