@@ -1037,6 +1037,12 @@ A billing administrator's account menu has one entry, "Subscription & billing", 
 (INFORMATION_ARCHITECTURE.md §9); every member keeps "Usage & limits". The usage screen reads its rate-limit table
 from `GET /api/billing/rate-limits` instead of a copy in the client.
 
+*Amended 2026-10-29, same day:* that route served a hand-written per-tier grid that nothing enforces, and invented
+"standard" for an organization with no tier. What the product applies is `server/config/platform-limits.ts`, per
+identity and the same for every subscription. So the route returns the limits actually enforced, the usage screen
+shows them as the same for every subscription, and the unenforced grid is deleted. Limits that differ by tier would
+be a new enforcement capability (Rule 2), not a label.
+
 ### P-62 — Module enforcement stays off until no gated prefix denies everyone
 
 `MODULE_ENFORCEMENT` is not switched to `enforce` while any gated prefix has only claimants without a catalog row
