@@ -12,12 +12,24 @@ const maxRecords = 100_000;
 export const CsrSourceSelectionSchema = z.object({ documentId: z.string().uuid(), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 export type CsrSourceSelection = z.infer<typeof CsrSourceSelectionSchema>;
 
+/** A ClinicalTrials.gov identifier: NCT and eight digits (NCT05330182). */
+export const NCT_NUMBER_RE = /^NCT\d{8}$/;
+export const nctNumberSchema = z.string().trim().regex(NCT_NUMBER_RE, 'A ClinicalTrials.gov identifier is NCT followed by eight digits, for example NCT05330182.');
+
 export const CsrStudyInfoSchema = z.object({
   title: text, protocolNumber: id, phase: text, indication: text, sponsor: text,
   investigationalProduct: text, studyDesign: text, primaryEndpoint: text,
   comparator: text.optional(), secondaryEndpoints: z.array(text).max(100).optional(),
   sampleSize: count.optional(), treatmentDuration: text.optional(), targetAgencies: z.array(text).max(20).optional(),
+  /** The study's ClinicalTrials.gov registration, as the sponsor's approved source states it (2026-10-29). */
+  nctNumber: nctNumberSchema.optional(),
 }).strict();
+
+/** The registration a study-information record states, when it is a well-formed NCT number; otherwise none. */
+export function nctNumberOf(studyInfo: unknown): string | null {
+  const raw = studyInfo && typeof studyInfo === 'object' ? (studyInfo as { nctNumber?: unknown }).nctNumber : undefined;
+  return typeof raw === 'string' && NCT_NUMBER_RE.test(raw.trim()) ? raw.trim() : null;
+}
 
 const participant = z.object({ subjectId: id, armId: id, randomized: z.boolean(), safety: z.boolean(), itt: z.boolean(),
   completed: z.boolean(), mitt: z.boolean().optional(), perProtocol: z.boolean().optional() }).strict();

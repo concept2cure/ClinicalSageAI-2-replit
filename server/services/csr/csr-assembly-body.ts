@@ -29,6 +29,8 @@ export type AppendixState =
 export interface BodyInput {
   studyId: string;
   title: string;
+  /** The study's ClinicalTrials.gov registration, as the approved source states it. */
+  nctNumber?: string | null;
   sections: ReadonlyMap<string, { title: string; content: string }>;
   tfls: readonly PlannedTfl[];
   appendices: ReadonlyMap<string, AppendixState>;
@@ -84,6 +86,7 @@ function runs(pass: Pass, section: string, text: string): TextRun[] {
 function drawTitlePage(pass: Pass, input: BodyInput): void {
   pass.writer.lines(input.title, { font: 'Helvetica-Bold', size: 16 });
   pass.writer.lines(`Clinical Study Report (ICH E3) — Study ${input.studyId}`, { size: 12 });
+  if (input.nctNumber) pass.writer.lines(`ClinicalTrials.gov Identifier: ${input.nctNumber}`, { size: 11 });
   pass.writer.lines('Assembled from the saved CSR job’s hash-verified sections and the retained run’s engine tables. This assembly carries no approval or signature; those are recorded on the governed Authoring document.', { size: 9.5 });
 }
 

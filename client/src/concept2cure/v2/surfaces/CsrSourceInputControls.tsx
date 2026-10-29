@@ -73,7 +73,7 @@ function ClinicalTable({ table }: { table: Table }) {
 }
 function SourceTables({ source, tables }: { source: CsrSourceReceipt; tables: Tables }) {
   return <div>
-    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · data cut {source.dataCutDate}</p>
+    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · {source.studyInfo.nctNumber ?? 'no ClinicalTrials.gov number in the source'} · data cut {source.dataCutDate}</p>
     <p>Source: {source.documentTitle}, version {source.version}</p>
     <details><summary>Source fingerprint</summary><code style={{ overflowWrap: 'anywhere' }}>{source.sha256}</code></details>
     {Object.entries(tables).filter((entry): entry is [string, Table] => Boolean(entry[1])).map(([key, table]) => <ClinicalTable key={`${source.sha256}:${key}`} table={table} />)}

@@ -58,6 +58,21 @@ it('previews the exact version/hash and requires explicit inclusion before publi
   expect(screen.getByText(/AI narrative generation remains unavailable/)).toBeTruthy();
 });
 
+it('names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29)', async () => {
+  render(<CsrSourceInputControls {...props} />);
+  await chooseAndPreview();
+  expect(screen.getByText(/SYN-P1 · no ClinicalTrials\.gov number in the source · data cut 2026-10-01/)).toBeTruthy();
+  cleanup();
+  apiRequest.mockImplementation(async (method, path) => {
+    if (path.includes('/csr/sources?')) return response(list);
+    if (path.endsWith('/csr/source-preview')) return response({ ...preview, source: { ...receipt, studyInfo: { ...receipt.studyInfo, nctNumber: 'NCT05330182' } } });
+    return response({});
+  });
+  render(<CsrSourceInputControls {...props} />);
+  await chooseAndPreview();
+  expect(screen.getByText(/SYN-P1 · NCT05330182 · data cut 2026-10-01/)).toBeTruthy();
+});
+
 it('keeps unapproved source previews read-only', async () => {
   apiRequest.mockImplementation(async (_method, path) => response(path.includes('/source-preview')
     ? { ...preview, approved: false, source: { ...receipt, sourceApproval: 'not-approved' } }

@@ -60,6 +60,8 @@ export interface SuppliedAppendixDocument { path: string; sha256: string }
 export interface CsrAssemblyInput {
   studyId: string;
   title: string;
+  /** The study's ClinicalTrials.gov registration, printed on the title page when the source states one. */
+  nctNumber?: string | null;
   ctdSection?: CsrCtdSection;
   /** The saved sections, verified by workflow-source-import (code, title, content). */
   sections: ReadonlyArray<{ code: string; title: string; content: string }>;
@@ -289,7 +291,7 @@ export async function assembleCsr(input: CsrAssemblyInput): Promise<CsrAssemblyR
   const targets = leafTargets(tfls, built, names);
   const bodyPath = path.join(input.outDir, CSR_BODY_FILE);
   const sections = new Map(input.sections.map(s => [s.code, { title: s.title, content: s.content }]));
-  const body = await renderBody({ studyId: input.studyId, title: input.title, sections, tfls, appendices: built.appendices, leafTargets: targets, stamp: input.contentModifiedAt }, bodyPath);
+  const body = await renderBody({ studyId: input.studyId, title: input.title, nctNumber: input.nctNumber ?? null, sections, tfls, appendices: built.appendices, leafTargets: targets, stamp: input.contentModifiedAt }, bodyPath);
   const bodyLeaf = leaf(input, built.ctd, { appendix: 'body', fileName: CSR_BODY_FILE, title: `${input.title} — Clinical Study Report`, fileTag: CSR_BODY_FILE_TAG, origin: 'generated', sourcePath: bodyPath, sha256: body.written.sha256, bytes: body.written.bytes, pages: body.written.pages });
   const leaves = [bodyLeaf, ...built.leaves].sort((a, b) => (a.appendix === 'body' ? -1 : b.appendix === 'body' ? 1 : compareDotted(a.appendix, b.appendix)));
   const structure = await checkCsrAssemblyStructure({ body: { fileName: CSR_BODY_FILE, path: bodyPath, headings: body.headings }, leaves: built.leaves.map(l => ({ fileName: names.get(l.fileName) ?? l.fileName, path: l.sourcePath })) });

@@ -173,6 +173,8 @@ export interface CSRSummaryInput {
    * Only `true` makes a study pivotal; the phase never does.
    */
   pivotal?: boolean | null;
+  /** The study's ClinicalTrials.gov registration, from its CSR's approved source; absent or null when it states none. */
+  nctNumber?: string | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -922,9 +924,10 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
 
   const tables: GeneratedTable[] = [{
     title: 'Clinical Study Index',
-    headers: ['Study ID', 'Phase', 'Design', 'N (ITT)', 'Primary Endpoint', 'Primary Result'],
+    headers: ['Study ID', 'ClinicalTrials.gov', 'Phase', 'Design', 'N (ITT)', 'Primary Endpoint', 'Primary Result'],
     rows: csrs.map(c => [
       c.protocolNumber,
+      c.nctNumber ?? 'Not stated in the source',
       c.phase,
       c.studyDesign,
       populationText(c),
