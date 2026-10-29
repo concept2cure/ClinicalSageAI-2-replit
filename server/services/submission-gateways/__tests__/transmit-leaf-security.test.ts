@@ -19,6 +19,9 @@ import { getGateway } from '../index';
 import type { GatewayTransmitRequest, SubmissionBundle } from '../types';
 import { generateIndForm } from '../../ind-forms/ind-form-fill-service';
 
+// The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
+vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+
 const secured = Buffer.from('%PDF-1.4\ntrailer<</Root 1 0 R/Encr#79pt 5 0 R>>\n%%EOF\n', 'latin1');
 const plain = Buffer.from('%PDF-1.4\ntrailer<</Root 1 0 R>>\n%%EOF\n', 'latin1');
 

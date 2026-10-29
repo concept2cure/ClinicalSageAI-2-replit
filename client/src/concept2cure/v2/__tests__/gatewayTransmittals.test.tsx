@@ -125,6 +125,46 @@ describe('GatewayTransmittals — the transmittal log', () => {
     expect(await screen.findByText(/the agency’s own bytes/i)).toBeTruthy();
   });
 
+  // 2026-10-29 (W5/D7): the exact package a transmittal sent, kept before the wire.
+  it('downloads the exact package a transmittal sent, when it was kept', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env([{ ...LOG[0], metadata: { sentPackage: { sha256: 'a'.repeat(64), sizeBytes: 10 } } }]);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals/3/sent-package') {
+        return { ok: true, status: 200, headers: { get: (h: string) => (h.toLowerCase() === 'content-disposition' ? `attachment; filename="fda-esg-${'a'.repeat(64)}.zip"` : null) },
+          blob: async () => ({ size: 10 }), json: async () => ({}) } as unknown as Response;
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-XYZ');
+    fireEvent.click(screen.getByRole('button', { name: /Package/ }));
+    expect(await screen.findByText('Downloaded the exact package this transmittal sent.')).toBeTruthy();
+  });
+
+  it('offers no package for a transmittal sent before packages were kept, and says why', async () => {
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-XYZ');
+    const button = screen.getByRole('button', { name: /Package/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe('Sent before the platform kept the bytes it sends');
+  });
+
+  it('shows the server’s refusal when the package cannot be handed back', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env([{ ...LOG[0], metadata: { sentPackage: { sha256: 'a'.repeat(64), sizeBytes: 10 } } }]);
+      // As apiRequest does: a non-2xx is thrown with the server's sentence.
+      if (url.endsWith('/sent-package')) {
+        throw new ApiRequestError('The kept copy of this package is not in storage. Nothing was downloaded.', 409,
+          { error: 'The kept copy of this package is not in storage. Nothing was downloaded.', details: { code: 'SENT_PACKAGE_MISSING' } }, 'SENT_PACKAGE_MISSING');
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-XYZ');
+    fireEvent.click(screen.getByRole('button', { name: /Package/ }));
+    expect(await screen.findByText('The kept copy of this package is not in storage. Nothing was downloaded.')).toBeTruthy();
+  });
+
   it('the transmittal log shows the meaning recorded on the transmittal with its signature', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) =>
       method === 'GET' && url === '/api/mdx/gateways/transmittals'

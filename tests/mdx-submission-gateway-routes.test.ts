@@ -131,7 +131,8 @@ vi.mock('../server/services/submission-gateways', () => {
     ValidationError: MockValidationError,
     // The route maps these too; their response shapes are pinned against the real
     // classes in server/services/submission-gateways/__tests__/gateway-route-response-shapes.test.ts.
-    PreTransmitBlockedError: class extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; }, UnverifiedTransportError: class extends Error { name = 'UnverifiedTransportError'; },
+    // SentPackageNotArchivedError (2026-10-29, W5/D7): the guard's refusal when it cannot keep the bytes it sends.
+    PreTransmitBlockedError: class extends MockValidationError { readonly code = 'PRE_TRANSMIT_BLOCKED' as const; }, UnverifiedTransportError: class extends Error { name = 'UnverifiedTransportError'; }, SentPackageNotArchivedError: class extends Error { name = 'SentPackageNotArchivedError'; },
   };
 });
 

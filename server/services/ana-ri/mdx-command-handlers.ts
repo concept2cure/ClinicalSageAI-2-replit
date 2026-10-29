@@ -1019,6 +1019,11 @@ function mapTransmitError(action: string, err: unknown): CommandResult {
   if (name === 'TransmitAuthorizationError') {
     return { success: false, action, message: detail, error: 'HUMAN_AUTHORIZATION_REQUIRED' };
   }
+  if (name === 'SentPackageNotArchivedError') {
+    // The package's bytes could not be kept, so the guard sent nothing
+    // (sent-package-archive.ts, 2026-10-29 W5/D7). Its message says so.
+    return { success: false, action, message: detail, error: 'SENT_PACKAGE_NOT_ARCHIVED' };
+  }
   if (name === 'ValidationError') {
     return {
       success: false,

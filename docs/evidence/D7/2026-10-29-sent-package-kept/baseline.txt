@@ -1,0 +1,31 @@
+# Every suite under server/services/submission-gateways and server/services/submission-service (2026-10-29).
+# With this change: 86 files, 75 passed, 10 failed, 1 skipped (1019 tests, 67 failed).
+# Each failing file, run at the base commit 35283b804 without this change, fails identically:
+
+## With this change
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+
+## At the base commit, the same files
+ Test Files  9 failed (9)
+      Tests  67 failed | 31 passed (98)
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+ FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts [ server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts ]
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+      Tests  10 skipped (10)

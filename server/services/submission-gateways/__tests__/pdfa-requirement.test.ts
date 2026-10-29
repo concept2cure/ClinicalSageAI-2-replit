@@ -24,6 +24,9 @@ const h = vi.hoisted(() => ({
   settingsReadFails: false,
   noRow: false,
 }));
+// The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
+vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+
 vi.mock('../../../db', () => ({
   db: {},
   pool: {
