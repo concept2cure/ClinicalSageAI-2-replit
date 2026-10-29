@@ -4,7 +4,7 @@
  * Split out from `MdxSurfaceHost` on purpose. The v2 registry needs this list at
  * module scope to build its entries, and `V2App` imports the registry at module
  * scope; importing it from the host would drag the host — and with it four
- * stylesheets and sixteen surface components — into the entry chunk of every
+ * stylesheets and fifteen surface components — into the entry chunk of every
  * session, including a pharma user's who never opens a device surface. That is
  * the regression `tests/ui/shell-kit-lazy.test.ts` exists to catch, and it
  * caught this.
@@ -35,7 +35,10 @@ export const MDX_SURFACE_IDS = [
   // surface (v2 `ana-memory`, identical endpoint) and its project home
   // (v2 `project-home`).
   'device-vault',
-  'device-tasks',
+  // No `device-tasks`. The kit's task workbench folded into Tasks (D2,
+  // 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/): Tasks
+  // reads the same work item by item, and the old id is a DEEP_LINK_ALIASES
+  // entry that lands there.
   'device-validation',
   'device-submission',
   'device-analytics',

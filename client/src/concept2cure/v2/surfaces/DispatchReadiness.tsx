@@ -32,6 +32,13 @@ import '../styles/project-home-v2.css';
    Submission Center where the finding is fixed (readinessFindingActs.ts); a
    cleared gate opens that sequence's Dispatch tab. Nothing here computes a
    verdict, signs or transmits.
+   MarketGateDetail is also what the project's Submit step draws under each
+   market row (ProjectMarkets.tsx; F10, P-33). Submit has no door to this
+   screen; it is reached from the Apps catalog's Submission Readiness entry,
+   AnA and a deep link. What it adds to Submit is its head, the pedigree
+   footer, its no-project state and the AnA context it publishes. It is a
+   candidate to fold into Submit (docs/evidence/D2-ONE-ANA/2026-10-29/
+   f10-readiness-in-submit/).
    Pedigree: deterministic_registry (the gate is proven, not generated).
    full: true — owns the canvas. */
 
@@ -195,7 +202,7 @@ function DispatchDoor({ m, sequenceId, sequenceNumber, transmit, awaiting, reaut
 /** Under a market's row: the server's composed gates, its structural findings
  *  with their acts, and the door to Dispatch on a cleared gate. Where the
  *  server gave no gate breakdown, the row's own verdict detail is shown. */
-function MarketGateDetail({ m, onNav, center }: { m: ProgramMarket; onNav: (id: string) => void; center: boolean }) {
+export function MarketGateDetail({ m, onNav, center }: { m: ProgramMarket; onNav: (id: string) => void; center: boolean }) {
   const r = m.read;
   if (r.state !== 'verdict' || !r.assessment) return <VerdictDetail read={r} />;
   const a = r.assessment;

@@ -28,7 +28,10 @@ vi.mock('@/services/portal/authService', async original => {
   return {
     ...actual,
     authService: {
-      getUser: () => ({ id: 1, organizationId: 1 }),
+      // One account object, as AuthService.getUser() returns: the authoring read
+      // session is owned by that reference (authoringCurrentRead.ts), so a fresh
+      // object per call re-mints the session on every render and never settles.
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
       captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
       on: actual.authService.on.bind(actual.authService),
     },
@@ -104,8 +107,9 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
+    // The current read names its project (`?programId=`, authoringCurrentReadPath); the route is the path.
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
       return ok({ success: true, revisions: [], sources: [], citations: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/dddddddd-0000-4000-8000-000000000001/comments'))

@@ -276,7 +276,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'A device or diagnostics team learning to run their 510(k), PMA, De Novo, or EU MDR/IVDR work here.',
     minutes: 8,
     description:
-      'The complete device working tour: the portfolio, the task workbench, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
+      'The complete device working tour: the portfolio, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device projects, on their real data, and they can interrupt with a question at any moment.',
@@ -286,8 +286,8 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-workstream' },
       },
       {
-        say: 'The device task workbench is where the day starts: every open item across their projects with its owner, so nothing waits on a shared drive or an email thread.',
-        navigate: { target: 'device-tasks' },
+        say: 'Tasks is where the day starts: every open item across their projects, from the board, the schedule, agency correspondence and tracked filings, each labelled with where it lives and with the work another store records as blocking marked, so nothing waits on a shared drive or an email thread.',
+        navigate: { target: 'tasking' },
       },
       {
         say: 'Pre-Submissions shape the pathway before you build it — the agency-meetings workspace tracks each Q-Sub / Pre-Sub with its briefing book and the FDA feedback, so the team designs to the agency’s answer instead of guessing it.',

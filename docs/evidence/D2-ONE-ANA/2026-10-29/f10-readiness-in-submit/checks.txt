@@ -1,0 +1,18 @@
+# ESLint per changed file, head vs working tree
+server/routes/mdx-udi.ts | head: errors 0 warnings 2 | now: errors 0 warnings 3
+server/routes/mdx-labeling.ts | head: errors 0 warnings 0 | now: errors 0 warnings 1
+server/routes/q-sub.ts | head: errors 0 warnings 0 | now: errors 0 warnings 0
+server/__tests__/routes/q-sub.test.ts | head: errors 0 warnings 0 | now: errors 0 warnings 0
+server/__tests__/security/tenant-isolation-q-sub.contract.test.ts | head: errors 0 warnings 0 | now: errors 0 warnings 0
+server/__tests__/routes/device-project-writes-admit-program.test.ts | head: (new file) | now: errors 0 warnings 0
+
+# Whole-tree typecheck: node scripts/ci/typecheck-no-regression.mjs --incremental
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+# Other gates on the working tree
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+[ci:class-vocabulary] OK — 5635 file(s) scanned, no restated class vocabulary.
+ci:fixture-fallback: no new ungated fixture fallback. 0 baselined.
+[ci:untracked-imports] OK — every relative import in 72 file(s) resolves to a tracked file.

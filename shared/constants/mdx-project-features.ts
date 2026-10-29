@@ -18,7 +18,8 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   'device-postmarket',
   'device-presub',
   'device-vault',
-  'device-tasks',
+  // No device task workbench: it folded into Tasks, a core service of every
+  // project (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/).
   'device-validation',
   'device-submission',
   'device-analytics',

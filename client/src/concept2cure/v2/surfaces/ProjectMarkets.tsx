@@ -23,6 +23,14 @@
  * (navParams → submissionNavTarget, F10): on Validation when the server
  * blocked dispatch, otherwise on Sequences.
  *
+ * Under each Submit row is the sequence's readiness detail (MarketGateDetail):
+ * the server's composed gates, its structural findings with the act that opens
+ * where each is fixed, and the door to Dispatch once the gate allows it. It is
+ * Submission Readiness's own detail, imported from DispatchReadiness.tsx (F10,
+ * P-33: the one dispatch verdict per sequence, shown inside Submit). Submit no
+ * longer has a door to a second readiness screen; that screen draws this same
+ * list and detail.
+ *
  * "Add a market" opens the Submission Center's New submission form with the
  * open project named (FILING_SPINE.md F9; the form takes the project, F20).
  */
@@ -40,6 +48,7 @@ import { MarketApplicationNumber } from './MarketApplicationNumber';
 import { STEP_DOORS } from '../projectDoors';
 import { getSurfaceMeta } from '../registryModel';
 import { mdxProjectPlan, PATHWAY_FEATURES, type MdxWorkflowProject } from './ProjectMdxWorkflow';
+import { MarketGateDetail } from './DispatchReadiness';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -205,7 +214,7 @@ export interface CenterTarget {
 }
 
 /** The one way the project's markets open the Submission Center: this list,
- *  and Submission Readiness's acts (F18). */
+ *  and the readiness detail's acts (F18). */
 export function openSubmissionCenter(onNav: (id: string) => void, at: CenterTarget): void {
   stashNavParamsForTarget('submission-center', {
     submissionId: at.submissionId != null ? String(at.submissionId) : '',
@@ -239,7 +248,7 @@ export function marketAccessibleName(s: Pick<MarketSubmission, 'applicationType'
 
 function MarketRow({ m, onRetry, onOpen, detail, number }: {
   m: ProgramMarket; onRetry: (id: number) => void; onOpen: ((m: ProgramMarket) => void) | null;
-  /** What is shown under the verdict in place of VerdictDetail (Submission Readiness's gates). */
+  /** What is shown under the verdict in place of VerdictDetail (the readiness detail, MarketGateDetail). */
   detail?: (m: ProgramMarket) => React.ReactNode;
   /** The market's own application number (P-44), where the list offers it. */
   number?: (m: ProgramMarket) => React.ReactNode;
@@ -314,7 +323,8 @@ export function marketsForbidden(markets: ProgramMarkets): boolean {
 const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this project’s markets are not shown.';
 
 /** The project's markets as a list, with its loading, refused, failed and
- *  empty states. The Submit tab and Submission Readiness (F18) both draw it. */
+ *  empty states. The Submit tab and Submission Readiness (F18) both draw it,
+ *  each with MarketGateDetail under every row (F10). */
 export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
@@ -461,13 +471,10 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       <div className="pj-sec-h">
         <h2 id="pj-markets-h">Markets</h2>
         <span className="pj-sec-acts">
-          {/* The readiness screen (Submission Readiness), kept as slice 24's
-              door until F10 retargets it to Validation on the gated sequence. */}
-          {available('dispatch-readiness') && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('dispatch-readiness')}>
-              {STEP_DOORS.readiness} {I.right}
-            </button>
-          )}
+          {/* No door to the readiness screen (Submission Readiness): each row
+              below shows its sequence's readiness itself, and its acts open
+              that sequence (F10, P-33). Slice 24's door opened a second screen
+              that drew this same list. */}
           {/* eCTD compile, opened from the project, compiles the submission
               of the project's own application type; each sequence's Dispatch
               tab opens it on that sequence (F14), which is how another
@@ -507,6 +514,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
         startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
+        detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>

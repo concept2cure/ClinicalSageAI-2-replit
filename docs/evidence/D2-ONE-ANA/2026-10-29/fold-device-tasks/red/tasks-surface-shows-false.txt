@@ -1,0 +1,6 @@
+ × client/src/concept2cure/mdx/workbench/__tests__/tasksSurfaceWorkloadShape.test.tsx > TasksSurface over the body /workload really returns > renders no untitled, unassigned card for an owner's workload row, and counts the work, not the rows 76ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a per-owner count rendered as an untitled task card: expected [ Array(2) ] to have a length of +0 but got 2
+AssertionError: an owner-named row rendered as unassigned: expected [ <span …(2)></span>, …(1) ] to have a length of +0 but got 2
+AssertionError: Open work counts owners, not tasks: expected '2' to be '5' // Object.is equality
+      Tests  1 failed (1)

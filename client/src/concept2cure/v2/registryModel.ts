@@ -674,7 +674,7 @@ export const SEGMENT_MODULES = {
       ],
     },
     { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: the device segment had no biostatistics surface either,
@@ -976,6 +976,12 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // Legacy MDX links reach the existing device-filtered Projects view.
   // The device-workstream screen retains its separate A2.10 parity work.
   mdx: 'projects',
+  /* The device task workbench folded into Tasks (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Tasks reads the
+     same submission-ops work item by item, beside every other store, and marks
+     what another store records as blocking. Old links, ⌘K hits and AnA's
+     `device-tasks` target land there. */
+  'device-tasks': 'tasks',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate
