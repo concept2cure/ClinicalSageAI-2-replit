@@ -28,6 +28,7 @@ import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
+import { ArchiveLimitError } from '../services/archive/safeZip';
 import { EctdCompletenessError } from '../services/ectd/completeness';
 import { PackageIdentityMissingError } from '../services/ectd/package-identity';
 import {
@@ -626,7 +627,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // Optionally validate the generated package
     let validation = null;
     if (validateAfter) {
-      validation = await validateEctdPackage(result.buffer);
+      validation = await validateEctdPackage(result.buffer, { origin: 'platform-generated' });
     }
 
     // Fail closed: a package that FAILED structural validation must not be
@@ -881,7 +882,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
           organizationId,
           userId,
         });
-        zipValidation = await validateEctdPackage(result.buffer);
+        zipValidation = await validateEctdPackage(result.buffer, { origin: 'platform-generated' });
         generatedStats = result.stats;
         mode = 'json-generated-then-validated-legacy';
       } else {
@@ -935,7 +936,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
             organizationId,
             userId,
           });
-          zipValidation = await validateEctdPackage(result.buffer);
+          zipValidation = await validateEctdPackage(result.buffer, { origin: 'platform-generated' });
           generatedStats = result.stats;
           mode = 'json-generated-then-validated';
         } else {
@@ -997,7 +998,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
           organizationId,
           userId,
         });
-        zipValidation = await validateEctdPackage(result.buffer);
+        zipValidation = await validateEctdPackage(result.buffer, { origin: 'platform-generated' });
         generatedStats = result.stats;
         mode = 'generated-then-validated';
       } else {
@@ -1083,6 +1084,10 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
     return res.json(response);
   } catch (error: any) {
     if (respondIfConverterBusy(res, error)) return; // generate-then-validate assembles (OPS-13)
+    // A caller-supplied package that would expand past the one archive limit (SEC-17).
+    if (error instanceof ArchiveLimitError) {
+      return res.status(422).json({ error: 'eCTD validation refused', code: error.code, message: error.message });
+    }
     const correlationId = randomUUID();
     log.error('Validate failed', {
       err: error instanceof Error ? error.message : String(error),

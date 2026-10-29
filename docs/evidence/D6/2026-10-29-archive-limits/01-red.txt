@@ -1,0 +1,18 @@
+# Red, on HEAD before the helper existed: each place the server inflates a caller's ZIP read an 8 MiB entry compressed about 1000:1 (a few KB on the wire)
+
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary DOCX
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > refuses a bomb DOCX before it inflates
+   → promise resolved "{ spec: { specVersion: 1, …(6) }, …(3) }" instead of rejecting
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > still reads an ordinary DOCX
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > reads no text from a bomb DOCX, and never hands it to the DOCX reader
+   → expected { …(2) } to deeply equal { text: '', method: 'none' }
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > still reads an ordinary DOCX
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > refuses a caller-supplied bomb package
+   → promise resolved "{ valid: false, …(2) }" instead of rejecting
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > still validates an ordinary package, and a package this server assembled is not bounded by an upload limit
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > legacy import detection (detectArchive) > reports a bomb archive as refused, reading none of its files
+   → expected [ { …(11) }, { …(11) }, { …(11) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 4 passed (9)

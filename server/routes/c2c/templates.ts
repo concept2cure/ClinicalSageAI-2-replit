@@ -22,6 +22,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { receiveTemplateFile, uploadedTemplateIsSafe, extractTemplatePreview } from './template-upload';
+import { ArchiveLimitError } from '../../services/archive/safeZip';
 import {
   extractTemplateFromFile,
   renderDocxWithTemplate,
@@ -126,6 +127,7 @@ router.post('/from-upload', receiveTemplateFile, async (req: Request, res: Respo
     // `auditTrail`: whether the template's §11.10(e) row was written (WO-16C).
     return res.status(201).json({ template: record, extraction: extracted, auditTrail });
   } catch (err: any) {
+    if (err instanceof ArchiveLimitError) return res.status(422).json({ error: err.code, detail: err.message });
     console.error('[c2c/templates] from-upload', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }

@@ -37,6 +37,7 @@
  */
 
 import JSZip from 'jszip';
+import { assertZipWithinLimits } from '../archive/safeZip';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { FILENAME_PATTERN, FILENAME_RULE_TEXT, FOLDER_NAME_PATTERN } from '../ectd/ectd-regional-rules';
@@ -454,9 +455,16 @@ async function rootChecksumErrors(zip: JSZip, fileNames: string[], md5Of: Map<st
  *    manifest entry naming a missing file is an error; a missing manifest is a
  *    warning.
  */
-export async function validateEctdPackage(zipBuffer: Buffer): Promise<EctdZipValidationResult> {
+export async function validateEctdPackage(
+  zipBuffer: Buffer,
+  /** `platform-generated`: a package this server assembled, which no upload limit binds.
+   *  Anything else is held to the one archive limit before it inflates (SEC-17), and an
+   *  ArchiveLimitError reaches the caller, which answers 422. */
+  opts: { origin?: 'upload' | 'platform-generated' } = {},
+): Promise<EctdZipValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
+  if ((opts.origin ?? 'upload') !== 'platform-generated') await assertZipWithinLimits(zipBuffer);
 
   let zip: JSZip;
   try {
