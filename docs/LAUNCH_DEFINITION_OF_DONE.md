@@ -918,15 +918,20 @@ stops being described as deviations. (Parity §8 Q5; slice G16.)
   cancelled when the version is superseded or retired (`services/tasking/source-task.ts`). This is the distribution
   of an effective SOP; no separate distribution list is kept.
 
-### P-51 — Review is a signed act; one independent reviewer and one approver; retirement has its own meaning (NEW-4)
+### P-51 — Review and approval follow the review-routing decision; retirement has its own meaning (NEW-4)
 
-- "Send for review" stays a status move. The review itself is a signed act, with meaning `review`, by a person other
-  than the author.
-- Approval is a signature by a person other than the author.
-- In a small team the same person may review and approve. A per-organisation quorum waits until after D10.
-- Retirement is signed with its own meaning, `retirement` ("you withdraw this document from use"). Stored
-  retirements keep the meaning they were signed with.
-- This unblocks MR-12 Stages 5 and 7.
+NEW-4 was decided on 2026-10-29 by the review-routing coordinator, under the founder's delegation of 2026-10-07
+(`docs/design/REVIEW_ROUTING_2026-10-23.md` §4, with D-Q in §7). RR4 is building it. For a QMS controlled document:
+- at least one approver holds the QMS approver designation, and that approver is not the author or a contributor;
+- reviewers are optional; when any are named, all of them sign before the approval;
+- sending for review is a governed act with a reason, not a signature.
+
+That decision stands and is recorded here. *(Corrected 2026-10-29: this entry first read "review is a signed act; the
+same person may review and approve", written before the review-routing decision was found. That decision governs.)*
+
+What NEW-4 left open is retirement's meaning. Retirement is signed with its own meaning, `retirement` ("you withdraw
+this document from use"), not `approval`. Stored retirements keep the meaning they were signed with. This unblocks
+MR-12 Stage 5 step 3. Stage 7's review step is RR4's.
 
 ### P-52 — Controlled output: Letter, the FDA PDF specification, a default confidentiality line (MR-09 NEW)
 

@@ -311,7 +311,7 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
 - **NEW-1: system of record for SOP body text** — the linked Authoring artifact (recommended) or a body stored on the QMS version. Blocks Stage 2 step 4 and Stage 3 step 4; it also decides what Stage 8 renders.
 - **NEW-2: training assignment model** — role-based or curriculum-based. Blocks Stage 4 step 4. **Decided 2026-10-29 (P-50):** named members and organisation roles per document; no assignment counts everyone, labelled; curricula after D10.
 - **NEW-3: training before the effective date** — may a user acknowledge an approved-pending version before D? Blocks Stage 4 step 6. **Decided 2026-10-29 (P-50):** yes.
-- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7). **Decided 2026-10-29 (P-51):** review is a signed `review` act by someone other than the author; approval by someone other than the author; retirement's meaning is `retirement`.
+- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7). **Decided 2026-10-29:** the quorum is `docs/design/REVIEW_ROUTING_2026-10-23.md` §4 (a designated QMS approver who is not the author or a contributor; optional reviewers; sending is not a signature), carried by RR4. Retirement's meaning is `retirement` (P-51).
 
 ## Do not
 
