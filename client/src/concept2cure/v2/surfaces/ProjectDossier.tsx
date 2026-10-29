@@ -20,6 +20,7 @@ import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } fro
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
+import type { EditingCopy } from '../editor/editingCopy';
 import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
 import { ArtifactSectionStatus, artifactReadinessOf } from './ProjectArtifactReadiness';
 import type { DossierSectionTracking } from '@shared/types/dossier-section-tracking';
@@ -183,11 +184,27 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
   );
 }
 
+/** The editing copy of the filing a row measures, or why it is not known. */
+export type RowCopy = EditingCopy<BuiltDocument> | { kind: 'unread'; failed: boolean };
+
+/** What a row says when it has no copy to open (F3: never a dead end, never a guess). */
+function noCopyWords(r: DossierRow, copy: Exclude<RowCopy, { kind: 'one' }>): string {
+  if (copy.kind === 'several') return `${copy.docs.length} documents are bound to this filing, so none is opened from here.`;
+  if (copy.kind === 'unread') {
+    return copy.failed ? 'The project\'s documents could not be read, so its editing copy is not known.' : 'Reading the project\'s documents…';
+  }
+  return r.agency
+    ? 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.'
+    : 'No editing copy of this filing yet.';
+}
+
 /** One row: the module (or document), its bar, its figure and what it counts.
- *  A row whose module holds one of this project's documents opens the newest
- *  one (FILING_SPINE.md §6 row 4); otherwise it has nothing to click. */
-function ModuleRow({ r, match, onOpen }: {
-  r: DossierRow; match: { doc: BuiltDocument; count: number; n: number } | null; onOpen: (doc: BuiltDocument) => void;
+ *  It opens the editing copy of the filing it measures (FILING_SPINE.md F3:
+ *  the document bound to `documentId`). It named the newest document TAGGED
+ *  with its module until 2026-10-29, so the home Module 1 row could open an
+ *  added market's copy. With no single copy it says why and opens nothing. */
+function ModuleRow({ r, copy, onOpen }: {
+  r: DossierRow; copy: RowCopy; onOpen: (doc: BuiltDocument) => void;
 }) {
   const pct = r.figure.state === 'measured' ? r.figure.pct : null;
   const counts = `${r.complete} of ${r.counted} approved or locked${r.inReview ? ` · ${r.inReview} in review` : ''}`;
@@ -201,18 +218,22 @@ function ModuleRow({ r, match, onOpen }: {
       <span className="pj-lmod-pct">{figureValue(r.figure)}</span>
     </>
   );
-  const which = match && match.count > 1 ? `, the newest of ${match.count} Module ${match.n} documents` : '';
   return (
     <div className="pj-lmodrow">
-      {match ? (
+      {copy.kind === 'one' ? (
         <>
-          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(match.doc)}
-            aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${match.doc.title}${which}`}>
+          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(copy.doc)}
+            aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${copy.doc.title}`}>
             {body}
           </button>
-          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {match.doc.title}{which}</span>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {copy.doc.title}</span>
         </>
-      ) : <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>}
+      ) : (
+        <>
+          <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(r, copy)}</span>
+        </>
+      )}
       <span className="pj-lmod-doc">{hasUpdated ? <>Updated <time dateTime={r.lastUpdated!}>{updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></> : 'Update time not recorded.'}</span>
       {hasSectionDetails(r.sections) ? (
         <details className="pj-lmod-sections">
@@ -228,10 +249,10 @@ function ModuleRow({ r, match, onOpen }: {
 }
 
 /** The Author tab's module rows, from the same read as the card. */
-export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
+export function ModuleCompletion({ read, copyFor, onOpen, onAsk }: {
   read: DossierState;
-  /** The newest of this project's documents in a CTD module, and how many it holds. */
-  docForModule: (module: string | null) => { doc: BuiltDocument; count: number; n: number } | null;
+  /** The editing copy of the filing (`DossierRow.documentId`) a row measures. */
+  copyFor: (filingId: string) => RowCopy;
   onOpen: (doc: BuiltDocument) => void;
   onAsk?: (question: string) => void;
 }) {
@@ -251,8 +272,7 @@ export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
     body = (
       <div className="pj-mods">
         {d.rows.map((r) => (
-          <ModuleRow key={`${r.documentId}:${r.module ?? r.label}`} r={r}
-            match={r.group === 'module' && !r.agency ? docForModule(r.module) : null} onOpen={onOpen} />
+          <ModuleRow key={`${r.documentId}:${r.module ?? r.label}`} r={r} copy={copyFor(r.documentId)} onOpen={onOpen} />
         ))}
       </div>
     );

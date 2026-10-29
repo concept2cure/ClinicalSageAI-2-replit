@@ -38,7 +38,7 @@ describe('the existing dossier details on Author', () => {
   it('shows read-only section status and a valid update time without changing the editor handoff', () => {
     const onOpen = vi.fn();
     const doc = { id: 'authoring-doc', title: 'Existing clinical overview' } as any;
-    render(<ModuleCompletion read={read()} docForModule={() => ({ doc, count: 1, n: 2 })} onOpen={onOpen} />);
+    render(<ModuleCompletion read={read()} copyFor={() => ({ kind: 'one', doc })} onOpen={onOpen} />);
     const details = screen.getByText('Section status', { selector: 'summary' }).closest('details')!;
     fireEvent.click(within(details).getByText('Section status'));
     expect(details.textContent).toContain('2.4');
@@ -66,7 +66,7 @@ describe('the existing dossier details on Author', () => {
   it('hands the existing critical-path question to AnA without opening a document', () => {
     const onAsk = vi.fn();
     const onOpen = vi.fn();
-    render(<ModuleCompletion read={read()} docForModule={() => null} onOpen={onOpen} onAsk={onAsk} />);
+    render(<ModuleCompletion read={read()} copyFor={() => ({ kind: 'none' })} onOpen={onOpen} onAsk={onAsk} />);
     fireEvent.click(screen.getByRole('button', { name: /critical path to filing/i }));
     expect(onAsk).toHaveBeenCalledWith('What is the critical path to filing?');
     expect(onOpen).not.toHaveBeenCalled();
@@ -86,27 +86,27 @@ describe('the existing dossier details on Author', () => {
     const r = read();
     r.state.data!.rows[0].lastUpdated = 'invalid';
     r.state.data!.rows[0].sections = undefined;
-    const view = render(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+    const view = render(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('Section details unavailable.')).toBeTruthy();
     expect(screen.getByText('Update time not recorded.')).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Invalid Date|0 sections/);
     expect((dossierFacts(r) as any).dossier.rows[0].sections).toBeNull();
     r.state.data!.rows[0].sections = [{ key: '2.4', label: 'Nonclinical overview', status: 'future-status' }];
-    view.rerender(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+    view.rerender(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('future-status')).toBeTruthy();
   });
 
   it('prints prototype-like unknown statuses literally', () => {
     const r = read();
     r.state.data!.rows[0].sections = [{ key: '2.4', label: 'Nonclinical overview', status: '__proto__' }];
-    render(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+    render(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('__proto__')).toBeTruthy();
   });
 
   it('does not present malformed section details as an empty list', () => {
     const r = read();
     r.state.data!.rows[0].sections = [{ key: '2.4', label: 'Nonclinical overview', status: null }] as any;
-    render(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+    render(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('Section details unavailable.')).toBeTruthy();
     expect(screen.queryByText('Section status')).toBeNull();
     expect((dossierFacts(r) as any).dossier.rows[0].sections).toBeNull();
