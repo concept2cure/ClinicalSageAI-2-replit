@@ -93,9 +93,11 @@ it('the on-demand route refuses a heading that is not a drafting target, by E3 n
   expect(complete).not.toHaveBeenCalled();
 });
 
-it('the build route refuses a manual heading and accepts an E3 heading the old list omitted', async () => {
-  const refused = await request(app).post('/api/csr-builder/build').send({ studyInfo, sectionsToGenerate: ['16'] });
-  expect(refused.status).toBe(400);
+// POST /build was retired on 2026-10-29 (csr-builder-retired-endpoints.test.ts);
+// the job runner applies the same section rule (csr-builder-e3-outline.test.ts).
+it('the builder no longer builds, and its structure lists every E3 heading', async () => {
+  const retired = await request(app).post('/api/csr-builder/build').send({ studyInfo, sectionsToGenerate: ['16'] });
+  expect(retired.status).toBe(404);
   const structure = await request(app).get('/api/csr-builder/structure');
   expect(structure.body.totalSections).toBeGreaterThanOrEqual(119);
 });
