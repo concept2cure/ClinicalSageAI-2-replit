@@ -3552,6 +3552,17 @@ export const C2C_MIGRATION_FILES = [
   // (regulatory_programs_id_org_uq, created here too when absent). Public with
   // organization_id INTEGER NOT NULL; creates no table; guarded; no DROP.
   'migrations/20261029_hf_engineering_files_program_key.sql',
+  // CSR build job state (D2, 2026-10-29, slice 3 of
+  // docs/design/CSR_END_TO_END_2026-10-29.md): csr_build_jobs and
+  // csr_section_outputs, which the job runner, the csr-workflow board and
+  // workflow-source-import have read since 2026-06-28 from a file on no
+  // applier. Amended in place the same day to replay (IF NOT EXISTS, named
+  // constraints added only when absent) and to add the bound source run
+  // (generated from the job's snapshot) and per-section review state. After
+  // organizations, projects and users (base schema). Both tables are public
+  // with organization_id INTEGER NOT NULL, so the sweep below polices them.
+  // Drops nothing.
+  'migrations/20260628_csr_job_state.sql',
   // Labeling approvals record their approver, and labeling records their
   // creator (D5, 2026-10-29): labeling_documents.approved_by / approved_at /
   // created_by and labeling_translations.created_by, each INTEGER → users(id)

@@ -119,6 +119,7 @@ MODEL GOVERNANCE
 3. **Composition boundary.** First scope: a Phase 2/3 parallel-arm interventional CSR (drug or biologic). Crossover, PK/BE, device and non-interventional studies are refused by name until widened, as CMC's `composition-scope.ts` does.
 4. **Reference content.** Verbatim public ICH E3 and E3 Q&A (R1) text and the CC-BY CORE Reference may be encoded as basis with quoted spans; TransCelerate templates wait for a licence check. End-to-end proofs use the public CDISC pilot ADaM data; no sponsor CSR is in the repository today.
 5. **Scale target.** 10,000 pages and 1,000 patient narratives per build; slices 7–8 are designed for streaming and parallel work at that size.
+7. **Two reviews, one approval (2026-10-29, slice 3).** The build board's per-section state (draft, in review, approved) is an editorial triage before import, bound to the exact text by hash, and the build's requester may not approve their own sections. It is not the CSR's approval. The governed approval stays the Authoring document's review, scientific-review attestation and Part 11 signature after import, owned by the D5 CSR-path lane; nothing on the board changes those gates. Slice 3's design text said the board approval *is* that attestation; that is superseded here, so the attestation is not duplicated.
 6. **Retiring Rule-2 defects.** The model-frequency and model-verdict CSR endpoints (`/safety-signals`, `/analyze-benefit-risk`, `/generate-narrative`) have no client caller; each is removed with its engine replacement named (slice 9).
 
 ## Founder decision still open

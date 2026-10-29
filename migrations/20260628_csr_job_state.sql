@@ -14,6 +14,29 @@
 --   * No ALTER on existing tables
 --   * No CASCADE on references to existing tables
 --   * Rollback is the inverse DROP TABLE (only safe before rows are written)
+--
+-- AMENDED IN PLACE 2026-10-29 (D2, CSR end to end, slice 3 of
+-- docs/design/CSR_END_TO_END_2026-10-29.md; RULE 1 of CLAUDE.md):
+--   * The file was on no deploy applier (it sat in
+--     scripts/ci/migration-deploy-path-baseline.json). It is now on
+--     C2C_MIGRATION_FILES, above the final isolation pair, so it re-runs on
+--     every deploy. Every CREATE is therefore IF NOT EXISTS and every
+--     constraint is added only when absent: a database where the tables were
+--     pushed from shared/schema.ts keeps its rows and gains the columns below.
+--   * csr_build_jobs.source_run_id: the retained Submission Center run whose
+--     engine tables ground the build. A STORED generated column over
+--     study_info_snapshot->'evidenceSource'->>'runId', which the job runner
+--     already writes at enqueue, so the two can never disagree. NULL for a
+--     build with no bound run (metadata-only, never a results draft).
+--   * csr_section_outputs review state, per section: review_status
+--     ('draft' | 'in_review' | 'approved', default 'draft'), reviewer_id (the
+--     user who made the last review decision), review_decided_at,
+--     review_reason (a send-back's stated reason) and reviewed_content_hash
+--     (the content_hash the decision was made on: an approval binds that exact
+--     text, and a redraft that changes content_hash leaves the approval
+--     stale, which server/services/csr/csr-section-review.ts reports as a
+--     draft). Written only by csr-section-review.ts.
+--   Nothing is dropped; no file in the set re-creates or removes these.
 -- ============================================================================
 
 BEGIN;
@@ -27,7 +50,7 @@ BEGIN;
 -- (not an enum) so it can be loosened with a single ALTER TABLE.
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE csr_build_jobs (
+CREATE TABLE IF NOT EXISTS csr_build_jobs (
   id                    serial PRIMARY KEY,
 
   -- Tenant scoping (non-negotiable)
@@ -58,16 +81,16 @@ CREATE TABLE csr_build_jobs (
 );
 
 -- Tenant-first index for status dashboards
-CREATE INDEX csr_build_jobs_org_project_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_project_idx
   ON csr_build_jobs (organization_id, project_id);
 
 -- Partial index for the worker poll path — only "live" rows matter
-CREATE INDEX csr_build_jobs_status_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_status_idx
   ON csr_build_jobs (status)
   WHERE status IN ('queued', 'loading_data', 'drafting', 'tabulating', 'cross_linking');
 
 -- Org+study lookup for "show me the latest CSR for this study"
-CREATE INDEX csr_build_jobs_org_study_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_study_idx
   ON csr_build_jobs (organization_id, study_id);
 
 -- ----------------------------------------------------------------------------
@@ -80,7 +103,7 @@ CREATE INDEX csr_build_jobs_org_study_idx
 -- parent job (the inverse of the job's project_id rule).
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE csr_section_outputs (
+CREATE TABLE IF NOT EXISTS csr_section_outputs (
   id                serial PRIMARY KEY,
 
   -- Tenant scoping (denormalized from the job for cheap org-scoped reads)
@@ -112,10 +135,10 @@ CREATE TABLE csr_section_outputs (
   CONSTRAINT csr_section_outputs_job_section_unique UNIQUE (job_id, section_number)
 );
 
-CREATE INDEX csr_section_outputs_org_project_idx
+CREATE INDEX IF NOT EXISTS csr_section_outputs_org_project_idx
   ON csr_section_outputs (organization_id, project_id);
 
-CREATE INDEX csr_section_outputs_job_idx
+CREATE INDEX IF NOT EXISTS csr_section_outputs_job_idx
   ON csr_section_outputs (job_id);
 
 -- ----------------------------------------------------------------------------
@@ -145,6 +168,50 @@ BEGIN
                  FOR EACH ROW
                  EXECUTE FUNCTION set_updated_at()';
     END IF;
+END $$;
+
+-- ----------------------------------------------------------------------------
+-- 2026-10-29 amendment: bound source run and per-section review state
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE csr_build_jobs
+  ADD COLUMN IF NOT EXISTS source_run_id text
+    GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED;
+
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_source_run_idx
+  ON csr_build_jobs (organization_id, source_run_id)
+  WHERE source_run_id IS NOT NULL;
+
+ALTER TABLE csr_section_outputs
+  ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'draft',
+  ADD COLUMN IF NOT EXISTS reviewer_id integer REFERENCES users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS review_decided_at timestamptz,
+  ADD COLUMN IF NOT EXISTS review_reason text,
+  ADD COLUMN IF NOT EXISTS reviewed_content_hash text;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'csr_section_outputs_review_status_check'
+      AND conrelid = 'csr_section_outputs'::regclass
+  ) THEN
+    ALTER TABLE csr_section_outputs
+      ADD CONSTRAINT csr_section_outputs_review_status_check
+      CHECK (review_status IN ('draft', 'in_review', 'approved'));
+  END IF;
+  -- A decision is recorded with when it was made and on which text; an
+  -- approval without them is not an approval.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'csr_section_outputs_review_decision_check'
+      AND conrelid = 'csr_section_outputs'::regclass
+  ) THEN
+    ALTER TABLE csr_section_outputs
+      ADD CONSTRAINT csr_section_outputs_review_decision_check
+      CHECK (review_status = 'draft' AND review_decided_at IS NULL
+             OR review_decided_at IS NOT NULL AND reviewed_content_hash IS NOT NULL);
+  END IF;
 END $$;
 
 COMMIT;
