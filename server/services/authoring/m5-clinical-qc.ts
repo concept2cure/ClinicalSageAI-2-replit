@@ -21,10 +21,13 @@
  * @module server/services/authoring/m5-clinical-qc
  */
 
-import { ICH_E3_STRUCTURE, type CSRSection } from '../csr-builder';
+import { getICHE3Structure, type CSRSection } from '../csr-builder';
 
-/** Required ICH E3 top-level section numbers (1–13 are required; 14–16 optional). */
-const REQUIRED_E3_TOP_LEVEL: readonly string[] = ICH_E3_STRUCTURE.filter((s) => s.required).map((s) => s.number);
+/**
+ * Required ICH E3 top-level section numbers (1–13 are required; 14–16 optional),
+ * from the canonical ICH_E3_GUIDANCE tree (2026-10-29: was the builder's copy).
+ */
+const REQUIRED_E3_TOP_LEVEL: readonly string[] = getICHE3Structure().filter((s) => s.required).map((s) => s.number);
 
 /** A CSR section's drafting status (from the CSR builder's ICH E3 model). */
 export type CsrSectionStatus = CSRSection['status'];

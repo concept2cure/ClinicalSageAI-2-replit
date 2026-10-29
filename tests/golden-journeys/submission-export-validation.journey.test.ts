@@ -96,6 +96,7 @@ const R = new JourneyRecorder(
   [
     'server/db/pglite-harness.ts#SUBMISSION_CORE_PGLITE_DDL',
     'server/db/pglite-harness.ts#LEAF_SOURCE_PGLITE_DDL',
+    'server/db/pglite-harness.ts#PROGRAM_SPINE_PGLITE_DDL',
   ],
 );
 
@@ -153,12 +154,17 @@ beforeAll(async () => {
   delete process.env.EVALIDATOR_ENDPOINT;
   process.env.EVALIDATOR_USE_FDA_CRITERIA_FALLBACK = 'true';
 
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  // programSpine: assembly reads the tenant's saved company legal requirements
+  // from organizations.settings (stored-legal-readiness.ts, 5ebfcfd2c) and
+  // refuses when that row is missing, so the tenant must exist.
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
   holder.db = harness.db;
 
   // Seed a real FDA IND sequence with two locally-renderable leaves (M2 + M3)
   // and one cross-tenant leaf that MUST NOT be assembled into this org's package.
   await harness.pglite.exec(`
+    INSERT INTO organizations (id, name) VALUES (${ORG}, 'Export Journey Sponsor'), (${OTHER_ORG}, 'Other Tenant');
+
     INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by)
     VALUES (1, 'C2C Export Journey', 'Examplinib', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
 

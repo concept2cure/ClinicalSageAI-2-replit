@@ -58,12 +58,11 @@ export interface FilingDocumentClass {
 
 export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   // ── FDA post-approval (21 CFR 314.70, 314.81; 601.12) ──
-  // US_BLA_SUPP shares the PAS outline: 21 CFR 601.12(b) is the biologics
-  // prior-approval category and the supplement carries the same parts. The
-  // pack's uncertainties say the BLA rule text was not re-read for it.
   // US_NDA_SUPP is "NDA/BLA Supplement (Prior Approval)" in the registry, so it
-  // fixes no class; US_BLA_SUPP is the biologics licence's own.
-  { docType: 'pas', packAgency: 'fda', label: 'Prior Approval Supplement', registryIds: ['US_NDA_SUPP', 'US_BLA_SUPP'], productTypeByFiling: { US_BLA_SUPP: 'biologic' } },
+  // fixes no class. US_BLA_SUPP shared this class (the NDA PAS outline) until
+  // 2026-10-29; it is now 'bla_pas' below, read from its own 601.12(b) record.
+  // A document already bound to the pas pack keeps that outline.
+  { docType: 'pas', packAgency: 'fda', label: 'Prior Approval Supplement', registryIds: ['US_NDA_SUPP'] },
   { docType: 'cbe', packAgency: 'fda', label: 'CBE-30 / CBE-0 supplement', registryIds: ['US_CBE'] },
   { docType: 'annual_report', packAgency: 'fda', label: 'NDA/BLA annual report', registryIds: ['US_NDA_ANNUAL'] },
   { docType: 'rems', packAgency: 'fda', label: 'REMS', registryIds: ['US_REMS'] },
@@ -85,6 +84,28 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   { docType: 'fast_track', packAgency: 'fda', label: 'fast track designation request', registryIds: ['US_FAST_TRACK'] },
   { docType: 'rmat', packAgency: 'fda', label: 'RMAT designation request', registryIds: ['US_RMAT'] },
   { docType: 'psp', packAgency: 'fda', label: 'pediatric study plan', registryIds: ['US_PSP'] },
+  // ── US biotech filing completion (2026-10-29) ──
+  // docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md. One class per exact
+  // identity, so each scaffolds its own lifecycle record's parts and never the
+  // parent IND, BLA or the NDA record a neighbour reads. A licensed-biologic
+  // filing fixes the class 'biologic' (21 CFR parts 600 and 601 govern licences).
+  { docType: 'type_d_meeting', packAgency: 'fda', label: 'Type D meeting request and package', registryIds: ['US_TYPE_D_MEETING'] },
+  { docType: 'interact_meeting', packAgency: 'fda', label: 'INTERACT meeting request and package', registryIds: ['US_INTERACT'] },
+  { docType: 'expanded_access_individual', packAgency: 'fda', label: 'individual patient expanded access submission', registryIds: ['US_EXPANDED_ACCESS_INDIVIDUAL'] },
+  { docType: 'expanded_access_intermediate', packAgency: 'fda', label: 'intermediate-size population expanded access submission', registryIds: ['US_EXPANDED_ACCESS_INTERMEDIATE'] },
+  { docType: 'expanded_access_treatment', packAgency: 'fda', label: 'treatment IND or treatment protocol', registryIds: ['US_EXPANDED_ACCESS_TREATMENT'] },
+  { docType: 'bla_pas', packAgency: 'fda', label: 'BLA Prior Approval Supplement', registryIds: ['US_BLA_SUPP'], productTypeByFiling: { US_BLA_SUPP: 'biologic' } },
+  { docType: 'bla_cbe30', packAgency: 'fda', label: 'BLA CBE-30 supplement', registryIds: ['US_BLA_CBE30'], productTypeByFiling: { US_BLA_CBE30: 'biologic' } },
+  { docType: 'bla_cbe0', packAgency: 'fda', label: 'BLA CBE-0 supplement', registryIds: ['US_BLA_CBE0'], productTypeByFiling: { US_BLA_CBE0: 'biologic' } },
+  { docType: 'bla_annual_report', packAgency: 'fda', label: 'BLA annual report of minor changes', registryIds: ['US_BLA_ANNUAL'], productTypeByFiling: { US_BLA_ANNUAL: 'biologic' } },
+  { docType: 'bla_pediatric_report', packAgency: 'fda', label: 'BLA pediatric annual report', registryIds: ['US_BLA_PEDIATRIC_ANNUAL'], productTypeByFiling: { US_BLA_PEDIATRIC_ANNUAL: 'biologic' } },
+  { docType: 'bla_pmr_status_report', packAgency: 'fda', label: 'BLA postmarketing requirement and commitment status report', registryIds: ['US_BLA_PMR_ANNUAL'], productTypeByFiling: { US_BLA_PMR_ANNUAL: 'biologic' } },
+  { docType: 'bla_distribution_report', packAgency: 'fda', label: 'BLA distribution report', registryIds: ['US_BLA_DISTRIBUTION'], productTypeByFiling: { US_BLA_DISTRIBUTION: 'biologic' } },
+  { docType: 'bpdr', packAgency: 'fda', label: 'biological product deviation report', registryIds: ['US_BPDR'], productTypeByFiling: { US_BPDR: 'biologic' } },
+  { docType: 'bla_pae_report', packAgency: 'fda', label: 'BLA periodic adverse experience report', registryIds: ['US_BLA_PAE_REPORT'], productTypeByFiling: { US_BLA_PAE_REPORT: 'biologic' } },
+  { docType: 'cber_master_file', packAgency: 'fda', label: 'CBER biologics master file', registryIds: ['US_CBER_MASTER_FILE'], productTypeByFiling: { US_CBER_MASTER_FILE: 'biologic' } },
+  { docType: 'cber_lot_release', packAgency: 'fda', label: 'CBER lot release protocol', registryIds: ['US_CBER_LOT_RELEASE'], productTypeByFiling: { US_CBER_LOT_RELEASE: 'biologic' } },
+  { docType: 'eua_request', packAgency: 'fda', label: 'emergency use authorization request (drug or biologic)', registryIds: ['US_EUA_THERAPEUTIC'] },
   // ── Harmonised clinical and safety documents (ICH) ──
   { docType: 'csr', packAgency: 'ich', label: 'clinical study report', registryIds: ['ICH_CSR'] },
   { docType: 'protocol', packAgency: 'ich', label: 'clinical trial protocol', registryIds: ['ICH_PROTOCOL'] },
@@ -135,7 +156,7 @@ export function filingTypeInSentence(programType: string, midSentence = false): 
  * not build that sequence (review finding, 2026-10-18).
  */
 export function classNotSequencedReason(c: FilingDocumentClass, agency?: string): string {
-  if (c.docType === 'pas' || c.docType === 'cbe') {
+  if (['pas', 'cbe', 'bla_pas', 'bla_cbe30', 'bla_cbe0'].includes(c.docType)) {
     return `An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
   }
   if (c.packAgency === 'ich') {

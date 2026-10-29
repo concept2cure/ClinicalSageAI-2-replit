@@ -68,6 +68,19 @@ export const E3_QA_R1: RegulatoryBasis = {
   note: searchExtract(SEARCHED),
 };
 
+/**
+ * ICH E9(R1), the estimands and sensitivity-analysis addendum to E9 (Step 4,
+ * November 2019), as FDA publishes it (May 2021). Added 2026-10-29 (CSR slice
+ * 4) for §9.7.1 and §11.4. Not read: egress to fda.gov and ich.org was refused
+ * that day, so it is recall.
+ */
+export const ICH_E9_R1: RegulatoryBasis = {
+  ref: 'ICH E9(R1) Addendum on Estimands and Sensitivity Analysis in Clinical Trials (Step 4, November 2019)',
+  confidence: 'recall',
+  url: 'https://www.fda.gov/media/148473/download',
+  note: 'the addendum was not read in this session (egress to fda.gov and ich.org refused 2026-10-29); verbatim re-read owed.',
+};
+
 // ── FDA technical specifications for what a reviewer receives ───────────────
 
 /** FDA, Portable Document Format (PDF) Specifications. */

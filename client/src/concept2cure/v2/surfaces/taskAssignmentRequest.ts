@@ -1,4 +1,4 @@
-import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { capturedActorHeaders } from '@/utils/authToken';
 import {
   isTaskAssignmentRoster, isTaskAssignmentResult, taskAssignmentId,
@@ -23,7 +23,7 @@ export function taskAssignmentHeaders(scope: TaskAssignmentScope, isCurrent: () 
 const retired = (): AssignmentFailure => ({ kind: 'retired', message: 'The task, account or workspace changed. Reopen the task before assigning it.' });
 
 function failure(method: string, status?: number, payload?: unknown, code?: string): AssignmentFailure {
-  const payloadCode = object(payload) && typeof payload.error === 'string' ? payload.error : code;
+  const payloadCode = errorCodeOf(payload) ?? code;
   if (method !== 'GET' && payloadCode !== 'AUDIT_WRITE_FAILED' && (!status || status >= 500)) {
     return { kind: 'unconfirmed', message: 'Could not confirm the assignment. Refresh assignment before retrying; the change may have reached the server.' };
   }

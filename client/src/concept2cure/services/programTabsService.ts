@@ -173,23 +173,12 @@ export interface PendingApproval {
   [key: string]: unknown;
 }
 
-/** Result of a reject decision (POST /api/approval-workflows/:id/reject). */
-export interface WorkflowDecisionResult {
-  success: boolean;
-  status: string;
-  workflowAdvanced: boolean;
-  workflowCompleted: boolean;
-  workflowRejected: boolean;
-  nextStep?: number;
-  message?: string;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ProgramTabsService {
-  async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
     const response = await apiRequest(method, url, body);
     if (response.status === 204) return undefined as T;
     const payload = await response.json().catch(() => ({}));

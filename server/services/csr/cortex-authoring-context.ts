@@ -33,9 +33,11 @@ export function parseCsrEvidenceSelection(value: unknown): CsrEvidenceSelection 
     studyId: value.studyId, sectionNumber: value.sectionNumber };
 }
 const SAFETY: CsrTableKey[] = ['analysisPopulations', 'exposure', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts'];
+// Keyed by ICH_E3_GUIDANCE numbers. 2026-10-29: '2.4', '2.8', '2.9' and '2.10'
+// were csr-builder's invented synopsis children, deleted with its outline; E3's
+// synopsis is one heading, §2, which reads every table.
 const SECTIONS: Record<string, readonly CsrTableKey[]> = {
-  '2': CSR_TABLE_KEYS, '2.4': ['analysisPopulations', 'disposition'],
-  '2.8': ['analysisPopulations', 'primaryEfficacy', 'secondaryEfficacy'], '2.9': SAFETY, '2.10': CSR_TABLE_KEYS, '10': ['disposition'], '10.1': ['disposition'],
+  '2': CSR_TABLE_KEYS, '10': ['disposition'], '10.1': ['disposition'],
   '11': ['analysisPopulations', 'demographics', 'primaryEfficacy', 'secondaryEfficacy'],
   '11.1': ['analysisPopulations'], '11.2': ['analysisPopulations', 'demographics'],
   '11.4': ['analysisPopulations', 'primaryEfficacy', 'secondaryEfficacy'],
@@ -44,7 +46,7 @@ const SECTIONS: Record<string, readonly CsrTableKey[]> = {
   '12.3': ['analysisPopulations', 'deathsSAEsDiscontinuations'],
   '12.4': ['analysisPopulations', 'labShifts'], '12.6': SAFETY, '13': CSR_TABLE_KEYS,
 };
-function tableKeys(section: string): readonly CsrTableKey[] {
+export function csrSectionTableKeys(section: string): readonly CsrTableKey[] {
   // Do not use a parent-section fallback for unsupported subtopics (e.g. 12.5
   // vital signs), which would imply that unrelated safety tables support them.
   const parts = section.split('.');
@@ -86,7 +88,7 @@ export function buildCsrAuthoringEvidence(retained: RetainedCsrTables, requested
       'No external CSR numbers, patient-level records, model training or approval is supplied by this context.',
     ],
   };
-  const keys = tableKeys(selection.sectionNumber);
+  const keys = csrSectionTableKeys(selection.sectionNumber);
   if (!keys.length) result.limitations.push('No retained-table mapping exists for this section; consult the protocol, SAP and governed source documents.');
   let chars = 0;
   for (const key of keys) {
@@ -140,3 +142,28 @@ export const CSR_AUTHORING_EVIDENCE_RULES = `Use the attached CSR evidence as qu
 Use only the selected study and exact source version. Preserve denominators, analysis labels, units, CI levels and p-value comparators.
 Cite table key and source digest for reported values. Do not replace missing data with zero, infer statistical significance, or borrow another study's results.
 Explain omissions and missing source requirements. This is historical, clinically unverified evidence for a human-reviewed draft, not approval or filing readiness.`;
+
+/** What a CSR job's drafter is told when a section is bound to retained tables. */
+export const CSR_EVIDENCE_DRAFTING_RULES = `${CSR_AUTHORING_EVIDENCE_RULES}
+State a figure only when it is the exact text of a cell in the attached retained tables. List every figure you state, once, in a claims block at the very end:
+\`\`\`csr-claims
+[{"table":"<table key>","row":<0-based row index>,"column":<0-based column index>,"value":"<exact cell text>"}]
+\`\`\`
+Every figure in the prose is checked against the cell its claim names. Where the tables do not carry a figure, write [DATA TO BE INSERTED] instead.`;
+
+const CLAIMS_BLOCK = /\n?```csr-claims[ \t]*\n([\s\S]*?)\n```[ \t]*$/;
+
+/**
+ * Separate a drafted section's prose from its trailing claims block. A missing
+ * block yields no claims (so any stated figure is unreconciled); a block that
+ * is not a JSON array yields an invalid claims value reconcileCsrTableClaims
+ * refuses.
+ */
+export function splitCsrClaims(draft: string): { prose: string; claims: unknown } {
+  const text = draft.trimEnd();
+  const match = CLAIMS_BLOCK.exec(text);
+  if (!match) return { prose: text, claims: [] };
+  let claims: unknown;
+  try { claims = JSON.parse(match[1]); } catch { claims = null; }
+  return { prose: text.slice(0, match.index).trimEnd(), claims };
+}

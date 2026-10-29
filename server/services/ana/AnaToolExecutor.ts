@@ -77,6 +77,7 @@ import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js'
 import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools.js';
 import {
   getDeficienciesBySubmissionType,
   getCriticalDeficiencies,
@@ -233,6 +234,7 @@ import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
 import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
+import { registerCsrSectionEvidenceHandlers } from './csr-section-evidence-tool.js';
 import { registerCmcKnowledgeHandlers } from './cmc-knowledge-tools.js';
 import { registerCmcQualitySummaryHandler } from './cmc-quality-summary-tool.js';
 import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
@@ -2358,6 +2360,7 @@ registerToolHandler('medical_writing_guidance', async (input) => {
     region: asStr(input.region),
     audience: asStr(input.audience),
     clientSegment: asStr(input.client_segment),
+    section: asStr(input.section),
   });
   return JSON.stringify({
     source: 'AnA Medical-Writing Knowledge Base',
@@ -6704,8 +6707,19 @@ function ivdComputed(result: unknown, instruction: string): string {
   return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction }));
 }
 
+// The IVD calculators' required inputs come from their own schema module, not
+// from getRequiredInputKeys(): that one reads the whole tool catalog
+// (AnaToolDefinitions), whose agentic-workflow tools reach the model gateway.
+// Required keys are a schema fact; a deterministic engine handler should not
+// import a model to learn them (check-step-presentation ENGINE).
+function ivdRequiredInputKeys(name: string): string[] {
+  const def = IVD_LIFECYCLE_TOOLS.find(tool => tool.name === name);
+  const required = (def?.input_schema as { required?: string[] } | undefined)?.required;
+  return Array.isArray(required) ? required : [];
+}
+
 function ivdError(name: string, err: any, input: Record<string, unknown>): string {
-  const missing = getRequiredInputKeys(name).filter(key => input[key] == null);
+  const missing = ivdRequiredInputKeys(name).filter(key => input[key] == null);
   if (missing.length > 0) {
     return JSON.stringify({
       status: 'needs_parameters',
@@ -16086,6 +16100,8 @@ registerDocumentCatalogHandlers(registerToolHandler);
 registerAuthoringReadHandlers(registerToolHandler);
 // The canonical regulatory record (ind/ctd), read-only — same injected-register pattern.
 registerRegulatoryKnowledgeHandlers(registerToolHandler);
+// The retained CSR evidence pack (csr/cortex-authoring-reader), read-only — same injected-register pattern.
+registerCsrSectionEvidenceHandlers(registerToolHandler);
 // The cited CMC regulatory record (cmc/knowledge), read-only — same injected-register pattern.
 registerCmcKnowledgeHandlers(registerToolHandler);
 // The 2.3 QOS of the open program, from its recorded CMC data (no model-supplied figures).

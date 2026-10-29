@@ -76,7 +76,7 @@ vi.mock('../../server/services/csr-builder', async (importOriginal) => {
   // reads the real detector; only the drafting seam and the tree are faked.
   const actual = await importOriginal<typeof import('../../server/services/csr-builder')>();
   // Two top-level sections, one with two children → 4 total after flatten.
-  const ICH_E3_STRUCTURE = [
+  const FAKE_E3_TREE = [
     { number: '1', title: 'Title Page', required: true, status: 'empty', description: 'd1' },
     {
       number: '2',
@@ -98,9 +98,20 @@ vi.mock('../../server/services/csr-builder', async (importOriginal) => {
     }
     return out;
   }
+  // The runner's outline seam (2026-10-29: ICH_E3_GUIDANCE via the builder's
+  // resolveCSRDraftTargets / csrSectionSelectionRefusal, not a copied tree).
+  const numbers = () => flattenICHE3Sections(FAKE_E3_TREE).map((s: any) => s.number);
+  const csrSectionSelectionRefusal = (sel: unknown) =>
+    sel === undefined ? null
+      : !Array.isArray(sel) || !sel.length || new Set(sel).size !== sel.length || sel.some((n) => !numbers().includes(n))
+        ? { code: 'CSR_SECTION_SELECTION_INVALID', message: 'invalid' } : null;
+  const resolveCSRDraftTargets = (sel?: string[]) => {
+    if (csrSectionSelectionRefusal(sel)) throw new Error('CSR_SECTION_SELECTION_INVALID');
+    return flattenICHE3Sections(JSON.parse(JSON.stringify(FAKE_E3_TREE))).filter((s: any) => !sel || sel.includes(s.number));
+  };
   return {
-    ICH_E3_STRUCTURE,
-    flattenICHE3Sections,
+    resolveCSRDraftTargets,
+    csrSectionSelectionRefusal,
     draftCSRSectionWithProvenance: (...args: unknown[]) => draftMock(...args),
     hasUnresolvedPlaceholders: actual.hasUnresolvedPlaceholders,
   };
@@ -303,7 +314,9 @@ vi.mock('../../server/db', () => {
               ? state.jobs.filter((r) => evalPred(pred, r))
               : state.sections.filter((r) => evalPred(pred, r));
           for (const row of rows) Object.assign(row, patch);
-          return Promise.resolve();
+          // The runner claims a job with update(...).where(...).returning().
+          const done = Promise.resolve();
+          return Object.assign(done, { returning: async () => rows.map((r: any) => ({ id: r.id })) });
         },
       };
       return builder;
@@ -480,26 +493,15 @@ describe('runCSRBuildJob — progress', () => {
     expect(state.jobs[0].progress).toBe(100);
   });
 
-  it('is 100 (no divide-by-zero) when the filtered work list is empty', async () => {
-    // The "empty sectionsToGenerate" contract: when the runner produces a
-    // zero-length work list (here we drive that by giving it a subset
-    // filter that matches no real ICH-E3 section number), totalSections
-    // is 0, the per-section division never runs, and the final write must
-    // pin progress at 100 without throwing.
-    //
-    // We can't pass [] at the API: enqueueCSRBuildJob normalizes [] to
-    // null which means "full build". A filter of ['NONEXISTENT'] is the
-    // smallest scenario that flows through to totalSections === 0.
-    const { jobId } = await enqueueCSRBuildJob(
+  it('refuses a selection that names no ICH E3 heading, creating no job', async () => {
+    // Until the enqueue gate existed, ['NONEXISTENT'] flowed through to a
+    // zero-length work list and a vacuous complete/100. An unknown section is
+    // now refused before any job row exists.
+    await expect(enqueueCSRBuildJob(
       makeReq({ sectionsToGenerate: ['NONEXISTENT'] }),
       { organizationId: 100, requestedBy: 7 }
-    );
-
-    await runCSRBuildJob(jobId);
-
-    expect(state.sections).toHaveLength(0);
-    expect(state.jobs[0].status).toBe('complete');
-    expect(state.jobs[0].progress).toBe(100);
+    )).rejects.toMatchObject({ code: 'CSR_SECTION_SELECTION_INVALID' });
+    expect(state.jobs).toHaveLength(0);
   });
 });
 

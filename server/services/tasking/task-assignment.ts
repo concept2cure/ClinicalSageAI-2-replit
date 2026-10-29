@@ -13,7 +13,6 @@ import { auditTaskActionInTx, TaskAuditNotRecordedError } from './task-audit';
 import { getOptimalAssignee } from './task-planning';
 import { notifyTaskEvent } from './task-side-effects';
 import { auditWriteFailed, outcomeUnknown } from './governed-task-write';
-import { isRouteTask, refuseRouteTaskWrite, RouteTaskWriteRefused, routeTaskRefusalBody } from './task-state-machine';
 
 type Row = Record<string, unknown>;
 type Account = { id: number; name: string | null; email: string | null; role: string };
@@ -23,8 +22,6 @@ const id = z.number().int().positive().max(2_147_483_647);
 export const assignmentExpectedSchema = z.object({ expectedAssigneeId: id.nullable(), expectedVersion: z.string().regex(/^[a-f0-9]{64}$/) });
 export const namedAssignmentSchema = assignmentExpectedSchema.extend({ action: z.literal('assign'), assigneeId: id, reason: z.string().trim().min(3).max(1000) }).strict();
 export type AssignmentInput = { taskId: string; method: 'named' | 'workload-balanced'; assigneeId?: number; expectedAssigneeId?: number | null; expectedVersion?: string; reason?: string };
-/** Set only by server/services/review/review-route.ts, on a transaction that holds the route-writer setting: a route member's handoff is the route's (RR3). No request schema admits it. */
-export type AssignmentOptions = { routeOwned?: boolean };
 
 export class TaskAssignmentError extends Error {
   constructor(readonly status: 400 | 401 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
@@ -78,31 +75,27 @@ async function workspace(req: Request, q: RequestSqlClient, org: number, task: R
   }
   return actual;
 }
-function assignable(actor: ReportProjectActor, task: Row, project: Row | null, editable: boolean, opts: AssignmentOptions = {}): boolean {
-  // A route member is reassigned only through its route (RR1a, B1), so the
-  // generic roster offers no one for it.
-  if (isRouteTask(task) && !opts.routeOwned) return false;
+function assignable(actor: ReportProjectActor, task: Row, project: Row | null, editable: boolean): boolean {
   return GOVERNED_WRITE_ROLES.has(String(actor.role)) && editable && LIVE.has(String(task.status)) && !['archived','deleted'].includes(String(project?.status));
 }
 function requireWritePermission(actor: ReportProjectActor, editable: boolean, canAssign: boolean): void {
   if (!GOVERNED_WRITE_ROLES.has(String(actor.role)) || !editable) throw denied();
   if (!canAssign) throw new TaskAssignmentError(409, 'TASK_NOT_ASSIGNABLE', 'Only unfinished tasks in an active project can be reassigned.');
 }
-async function admission(req: Request, q: RequestSqlClient, taskId: string, write = false, opts: AssignmentOptions = {}): Promise<Admission> {
+async function admission(req: Request, q: RequestSqlClient, taskId: string, write = false): Promise<Admission> {
   const { organizationId, actorUserId } = identity(req);
   const initialActor = await readCsrProjectActor(q, organizationId, actorUserId);
   if (write && !GOVERNED_WRITE_ROLES.has(String(initialActor.role))) throw denied();
   const initial = await taskRow(q, organizationId, taskId);
   const project = await parent(q, organizationId, initial, write);
   const task = write ? await taskRow(q, organizationId, taskId, true) : initial;
-  if (write && !opts.routeOwned) refuseRouteTaskWrite(task, 'task.assign');
   if (task.project_id !== initial.project_id || task.client_workspace_id !== initial.client_workspace_id) throw stale();
   const actor = write ? await readCsrProjectActor(q, organizationId, actorUserId, { forShare: true }) : initialActor;
   const currentWorkspace = await workspace(req, q, organizationId, task, project);
   const projectId = numberOrNull(task.project_id);
   if (projectId !== null && !await canAccessReportProject(organizationId, actor, projectId, q)) throw denied();
   const editable = projectId === null || await canAccessReportProject(organizationId, actor, projectId, q, { forWrite: true });
-  const canAssign = assignable(actor, task, project, editable, opts);
+  const canAssign = assignable(actor, task, project, editable);
   if (write) requireWritePermission(actor, editable, canAssign);
   return { task, actor, organizationId, project, workspace: currentWorkspace, canAssign };
 }
@@ -163,8 +156,7 @@ async function recipient(q: RequestSqlClient, ctx: Admission, userId: number): P
     await q.query(`SELECT ra.artifact_id FROM concept2cure_review_assignments ra JOIN concept2cure_artifacts a ON a.id=ra.artifact_id WHERE ra.organization_id=$1 AND a.organization_id=$1 AND a.project_id=$2 AND ra.reviewer_id=$3 AND ra.status='pending' FOR SHARE OF ra,a`, [ctx.organizationId, ctx.task.project_id, userId]);
     if (!await canAccessReportProject(ctx.organizationId, actor, Number(ctx.task.project_id), q)) throw denied();
   }
-  // tenant-isolation-safe: users is the global account table (no tenant column); this account's membership of ctx.organizationId was proved above by readCsrProjectActor (organization_users, FOR SHARE).
-  const { rows } = await q.query('SELECT id,name,email FROM users WHERE id=$1 AND status=\'active\'', [userId]);
+  const { rows } = await q.query(`/* task-assignment:recipient */ SELECT u.id,u.name,u.email FROM organization_users ou JOIN users u ON u.id=ou.user_id WHERE ou.organization_id=$1 AND u.id=$2 AND u.status='active'`, [ctx.organizationId, userId]);
   if (rows.length !== 1) throw denied();
   return { id: userId, role: String(actor.role), name: typeof rows[0].name === 'string' ? rows[0].name : null, email: typeof rows[0].email === 'string' ? rows[0].email : null };
 }
@@ -194,7 +186,7 @@ async function mutate(req: Request, q: RequestSqlClient, ctx: Admission, input: 
     if (input.method === 'workload-balanced') return null;
     throw new TaskAssignmentError(409, 'ASSIGNMENT_UNCHANGED', 'The task is already assigned to this account. Nothing was changed.');
   }
-  const result = await q.query(`/* task-assignment:update */ UPDATE unified_tasks SET assignee_id=$1,assignee_name=$2,assigned_by=$3,assigned_at=now(),last_modified_by=$3,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$4 AND organization_id=$5 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING *,xmin::text AS row_version,updated_at::text AS exact_updated_at`, [account.id, account.name, ctx.actor.userId, ctx.task.id, ctx.organizationId]);
+  const result = await q.query(`/* task-assignment:update */ UPDATE unified_tasks SET assignee_id=$1,assignee_name=$2,assigned_by=$3,assigned_at=now(),last_modified_by=$3,updated_at=now() WHERE id=$4 AND organization_id=$5 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING *,xmin::text AS row_version,updated_at::text AS exact_updated_at`, [account.id, account.name, ctx.actor.userId, ctx.task.id, ctx.organizationId]);
   if (result.rows.length !== 1) throw stale();
   const data = saved(ctx, result.rows[0]);
   await auditTaskActionInTx(q, { orgId: ctx.organizationId, userId: ctx.actor.userId, command: 'task.assign', taskId: input.taskId,
@@ -211,26 +203,6 @@ function notifyAssigned(data: TaskAssignmentResult | null, title: string): void 
   try { notifyTaskEvent({ organizationId: data.organizationId, recipientUserId: data.assigneeId, category: 'task_assigned', title: `Task assigned: ${title}`, taskId: data.taskId }); }
   catch { console.warn('[tasking] Confirmed assignment notification could not be scheduled.'); }
 }
-/**
- * One assignment on the caller's transaction (`q` is inside it): the admission,
- * the compare-and-set UPDATE (which also clears the due-soon and overdue
- * markers, so the new assignee is reminded afresh) and the `task.assign` row.
- * `skipped` when a workload-balanced pick found nothing to do. The caller
- * commits, then sends `notifyAssignedAfterCommit`. assignTask below is this on
- * its own transaction; review-route.ts calls it with `routeOwned` (RR3).
- */
-export async function assignTaskInTx(req: Request, q: RequestSqlClient, input: AssignmentInput, opts: AssignmentOptions = {}): Promise<{ skipped: true } | { skipped: false; result: TaskAssignmentResult | null; title: string }> {
-  let ctx: Admission;
-  try { ctx = await admission(req, q, input.taskId, true, opts); }
-  catch (error) {
-    if (!canSkip(input, error)) throw error;
-    return { skipped: true };
-  }
-  return { skipped: false, result: await mutate(req, q, ctx, input), title: String(ctx.task.title) };
-}
-/** The new assignee's notice, sent only once the assignment committed. */
-export function notifyAssignedAfterCommit(data: TaskAssignmentResult | null, title: string): void { notifyAssigned(data, title); }
-
 export async function assignTask(req: Request, input: AssignmentInput): Promise<TaskAssignmentResult | null> {
   const q = requestPgClient(req);
   const client = await requestConnectable(req).connect();
@@ -238,9 +210,13 @@ export async function assignTask(req: Request, input: AssignmentInput): Promise<
   let result: TaskAssignmentResult | null; let title: string;
   try {
     await client.query('BEGIN'); began = true;
-    const done = await assignTaskInTx(req, q, input);
-    if (done.skipped) { await client.query('ROLLBACK'); began = false; return null; }
-    result = done.result; title = done.title;
+    let ctx: Admission;
+    try { ctx = await admission(req, q, input.taskId, true); }
+    catch (error) {
+      if (!canSkip(input, error)) throw error;
+      await client.query('ROLLBACK'); began = false; return null;
+    }
+    result = await mutate(req, q, ctx, input); title = String(ctx.task.title);
     committing = true; await client.query('COMMIT'); committing = false; began = false;
   } catch (error) {
     let uncertain = !began || committing;
@@ -258,7 +234,6 @@ export function assignmentFailure(res: Response, error: unknown) {
   if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: 'Invalid task assignment request', code: 'VALIDATION_ERROR' });
   if (error instanceof TaskAssignmentUnknown) return outcomeUnknown(res);
   if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The assignment');
-  if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
   if (error instanceof CsrScopeError) return res.status(403).json({ success: false, error: 'Current active organization membership is required.', code: 'TASK_ASSIGNMENT_DENIED' });
   if (error instanceof TaskAssignmentError) return res.status(error.status).json({ success: false, error: error.message, code: error.code });
   return res.status(503).json({ success: false, error: unavailable().message, code: 'TASK_ASSIGNMENT_UNAVAILABLE' });

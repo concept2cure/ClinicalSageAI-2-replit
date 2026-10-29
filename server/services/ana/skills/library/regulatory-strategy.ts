@@ -491,6 +491,8 @@ A product combines a drug, a biologic or a device, and the question is whether i
       'US_TYPE_A_MEETING',
       'US_TYPE_B_MEETING',
       'US_TYPE_C_MEETING',
+      'US_TYPE_D_MEETING',
+      'US_INTERACT',
       'US_QSUB',
       'US_IVD_QSUB',
       'EU_SCIENTIFIC_ADVICE',

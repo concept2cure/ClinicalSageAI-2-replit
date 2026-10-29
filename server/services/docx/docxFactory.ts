@@ -42,6 +42,9 @@ import {
 } from 'docx';
 import { imageSize, fitWithin } from '../templates/imageSize';
 
+/** Types of the canonical runtime's `docx` library, for callers that compose sections and must not import 'docx' themselves. */
+export type { ISectionOptions, Paragraph as WordParagraph, Table as WordTable } from 'docx';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE MODEL — formatting is data, not hard-coded constants.
 //

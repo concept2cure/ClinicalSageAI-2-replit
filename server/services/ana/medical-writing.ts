@@ -19,6 +19,9 @@
  */
 
 import { e3TopLevel } from '../ind/ctd/index.js';
+import { csrWritingBrief, csrWritingGuidance, type CsrWritingGuidance } from './medical-writing-csr.js';
+
+export { csrWritingGuidance, type CsrWritingGuidance };
 import { ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 
@@ -49,6 +52,12 @@ export interface TherapeuticAreaConvention {
   terminology: string[];
   reportingConventions: string[];
   keyGuidances: string[];
+  /**
+   * The efficacy and safety vocabulary a CSR in this area uses, and how to use
+   * it correctly (CSR slice 4, 2026-10-29). Craft and convention; the protocol
+   * and SAP decide the study's own definitions.
+   */
+  csrVocabulary?: string[];
   aliases?: string[];
 }
 
@@ -279,6 +288,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['RECIST 1.1', 'iRECIST (immunotherapy)', 'Lugano (lymphoma)', 'RANO (CNS tumors)', 'CTCAE v5.0 (AEs)'],
     reportingConventions: ['Kaplan–Meier with median + 95% CI and HR (Cox)', 'Censoring rules pre-specified', 'Swimmer/waterfall plots for response', 'Data maturity (events/% ) reported'],
     keyGuidances: ['FDA oncology endpoints guidance', 'Project Optimus (dose optimization)', 'ICH E9(R1) estimands'],
+    csrVocabulary: ["Response by RECIST 1.1 (complete response, partial response, stable disease, progressive disease) as assessed by the investigator or by blinded independent central review (BICR); say which", "iRECIST for immunotherapy: unconfirmed progression (iUPD) needs confirmation (iCPD); pseudoprogression is not progression until confirmed", "PFS, OS, ORR (confirmed responses only, unless the SAP says otherwise), duration of response (DoR, among responders), DCR; medians with confidence intervals from Kaplan–Meier, hazard ratios from the stratified Cox model the SAP names; state data maturity and the data cutoff date", "Safety: CTCAE grade (name the version); Grade ≥3 TEAEs, dose interruptions, reductions and discontinuations; immune-mediated adverse events for checkpoint inhibitors; deaths within 30 days of last dose"],
     aliases: ['cancer', 'onc', 'tumor', 'tumour', 'hematology-oncology'],
   },
   {
@@ -287,6 +297,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['NYHA class', 'Standardized CV endpoint definitions (2017/2018 ACC/AHA)', 'Adjudicated events (CEC)'],
     reportingConventions: ['Time-to-first-event + recurrent-event analyses', 'Independent endpoint adjudication', 'Non-inferiority margins justified for CV outcomes/safety'],
     keyGuidances: ['FDA CV outcomes (incl. diabetes CVOT history)', 'ICH E14 (QT)'],
+    csrVocabulary: ["MACE: name every component (3-point: CV death, non-fatal MI, non-fatal stroke) and say it was adjudicated by the clinical events committee (CEC); report time to first event and, where planned, total events", "Heart failure: HF hospitalisation or urgent HF visit as adjudicated; KCCQ as a PRO with its scoring direction", "Safety: blood pressure, heart rate and QTc changes with the correction (Fridericia) the SAP names; bleeding by the BARC, TIMI or ISTH scale the protocol uses"],
     aliases: ['cardiovascular', 'cv', 'heart failure', 'cardio'],
   },
   {
@@ -295,7 +306,19 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['Validated rating scales with MCID', 'Central reading where applicable'],
     reportingConventions: ['MMRM for longitudinal continuous endpoints', 'Pre-specified handling of rater variability', 'Clinically meaningful within-patient change defined'],
     keyGuidances: ['FDA/EMA disease-specific guidances (AD, MS, PD, epilepsy)'],
-    aliases: ['cns', 'neurology', 'psychiatry', 'neuro'],
+    csrVocabulary: ["Neurology rating scales by their exact names and versions (MDS-UPDRS, EDSS, ADAS-Cog13, CDR-SB), with the direction of improvement stated", "Seizure frequency as percentage change from baseline and responder rate (≥50% reduction) as the SAP defines them", "Safety: suicidality by C-SSRS; ARIA-E and ARIA-H by MRI for anti-amyloid antibodies; cognitive and falls events"],
+    aliases: ['cns', 'neurology', 'neuro'],
+  },
+  {
+    // Split from neuroscience 2026-10-29 (CSR slice 4): psychiatric rating
+    // scales and safety topics differ from neurology's.
+    id: 'psychiatry', label: 'Psychiatry',
+    endpoints: ['MADRS or HAM-D17 total score change (depression)', 'PANSS total (schizophrenia)', 'YMRS (mania)', 'CGI-S / CGI-I', 'Response and remission by the protocol\'s thresholds'],
+    terminology: ['Validated rating scales with trained, calibrated raters', 'DSM-5 diagnoses confirmed by a structured interview (for example MINI)'],
+    reportingConventions: ['MMRM for change from baseline, with the treatment-discontinuation intercurrent event and its strategy stated', 'Placebo response and site effects discussed'],
+    keyGuidances: ['FDA and EMA indication-specific psychiatric guidances', 'ICH E9(R1)'],
+    csrVocabulary: ["Name each scale exactly (MADRS, HAM-D17, PANSS, YMRS, CGI-S) with its range and direction of improvement; response and remission are defined by the protocol's thresholds, quoted, not paraphrased", "Safety: suicidal ideation and behaviour by C-SSRS (separately from AE reports), extrapyramidal symptoms (SAS, BARS, AIMS), metabolic changes (weight, glucose, lipids) and prolactin for antipsychotics, abuse and withdrawal where relevant"],
+    aliases: ['psychiatric', 'depression', 'schizophrenia', 'bipolar', 'mental health'],
   },
   {
     id: 'infectious_disease', label: 'Infectious Disease',
@@ -303,6 +326,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['ITT/mITT/CE/ME analysis populations', 'MIC and susceptibility (CLSI/EUCAST)'],
     reportingConventions: ['Non-inferiority designs with pre-specified margins', 'By-pathogen and by-population summaries'],
     keyGuidances: ['FDA indication-specific anti-infective guidances', 'EUCAST/CLSI breakpoints'],
+    csrVocabulary: ["Clinical cure, microbiological eradication and recurrence at the test-of-cure (TOC) visit, by the analysis population (ITT, mITT, CE, ME) the SAP defines", "By-pathogen outcomes with baseline MIC; susceptibility by CLSI or EUCAST breakpoints, naming which", "Safety: DAIDS grading for HIV studies; Clostridioides difficile-associated diarrhoea and antimicrobial resistance emergence where relevant"],
     aliases: ['id', 'antimicrobial', 'antibiotic', 'antiviral', 'vaccine-preventable'],
   },
   {
@@ -311,6 +335,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['Validated composite indices', 'Non-responder imputation (NRI) for binary endpoints'],
     reportingConventions: ['NRI/MI for missing binary outcomes pre-specified', 'Maintenance of effect across periods'],
     keyGuidances: ['Indication-specific FDA/EMA guidances'],
+    csrVocabulary: ["ACR20/50/70, DAS28-CRP, PASI 75/90/100, IGA 0/1, EASI-75, clinical remission by the index the protocol names; binary endpoints with non-responder imputation stated", "Safety: serious and opportunistic infections, herpes zoster, malignancy, MACE and VTE for JAK inhibitors, injection-site reactions, immunogenicity (anti-drug antibodies)"],
     aliases: ['rheumatology', 'dermatology', 'autoimmune', 'ibd', 'gastroenterology'],
   },
   {
@@ -319,6 +344,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['ADA/EASD definitions', 'Treat-to-target designs'],
     reportingConventions: ['Estimand for rescue medication/discontinuation (intercurrent events)', 'CVOT non-inferiority then superiority testing'],
     keyGuidances: ['FDA diabetes/obesity guidances', 'ICH E9(R1)'],
+    csrVocabulary: ["HbA1c change from baseline in % (and mmol/mol where the region expects it), with the rescue-medication intercurrent event and its strategy named", "Hypoglycaemia by level (level 1, 2, 3 per ADA/EASD) as the protocol classifies it; body weight change in kg and %", "Safety: hypoglycaemia, gastrointestinal events for incretin therapies, pancreatitis, diabetic ketoacidosis for SGLT2 inhibitors"],
     aliases: ['diabetes', 'obesity', 'endocrine', 'metabolism'],
   },
   {
@@ -327,6 +353,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['Reversibility criteria', 'GOLD/GINA staging'],
     reportingConventions: ['Negative binomial for exacerbation rates', 'On-treatment vs off-treatment estimands'],
     keyGuidances: ['FDA/EMA asthma & COPD guidances'],
+    csrVocabulary: ["Trough and peak FEV1 change from baseline in mL; annualised exacerbation rate from the negative binomial model with its offset; time to first exacerbation", "Safety: pneumonia with inhaled corticosteroids, paradoxical bronchospasm, oral candidiasis"],
     aliases: ['pulmonary', 'asthma', 'copd', 'lung'],
   },
   {
@@ -335,6 +362,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['External/historical controls', 'Surrogate endpoints (accelerated approval)'],
     reportingConventions: ['Small-N designs (n-of-1, crossover, Bayesian borrowing)', 'Natural history as comparator with bias controls'],
     keyGuidances: ['FDA rare-disease & natural-history guidances', 'EMA orphan & small-population guidance'],
+    csrVocabulary: ["Name the natural-history or external-control source and how comparability was addressed; label single-arm comparisons as such", "Small numbers: report counts, not only percentages, and avoid percentages for groups smaller than the SAP's threshold"],
     aliases: ['orphan', 'ultra-rare', 'natural history'],
   },
   {
@@ -343,6 +371,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['Correlates of protection', 'Per-protocol immunogenicity sets'],
     reportingConventions: ['Non-inferiority on immunogenicity (GMT ratio, seroresponse difference)', 'Solicited/unsolicited reactogenicity reporting'],
     keyGuidances: ['FDA/EMA/WHO vaccine guidances'],
+    csrVocabulary: ["Reactogenicity: solicited local reactions (pain, redness, swelling) and solicited systemic events (fever, fatigue, headache, myalgia) collected by diary within the solicited window after each dose, graded by the FDA 2007 toxicity grading scale or the protocol's scale; unsolicited adverse events reported separately, with medically attended adverse events (MAAEs) and AESIs", "Immunogenicity: GMT or GMC with confidence intervals, GMT ratio, seroconversion or seroresponse rates as the protocol defines them, by the per-protocol immunogenicity set", "Efficacy: vaccine efficacy as 1 − relative risk (or hazard ratio) with its confidence interval and case definition"],
     aliases: ['vaccine', 'immunization', 'prophylactic'],
   },
   {
@@ -351,6 +380,7 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     terminology: ['MedDRA (AEs)', 'Validated, fit-for-purpose instruments'],
     reportingConventions: ['Estimand-aligned analysis', 'Pre-specified multiplicity and missing-data handling'],
     keyGuidances: ['ICH E8(R1), E9(R1), E3, M4E'],
+    csrVocabulary: ["MedDRA preferred terms and SOCs exactly as coded, with the version; WHODrug for medications; the grading scale named with its version"],
   },
 ];
 
@@ -405,7 +435,10 @@ export interface MedicalWritingRequest {
   region?: string;
   audience?: string;
   clientSegment?: string; // pharma | biotech | medtech/device | ivd | cro — informational
+  /** For a CSR: the ICH E3 heading ("11.4.1", "§12.2.2") whose writing rules to return. */
+  section?: string;
 }
+
 
 export interface MedicalWritingGuidance {
   resolved: {
@@ -424,6 +457,8 @@ export interface MedicalWritingGuidance {
   brief: string;
   /** When the document type wasn't recognized, the catalog of supported ids. */
   availableDocumentTypes?: string[];
+  /** Only for a CSR: the report-wide writing rules, sentence patterns, terminology and the section's rules. */
+  csrWriting?: CsrWritingGuidance;
 }
 
 /** Resolve a document-type standard by id/alias/label (null if unknown). */
@@ -444,6 +479,11 @@ export function listMedicalWritingCatalog() {
 function bullets(title: string, items: string[]): string {
   if (!items.length) return '';
   return `\n### ${title}\n${items.map(i => `- ${i}`).join('\n')}`;
+}
+
+/** The CSR writing standard for a CSR request; undefined for any other document. */
+function csrWritingFor(doc: DocumentTypeStandard | null, section: string | undefined): CsrWritingGuidance | undefined {
+  return doc?.id === 'csr' ? csrWritingGuidance(section) : undefined;
 }
 
 /**
@@ -492,6 +532,9 @@ Avoid overclaiming: no unsupported significance, no spin, no invented CI, p-valu
 Retain source originals and derivatives with page/version/hash lineage; enforce source rights before commercial retrieval, embedding, or training. Use the existing governed canvas and editor.`);
   }
 
+  const csrWriting = csrWritingFor(doc, req.section);
+  parts.push(csrWritingBrief(csrWriting, ta));
+
   if (ta) {
     parts.push(`\n## Therapeutic area: ${ta.label}`);
     parts.push(bullets('Endpoints', ta.endpoints));
@@ -531,5 +574,6 @@ Retain source originals and derivatives with page/version/hash lineage; enforce 
     globalStyleRules: GLOBAL_STYLE_RULES,
     brief: parts.filter(Boolean).join('\n'),
     availableDocumentTypes: doc ? undefined : DOCUMENT_TYPES.map(d => d.id),
+    csrWriting,
   };
 }

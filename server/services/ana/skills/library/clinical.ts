@@ -393,6 +393,8 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
       'in-text tables',
     ],
     tools: [
+      'get_csr_section_evidence',
+      'get_document_section_requirements',
       'get_csr_template',
       'medical_writing_guidance',
       'narrate_statistical_result',
@@ -416,15 +418,16 @@ Drafting, structuring or checking a clinical study report for an interventional 
 
 ## Method
 1. Establish the inputs before writing: final protocol and amendments, the SAP version, database lock, the approved tables, listings and figures, the MedDRA version used for coding, and the data cut-off. Text is written from approved outputs, never from memory or estimate.
-2. Use the ICH E3 structure: \`get_csr_template\` returns the E3 body or the standalone synopsis, and \`medical_writing_guidance\` (document type csr) the conventions. E3 is a guideline, not a fixed template (its Q&A says so): keep its headings and order where they fit, adapt where the study calls for it, and say what was adapted.
-3. Synopsis (E3 section 2): self-contained and consistent with the body, figure for figure.
-4. Disposition (E3 section 10): account for every participant from screening onward by arm: screen failures where the study records them, randomised, treated, completed and discontinued with reasons. Report protocol deviations and the analysis sets as the SAP defines them.
-5. Efficacy (E3 section 11): the primary analysis on the pre-specified population and estimand, with the sensitivity analyses the SAP planned. Keep pre-specified and post hoc analyses apart. State each result through \`narrate_statistical_result\`, which flags multiplicity and exploratory status.
-6. Safety (E3 section 12): exposure; adverse events by system organ class and preferred term, by arm, with severity and relatedness; deaths, serious adverse events, discontinuations for adverse events and other significant events; laboratory and vital-sign findings. State the MedDRA version once and use it throughout. Code verbatim terms only with \`code_meddra\`; when it reports license_required or no_match, say so and never supply a code.
-7. Narratives: draft each with \`draft_safety_narrative\` from structured case facts, in one order for every narrative: exposure timeline, the event, its management, outcome, causality. Report the missing fields the tool lists; never fill them.
-8. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
-9. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
-10. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
+2. Use the ICH E3 structure: \`get_csr_template\` returns the E3 body or the standalone synopsis, \`get_document_section_requirements\` (document csr, with the E3 heading) what each heading must contain, and \`medical_writing_guidance\` (document type csr) the conventions. E3 is a guideline, not a fixed template (its Q&A says so): keep its headings and order where they fit, adapt where the study calls for it, and say what was adapted.
+3. Results sections (E3 2 synopsis, 10 study patients, 11 efficacy, 12 safety, 13 discussion and overall conclusions): call \`get_csr_section_evidence\` before writing a word, with the retained Submission Center run, the study and the E3 heading. Write every figure from its cells, cite the table key and the evidence digest, and keep its limitations. Then pass each figure you wrote back to it as claims with that digest, and correct every figure it reports as not reconciling. If it refuses, say the evidence is unavailable and why; never describe the section as having no data and never supply the figures yourself.
+4. Synopsis (E3 section 2): self-contained and consistent with the body, figure for figure.
+5. Disposition (E3 section 10): account for every participant from screening onward by arm: screen failures where the study records them, randomised, treated, completed and discontinued with reasons. Report protocol deviations and the analysis sets as the SAP defines them.
+6. Efficacy (E3 section 11): the primary analysis on the pre-specified population and estimand, with the sensitivity analyses the SAP planned. Keep pre-specified and post hoc analyses apart. State each result through \`narrate_statistical_result\`, which flags multiplicity and exploratory status.
+7. Safety (E3 section 12): exposure; adverse events by system organ class and preferred term, by arm, with severity and relatedness; deaths, serious adverse events, discontinuations for adverse events and other significant events; laboratory and vital-sign findings. State the MedDRA version once and use it throughout. Code verbatim terms only with \`code_meddra\`; when it reports license_required or no_match, say so and never supply a code.
+8. Narratives: draft each with \`draft_safety_narrative\` from structured case facts, in one order for every narrative: exposure timeline, the event, its management, outcome, causality. Report the missing fields the tool lists; never fill them.
+9. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
+10. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
+11. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
 
 ## Pitfalls reviewers raise
 - Figures in the text that differ from the tables.

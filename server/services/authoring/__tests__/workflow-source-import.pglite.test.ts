@@ -194,7 +194,13 @@ describe('stored CSR materialization',()=>{
     expect(result.origin.sourceScope.level).toBe('organization');
     expect(result.association.required).toBe(true);
     expect(result.gaps).toContain('The saved CSR job is failed; available output is a partial draft.');
-    expect(result.gaps).toContain('CSR section 14 has no saved output in this selection.');
+    // Gaps name the headings a job drafts (ICH_E3_GUIDANCE, 2026-10-29):
+    // manual §14, prepared from source, is never a missing job output — but
+    // its absence from the draft is still a gap, said as what it is.
+    expect(result.gaps).not.toContain('CSR section 14 has no saved output in this selection.');
+    expect(result.gaps).toContain('CSR section 14 is prepared from source outputs and records, not drafted by a CSR job; this draft does not contain it.');
+    // The job's recorded scope is §13 and §14, so §3 is not this draft's gap.
+    expect(result.gaps.some(g => g.startsWith('CSR section 3 '))).toBe(false);
     expect(result.gaps.some(g=>g.includes('placeholder'))).toBe(true);
     expect(result.origin.sectionOrigins[0].originalAuthorship).toBe('unknown');
   });
@@ -202,7 +208,9 @@ describe('stored CSR materialization',()=>{
     await database.query("INSERT INTO csr_section_outputs VALUES(703,7,11,1,'11.1',$1,$2,true,NULL,NULL,'2026-10-02T00:00:00Z')",['Saved descendant',hash('Saved descendant')]);
     const result=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11']}),q);
     expect(result.sections.map(s=>s.code)).toEqual(['11.1']);
-    expect(result.gaps).toContain('CSR section 11 has no saved output in this selection.');
+    expect(result.gaps).toContain('CSR section 11.4.1 has no saved output in this selection.');
+    expect(result.gaps).not.toContain('CSR section 11 has no saved output in this selection.');
+    expect(result.gaps.some(g => g.includes('prepared from source'))).toBe(false);
     expect(result.origin.selection).toEqual({kind:'csr',jobId:1,sectionNumbers:['11']});
   });
   it('refuses missing selected output and a changed or forged recorded hash',async()=>{

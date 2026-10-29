@@ -1,0 +1,4 @@
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary 57ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 124 passed (125)

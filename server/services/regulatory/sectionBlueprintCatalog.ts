@@ -46,6 +46,7 @@ import * as indiaCt from './registry/blueprints/indiaCtBlueprint.js';
 import { dsurSectionBlueprint, csrSectionBlueprint } from './registry/blueprints/clinicalDocumentBlueprints.js';
 import * as usIndAmendment from './registry/blueprints/usIndAmendmentBlueprint.js';
 import * as nonclinicalSummary from './registry/blueprints/nonclinicalSummaryBlueprint.js';
+import { US_LIFECYCLE_RECORD_SECTION_BLUEPRINTS, usLifecycleRecordBlueprintContext } from './registry/blueprints/usLifecycleRecordBlueprints.js';
 
 /**
  * Registry ID → its dedicated section blueprint.
@@ -84,6 +85,11 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   ICH_CSR: csrSectionBlueprint,
   US_IND_AMENDMENT: usIndAmendment.sectionBlueprint,
   ICH_NONCLIN_SUMMARY: nonclinicalSummary.sectionBlueprint,
+  // 2026-10-29: US biotech identities whose outline is their own lifecycle record
+  // (Type D, INTERACT, expanded access, BLA supplements and Part 600/601 reports,
+  // CBER master file and lot release, drug/biologic EUA). Without these each one
+  // resolved to the generic CTD fallback here.
+  ...US_LIFECYCLE_RECORD_SECTION_BLUEPRINTS,
 };
 
 /** Registry IDs that have a dedicated, wired section blueprint. */
@@ -132,6 +138,11 @@ export function requiresSectionApplicabilityAssessment(registryId: string): bool
 
 /** Provenance and limitations travel with the repaired outline through all authoring paths. */
 export function getSectionBlueprintContext(registryId: string): { basis?: RegulatoryBasis; limitations: readonly string[] } {
+  // A 2026-10-29 lifecycle-record identity carries its record's basis and limits.
+  return usLifecycleRecordBlueprintContext(registryId) ?? authoredBlueprintContext(registryId);
+}
+
+function authoredBlueprintContext(registryId: string): { basis?: RegulatoryBasis; limitations: readonly string[] } {
   const deviceContext = deviceAuthoringBlueprintContext(getApplicationType(registryId)?.defaultSectionBlueprint ?? '');
   if (deviceContext) return deviceContext;
   if (registryId === 'ICH_PROTOCOL') return { basis: ICH_M11_PROTOCOL_BASIS, limitations: ICH_M11_PROTOCOL_LIMITATIONS };

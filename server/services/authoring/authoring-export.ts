@@ -20,8 +20,7 @@ import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './
 import { sectionsDigest } from './authoring-content-digests';
 import type { CompanyDocumentProfile } from '../../../shared/company-documents';
 import { correspondenceTemplate, readCorrespondencePresentation } from '../company-documents/correspondence-rendering';
-import type { DocxStyle } from '../docx/docxFactory';
-import type { ISectionOptions, Paragraph as WordParagraph, Table as WordTable } from 'docx';
+import type { DocxStyle, ISectionOptions, WordParagraph, WordTable } from '../docx/docxFactory';
 import { isConversionCapacityError } from '../conversion-slots';
 // Preserve this service's public API while keeping workflow release checks
 // independent of the renderer's async initialization (production boot).

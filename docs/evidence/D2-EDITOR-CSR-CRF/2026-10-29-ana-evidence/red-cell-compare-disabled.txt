@@ -1,0 +1,4 @@
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reports an AE count one off from aeBySOC as not reconciling, with the cell value 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'matches' to be 'needs_review' // Object.is equality
+      Tests  1 failed | 12 skipped (13)

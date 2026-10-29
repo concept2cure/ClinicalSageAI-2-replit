@@ -191,7 +191,7 @@ export const PLAN_ANNUAL_REPORT: AnaTool = {
     'to determine which are annual-reportable (vs requiring a supplement), lays out ' +
     'the required annual-report sections (including stability protocol/commitment ' +
     'updates), and structures the PLCM document (established conditions, reporting ' +
-    'categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) ' +
+    'categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) (NDA) or 601.12(d) (BLA) ' +
     'and ICH Q12 (PLCM). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -199,6 +199,7 @@ export const PLAN_ANNUAL_REPORT: AnaTool = {
       productName: { type: 'string', description: 'Product name (context).' },
       reportingPeriod: { type: 'string', description: 'Annual report reporting period (context).' },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality.' },
+      biologicLicense: { type: 'boolean', description: 'True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Absent, a biologic, vaccine or cell/gene therapy modality is taken as licensed.' },
       changes: {
         type: 'array',
         description: 'Implemented changes to classify for annual-report inclusion.',

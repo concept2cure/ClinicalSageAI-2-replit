@@ -10,7 +10,7 @@ import type { Queryable } from './authoring-evidence';
 import { requireCsrJobAccess, readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { canAccessReportProject } from '../report-os/project-access';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
-import { ICH_E3_STRUCTURE, flattenICHE3Sections } from '../csr-builder';
+import { flattenICHE3Sections, getICHE3Structure, resolveCSRDraftTargets } from '../csr-builder';
 import { loadProtocolExportSnapshot, type ProtocolCompositionSnapshot } from '../protocol-export/protocol-export-service';
 import { protocolAuthoringSections } from '../protocol-export/protocol-export-logic';
 import { validateSoa } from '../protocol-soa/protocol-soa-logic';
@@ -152,7 +152,13 @@ async function composeProtocol(input: WorkflowMaterializationInput, q: Queryable
   return {title:snapshot.document.title,version:snapshot.document.header.version,scope,sections,sectionOrigins,gaps:protocolGaps(snapshot),facts:{...snapshot.sourceRows,machineLineage,...retiredFacts}};
 }
 
-const CSR_CATALOG = flattenICHE3Sections(ICH_E3_STRUCTURE);
+// The ICH_E3_GUIDANCE tree (2026-10-29: was csr-builder's duplicate outline),
+// and the headings a CSR job writes output for: §3 and §14–16 are prepared
+// from source and bare parents are written through their children, so neither
+// is ever an expected saved output.
+const CSR_CATALOG = flattenICHE3Sections(getICHE3Structure());
+const CSR_DRAFT_TARGETS = resolveCSRDraftTargets().map(section => section.number);
+const CSR_MANUAL_TOP_LEVEL = getICHE3Structure().filter(section => section.draftingMode === 'manual').map(section => section.number);
 const CSR_CODES = new Map(CSR_CATALOG.map((section, index) => [section.number, {section,index}]));
 const selectedBy = (code: string, selections: readonly string[]) => selections.some(parent => code === parent || code.startsWith(`${parent}.`));
 
@@ -202,8 +208,11 @@ function verifiedCsrJob(row: Record<string,unknown> | undefined, targetProjectId
 
 function csrGaps(job: CsrJob, sections: Composition['sections'], selection: string[] | undefined): string[] {
   const present = new Set(sections.map(s=>s.code));
-  const expected = selection ? CSR_CATALOG.filter(s => selectedBy(s.number,selection)).map(s=>s.number) : job.sections_to_generate ?? CSR_CATALOG.map(s=>s.number);
+  const scopeCodes = selection ?? job.sections_to_generate;
+  const expected = CSR_DRAFT_TARGETS.filter(code => !scopeCodes || selectedBy(code, scopeCodes));
   const gaps = expected.filter(code=>!present.has(code)).map(code=>`CSR section ${code} has no saved output in this selection.`);
+  // §3 and §14–16 are never job outputs; their absence is a gap all the same.
+  for (const code of CSR_MANUAL_TOP_LEVEL) if (!scopeCodes || selectedBy(code, scopeCodes)) gaps.push(`CSR section ${code} is prepared from source outputs and records, not drafted by a CSR job; this draft does not contain it.`);
   if (job.status !== 'complete') gaps.unshift(`The saved CSR job is ${job.status}; available output is a partial draft.`);
   for (const section of sections) if (/\[DATA TO BE INSERTED\]/i.test(section.content)) gaps.push(`CSR section ${section.code} retains a data-to-be-inserted placeholder.`);
   return gaps;
