@@ -62,7 +62,7 @@ export interface ExtractDocumentTextOptions {
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const RAW_TEXT_MIMES = new Set(['application/json', 'application/xml']);
+const RAW_TEXT_MIMES = new Set(['application/json', 'application/xml', 'application/xslt+xml']);
 /** Below this many characters a PDF text layer is treated as missing → OCR. */
 const PDF_TEXT_MIN = 200;
 export { AUTOMATIC_PDF_OCR_BUDGET } from './ocr-budget';
