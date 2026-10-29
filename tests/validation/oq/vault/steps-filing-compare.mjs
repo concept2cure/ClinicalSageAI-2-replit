@@ -163,9 +163,8 @@ async function librarySearchStep({ step, state, stamp }) {
     },
     async ({ api, expect }) => {
       const word = `oqlibrary${stamp.replace(/\W+/g, '').toLowerCase()}`;
-      const p = await api('POST', '/api/c2c/projects', { name: `OQ-002 Library program ${stamp}`, programType: 'ind', primaryAgency: 'FDA', indication: 'Validation exercise', priority: 'medium' });
-      expect(p.status === 201, `second program: expected 201, got ${p.status}`, p.json);
-      const other = p.json.data;
+      // Through the one program fixture, which states the product class intake requires (OQ-002 v0.15).
+      const other = await createProgram(api, expect, `OQ-002 Library program ${stamp}`);
       const doc = await ingestPdf(api, expect, { programId: other.id, title: `OQ-002 ${word} report` });
       const lib = await api('GET', `/api/c2c/project-vault/search?q=${word}`);
       const found = (lib.json?.data?.results ?? []).find((h) => h.id === doc.document.id);

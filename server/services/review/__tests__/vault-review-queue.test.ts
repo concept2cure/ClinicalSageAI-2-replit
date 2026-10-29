@@ -25,7 +25,8 @@ const record = (over: Record<string, unknown> = {}) => ({
 function sqlWith(records: unknown[]) {
   return {
     query: vi.fn(async (text: string, _params?: unknown[]) =>
-      text.includes('FROM canonical_documents') ? { rows: records } : { rows: ORG_MEMBERS }),
+      text.includes('FROM canonical_documents') ? { rows: records }
+        : text.includes('FROM review_routes') ? { rows: [] } : { rows: ORG_MEMBERS }),
   };
 }
 
@@ -66,5 +67,22 @@ describe('Vault versions in review reach the board', () => {
     }) };
     const items = await readVaultReviewQueue({ sql, orgId: 1, userId: '2', scope: 'all', programId: null, limit: 25 });
     expect(items[0].eligibleSigners).toBeNull();
+  });
+});
+
+/* RR1b (REVIEW_ROUTING §2.13): a version whose route could not be read is not
+   handed to every eligible signer as the legacy reading would, and nobody is
+   claimed to hold it. */
+describe('a route that could not be read (RR1b)', () => {
+  it('is in no one\'s queue, names no one, and says it is unread', async () => {
+    const sql = { query: vi.fn(async (text: string) => {
+      if (text.includes('FROM canonical_documents')) return { rows: [record()] };
+      if (text.includes('FROM review_routes')) throw new Error('permission denied for table review_routes');
+      return { rows: ORG_MEMBERS };
+    }) };
+    const all = await readVaultReviewQueue({ sql, orgId: 1, userId: '3', scope: 'all', programId: null, limit: 25 });
+    expect(all[0]).toMatchObject({ routeUnread: true, mine: false, eligibleSigners: null, round: null });
+    const mine = await readVaultReviewQueue({ sql, orgId: 1, userId: '3', scope: 'mine', programId: null, limit: 25 });
+    expect(mine).toEqual([]);
   });
 });

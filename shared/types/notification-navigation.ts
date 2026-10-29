@@ -1,6 +1,6 @@
 /** Navigation conveys verified record identity; it never grants object access. */
 import { SUBMISSION_WORKSPACES } from './submission-ui';
-export type NotificationTargetSurface = 'insights' | 'tasks' | 'document-authoring' | 'project-home' | 'submission-center' | 'gateway-transmittals' | 'protocol-dev' | 'quality' | 'conversation-thread';
+export type NotificationTargetSurface = 'insights' | 'tasks' | 'document-authoring' | 'project-home' | 'submission-center' | 'gateway-transmittals' | 'protocol-dev' | 'quality' | 'conversation-thread' | 'vault';
 export interface NotificationRecordTarget {
   surface: NotificationTargetSurface;
   label: string;
@@ -10,7 +10,8 @@ export interface NotificationRecordTarget {
 }
 export const NOTICE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const noticePositiveId = (value: unknown): value is string => typeof value === 'string' && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) <= 2_147_483_647;
-export const noticeTaskId = (value: unknown): value is string => typeof value === 'string' && /^TASK-[A-Za-z0-9_-]{1,120}$/.test(value);
+/** A unified task's id: `TASK-…`, or a review route member's `ROUTE-…` (server/services/review/review-route.ts). */
+export const noticeTaskId = (value: unknown): value is string => typeof value === 'string' && /^(TASK|ROUTE)-[A-Za-z0-9_-]{1,120}$/.test(value);
 /** An AnA conversation's id, as its address carries it (client v2/routing.ts). */
 export const noticeThreadId = (value: unknown): value is string => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(value);
 export const noticeSafeSectionCode = (value: string): boolean => value.length > 0 && value.length <= 128
@@ -21,6 +22,8 @@ const allowedKeys: Record<NotificationTargetSurface, readonly string[]> = {
   'project-home': [], 'submission-center': ['submissionId', 'sequenceId', 'ws'],
   'gateway-transmittals': ['transmittalId'], 'protocol-dev': ['protocol', 'protocolScope'], quality: ['qmsDocumentId'],
   'conversation-thread': ['threadId'],
+  // A Vault version: a review route's notice opens it (RR1b, REVIEW_ROUTING §2.11).
+  vault: ['documentId'],
 };
 const validParams: Record<NotificationTargetSurface, (p: Record<string, string>) => boolean> = {
   insights: p => noticePositiveId(p.reportRunId),
@@ -34,6 +37,7 @@ const validParams: Record<NotificationTargetSurface, (p: Record<string, string>)
   'protocol-dev': p => noticePositiveId(p.protocol) && (p.protocolScope === undefined || p.protocolScope === 'unfiled'),
   quality: p => noticePositiveId(p.qmsDocumentId),
   'conversation-thread': p => noticeThreadId(p.threadId),
+  vault: p => typeof p.documentId === 'string' && NOTICE_UUID.test(p.documentId),
 };
 function validEnvelope(v: Partial<NotificationRecordTarget>): boolean {
   if (v.programId !== null && (typeof v.programId !== 'string' || !NOTICE_UUID.test(v.programId))) return false;
@@ -48,6 +52,6 @@ export function isNotificationRecordTarget(value: unknown): value is Notificatio
   const v = value as Partial<NotificationRecordTarget>;
   if (!validEnvelope(v) || !v.params) return false;
   if (!v.surface || !Object.hasOwn(allowedKeys, v.surface)) return false;
-  if (v.surface === 'project-home' && v.programId === null) return false;
+  if ((v.surface === 'project-home' || v.surface === 'vault') && v.programId === null) return false;
   return Object.keys(v.params).every(key => allowedKeys[v.surface!].includes(key)) && validParams[v.surface](v.params);
 }

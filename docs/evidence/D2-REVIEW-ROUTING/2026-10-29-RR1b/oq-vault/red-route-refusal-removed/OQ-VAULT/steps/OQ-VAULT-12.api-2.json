@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/7c08efdd-9c7c-467b-b725-d6118db4116a/documents/2c04e9d4-5e52-4357-beb3-feab9790fb53/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 211,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "9931ce0d-02ac-4354-aa56-ae287c92a360",
+            "version": "2.0",
+            "contentHash": "aae5a1eab836350782469271fdbaa0a4bc146ba72ebbe7f4347063d774cbfafc",
+            "fileSize": 622,
+            "fileName": "next-version.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T10:28:11.229Z",
+            "current": true,
+            "link": "verified",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "not reviewed"
+          },
+          {
+            "id": "2c04e9d4-5e52-4357-beb3-feab9790fb53",
+            "version": "1.0",
+            "contentHash": "84cc7ba075b82e879a39e05d3c1b1eb8667e14271e247f8758128284a8df5570",
+            "fileSize": 611,
+            "fileName": "OQ-002-Protocol-20261029102745.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T10:27:51.154Z",
+            "current": false,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "superseded by a later version"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "OQ Approver"
+            },
+            {
+              "id": 1,
+              "name": "OQ Runner"
+            },
+            {
+              "id": 2,
+              "name": "OQ Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

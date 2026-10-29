@@ -1,0 +1,120 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint 110ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board 480ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill 72ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'approved' } reads "Reviewers approved, sign-off pending", never the raw code 53ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'APPROVED', state: 'approved' } reads "Approved", never the raw code 47ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'changes-requested' } reads "Changes requested", never the raw code 51ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'rejected' } reads "Declined", never the raw code 44ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'in-review' } reads "In review", never the raw code 47ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked 75ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter 96ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails 13ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > lists it with the people who can sign it, and does not claim nothing is in review 346ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > says plainly when nobody in the organization can sign it 36ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > a failed Vault read is said, never shown as an empty list 25ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 739ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review on a named route, after saying what that means: starts its record, then moves it to In review 1069ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 808ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 1006ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 1134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 1149ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 757ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 716ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a server failure shows the reference its sentence asks the user to quote 636ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > Send waits for reviewers, an approver, both due dates and a reason, and then sends the route 1194ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > a refusal is said in the server's words, and the form stays open 765ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Send for review opens the route form (RR1b, §2.6) > a candidate list that could not be read offers no one, and says so 603ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > every member with printed name, meaning, UTC time and outcome; "You signed at …; waiting for B" 353ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > the approver reads "Approved (1 of 1 required)" 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > "Reviewers could not be read" on a failed read: never "no reviewers", and no step is offered 394ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the version shows its route (RR1b, §2.12) > a named approver whose turn it is approves by signing on the route 403ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > Withdraw asks for a reason and refuses without one 762ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > Return for revision asks for a reason and refuses without one 699ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > Withdraw and Return for revision (RR1b, §2.9–§2.10) > the sender reminds a member whose turn it is, through the task notify route 715ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > a version in review with no route (legacy, §2.13) > keeps "Not assigned to one person" and offers Name reviewers, which names a route on its record 606ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > checks the canonical session again before a prepared confirmation can write 137ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > does not create follow-on tasks using a replacement session after a sent review request 53ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > a current partial canvas preserves a sent review request > blocks new confirmation and retains the actual pending review/task receipt 151ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 826ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 581ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 380ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 396ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object” 362ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 345ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 286ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 358ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 469ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 396ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 82ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record 71ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 63ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 50ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 49ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 52ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board and completes the task, not the other way round 31ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > does not offer the document’s author as a reviewer, and says why 17ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > the workbench passes the document’s author, so she is not offered there either 267ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > says the reviewer was given the Reviewer role when the server granted it 43ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > a requester who may not grant access is told, in the server’s words, that no access was granted 36ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > an author refusal from the server is shown in its words and creates no task 34ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > the task create is POST /api/tasks/tasks linked to the document, and the Tasks rail lists it with its state 1063ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > Start and Complete go through the tasking path’s own PATCH transition 502ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board 716ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a failed task read is an error, never "no tasks" 329ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > tasksForDocument keeps only rows whose recorded origin is this document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read 491ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a gateway error on a transition is an unknown outcome too 417ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity -1 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1.5 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 9007199254740992 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1e2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > reports a lost response as unknown and keeps what was typed for reconciliation 103ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > does not confirm a task receipt for a different document 53ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > resets the reviewers, the reason and the instructions when the document changes 45ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > ignores a delayed answer after changing documents 46ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list after a lost task response and shows the task that actually committed 672ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > known assignment refusal > keeps a confirmed audit rollback distinct from an unknown commit 63ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a 20000000-0000-4000-8000-000000000002 target 12ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a null target 3ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > checks the tray owner before changing any channel 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > builds a confirmed task destination with the current actor and organization 16ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > refuses a task when the current actor cannot be established before clearing existing targets 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > retains all channels when native creation becomes uncertain during the target read 295ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rechecks the retained tray owner after the linked record is confirmed 53ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rejects a changed live actor even if the bearer has not yet been replaced 32ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > does not resolve a linked record under a bearer for another actor 37ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > refuses the confirmed target when the old tray actor changes before React retires it 133ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > does not revive an old notification callback after an account round trip 86ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > the shared contract admits the Vault version, only with its project, and a route task id 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > opening it publishes the project and the Vault target, then navigates to the Vault 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a named member whose turn it is reads "Your turn", with their due date 47ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > the sender's row carries every member's outcome and Remind; Open the version opens that version 216ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a route that could not be read says so, and names nobody 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a withdrawn route says nothing is signed until a new one is sent 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > says what an approver waits on, and opens the Review board 39ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > an ordinary task still opens on the task board 34ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > uses validated saved-report identity rather than its supplied URL 4ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > hands a unified task to the real board with its identity 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > keeps declared local record identifiers but drops redirect parameters 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations https://evil.invalid/ 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations //evil.invalid/x 0ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations javascript:alert(1) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations /concept2cure/not-a-surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations /concept2cure/tasks/../../evil 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationTarget.test.ts > notification navigation boundary > refuses unsafe/unknown destinations /concept2cure/tasks\..\evil 1ms
+
+ Test Files  9 passed (9)
+      Tests  111 passed (111)
+   Start at  08:39:08
+   Duration  47.73s (transform 5.97s, setup 1.17s, import 11.02s, tests 27.45s, environment 6.05s)
+

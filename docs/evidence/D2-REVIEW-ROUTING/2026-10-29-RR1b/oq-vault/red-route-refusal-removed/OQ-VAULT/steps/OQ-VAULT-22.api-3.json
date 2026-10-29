@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/7c08efdd-9c7c-467b-b725-d6118db4116a/documents/6f687556-9dbd-478b-aa9b-f6254559a96e/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "kind": "comment",
+      "body": "Page 1 reads well.",
+      "anchor": {
+        "kind": "page",
+        "page": 1
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 80,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "d9a55cca-1a06-487e-829b-4ca97b4ef579"
+      }
+    }
+  }
+}

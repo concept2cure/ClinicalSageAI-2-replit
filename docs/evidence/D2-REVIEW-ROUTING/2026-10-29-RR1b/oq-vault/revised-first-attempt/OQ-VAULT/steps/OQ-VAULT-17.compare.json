@@ -1,0 +1,61 @@
+{
+  "from": {
+    "id": "8e954c30-636b-4b94-9718-6706464831b4",
+    "version": "1.0",
+    "contentHash": "52822af62708e1342a7e7b6a78e9c5c930012d1a0d2059e2e3ce7a090ec3cbe2",
+    "fileSize": 611,
+    "fileName": "OQ-002-Protocol-20261029101122.pdf",
+    "createdAt": "2026-10-29T10:11:27.764Z",
+    "uploader": "OQ Runner",
+    "current": false
+  },
+  "to": {
+    "id": "ff975b65-708e-42c5-91f5-7e24edfd6c19",
+    "version": "2.0",
+    "contentHash": "521d25428d9f595ee33f0e7471ba31b5a3f33aa4e5cee2f6d5da7d0be1c184e6",
+    "fileSize": 622,
+    "fileName": "next-version.pdf",
+    "createdAt": "2026-10-29T10:11:46.938Z",
+    "uploader": "OQ Runner",
+    "current": true
+  },
+  "sameBytes": false,
+  "details": [
+    {
+      "field": "fileName",
+      "from": "OQ-002-Protocol-20261029101122.pdf",
+      "to": "next-version.pdf"
+    }
+  ],
+  "text": {
+    "available": true,
+    "identical": false,
+    "truncated": false,
+    "counts": {
+      "added": 1,
+      "removed": 1,
+      "unchanged": 2
+    },
+    "hunks": [
+      {
+        "kind": "removed",
+        "lines": [
+          "OQ-002 Protocol 20261029101122"
+        ]
+      },
+      {
+        "kind": "added",
+        "lines": [
+          "OQ-002 Protocol 20261029101122 revision 2"
+        ]
+      },
+      {
+        "kind": "same",
+        "lines": [
+          "",
+          "-- 1 of 1 --"
+        ]
+      }
+    ]
+  }
+}

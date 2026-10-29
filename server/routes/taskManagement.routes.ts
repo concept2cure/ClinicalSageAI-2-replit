@@ -50,6 +50,8 @@ import {
 import { requestDb, type RequestDb } from '../db/requestDb';
 import { createTaskInTx, type TaskInsertRunner } from '../services/tasking/create-task';
 import { readMyWork } from '../services/tasking/my-work';
+import { routeRemindRefusal } from '../services/review/review-route';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES } from '../services/tasking/task-project';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
@@ -1403,6 +1405,14 @@ router.post('/tasks/:taskId/notify', requireEditorAccess, async (req: Request, r
       .limit(1);
     if (!task) {
       return res.status(404).json({ success: false, error: 'Task not found' });
+    }
+    // A review route member is reminded by the route's sender or an
+    // administrator, while their step is open (RR1b, REVIEW_ROUTING §2.11).
+    if (task.reviewRouteId) {
+      const refused = await routeRemindRefusal(queryableFromDrizzle(storage.db), {
+        organizationId, actorUserId, reviewRouteId: task.reviewRouteId, taskStatus: task.status,
+      });
+      if (refused) return res.status(refused.status).json({ success: false, error: refused.message, code: refused.code });
     }
 
     let recipientUserId = parsed.recipientUserId ?? task.assigneeId ?? null;

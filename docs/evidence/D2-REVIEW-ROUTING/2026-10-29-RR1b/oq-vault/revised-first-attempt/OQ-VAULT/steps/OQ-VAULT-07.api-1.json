@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentId": "8e954c30-636b-4b94-9718-6706464831b4",
+      "folderId": "module-5",
+      "note": "OQ-002 step 07 — filed into Module 5 by validation runner"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 81,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "filing": {
+        "folderId": "module-5",
+        "folderLabel": "Module 5 · Clinical",
+        "evidenceKind": "protocol",
+        "ctdSection": null,
+        "placementStatus": "confirmed",
+        "confidence": null,
+        "rationale": "OQ-002 step 07 — filed into Module 5 by validation runner",
+        "needsReview": false
+      }
+    }
+  }
+}

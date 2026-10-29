@@ -1,0 +1,69 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/search?q=OQ-002%20Protocol%2020261029101122&includeSuperseded=true",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 72,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "OQ-002 Protocol 20261029101122",
+        "mode": "search",
+        "filters": {},
+        "total": 2,
+        "limit": 25,
+        "offset": 0,
+        "includeSuperseded": true,
+        "results": [
+          {
+            "id": "ff975b65-708e-42c5-91f5-7e24edfd6c19",
+            "title": "OQ-002 Protocol 20261029101122",
+            "fileName": "next-version.pdf",
+            "documentType": "PROTOCOL",
+            "size": "622 B",
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "confirmed",
+            "evidenceKind": "protocol",
+            "classification": "INTERNAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-10-29T10:11:46.938Z",
+            "version": "2.0",
+            "current": true,
+            "contentHash": "521d25428d9f595ee33f0e7471ba31b5a3f33aa4e5cee2f6d5da7d0be1c184e6",
+            "originalFileAvailable": true,
+            "disposition": null,
+            "snippet": "<b>OQ</b><b>-002</b> <b>Protocol</b> <b>20261029101122</b> revision"
+          },
+          {
+            "id": "8e954c30-636b-4b94-9718-6706464831b4",
+            "title": "OQ-002 Protocol 20261029101122",
+            "fileName": "OQ-002-Protocol-20261029101122.pdf",
+            "documentType": "PROTOCOL",
+            "size": "611 B",
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "confirmed",
+            "evidenceKind": "protocol",
+            "classification": "INTERNAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-10-29T10:11:28.970Z",
+            "version": "1.0",
+            "current": false,
+            "contentHash": "52822af62708e1342a7e7b6a78e9c5c930012d1a0d2059e2e3ce7a090ec3cbe2",
+            "originalFileAvailable": true,
+            "disposition": null,
+            "snippet": "<b>OQ</b><b>-002</b> <b>Protocol</b> <b>20261029101122</b>"
+          }
+        ]
+      }
+    }
+  }
+}

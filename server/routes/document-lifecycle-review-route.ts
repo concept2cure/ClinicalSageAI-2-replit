@@ -43,6 +43,9 @@ import {
 } from '../services/review/review-route';
 import { routeStanding, type RouteMember, type RouteStanding } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
+import { readRouteCandidates } from '../services/review/review-route-candidates';
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type Outcome = { responded: true } | { status: number; body: unknown };
 
@@ -302,6 +305,13 @@ export async function routedAdvanceGate(
   if (p.to === 'approved' && inReview && (standing.state === 'live' || standing.state === 'withdrawn')) {
     return refuse(409, 'ROUTE_APPROVAL_BY_SIGN', 'This document is approved by its named approver signing on the review route. Nothing was approved.') as { status: number; body: unknown };
   }
+  // RR1b (§2.6, §2.13): a Vault version enters review with named reviewers
+  // and an approver. The FD5(c) carry-over advances through the orchestrator,
+  // not this handler, so it is not asked.
+  if (p.to === 'in_review' && !p.route && vaultSourceId(p.doc.sources) !== null) {
+    return refuse(409, 'REVIEW_ROUTE_REQUIRED',
+      'Name the reviewers and the approver to send this version for review. Nothing was sent.') as { status: number; body: unknown };
+  }
   let exitReason: string | null = null;
   if (inReview && standing.state === 'live') {
     const reason = requireGovernedReason(req.body?.reason);
@@ -365,6 +375,20 @@ async function onRecord(m: ReviewRouteActMount, req: Request, res: Response, act
  * withdrawn (or that entered review with none), withdraw, and return.
  */
 export function mountReviewRouteActs(m: ReviewRouteActMount): void {
+  // The picker's read (RR1b): who may be named on this Vault version, by the
+  // validator's own rules. Read-only, on the sender's grant.
+  m.router.get('/route-candidates/:vaultId', m.guard, m.wrap(async (req, res) => {
+    const organizationId = resolveOrgId(req);
+    if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
+    const readerId = resolveUserId(req);
+    if (readerId === null) return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
+    const vaultId = String(req.params.vaultId);
+    if (!UUID.test(vaultId)) return res.status(404).json({ ok: false, error: 'not_found' });
+    const read = await (await m.getDb()).transaction((tx) =>
+      readRouteCandidates(queryableFromDrizzle(tx as never), { organizationId, vaultId, readerId }));
+    if (!read) return res.status(404).json({ ok: false, error: 'not_found' });
+    return res.json({ ok: true, ...read });
+  }));
   m.router.post('/:id/review-route', m.guard, m.wrap((req, res) => onRecord(m, req, res, async (tx, doc, notices) => {
     const reason = requireGovernedReason(req.body?.reason);
     if (!reason.ok) return refuse(400, 'REASON_REQUIRED', `${reason.error} Nothing was sent.`);

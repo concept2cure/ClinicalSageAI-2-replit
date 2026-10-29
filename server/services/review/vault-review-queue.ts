@@ -17,10 +17,20 @@
  * step is taken on the version in the Vault, through the lifecycle route,
  * which re-checks authority and separation of duties.
  *
+ * Since RR1b (docs/design/REVIEW_ROUTING_2026-10-23.md §2.11–§2.12) a version
+ * sent with a named route is read from its route instead: "mine" is a named
+ * member whose step is open and who has not signed, with their own due date;
+ * "Requested by me" is the routes the reader sent, each with every member's
+ * outcome (the round, as the Vault reads it). A withdrawn route is in nobody's
+ * queue: nothing is signed until a new one is sent. A route that could not be
+ * read is said as unread (`routeUnread`), never as nobody named. The legacy
+ * reading above stays for a version in review with no route.
+ *
  * @module server/services/review/vault-review-queue
  */
 import { readOrgSigners, type OrgSigner, type SignerQueryable } from '../vault/vault-signing-posture';
 import type { ReviewScope } from './authoring-review-board';
+import { readRouteRounds, type RouteRound } from './review-route-standing';
 
 export interface VaultReviewItemView {
   canonicalId: string;
@@ -39,6 +49,14 @@ export interface VaultReviewItemView {
   mine: boolean;
   /** The reader sent it for review. */
   sentByMe: boolean;
+  /** 'live' or 'withdrawn' for a version sent on a named route; 'legacy' for one in review without (§2.13). */
+  routeState: 'live' | 'withdrawn' | 'legacy';
+  /** The route's round (every member and outcome), when it has one. */
+  round: RouteRound | null;
+  /** The route could not be read: who holds it is unknown, never "nobody". */
+  routeUnread: boolean;
+  /** The reader's own due date, when their step on the route is open. */
+  myDueAt: string | null;
 }
 
 export interface VaultReviewQueueInput {
@@ -90,7 +108,47 @@ export function toVaultReviewItem(row: Row, signers: OrgSigner[] | null, userId:
     eligibleSigners: eligible === null ? null : eligible.map((s) => s.name),
     mine: me !== null && !!eligible?.some((s) => s.id === me),
     sentByMe: me !== null && asId(row.sent_by) === me,
+    routeState: 'legacy',
+    round: null,
+    routeUnread: false,
+    myDueAt: null,
   };
+}
+
+/**
+ * The item a version on a named route becomes (RR1b): who holds it is the
+ * route's named members whose step is open and who have not signed. A
+ * withdrawn route holds nobody.
+ */
+export function toRoutedVaultReviewItem(row: Row, round: RouteRound, userId: string): VaultReviewItemView {
+  const me = asId(userId);
+  const live = round.route.status === 'open';
+  const holders = live ? round.members.filter((m) => m.stepOpen && m.outcome === 'pending') : [];
+  const mineMember = holders.find((m) => m.userId === me) ?? null;
+  return {
+    canonicalId: row.canonical_id,
+    vaultId: row.vault_id,
+    programId: row.program_id,
+    program: row.program_name,
+    title: row.title || 'Untitled document',
+    version: row.version,
+    step: round.reviewComplete ? 'approve' : 'review',
+    sentBy: round.route.senderName,
+    sentAt: round.route.createdAt,
+    // The others whose turn it is: the reader's own turn is `mine`.
+    eligibleSigners: holders.filter((m) => m.userId !== me).map((m) => m.printedName ?? `Account #${m.userId}`),
+    mine: mineMember !== null,
+    sentByMe: me !== null && round.route.senderId === me,
+    routeState: live ? 'live' : 'withdrawn',
+    round,
+    routeUnread: false,
+    myDueAt: mineMember?.dueDate ?? null,
+  };
+}
+
+/** A version whose route could not be read: nobody is claimed to hold it, and it is in no one's "mine". */
+function unreadItem(row: Row, userId: string): VaultReviewItemView {
+  return { ...toVaultReviewItem(row, null, userId), mine: false, routeUnread: true };
 }
 
 /** Whether an item belongs in the board's scope, as the Authoring rows are scoped. */
@@ -121,9 +179,20 @@ export async function readVaultReviewQueue(input: VaultReviewQueueInput): Promis
     [orgId, programId],
   );
   if (rows.length === 0) return [];
+  const records = rows as Row[];
+  const rounds = await readRouteRounds(sql as never, {
+    organizationId: orgId, subjectType: 'canonical_document', subjectIds: records.map((r) => r.canonical_id),
+  }).catch(() => null);
   const signers = await readOrgSigners(sql, orgId).catch(() => null);
-  return (rows as Row[])
-    .map((r) => toVaultReviewItem(r, signers, userId))
+  return records
+    .map((r) => {
+      if (rounds === null) return unreadItem(r, userId);
+      const round = rounds.get(r.canonical_id);
+      // A route closed by return or completion, on a version back in review
+      // with none: that round entered review without one (legacy, §2.13).
+      if (round && (round.route.status === 'open' || round.route.status === 'withdrawn')) return toRoutedVaultReviewItem(r, round, userId);
+      return toVaultReviewItem(r, signers, userId);
+    })
     .filter((i) => inVaultScope(scope, i))
     .slice(0, limit);
 }

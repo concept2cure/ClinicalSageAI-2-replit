@@ -50,6 +50,8 @@ import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
 import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
+import { openNotificationRecord } from '../notificationNavigation';
+import { NOTICE_UUID } from '@shared/types/notification-navigation';
 import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
 import { getSurfaceMeta } from '../registryModel';
@@ -181,7 +183,23 @@ export function Review(props: SurfaceViewProps) {
   return <ReviewSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
 }
 
+/**
+ * Open a Vault version on the board in the Vault of its project, on its row,
+ * through the one record-opening path a notice uses (RR1b). A version with no
+ * project opens the Vault itself.
+ */
+function openVaultVersion(item: VaultReviewItem, onNav: (id: string) => void, fireToast: (text: string, tone?: 'error') => void) {
+  if (!item.programId || !NOTICE_UUID.test(item.programId) || !NOTICE_UUID.test(item.vaultId)) return onNav('vault');
+  try {
+    openNotificationRecord({ surface: 'vault', label: 'Open the version', params: { documentId: item.vaultId }, programId: item.programId }, onNav);
+  } catch (e) {
+    fireToast(e instanceof Error ? e.message : 'The version could not be opened.', 'error');
+  }
+}
+
 function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
+  const me = useAuthUser();
+  const meId = me?.id && /^\d+$/.test(me.id) ? Number(me.id) : null;
   const [queue, setQueue] = useState<ReviewItem[]>([]);
   const [sel, setSel] = useState('');
   /* The row whose thread the board should carry. Set only by an explicit
@@ -384,7 +402,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
       <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
       {/* Send for review on a Vault version assigns nobody, so it was in no
           queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
-      <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
+      <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
     </>
   );
   const vaultInReview = (board?.vaultReviews ?? []).length;

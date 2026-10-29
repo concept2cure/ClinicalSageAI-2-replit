@@ -41,6 +41,12 @@ export interface MyWorkItem {
    * B11). Null for every other task.
    */
   waitingOn: string | null;
+  /**
+   * 'reviewer' or 'approver' for a review route member, whose task is acted on
+   * where its route is (the version in the Vault, through the Review board),
+   * never on the Tasks board, which refuses it (RR1b). Null for every other task.
+   */
+  reviewRole: 'reviewer' | 'approver' | null;
   approvalRequired: boolean;
   approvalStatus: string;
   criticalPath: boolean;
@@ -63,6 +69,12 @@ function routeWaitingOn(row: { status: string; reviewRouteId: string | null; rev
   if (row.status !== 'blocked' || !row.reviewRouteId) return null;
   if (row.reviewRole === 'approver') return 'review';
   return row.reviewStep && row.reviewStep > 1 ? `step ${row.reviewStep - 1}` : 'an earlier step';
+}
+
+/** A review route member's role, or null for every other task. */
+function routeRoleOf(row: { reviewRouteId: string | null; reviewRole: string | null }): 'reviewer' | 'approver' | null {
+  if (!row.reviewRouteId) return null;
+  return row.reviewRole === 'reviewer' || row.reviewRole === 'approver' ? row.reviewRole : null;
 }
 
 export async function readMyWork(
@@ -106,6 +118,7 @@ export async function readMyWork(
       dueSoon: dueMs != null && dueMs >= now && dueMs <= soonCutoff,
       blocked: row.status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0),
       waitingOn,
+      reviewRole: routeRoleOf(row),
       approvalRequired: row.approvalRequired ?? false,
       approvalStatus: row.approvalStatus ?? 'not_started',
       criticalPath: row.criticalPath ?? false,

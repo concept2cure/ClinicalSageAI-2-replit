@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a failed route read keeps the stage and sign-offs, and marks the reviewers unread
+{
+  "timestamp": "2026-10-29T07:00:24.273Z",
+  "level": "warn",
+  "message": "[vault-lifecycle] review route read failed; the versions show their reviewers as unread",
+  "context": {
+    "err": "permission denied for table review_routes"
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a failed route read keeps the stage and sign-offs, and marks the reviewers unread 9ms
+ ✓ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a version with no route reads as no route, not as unread 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  07:00:22
+   Duration  1.53s (transform 648ms, setup 113ms, import 993ms, tests 17ms, environment 0ms)
+

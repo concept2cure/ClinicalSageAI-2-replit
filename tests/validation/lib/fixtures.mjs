@@ -32,10 +32,16 @@ export function sha256(buf) {
   return createHash('sha256').update(buf).digest('hex');
 }
 
-export async function createProgram(api, expect, name, programType = 'ind') {
+export async function createProgram(api, expect, name, programType = 'ind', productType = 'drug') {
+  // The product class is stated, never derived (P-21 at intake, 2026-10-08):
+  // an IND covers a drug or a biologic, and intake refuses one that states
+  // neither (400 "State whether the product is a drug or a biologic"). Every
+  // protocol's program creation failed on it until the fixture stated it
+  // (OQ-002 v0.15, 2026-10-29). The validation programs are small-molecule INDs.
   const r = await api('POST', '/api/c2c/projects', {
     name,
     programType,
+    productType,
     primaryAgency: 'FDA',
     indication: 'Validation exercise',
     priority: 'medium',

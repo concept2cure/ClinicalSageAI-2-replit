@@ -28,7 +28,8 @@ type Row = Record<string, unknown>;
  * Authoring review (authoring-approval-carryover.ts). This document was
  * frozen by its author and approved, never reviewed, so hop 6 records that it
  * did not carry, and the export is approved in the Vault: its filer starts
- * the record and sends it for review, a reviewer signs, the approver approves.
+ * the record and sends it for review on a named route (RR1b), the named
+ * reviewer signs, the named approver approves by signing on the route.
  * POST /api/regulatory/documents (document-lifecycle.ts) and /:id/advance, /:id/sign.
  */
 export async function hopVaultApproval(w: World): Promise<void> {
@@ -42,11 +43,15 @@ export async function hopVaultApproval(w: World): Promise<void> {
   const start = await lifecycle(3, '', { sources: { vault_documents: { nativeId: k.vaultDocumentId, role: 'artifact' } } });
   expect(start.status, JSON.stringify(start.body)).toBe(201);
   const canonicalId = String(start.body.canonicalId);
-  const toReview = await lifecycle(3, `/${canonicalId}/advance`, { to: 'in_review', ...signed, reason: 'Send the sealed export for review' });
+  // Since RR1b a Vault version is sent on a named route (REVIEW_ROUTE_REQUIRED):
+  // user 5 reviews, user 4 approves by signing on the route.
+  const due = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  const route = { reviewers: [5], approvers: [4], order: 'parallel', reviewDueDate: due(3), approvalDueDate: due(5) };
+  const toReview = await lifecycle(3, `/${canonicalId}/advance`, { to: 'in_review', route, reason: 'Send the sealed export for review' });
   expect(toReview.status, JSON.stringify(toReview.body)).toBe(200);
   const reviewed = await lifecycle(5, `/${canonicalId}/sign`, { meaning: 'reviewed', ...signed, reason: 'Reviewed against the sealed document' });
   expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
-  const approved = await lifecycle(4, `/${canonicalId}/advance`, { to: 'approved', ...signed, reason: 'Approved for the C2C-101 IND original sequence' });
+  const approved = await lifecycle(4, `/${canonicalId}/sign`, { meaning: 'approved', ...signed, reason: 'Approved for the C2C-101 IND original sequence' });
   expect(approved.status, JSON.stringify(approved.body)).toBe(200);
 
   await hop.check('vault-copy-approved-for-its-bytes', 'the Vault copy\'s lifecycle record is approved, for the bytes the Vault holds', async (observe) => {
