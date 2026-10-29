@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { downloadBlob, downloadText } from '../download';
-import { useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
-import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
+import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import {
@@ -25,23 +25,12 @@ import type {
   AuditEntry,
   AcGrant,
 } from '../fixtures/admin-data';
-import { useIndustryProfile } from '../../mdx/hooks/useIndustryProfile';
-import {
-  CLIENT_TYPE_LABEL,
-  CLIENT_TYPE_OPTIONS,
-  buildOrgProfilePatch,
-  governedToPicker,
-  pickerMatchesProfile,
-} from '../../mdx/lib/industryProfileMapping';
 import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
-import { RetentionPeriodCard } from './RetentionPeriodCard';
-import { CompanyDocumentSettings } from './CompanyDocumentSettings';
-import { LegalHoldsCard } from './LegalHoldsCard';
-import { GatewayAccountsSetting } from './GatewayAccountsSetting';
-import { PdfARequirementSetting } from './PdfARequirementSetting';
+import { OrganizationSettingsCards, SUMMARISE_CONFIGURATION } from './AdminSettings';
+import type { OrganizationProfileContext } from './OrganizationProfileCard';
 import { AuditEventChainBanner, auditEventChainForAna, useAuditEventChain } from './AuditEventChain';
 import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import '../styles/project-home-v2.css';
@@ -82,481 +71,32 @@ function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
   );
 }
 
-/** The fields this surface reads from GET /api/organizations/:id. */
-interface OrgRecord {
-  organization?: { name?: string | null };
-}
-
-/**
- * How a refused governed write is reported. The server's own message is used
- * where it gave one, and status 0 -- reserved for a failure with no response at
- * all -- is the one case that must never read as "the server said no".
- *
- * The claim this comment used to make, that "apiRequest already lifts it out of
- * the error envelope", is true of only one of the two ways a string gets here.
- * apiRequest throws ApiRequestError with a message extractApiError has already
- * reduced, and liveMutateOrNull passes that through -- so far so good. But
- * liveMutateOrNull also has a branch that never goes near the envelope: a 401
- * is the one status apiRequest does not throw on, and it returns its own
- * `HTTP <status> <path>` string, which carries an API route. Rendering that is
- * an information-disclosure finding, not a cosmetic one. So the string is
- * filtered here rather than trusted: wrapping it as a message body runs it
- * through the same reader every other surface uses, which rejects both
- * enum-shaped tokens and infrastructure text.
- */
-function saveFailure(error: string, status: number): string {
-  if (status === 0) return 'the server could not be reached, so nothing was saved.';
-  const said = serverMessage({ message: error });
-  return said ? `${said} (HTTP ${status}).` : `the change was not accepted (HTTP ${status}).`;
-}
-
 /* ════════════ Setup (org config) ════════════
-   GOVERNED. Every control on this surface either reads and writes a real,
-   org-scoped, audited server record, or says plainly that the thing it names is
-   enforced elsewhere and cannot be set here. Nothing on it is browser-local any
-   more, and no value it shows is fabricated.
-
-   Reads
-     GET   /api/organizations/:id            organizations.name
-     GET   /api/mdx/industry-profile         the governed client type
-   Writes
-     PATCH /api/organizations/:id/profile    { name, reason }
-     PATCH /api/mdx/industry-profile         (useIndustryProfile)
-   (The cards below — gateway accounts, session policy, PDF/A, retention,
-   legal holds — each own their own read and governed write.)
-
-   `:id` is getJwtOrgId() — the organizationId claim on the caller's OWN token,
-   never a value this page holds or a user types. That is the identifier
-   organizations-routes.ts actually takes: validateOrgOwnership pins a non-staff
-   caller to exactly that org (a tenant 'admin' is deliberately not treated as
-   platform staff there), and requireOrgAdmin gates the profile write — so a member
-   without the admin role gets a 403 and this panel says so instead of letting
-   the save look like it landed.
-
-   Both writes carry a reason, because both routes audit one: the profile PATCH
-   logs before/after plus the reason.
-
-   The one thing NOT wired, deliberately: /api/setup. The only routes there
-   (server/routes/setup.ts) are the first-run installer — GET /status
-   ({ initialized }) and the self-closing POST /initialize that creates the
-   first org + admin on an EMPTY database. Calling that from an admin console
-   would be destructive, not persistence.
-
-   ── Controls that are deliberately not switches ────────────────────────────
-   Three translation guardrails used to render as toggles, then as locked
-   facts inside the Translation workspace card. They are enforced
-   unconditionally by DEFAULT_GUARDRAILS (server/services/translation/types.ts)
-   through approvalGuard(), which reads no org setting; the card that stated
-   them was removed with the unread settings it saved (see the note at the top
-   of this file).
-
-   MFA and SSO were switches. There is no organization-wide MFA gate:
-   users.mfaEnabled is per-user enrolment through mfaService, and no sign-in
-   path reads an org flag. SSO/SCIM is genuinely governed — but by the Identity
-   console (SAML endpoints, SCIM provisioning tokens, IP allowlist), not by a
-   boolean here, and a second copy of that state would be a second source of
-   truth that nothing reconciles. Both are now status rows naming where the
-   control actually lives. */
+   Setup is folding into Admin and access (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). Its controls moved, not
+   copied: the name and client type to OrganizationProfileCard.tsx, and every
+   setting card, with them, to admin-console's Settings tab (AdminSettings.tsx).
+   Until the fold's checklist change retires the `setup` id — an alias to
+   admin-console's Settings tab — this screen mounts the same cards and
+   publishes the Profile card's context under its own id. */
 
 export function Setup({ onAsk, onNav }: SurfaceViewProps) {
-  /* The org claim on the caller's own token. Read once: the identity behind a
-     mounted surface does not change, and re-reading would re-key the fetches. */
-  const orgId = useMemo(() => getJwtOrgId(), []);
-  const orgPath = `/api/organizations/${encodeURIComponent(orgId)}`;
-
-  const org = useLiveData<OrgRecord>(orgPath);
-
-  /* Server truth and the working copy the controls edit. Both take the same
-     value the moment a load lands, so `dirty` is exactly "what this
-     administrator changed and has not saved yet" — never "what differs from a
-     default we made up". */
-  const [savedName, setSavedName] = useState('');
-  const [name, setName] = useState('');
-
-  const [reason, setReason] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saveNote, setSaveNote] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
-
-  const orgLoaded = !org.loading && !org.error;
-  const loadError = org.error ?? null;
-  const loading = org.loading;
-
-  useEffect(() => {
-    if (!orgLoaded) return;
-    const live = org.data?.organization?.name ?? '';
-    setSavedName(live);
-    setName(live);
-  }, [orgLoaded, org.data]);
-
-  const nameDirty = orgLoaded && name.trim() !== savedName;
-  const editable = !loading && !loadError;
-
-  /**
-   * One reason, up to two governed PATCHes, and a baseline that advances ONLY
-   * for the call that actually succeeded — so a partial failure leaves the
-   * failed section dirty and visibly unsaved rather than quietly marking it
-   * clean. The reason is cleared only when everything landed.
-   */
-  async function saveOrg() {
-    const why = reason.trim();
-    if (why.length < 3) {
-      setSaveNote({
-        tone: 'warn',
-        text: 'Enter a reason of at least 3 characters — it is written to the audit record.',
-      });
-      return;
-    }
-    if (nameDirty && !name.trim()) {
-      setSaveNote({ tone: 'warn', text: 'Organization name cannot be blank.' });
-      return;
-    }
-
-    setSaving(true);
-    setSaveNote(null);
-    const failures: string[] = [];
-
-    if (nameDirty) {
-      const r = await liveMutateOrNull<{ organization?: { name?: string } }>(
-        'PATCH',
-        `${orgPath}/profile`,
-        { name: name.trim(), reason: why },
-      );
-      if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
-      else setSavedName(r.data?.organization?.name ?? name.trim());
-    }
-
-    if (clientTypeDirty) {
-      const patch = buildOrgProfilePatch(clientType, govSpec);
-      const saved = patch ? await saveProfile(patch, why) : false;
-      if (!saved) failures.push('Client type — not saved to the governed industry profile.');
-    }
-
-    setSaving(false);
-    if (failures.length) {
-      setSaveNote({ tone: 'warn', text: `Not saved: ${failures.join('  ')}` });
-      return;
-    }
-    setReason('');
-    setSaveNote({
-      tone: 'ok',
-      text: 'Saved to the organization record and written to the audit trail.',
-    });
-  }
-
-  /* ── Governed client type (org industry profile) ──
-     The picker below reads/writes GET|PATCH /api/mdx/industry-profile. The
-     profile row is the truth; this component keeps only the picker-level
-     nuance the governed enum collapses (pharma vs biotech). */
-  const { profile, save: saveProfile, saveState } = useIndustryProfile();
-  const govPrimary = profile.status === 'ready' ? profile.data.primaryIndustry : null;
-  const govSpec = profile.status === 'ready' ? profile.data.mdxSpecialization : null;
-  const [clientType, setClientType] = useState('');
-
-  useEffect(() => {
-    if (!govPrimary) return;
-    setClientType((prev) =>
-      pickerMatchesProfile(prev, govPrimary, govSpec) ? prev : governedToPicker(govPrimary, govSpec),
-    );
-  }, [govPrimary, govSpec]);
-
-  /* A chip is a pending change, saved by "Save to organization" under the
-     page's one reason for change like every other field here. It used to
-     PATCH the governed profile on click, with no reason and no confirmation
-     (launch sweep finding 122). */
-  const chooseClientType = (t: string) => setClientType(t);
-  const clientTypeDirty =
-    profile.status === 'ready' || profile.status === 'empty'
-      ? Boolean(clientType) && (govPrimary == null || !pickerMatchesProfile(clientType, govPrimary, govSpec))
-      : false;
-  const dirty = nameDirty || clientTypeDirty;
-
-  const clientTypeStatus: string =
-    clientTypeDirty && saveState.status !== 'saving'
-      ? 'Not saved yet — give a reason above and save to the organization.'
-      : profile.status === 'error'
-      ? 'Governed profile unreachable — the client type could not be read and cannot be changed.'
-      : saveState.status === 'saving'
-        ? 'Saving to governed org profile…'
-        : saveState.status === 'error'
-          ? saveState.message
-          : saveState.status === 'saved'
-            ? 'Saved to the governed org profile (audited).'
-            : profile.status === 'loading'
-              ? 'Loading governed org profile…'
-              : profile.status === 'empty'
-                ? 'No governed profile saved yet — pick a type to create one.'
-                : profile.status === 'ready'
-                  ? 'Governed — loaded from your org industry profile.'
-                  : '';
-
-  /* What AnA can see of this screen.
-     Setup is a governed editor: every control here writes to the organization
-     record under a reason, audited. So the fact that matters most is not what
-     the settings ARE but whether the administrator has UNSAVED changes and
-     whether the reason field is filled — the two things that decide whether the
-     save will be accepted. Publishing the settings without that would let AnA
-     describe as current a value nobody has committed.
-
-     A FAILED load publishes the failure: presenting an empty working copy as
-     this organisation's configuration would misstate it. */
-  const anaContext = useMemo(() => {
-    if (loading) {
-      return { summary: 'The organization profile and settings are still loading; nothing on screen is final yet.' };
-    }
-    if (loadError) {
-      return {
-        summary:
-          'The organization record could not be read, so the controls on this screen are not showing ' +
-          'this organisation\u2019s saved settings, and nothing here can be edited.',
-        facts: { loadFailure: loadError },
-        availableActions: ['Retry the organization profile and settings read'],
-      };
-    }
-    return {
-      summary:
-        `Organization setup: name "${savedName}"` +
-        (clientType ? `, client type "${clientType}"` : '') +
-        '. ' +
-        (dirty
-          ? `There are UNSAVED changes (${[nameDirty && 'organization name', clientTypeDirty && 'client type'].filter(Boolean).join(' and ')})` +
-            `, and a reason for change is ${reason.trim() ? 'entered' : 'still required before they can be saved'}.`
-          : 'Nothing is unsaved.'),
-      facts: {
-        savedOrganizationName: savedName,
-        editedOrganizationName: nameDirty ? name : null,
-        clientType: clientType || null,
-        clientTypeStatus,
-        hasUnsavedChanges: dirty,
-        reasonForChangeEntered: reason.trim().length > 0,
-        editable,
-        lastSaveNote: saveNote ? { tone: saveNote.tone, text: saveNote.text } : null,
-      },
-      availableActions: [
-        'Change the organization name, then save under an audited reason for change',
-        'Pick the client type, which is written to the governed org industry profile',
-      ],
-    };
-  }, [loading, loadError, savedName, name, nameDirty, clientType, clientTypeStatus, clientTypeDirty, dirty, reason, editable, saveNote]);
-  usePublishSurfaceContext('setup', anaContext);
+  const [profileContext, setProfileContext] = useState<OrganizationProfileContext | null>(null);
+  usePublishSurfaceContext('setup', profileContext);
 
   return (
     <div className="page-inner">
       <AdminHeader
         eyebrow="Admin — organization"
-        title={
-          <React.Fragment>
-            Setup
-          </React.Fragment>
-        }
-        sub="Organization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced."
+        title="Setup"
+        sub="Organization profile and module configuration, saved to the organization record and written to the audit trail."
         actions={
-          <React.Fragment>
-            <input
-              aria-label="Reason for change"
-              className="txw-gov-field"
-              placeholder="Reason for change (audited)"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              disabled={!dirty || saving}
-              style={{
-                fontSize: 12.5,
-                padding: '7px 10px',
-                borderRadius: 6,
-                border: '1px solid var(--border-control)',
-                background: 'var(--bg-050)',
-                color: 'var(--text-100)',
-                minWidth: 220,
-              }}
-            />
-            <button className="btn" onClick={() => void saveOrg()} disabled={!dirty || saving}>
-              {saving ? 'Saving…' : dirty ? 'Save to organization' : 'No unsaved changes'}
-            </button>
-            <button
-              className="btn ghost"
-              onClick={() => onAsk && onAsk('Summarize my org configuration')}
-            >
-              {I.sparkles} Ask AnA
-            </button>
-          </React.Fragment>
+          <button className="btn ghost" onClick={() => onAsk && onAsk(SUMMARISE_CONFIGURATION)}>
+            {I.sparkles} Ask AnA
+          </button>
         }
       />
-
-      {loadError && (
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't load your organization record"
-          hint={`${loadError} — nothing below is editable until the organization record loads, so no change can be lost.`}
-        />
-      )}
-      {/* The result of a governed, audited PATCH. It was a plain div that
-          appeared after the write, so the only report that "Save to
-          organization" had landed — or been refused with "Not saved: …" — was
-          an icon swap and a tint. The region is rendered unconditionally and
-          filled conditionally, because a live region has to exist before its
-          content changes for the change to be announced reliably; empty, it has
-          no class and so no box. */}
-      <div
-        className={saveNote ? 'txw-help' : undefined}
-        data-tone={saveNote?.tone === 'warn' ? 'warn' : undefined}
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {saveNote ? (
-          <>
-            {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
-          </>
-        ) : null}
-      </div>
-
-      <div className="txw-settings">
-        {/* -- Org profile -- */}
-        <div className="txw-set-card">
-          <div className="txw-set-head">
-            <div className="txw-set-head-l">
-              <div className="txw-set-eyebrow">Organization</div>
-              <h2 className="txw-set-title">Profile &amp; client type</h2>
-              <p className="txw-set-sub">
-                Drives default templates, pathways, and the AnA context across every project.
-              </p>
-            </div>
-          </div>
-          <div className="txw-set-body">
-            <div className="txw-row">
-              <div className="txw-row-l">
-                Organization name
-                <small>Displayed in audit, e-sign manifest, and export footers.</small>
-              </div>
-              <div className="txw-row-r">
-                <input
-                  aria-label="Organization name"
-                  className="txw-gov-field"
-                  style={{
-                    fontSize: 13,
-                    padding: '8px 10px',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-control)',
-                    background: 'var(--bg-050)',
-                    width: '100%',
-                    maxWidth: 340,
-                  }}
-                  value={name}
-                  disabled={!editable || saving}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <span className="txw-help" data-tone={nameDirty ? 'warn' : undefined}>
-                  {loading
-                    ? 'Loading the organization record…'
-                    : loadError
-                      ? 'Unavailable — the organization record did not load.'
-                      : nameDirty
-                        ? 'Unsaved — give a reason and save to write it to the organization record.'
-                        : 'Governed — stored on the organization record.'}
-                </span>
-              </div>
-            </div>
-            <div className="txw-row">
-              <div className="txw-row-l">
-                Client type
-                <small>
-                  Sets the default rail focus and AnA framing, and the skills AnA prefers
-                  when a question does not name the product (Admin and access → Skills).
-                  Governed — saved to your organization's industry profile.
-                </small>
-              </div>
-              <div className="txw-row-r">
-                <div className="txw-row-r-grid">
-                  {CLIENT_TYPE_OPTIONS.map((t) => (
-                    <button
-                      key={t}
-                      className="txw-pchip"
-                      data-on={clientType === t || undefined}
-                      disabled={profile.status === 'loading' || saveState.status === 'saving'}
-                      onClick={() => chooseClientType(t)}
-                    >
-                      {CLIENT_TYPE_LABEL[t]}
-                    </button>
-                  ))}
-                </div>
-                {clientTypeStatus && (
-                  /* Cycles through "Saving to governed org profile…" and its
-                     outcome. Choosing a client-type chip fires a governed write
-                     and the chips merely disable and re-enable, so without this
-                     the write was silent from start to finish. */
-                  <span
-                    role="status"
-                    aria-live="polite"
-                    className="txw-help"
-                    data-tone={
-                      saveState.status === 'error' || profile.status === 'error'
-                        ? 'warn'
-                        : undefined
-                    }
-                  >
-                    {clientTypeStatus}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="txw-row">
-              <div className="txw-row-l">
-                Multi-factor authentication
-                {/* QA 2026-10-08 (j9): this said "enrolled by each member", but no
-                    screen started an authenticator enrolment, so it said what sign-in
-                    does instead (routes/auth.ts POST /login). P-25: the account panel
-                    (v2/AccountPanel.tsx) now enrols one, so the row says where. */}
-                <small>
-                  Sign-in asks for an emailed code, or for an authenticator app on an account that
-                  has one.
-                </small>
-              </div>
-              <div
-                className="txw-row-r"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-              >
-                <span className="txw-help">
-                  {I.info} Set per user, not per organization, so there is nothing for an
-                  administrator to switch here. Each person sets up an authenticator app from
-                  Account in the account menu.
-                </span>
-              </div>
-            </div>
-            <div className="txw-row">
-              <div className="txw-row-l">
-                SSO &amp; SCIM<small>SAML / OIDC and directory provisioning.</small>
-              </div>
-              <div
-                className="txw-row-r"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-              >
-                <button className="btn ghost" onClick={() => onNav('identity-console')}>
-                  {I.lock} Open Identity console
-                </button>
-                <span className="txw-help">
-                  Governed there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM
-                  IP allowlist. A boolean on this page would be a second copy of that state with
-                  nothing to reconcile it.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* -- Agency gateway accounts: platform or the organisation's own, per
-            gateway and environment (D7, founder decision 2026-10-01). -- */}
-        <GatewayAccountsSetting />
-        <SessionPolicySetting />
-        {/* PDF/A only where this organisation's procedures require it (D7, decided 2026-10-01). */}
-        <PdfARequirementSetting />
-
-        {/* -- Records retention (P1-22; ADR-0014 §6) -- its own read and its
-            own governed save, because the period has its own route and its own
-            chained audit row; see RetentionPeriodCard.tsx. */}
-        <RetentionPeriodCard describeFailure={saveFailure} />
-        <LegalHoldsCard describeFailure={saveFailure} />
-        <CompanyDocumentSettings onNav={onNav} />
-      </div>
+      <OrganizationSettingsCards onNav={onNav} onProfileContext={setProfileContext} />
     </div>
   );
 }

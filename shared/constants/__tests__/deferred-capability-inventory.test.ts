@@ -5,7 +5,8 @@ import { isLaunchSurface } from '../launch-scope';
 
 describe('deferred surface convergence claims', () => {
   it('keeps each retained capability fenced and gives an implemented canonical launch destination', () => {
-    expect(DEFERRED_CAPABILITY_INVENTORY).toHaveLength(12);
+    // 11 since ana-memory folded into the conversation (D2, 2026-10-29).
+    expect(DEFERRED_CAPABILITY_INVENTORY).toHaveLength(11);
     for (const entry of DEFERRED_CAPABILITY_INVENTORY) {
       const surface = getSurface(entry.surfaceId);
       expect(surface, entry.surfaceId).toBeTruthy();

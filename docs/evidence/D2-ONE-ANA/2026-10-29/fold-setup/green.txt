@@ -1,0 +1,113 @@
+# Green — fold setup into admin-console, Part 1
+
+Trunk 984913ea5 + this change. Every suite that renders AdminAccess, AdminSurfaces, a moved card or HomeSetup, names 'setup' or identity-console, plus the server facet test:
+
+- client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx
+- client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx
+- client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx
+- client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx
+- client/src/concept2cure/v2/__tests__/adminAccessNoDeadActions.test.tsx
+- client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx
+- client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx
+- client/src/concept2cure/v2/__tests__/adminApiKeyUsage.test.tsx
+- client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx
+- client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx
+- client/src/concept2cure/v2/__tests__/adminPendingInvitation.test.tsx
+- client/src/concept2cure/v2/__tests__/adminPlatformGrants.test.tsx
+- client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx
+- client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx
+- client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx
+- client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx
+- client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+- client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx
+- client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx
+- client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx
+- client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx
+- client/src/concept2cure/v2/__tests__/appsLive.test.tsx
+- client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx
+- client/src/concept2cure/v2/__tests__/auditTrailChainVerdict.test.tsx
+- client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx
+- client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+- client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx
+- client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx
+- client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+- client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx
+- client/src/concept2cure/v2/__tests__/complianceReports.test.tsx
+- client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx
+- client/src/concept2cure/v2/__tests__/foldPart11Console.test.ts
+- client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+- client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx
+- client/src/concept2cure/v2/__tests__/homeSetup.test.tsx
+- client/src/concept2cure/v2/__tests__/identityConsole.test.tsx
+- client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx
+- client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx
+- client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx
+- client/src/concept2cure/v2/__tests__/identityRuleActions.test.tsx
+- client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+- client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx
+- client/src/concept2cure/v2/__tests__/pdfaRequirementSetting.test.tsx
+- client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts
+- client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx
+- client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+- client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+- client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx
+- client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx
+- server/routes/__tests__/mdx-admin-facets.test.ts
+
+ Test Files  51 passed (51)
+      Tests  471 passed (471)
+
+## The fold's own suites, verbose
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation)
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak)
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization)
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — the settings Setup folded into > serves no session-timeout row: the governed session-policy card replaces it
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — the settings Setup folded into > says where each person sets up an authenticator app
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeout":120}
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999}
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0}
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"}
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9}
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > offers the client type chips in words
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows the organization’s real name, not an invented default
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows no translation-workspace card: nothing reads organizations.settings.translation
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > addresses the org from the token claim, never the stale localStorage id
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > writes nothing to the browser-local settings blob it replaced
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > sends nothing until something has changed
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > refuses to write without a reason, because the route audits one
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > PATCHes the profile with the reason and the token’s org id, and writes no settings section
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > leaves a refused section dirty, and re-sends only that section
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > reports an unreachable server as unreachable, not as a refusal
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > has no switch for anything enforced elsewhere or per user
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01)
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01)
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > does not offer edits it cannot persist when the record fails to load
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > reads the period from the server and says when it is the 25-year default
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a failed read is an error, never the default presented as this organisation’s period
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a member is told who sets the period and is offered no control
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a 403 that is not about role is shown in the server’s words, never as “your role cannot”
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > are named in words, not keys
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > write nothing on click — the choice is pending until saved
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > are saved by "Save to organization" with the page’s reason for change
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx > the client type chips > are not saved without a reason
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Settings → Second factor at sign-in > says what sign-in asks for, and where each person enrols an authenticator
+ Test Files  6 passed (6)
+      Tests  51 passed (51)

@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 /**
- * Admin → Setup → Records retention (P1-22 remainder, DP-20; ADR-0014 §6).
+ * Admin and access → Settings → Records retention (P1-22 remainder, DP-20;
+ * ADR-0014 §6).
  *
  * The organisation's retention period is set by its owner or administrators
  * through GET|PUT /api/vault/legal-holds/retention
- * (server/routes/vault-retention-period.ts). Setup is the organisation's
- * existing governed settings surface, so the period is shown and set there —
- * no new surface (CLAUDE.md Rule 2).
+ * (server/routes/vault-retention-period.ts). It was shown and set on Setup, the
+ * organisation's governed settings surface then; Setup folded into Admin and
+ * access's Settings tab (D2, 2026-10-29), which mounts the same card — rendered
+ * here as it mounts it, in OrganizationSettingsCards.
  *
  * What is pinned, because each one looks right in a screenshot when wrong:
  *   - A failed read is an error, never the 25-year default presented as this
@@ -22,9 +24,7 @@ import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/re
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { Setup } from '../surfaces/AdminSurfaces';
-
-const Surface = Setup as unknown as React.ComponentType<Record<string, unknown>>;
+import { OrganizationSettingsCards } from '../surfaces/AdminSettings';
 const RETENTION = '/api/vault/legal-holds/retention';
 
 interface Sent {
@@ -88,21 +88,21 @@ afterEach(() => {
   localStorage.clear();
 });
 
-function renderSetup() {
+function renderSettings() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <Surface onAsk={() => {}} onNav={() => {}} segment="biotech" />
+      <OrganizationSettingsCards onNav={() => {}} />
     </QueryClientProvider>,
   );
 }
 
 /** The card, once it has rendered. */
 async function card() {
-  const view = renderSetup();
+  const view = renderSettings();
   const el = await waitFor(() => {
     const found = view.container.querySelector('[data-testid="retention-period-card"]');
-    expect(found, 'Setup renders no Records retention card').not.toBeNull();
+    expect(found, 'Settings renders no Records retention card').not.toBeNull();
     return found as HTMLElement;
   });
   return { view, el, q: within(el) };
@@ -110,7 +110,7 @@ async function card() {
 
 const puts = () => sent.filter((r) => r.method === 'PUT' && r.url.includes(RETENTION));
 
-describe('Setup → Records retention', () => {
+describe('Settings → Records retention', () => {
   it('reads the period from the server and says when it is the 25-year default', async () => {
     const { el } = await card();
     await waitFor(() => expect(el.textContent).toContain('25 years'));

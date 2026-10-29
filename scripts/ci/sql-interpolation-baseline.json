@@ -24,7 +24,6 @@
   "server/routes/ivdr-routes.ts": 2,
   "server/routes/manufacturing-routes.ts": 11,
   "server/routes/mdx-ana-drafts.ts": 2,
-  "server/routes/mdx-ana-memory.ts": 4,
   "server/routes/mdx-audit.ts": 2,
   "server/routes/mdx-cdx.ts": 7,
   "server/routes/mdx-clia.ts": 4,

@@ -166,9 +166,12 @@ describe('the client walker sees the real tree', () => {
     // PdevInd.tsx was retired alongside the Phase 7 PDEV kit landing at
     // client/src/concept2cure/pdev/. That kit uses useFetchJson and never
     // touched the ghost, so the guarantee holds by construction.
+    // AnaMemory.tsx was retired when ana-memory folded into the conversation
+    // (D2, 2026-10-29); its verify went with it, and the panel that replaced its
+    // real reads (WhatAnaRemembers.tsx) writes nothing.
     for (const name of [
       'LicensingSurface.tsx', 'ReportEngine.tsx',
-      'EctdCoauthor.tsx', 'AnaMemory.tsx', 'AnaVerbs.tsx',
+      'EctdCoauthor.tsx', 'AnaVerbs.tsx',
     ]) {
       expect(FILES.some(f => f.endsWith(name)), `${name} not walked`).toBe(true);
     }
@@ -313,7 +316,7 @@ describe('the ported surfaces use the sanctioned convention', () => {
     // is the source of truth and uses useFetchJson; no shim required.
     ['client/src/concept2cure/v2/surfaces/ReportEngine.tsx', /liveMutateOrNull</],
     ['client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx', /liveMutateOrNull</],
-    ['client/src/concept2cure/v2/surfaces/AnaMemory.tsx', /liveMutateOrNull\(/],
+    // AnaMemory.tsx retired (fold of ana-memory, 2026-10-29), with its verify.
     /* AnaVerbs is no longer listed. `connected()` lived in StreamingRenderer's
        `canLive`; with that component deleted the file makes no data access at
        all, and a surface that reads nothing needs no read convention. Asserting
@@ -332,12 +335,5 @@ describe('the ported surfaces use the sanctioned convention', () => {
     // A failed mutation must not be indistinguishable from a successful one.
     const fn = dc.slice(dc.indexOf('export async function liveMutateOrNull'));
     expect(fn.slice(0, 900)).toMatch(/data:\s*null/);
-  });
-
-  it('AnaMemory reports what actually happened instead of always claiming success', () => {
-    // The old line fired "Verified — AnA will weight this memory more."
-    // unconditionally, including when the POST never left the browser.
-    const code = codeOf(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/AnaMemory.tsx'));
-    expect(code).toMatch(/Could not verify/);
   });
 });

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
- * Admin → Setup: the client type is a governed change like every other field
- * on the page — pending until "Save to organization", saved under the page's
- * reason for change, and named in words (launch sweep findings 122 and 123).
+ * Admin and access → Settings → Profile (Setup until it folded in, D2
+ * 2026-10-29): the client type is a governed change like the name — pending
+ * until "Save to organization", saved under the card's reason for change, and
+ * named in words (launch sweep findings 122 and 123).
  *
  * One click on a chip used to PATCH /api/mdx/industry-profile immediately,
  * with no reason and no confirmation, on a page whose header says changes are
@@ -14,9 +15,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Setup } from '../surfaces/AdminSurfaces';
-
-const Surface = Setup as unknown as React.ComponentType<Record<string, unknown>>;
+import { OrganizationProfileCard } from '../surfaces/OrganizationProfileCard';
 const TOKEN_ORG = 7;
 const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '');
 const tokenFor = (orgId: number) => `${b64({ alg: 'HS256' })}.${b64({ sub: 'u1', organizationId: orgId })}.sig`;
@@ -47,7 +46,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); sessionStorage.clear(); loca
 
 const mount = () => render(
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <Surface onAsk={() => {}} onNav={() => {}} segment="biotech" />
+    <OrganizationProfileCard />
   </QueryClientProvider>,
 );
 const chip = (c: HTMLElement, text: string) =>

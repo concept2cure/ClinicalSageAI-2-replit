@@ -12,7 +12,7 @@ import '../styles/translation-v2.css';
 interface Policy { idleMinutes: number; concurrentSessions: number }
 interface SettingsPayload { settings: Record<string, unknown>; success?: boolean }
 type Note = { error: boolean; text: string } | null;
-const ORGANIZATION_CHANGED = 'Your organization changed. Reopen setup to read its current session policy.';
+const ORGANIZATION_CHANGED = 'Your organization changed. Reopen this page to read its current session policy.';
 const policyOf = (settings: unknown): Policy => ({ idleMinutes: idleWindowSecondsOf(settings) / 60, concurrentSessions: maxConcurrentSessionsOf(settings) });
 const isSettings = (body: unknown): body is SettingsPayload => body !== null && typeof body === 'object' &&
   (body as SettingsPayload).success !== false &&

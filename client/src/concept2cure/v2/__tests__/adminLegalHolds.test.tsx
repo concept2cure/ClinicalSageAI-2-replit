@@ -77,7 +77,7 @@ async function openLift() {
   return { view, dialog, reasonField, wordField };
 }
 
-describe('Setup legal-hold read states', () => {
+describe('Settings legal-hold read states', () => {
   it('distinguishes a successful empty register from an unknown hold state', async () => {
     const view = renderCard();
     expect(await view.findByText('No active holds in this list')).toBeTruthy();

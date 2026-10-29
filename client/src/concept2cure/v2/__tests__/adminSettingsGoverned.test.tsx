@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 /**
- * Admin → Setup — what an administrator is told they changed, versus what was
- * actually written.
+ * Admin and access → Settings (Setup until it folded in, D2 2026-10-29) — what
+ * an administrator is told they changed, versus what was actually written.
+ * Rendered as admin-console mounts it: OrganizationSettingsCards, the Profile
+ * card first (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/).
  *
  * The panel used to keep the organization name, an "MFA required" switch, an
  * "SSO enabled" switch and the whole translation-workspace policy in
@@ -50,9 +52,7 @@ import { render, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { Setup } from '../surfaces/AdminSurfaces';
-
-const Surface = Setup as unknown as React.ComponentType<Record<string, unknown>>;
+import { OrganizationSettingsCards } from '../surfaces/AdminSettings';
 
 /** The org id in the caller's token claim — every governed URL must use it. */
 const TOKEN_ORG = 7;
@@ -142,7 +142,7 @@ const renderSurface = () => {
   });
   return render(
     <QueryClientProvider client={client}>
-      <Surface onAsk={() => {}} onNav={() => {}} segment="biotech" />
+      <OrganizationSettingsCards onNav={() => {}} />
     </QueryClientProvider>,
   );
 };
@@ -169,7 +169,7 @@ async function loaded(container: HTMLElement) {
   return container;
 }
 
-describe('Admin → Setup reads the organization record', () => {
+describe('Admin → Settings reads the organization record', () => {
   it('shows the organization’s real name, not an invented default', async () => {
     const { container } = renderSurface();
     await loaded(container);
@@ -207,7 +207,7 @@ describe('Admin → Setup reads the organization record', () => {
   });
 });
 
-describe('Admin → Setup governed save', () => {
+describe('Admin → Settings governed save', () => {
   it('sends nothing until something has changed', async () => {
     const { container } = renderSurface();
     await loaded(container);
@@ -310,7 +310,7 @@ describe('Admin → Setup governed save', () => {
   });
 });
 
-describe('Admin → Setup claims no control it does not have', () => {
+describe('Admin → Settings claims no control it does not have', () => {
   it('offers the existing Vault legal-hold controls beside the retention period', async () => {
     const { container } = renderSurface();
     await loaded(container);

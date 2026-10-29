@@ -1,0 +1,101 @@
+Green, Part 1. Working tree over 66efa6179, 2026-10-29.
+
+== The new suites and their neighbours
+run: npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx tests/mdx-notifications-clinical-routes.test.ts client/src/concept2cure/v2/__tests__/anaMemoryNoFixtures.test.tsx client/src/concept2cure/v2/__tests__/anaMemoryPlainLanguage.test.tsx server/middleware/__tests__/launch-scope-api-gate.test.ts server/services/entitlements/__tests__/launch-scope.test.ts server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+ Test Files  10 passed (10)
+      Tests  394 passed (394)
+The three new suites, case by case:
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — the two real reads, for the caller alone > reads the caller’s own notes and their notes for the open project, and names no user
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — the two real reads, for the caller alone > shows how AnA is tuned to the person: notes, the four tone settings and the latest read
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — the two real reads, for the caller alone > shows the ledger of what AnA got wrong and the correction, in each scope
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — the two real reads, for the caller alone > heads the project’s notes with the open project
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — the two real reads, for the caller alone > counts turns, which is what the profile counts, not conversations
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > an empty ledger says so, in each scope
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > no notes yet is said as that, not as an error, and the ledger is still said to be empty
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > a row AnA has not yet written notes into is not shown as blank notes
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > a failed read of the caller’s notes is an error with Try again, never an empty memory; Try again reads again
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > a refused read is said as a refusal, with nothing to retry
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > an absent store is said, not shown as no notes yet
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > a project the caller cannot open is refused in the server’s terms; their own notes still show
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > a project access check that could not run offers Try again, and says nothing about the project
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > an answer that does not say it is this project’s is not shown as the project’s
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > with no project open, nothing is read for a project, and the panel says only the notes above are read
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — honest states > speaks in words: no table or column name reaches the screen
+ ✓ client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx > What AnA remembers — a dialog beside the conversation > is named, read-only, and closes on Close and on Escape
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile — the caller’s own notes, anywhere > reads the caller’s user-level profile in the session’s organization, and nobody else’s
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile — the caller’s own notes, anywhere > names no user from the request: a user id in the query is not read
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile — the caller’s own notes, anywhere > answers null, not a stand-in, when AnA has formed no notes for the caller
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile — the caller’s own notes, anywhere > says the store is absent when it is, rather than answering an empty profile
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile — the caller’s own notes, anywhere > refuses without an organization or a user, and reads nothing
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > reads the caller’s profile for the admitted project through 11111111-2222-4333-8444-000000000011
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > reads the caller’s profile for the admitted project through 11111111-2222-4333-8444-000000000011
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > reads the caller’s profile for the admitted project through 11
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > answers null for a project AnA has kept no notes on for the caller, though a colleague’s exist
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > refuses a project the caller can no longer open, and does not read their notes for it
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > refuses another organization’s or an absent project 11111111-2222-4333-8444-000000000021, reading nothing
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > refuses another organization’s or an absent project 21, reading nothing
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > refuses another organization’s or an absent project 999, reading nothing
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > refuses a malformed project reference rather than reading the caller’s notes anywhere
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > a project access check that could not run is a 503, never an empty profile
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > GET /api/mdx/ana/memory/profile?project_id= — the caller’s own notes for the conversation’s project > says the store is absent for the project read too
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/memory/profile is served
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/memory/profile?project_id=11111111-2222-4333-8444-000000000011 is served
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/memory is not
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/memory/7/verify is not
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/memory/7/supersede is not
+ ✓ server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts > launch scope serves the profile read, and nothing else of the retired screen > /api/mdx/ana/threads is not
+ ✓ client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx > the conversation reaches What AnA remembers > opens the panel from the header, for the project this conversation’s turns are sent under
+ ✓ client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx > the conversation reaches What AnA remembers > closes on Escape and hands focus back to the header control
+ ✓ client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx > the conversation reaches What AnA remembers > with no project open, reads only the person’s own notes
+
+== Every client suite that names ConversationThread (grep -rl ConversationThread client/src --include=*.test.tsx), and the panel suite: 41 files
+ Test Files  4 failed | 37 passed (41)
+      Tests  13 failed | 408 passed (421)
+The 13 failures are in 4 files and are left as found. The same 4 files fail the same 13 cases with
+ConversationThread.tsx at HEAD (this change's copy set aside, restored, sha256 6e654d0527700b16 before and after):
+ Test Files  4 failed (4)
+      Tests  13 failed | 18 passed (31)
+Causes, both present at HEAD: engineChoices, oneBoxDuringRun and runPolicySwitch (10 cases) mock
+@/services/portal/authService without its authService export, which editor/authoringCurrentRead.ts:15 reads
+("No 'authService' export is defined on the mock"); authoringConversationScopeLive (3 cases) fails an
+assertion on an undefined value after its 5 s waits ("the given combination of arguments (undefined and string)").
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx
+
+== Entitlement and launch-scope suites (the registry claim)
+run: npx vitest run server/middleware/__tests__/launch-scope-api-gate.test.ts server/services/entitlements/__tests__ tests/mdx-notifications-clinical-routes.test.ts
+ Test Files  20 passed (20)
+      Tests  601 passed (601)
+
+=================== Part 2 ===================
+
+== The broad regression set: every suite that reads the registry, the alias map, the surface views, the deferred
+inventory, the launch scope, the mdx surface ids or the router (grep -rlE over *.test.ts, *.test.tsx, *.spec.ts(x) in
+client, server, shared, tests and scripts; e2e excluded: 192 files), plus the panel, route and ghost-globals suites.
+Working tree over 984913ea5.
+ Test Files  3 failed | 188 passed (191)
+      Tests  10 failed | 2924 passed (2934)
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+The 10 failures are the three authService-mock suites that fail the same way at HEAD (Part 1, above).
+
+== The change's suites on the final tree (working tree over f83fcce03, which touches none of this change's files)
+run: npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts tests/mdx-notifications-clinical-routes.test.ts tests/ci/no-ghost-globals.contract.test.ts server/middleware/__tests__/launch-scope-api-gate.test.ts server/services/entitlements/__tests__/launch-scope.test.ts server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts shared/constants/__tests__/deferred-capability-inventory.test.ts server/services/ana/__tests__/project-scope-admission.pglite.test.ts tests/concept2cure/design-system-surfaces-smoke.test.tsx tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx
+ Test Files  13 passed (13)
+      Tests  427 passed (427)
+The fold guard and the not-served cases, case by case:
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > GET /api/mdx/ana/memory is no longer served, and reads nothing
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > POST /api/mdx/ana/memory/999/verify is no longer served, and reads nothing
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > POST /api/mdx/ana/memory/1/supersede is no longer served, and reads nothing
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > GET /api/mdx/ana/threads is no longer served, and reads nothing
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > GET /api/mdx/ana/threads/t-1 is no longer served, and reads nothing
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory > POST /api/mdx/ana/threads/t-1/pin is no longer served, and reads nothing
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)
+ ✓ client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts > ana-memory is folded into the conversation > resolves ana-memory to the conversation from a link and an in-app move, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts > ana-memory is folded into the conversation > lands on the conversation, which mounts What AnA remembers for its own project, read under its own claim
+ ✓ client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts > ana-memory is folded into the conversation > keeps no screen of its own: no view, no registry entry for ⌘K, no inventory row, no component
+ ✓ client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts > ana-memory is folded into the conversation > serves the profile read and nothing else of the retired screen, and no surface claims its paths
+ ✓ client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts > ana-memory is folded into the conversation > is in no launch scope list and no rail, and no tour stops on it

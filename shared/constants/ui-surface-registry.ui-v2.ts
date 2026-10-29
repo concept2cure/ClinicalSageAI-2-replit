@@ -276,7 +276,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ConversationThread.tsx exports and routes artifacts through the legacy project API.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
+    // '/api/mdx/ana/memory/profile' (2026-10-29, fold of ana-memory): WhatAnaRemembers.tsx reads the caller's own
+    // relational profile beside the conversation. Only that read: the rest of /api/mdx/ana/memory stays ana-memory's.
+    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
