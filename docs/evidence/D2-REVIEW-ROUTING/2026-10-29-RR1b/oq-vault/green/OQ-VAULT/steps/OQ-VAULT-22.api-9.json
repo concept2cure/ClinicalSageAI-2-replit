@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/3bdbdfc1-d8ee-4b10-bced-9c4dea945250/annotations/abc45dc4-ccd3-4413-98a3-c377b6a578d4/resolve",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "note": "Dose per kilogram added in the next version."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 47,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {}
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/relationships/2e2cd2b4-82f8-4b07-b176-7e6616446419/remove",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "OQ-002 exercise: removing the relationship it created."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 59,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true
+    }
+  }
+}

@@ -91,7 +91,7 @@ On the phone the script checks the form, the round and the withdraw sheet: horiz
 
 ## Design issues for the coordinator
 
-- **OQ protocol.** `tests/validation/oq/vault/run.mjs` steps OQ-VAULT-13/14 send a version with `advance {to:'in_review'}` and no route, and approve through `/advance`. After RR1b they will fail at the send. They are a validation protocol with URS traceability, so they were not edited here: they need a protocol revision naming a route (reviewer, approver) and approval by signing on the route.
+- **OQ protocol.** `tests/validation/oq/vault/run.mjs` steps OQ-VAULT-13/14 send a version with `advance {to:'in_review'}` and no route, and approve through `/advance`. After RR1b they will fail at the send. They are a validation protocol with URS traceability, so they were not edited here: they need a protocol revision naming a route (reviewer, approver) and approval by signing on the route. Done in OQ-002 v0.15 (`docs/validation/OQ-002-VAULT.md`); red and green runs in `oq-vault/`.
 - **The Vault's detail pane** gets only the height left under the uploads lane, the data room and the coverage band (96 px tall in the acceptance organization with 20+ uploads at 1440×900). The round panel is readable by scrolling the pane, but the layout is pre-existing and outside this slice.
 - The design's §2.12 also lists `vault-review-queue.ts` "mine = my open step, with the due date": done; "Returned by C"/"Withdrawn by D" name the closer from the route's own names, and an admin who withdrew a route they did not send reads as "an administrator" (the header stores only `status_by`).
 

@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 834,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "ff975b65-708e-42c5-91f5-7e24edfd6c19",
+        "programId": "a374e482-cd64-42d2-ad36-0f49896bb4b8",
+        "documentCode": "OQ-002 Protocol 20261029101122.pdf",
+        "documentTitle": "OQ-002 Protocol 20261029101122",
+        "documentType": "PROTOCOL",
+        "version": "2.0",
+        "fileName": "next-version.pdf",
+        "fileSize": 622,
+        "mimeType": "application/pdf",
+        "contentHash": "521d25428d9f595ee33f0e7471ba31b5a3f33aa4e5cee2f6d5da7d0be1c184e6",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 10,
+        "createdAt": "2026-10-29T10:11:46.938Z",
+        "updatedAt": "2026-10-29T10:11:46.938Z"
+      },
+      "filing": {
+        "view": "pharma",
+        "folderId": "module-5",
+        "evidenceKind": "protocol",
+        "ctdSection": null,
+        "placementStatus": "confirmed",
+        "confidence": null,
+        "rationale": "Kept from version 1.0 when this version was added.",
+        "folderLabel": "Module 5 · Clinical",
+        "needsReview": false
+      }
+    }
+  }
+}

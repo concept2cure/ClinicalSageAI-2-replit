@@ -1,0 +1,28 @@
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  pass
+  OQ-VAULT-08b  pass
+  OQ-VAULT-09  pass
+  OQ-VAULT-10  pass
+  OQ-VAULT-11  pass
+  OQ-VAULT-12  pass
+  OQ-VAULT-13  pass
+  OQ-VAULT-14  pass
+  OQ-VAULT-15  pass
+  OQ-VAULT-16  pass
+  OQ-VAULT-17  pass
+  OQ-VAULT-18  pass
+  OQ-VAULT-19  pass
+  OQ-VAULT-20  pass
+  OQ-VAULT-21  pass
+  OQ-VAULT-22  pass
+
+OQ-002 Vault: 24 pass, 0 fail, 0 deviation, 0 not-executed → docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR1b/oq-vault/green/OQ-VAULT

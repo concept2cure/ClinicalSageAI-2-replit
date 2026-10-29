@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/regulatory/documents/bd2c9875-a741-4536-a8b4-4ba370f0c54e/advance",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "to": "approved",
+      "reason": "OQ-002 step 13: the reviewer must not approve",
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 73,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": false,
+      "error": "ROUTE_APPROVAL_BY_SIGN",
+      "message": "This document is approved by its named approver signing on the review route. Nothing was approved."
+    }
+  }
+}
