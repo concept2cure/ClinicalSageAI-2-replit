@@ -1,0 +1,18 @@
+# mutation M1-restore-TasksSurface-import: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+# replaced: import {
+  ValidationSurface,
+  SubmissionsSurface,
+} from './workbench/Workbench';
+# with:     import {
+  TasksSurface,
+  ValidationSurface,
+  SubmissionsSurface,
+} from './workbench/Workbench';
+
+== client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > leaves no client code naming TasksSurface 68ms
+   → expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ Array(1) ] to deeply equal []
+      Tests  1 failed | 4 passed (5)
+# restored byte-for-byte (cmp)

@@ -99,7 +99,9 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // longer routable publishers (projectDossierParity/projectDestinationShell).
 // 2026-10-26 A2.10a: filings-catalog folds into the existing Projects wizard.
 // Its reference facts are published through Projects/ProjectHome, not a new id.
-const ID_BASELINE = 113;
+// 2026-10-29 D2: device-tasks folds into Tasks, which publishes as 'tasks'. The
+// retired id is an alias, no longer a routable publisher (foldDeviceTasks.test.ts).
+const ID_BASELINE = 112;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

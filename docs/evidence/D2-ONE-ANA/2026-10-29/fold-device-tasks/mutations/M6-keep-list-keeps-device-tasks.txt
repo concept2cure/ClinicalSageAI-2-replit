@@ -1,0 +1,13 @@
+# mutation M6-keep-list-keeps-device-tasks: db/migrations/20260810_reconcile_module_catalog.sql
+# replaced:    'device-udi',
+   'device-validation',
+# with:        'device-tasks',
+   'device-udi',
+   'device-validation',
+
+== tests/schema-contract/catalog-module-claims.contract.test.ts
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay 15ms
+   → catalog modules with no tier assigned: device-tasks
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+# restored byte-for-byte (cmp)

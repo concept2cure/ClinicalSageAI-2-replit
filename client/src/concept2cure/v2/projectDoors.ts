@@ -38,8 +38,6 @@ export const STEP_DOORS = {
   allTasks: 'See all tasks in Tasks',
   /** Review: the review board, which starts on the open project. */
   reviewBoard: 'Review documents on the review board',
-  /** Submit's header: Readiness, what stops each sequence being sent. */
-  readiness: 'Check what stops sending',
   /** Submit's header, and Plan's phase 7, for a US IND. */
   indForms: 'Prepare Forms 1571, 1572 and 3674 in IND forms',
   /** Submit's header: Submission Center, on the open project. */

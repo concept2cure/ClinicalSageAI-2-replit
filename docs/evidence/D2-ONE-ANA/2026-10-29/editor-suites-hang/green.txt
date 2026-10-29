@@ -1,0 +1,51 @@
+# Green: the three fixed files in the shared tree, each alone, after every mutation was restored
+# sha256 of the fixed files (verified with sha256sum -c before this run):
+b08c3f89e79a06481d3719a3a4943cb1771a98463c6c40c30ad2ae60ee65bddd  client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx
+455796fb83f0f7a380abd4c414fcc1cd9205fc5d8cd526d570648a6ed35e97a2  client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+bfa151a4158af9a3f74c99e8fe50273bb82a1fc5bd399834094d78586628aaac  client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+
+## authoringConversationContext.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx
+ ✓ authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > retains current saved section context when a phone ask hides the canvas after the arrival origin was spent 1370ms
+ ✓ authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > uses section B when its review replaces the initial section A handoff before the first send 953ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Duration  6.07s (transform 2.51s, setup 111ms, import 3.13s, tests 2.33s, environment 397ms)
+EXIT 0
+done after 10s
+
+## authoringAnaInsertGate.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 1056ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > a frozen document takes no insert, and the offer says so rather than failing on the click 529ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > document view edits no section, so the offer says so instead of failing on the click 817ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer cut off before it finished: disabled, whoever wrote it 568ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 588ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer every model of which may write governed content is inserted, naming its turn (negative control) 630ms
+ ✓ authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 678ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Duration  8.56s (transform 2.48s, setup 109ms, import 3.08s, tests 4.87s, environment 383ms)
+EXIT 0
+done after 10s
+
+## authoringAnaMarkdown.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders headings as headings and never shows the hashes 944ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders emphasis as emphasis and never shows the asterisks 609ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders bullet and ordered lists as lists 541ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders inline code and fenced code without showing the backticks 526ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders a pipe table as a table 527ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > builds React nodes — no raw HTML from the model is injected 535ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > leaves the user’s own turn as plain text 542ms
+ ✓ authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > still shows the streaming status phase rather than an invented sentence 479ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Duration  9.09s (transform 3.05s, setup 153ms, import 3.70s, tests 4.71s, environment 379ms)
+EXIT 0
+done after 10s
+
+## ESLint, now and at HEAD (git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>)
+authoringConversationContext.test.tsx  now 0 errors 0 warnings  HEAD 0 errors 0 warnings
+authoringAnaInsertGate.test.tsx        now 0 errors 0 warnings  HEAD 0 errors 0 warnings
+authoringAnaMarkdown.test.tsx          now 0 errors 0 warnings  HEAD 0 errors 0 warnings

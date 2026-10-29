@@ -1,33 +1,29 @@
 /**
  * Cross-program workbench surfaces:
- *   - TasksSurface         Tasks and reviews — Kanban + list + metrics
  *   - ValidationSurface    Validation center — programs matrix + rule list
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
  *
  * Ported verbatim from ui_kits/mdx/Workbench.jsx.
  * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
  * hooks/useVault.ts) alongside the other extracted surfaces.
+ *
+ * No task panel. The task workbench folded into Tasks (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/): it drew the per-owner
+ * rows of /api/submission-ops/workload as untitled, unassigned task cards, while
+ * Tasks (v2/surfaces/TaskBoard.tsx) reads the same work item by item.
  */
 
 import * as React from 'react';
 import { I } from '../icons';
 import {
   SUBMISSION_PIPELINE,
-  TASKS_COLUMNS,
   type Submission,
-  type Task,
-  type TaskMetric,
   type ValidationProgram,
   type ValidationRule,
   type ValidationSummary,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
-import {
-  useWorkbenchTasks,
-  useWorkbenchValidation,
-  useUnifiedWork,
-  workNotOnTheBoard,
-} from '../hooks/useWorkbench';
+import { useWorkbenchValidation } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { EmptyState } from '../../v2/dataConnect';
 import { downloadCsv } from '../../v2/download';
@@ -56,8 +52,6 @@ const VALIDATION_COLS =
  * documented where it was removed. Every panel here has a live endpoint, so
  * the honest reading before it answers is nothing, not somebody else's work.
  */
-const NO_TASKS: Task[] = [];
-const NO_TASK_METRICS: TaskMetric[] = [];
 const NO_VALIDATION_RULES: ValidationRule[] = [];
 const NO_VALIDATION_PROGRAMS: ValidationProgram[] = [];
 const NO_VALIDATION_SUMMARY: ValidationSummary[] = [];
@@ -124,208 +118,11 @@ export function PanelState({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tasks
+// Shared props
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface WorkbenchProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
-}
-
-export function TasksSurface({ onAskAna }: WorkbenchProps) {
-  const [view, setView] = React.useState<'board' | 'list'>('board');
-  const [owner, setOwner] = React.useState<'all' | 'JC'>('all');
-
-  /* Live tasks from /api/submission-ops/workload (c2c_project_work_items).
-     Falls back to the kit fixture during load and on error so the Kanban
-     never renders with empty columns. */
-  const live = useWorkbenchTasks();
-  /* The board above reads c2c_project_work_items only. This reports what the
-     other two tracking systems (schedule milestones, tracked filings) hold, so
-     the page stops silently under-reporting the portfolio. */
-  const unified = useUnifiedWork();
-  const offBoard = workNotOnTheBoard(unified.summary);
-  const sourceTasks = live.tasks ?? NO_TASKS;
-  const sourceMetrics = live.metrics ?? NO_TASK_METRICS;
-
-  /* One definition of "new task", shared by the header button and the empty
-     state's CTA — the same reason startNewSubmission below is a callback. Two
-     copies is how a panel comes to name an action differently from the control
-     that performs it. */
-  const newTask = React.useCallback(() => {
-    onAskAna(
-      'Create a new task. Walk me through the fields — project, section, summary, label, due date, assignee, ' +
-                  'and whether an e-signature is required — then file it to the right Kanban column.',
-    );
-  }, [onAskAna]);
-
-  const byCol = (id: string) =>
-    sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
-
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workbench</div>
-          <h1 className="page-title">Tasks and reviews</h1>
-          <div className="page-sub">
-            Everything assigned across the portfolio — blockers, peer reviews, e-signatures.
-          </div>
-          {/* A source whose query failed contributes nothing, so the counts
-              below are a floor. Saying so is the difference between "nothing
-              else is outstanding" and "we could not read everything". */}
-          {unified.summary?.partial === true && (
-            <div className="page-sub">
-              Some work sources could not be read, so these counts are incomplete. The reason has
-              been logged.
-            </div>
-          )}
-          {offBoard > 0 && (
-            <div className="page-sub">
-              {`+${offBoard} not on this board: `}
-              {`${unified.summary?.bySource.schedule ?? 0} schedule milestone(s), `}
-              {`${unified.summary?.bySource.filing ?? 0} tracked filing(s)`}
-              {unified.summary?.blocking ? ` · ${unified.summary.blocking} blocking` : ''}
-            </div>
-          )}
-        </div>
-        <div className="page-actions">
-          <div className="seg small">
-            <button className="seg-btn" data-on={view === 'board'} onClick={() => setView('board')}>Board</button>
-            <button className="seg-btn" data-on={view === 'list'} onClick={() => setView('list')}>List</button>
-          </div>
-          <div className="seg small">
-            <button className="seg-btn" data-on={owner === 'all'} onClick={() => setOwner('all')}>All</button>
-            <button className="seg-btn" data-on={owner === 'JC'} onClick={() => setOwner('JC')}>Mine</button>
-          </div>
-          <button className="btn primary small" onClick={newTask}>
-            {I.plus} New task
-          </button>
-        </div>
-      </div>
-
-      <div className="metrics-row">
-        {sourceMetrics.map((m, i) => (
-          <div key={i} className="metric-card" data-tone={m.tone || ''}>
-            <div className="metric-label">{m.label}</div>
-            <div className="metric-val">
-              {m.metric}
-              {m.unit && <span className="unit">{m.unit}</span>}
-            </div>
-            <div className="metric-meta">{m.meta}</div>
-          </div>
-        ))}
-      </div>
-
-      <PanelState
-        rows={sourceTasks}
-        loading={live.loading}
-        error={live.error}
-        refresh={live.refresh}
-        icon={I.check}
-        title="No tasks assigned"
-        errorTitle="Could not load your tasks"
-        hint="Work assigned across the portfolio appears here — blockers, peer reviews and e-signatures."
-        action={{ label: 'New task', onAct: newTask }}
-        testId="workbench-no-tasks"
-      />
-
-      {view === 'board' ? (
-        <div className="kanban">
-          {TASKS_COLUMNS.map(col => (
-            <div key={col.id} className="kanban-col" data-tone={col.tone}>
-              <div className="kanban-head">
-                <span className="kanban-dot" data-tone={col.tone} />
-                <span className="kanban-label">{col.label}</span>
-                <span className="kanban-n">{byCol(col.id).length}</span>
-              </div>
-              <div className="kanban-body">
-                {byCol(col.id).map(t => (
-                  <button
-                    key={t.id}
-                    className="task-card"
-                    data-tone={t.tone}
-                    onClick={() =>
-                      onAskAna(
-                        `Open task ${t.id} — "${t.title}" on ${t.prog} §${t.sect}. ` +
-                          `Status ${t.label}, due ${t.due}, assignee ${t.assignee}. Walk me through what's needed to clear it.`,
-                      )
-                    }
-                  >
-                    <div className="task-head">
-                      <span className="task-prog">
-                        {t.prog}
-                        <span className="task-sect">· {t.sect}</span>
-                      </span>
-                      {t.esig && (
-                        <span className="task-esig" title="E-signature required">
-                          {I.shieldCheck}
-                        </span>
-                      )}
-                    </div>
-                    <div className="task-title">{t.title}</div>
-                    <div className="task-foot">
-                      <span className={`task-label ${t.tone}`}>{t.label}</span>
-                      <span className="task-spacer" />
-                      {t.comments > 0 && (
-                        <span className="task-meta">
-                          {I.messageSquare} {t.comments}
-                        </span>
-                      )}
-                      <span className="task-meta">
-                        {I.clock} {t.due}
-                      </span>
-                      <span className="task-assignee" title={t.assignee}>
-                        {t.assignee}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="ctable">
-          <div
-            className="ctable-head"
-            style={{ gridTemplateColumns: '96px 1fr 120px 100px 90px 80px 60px' }}
-          >
-            <div>Task</div>
-            <div>Summary</div>
-            <div>Project · §</div>
-            <div>Label</div>
-            <div>Due</div>
-            <div>Assignee</div>
-            <div>Cmt</div>
-          </div>
-          {sourceTasks.filter(t => owner === 'all' || t.assignee === owner).map(t => (
-            <div
-              key={t.id}
-              className="ctable-row"
-              style={{ gridTemplateColumns: '96px 1fr 120px 100px 90px 80px 60px' }}
-              data-tone={t.tone}
-            >
-              <div className="mono">{t.id}</div>
-              <div className="ctable-strong">{t.title}</div>
-              <div>
-                {t.prog} · {t.sect}
-              </div>
-              <div>
-                <span className={`task-label ${t.tone}`}>{t.label}</span>
-              </div>
-              <div>{t.due}</div>
-              <div>
-                <span className="task-assignee small">{t.assignee}</span>
-              </div>
-              <div className="mono" style={{ color: 'var(--text-400)' }}>
-                {t.comments || '—'}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

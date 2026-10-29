@@ -1,0 +1,37 @@
+# Mutations, at fb562e76 with the change in the working tree: each applied to ProjectMarkets.tsx, submitHoldsReadiness.test.tsx run, the file restored.
+# Restore checked byte-for-byte (cmp against the pre-mutation copy) and git diff of both surfaces unchanged.
+
+## 1. restore-door: slice 24's header button to dispatch-readiness put back
+ × submitHoldsReadiness.test.tsx > no control on Submit opens the separate Submission Readiness canvas 290ms
+   → expected <button type="button" …(1)>…(1)</button> to be null
+ ✓ submitHoldsReadiness.test.tsx > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s 107ms
+ ✓ submitHoldsReadiness.test.tsx > a cleared gate opens that sequence’s Dispatch tab from Submit 84ms
+ ✓ submitHoldsReadiness.test.tsx > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door 62ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+## 2. wrong-sequence: detail={(m) => <MarketGateDetail m={markets.markets[0] ?? m} .../>} (every row draws the first market's readiness)
+ ✓ submitHoldsReadiness.test.tsx > no control on Submit opens the separate Submission Readiness canvas 303ms
+ × submitHoldsReadiness.test.tsx > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s 73ms
+   → Unable to find an element with the text: Required section 1.0 has no leaf in this sequence..
+ × submitHoldsReadiness.test.tsx > a cleared gate opens that sequence’s Dispatch tab from Submit 86ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ × submitHoldsReadiness.test.tsx > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door 46ms
+   → expected 'MAA · EU (EMA)Planningoriginal stageO…' not to match /Cleared|Satisfied|Clear except/
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+
+## 3. unread-as-clear: NO_VERDICT_WORDS['verdict-failed'] worded 'Cleared to dispatch', tone ok
+ ✓ submitHoldsReadiness.test.tsx > no control on Submit opens the separate Submission Readiness canvas 307ms
+ ✓ submitHoldsReadiness.test.tsx > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s 103ms
+ ✓ submitHoldsReadiness.test.tsx > a cleared gate opens that sequence’s Dispatch tab from Submit 81ms
+ × submitHoldsReadiness.test.tsx > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door 49ms
+   → expected 'MAA · EU (EMA): Cleared to dispatch' to contain 'No verdict · the readiness read failed'
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+## Restore
+restore-door restored byte-for-byte: True
+wrong-sequence restored byte-for-byte: True
+unread-as-clear restored byte-for-byte: True
+ProjectMarkets identical to pre-mutation; git diff unchanged
