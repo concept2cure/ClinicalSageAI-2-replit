@@ -116,7 +116,10 @@ describe('GET /api/artifacts-center — signature staleness', () => {
   it('scopes the read to the caller organization', async () => {
     query.mockResolvedValueOnce({ rows: [] });
     await request(appWith(42)).get('/api/artifacts-center');
-    expect(query.mock.calls[0][1]).toEqual([42]);
+    // The registry's one read (services/artifact-registry-read.ts, shared with
+    // the project Vault since 2026-10-29): organization, no program (the whole
+    // organization), and the gallery's window, all bound.
+    expect(query.mock.calls[0][1]).toEqual([42, null, 200]);
     expect(query.mock.calls[0][0]).toContain('a.organization_id = $1');
   });
 

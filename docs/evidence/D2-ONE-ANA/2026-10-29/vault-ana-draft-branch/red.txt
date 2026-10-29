@@ -1,0 +1,60 @@
+# RED at HEAD 8b3ee4b57 (no product change), 2026-10-29
+# npx vitest run <the three new suites> --reporter=verbose (ANSI stripped; failure DOM dumps omitted)
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > lists the branch in the tree, grouped by CTD module 96ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > states the branch’s status breakdown and signature and review counts 5023ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > the header names governed artifacts beside authored documents 5018ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > opens an artifact on its governance: kind, format, origin, model, author, signature, review, sources, hash 5258ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > an artifact with no recorded origin or model says so, rather than naming one 5137ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > a branch the server could not read is said as a failure, never as no artifacts 5012ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > a project with no artifacts says so plainly 5012ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > a window over a larger registry says the counts cover what is listed 5016ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > does not carry the unbacked retention subtitle 5015ms
+ × client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > tells AnA what the branch holds, and what it could not read 5018ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD sections, and nothing else 30ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > reads the signature on the current version in four states, and review of the current version 11ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > names the author through actor_name, and says nothing where none was recorded 8ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the organization reads its own 9ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD section, grouped by CTD module 34ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin 7ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses 6ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > names an origin only where the row records one 5ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > reports the status breakdown and the count, and the count joins documentCount 6ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > reads the registry bound to the organization and the program, newest first, one past the window 5ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable 5ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch 3ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch 4ms
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total 3ms
+AssertionError: the branch is in the tree: expected undefined to be truthy
+- Expected:
++ Received:
+AssertionError: expected undefined to match object { Object (total, window) }
+- Expected:
++ Received:
+AssertionError: the branch is in the tree: expected undefined to be truthy
+- Expected:
++ Received:
+AssertionError: expected undefined to deeply equal { total: 4, byStatus: { …(3) }, …(3) }
+- Expected:
++ Received:
+AssertionError: expected [ …(2) ] to deeply equal [ 7, …(2) ]
+- Expected
++ Received
+AssertionError: expected undefined to match object { total: +0, …(1) }
+- Expected:
++ Received:
+AssertionError: expected undefined to be null
+- Expected:
++ Received:
+AssertionError: expected undefined to be null
+- Expected:
++ Received:
+AssertionError: expected 'IND · 21 CFR 312  0 authored document…' to match /3 governed artifacts/
+- Expected:
++ Received:
+AssertionError: expected undefined to be truthy
+- Expected:
++ Received:
+ Test Files  3 failed (3)
+      Tests  23 failed | 2 passed (25)
