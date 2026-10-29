@@ -1,0 +1,63 @@
+RED: the 15 suites at trunk, before this change
+Trunk 316909f5 to 86610174. The three commits between change only server routes and docs.
+One file per run: $ timeout 240 npx vitest run <file>
+(trimmed: per-file counts, first failing case, distinct errors, first app frames)
+
+__tests__/conversationArtifactPanel.test.tsx: 5 failed | 3 passed (8)
+  first failure: ConversationThread artifact panel — the controls complete their chain > .docx POSTs the draft to the export route and hands the file to downloadBlob
+  distinct errors: 1, useAuth must be used within an AuthProvider
+editor/__tests__/conversationAuthoringOrigin.test.tsx: 8 failed | 1 passed (9)
+  first failure: saved Authoring arrivals wait for explicit submission > continues the current conversation and opens the exact canonical canvas after inventory verification
+  distinct errors: 1, useAuth must be used within an AuthProvider
+editor/__tests__/authoringConversationScope.test.tsx: 6 failed | 2 passed (8)
+  first failure: canonical authoring context follows the verified saved canvas > uses the newer saved canvas version on the first explicit send instead of the earlier handoff snapshot
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaContinueHosts.test.tsx: 3 failed | 2 passed (5)
+  first failure: the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaRunControlStrip.test.tsx: 5 failed | 7 passed (12)
+  first failure: the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/emptyStateBatchA.test.tsx: 3 failed | 5 passed (8)
+  first failure: ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaAnswerCaveats.test.tsx: 7 failed (7)
+  first failure: an answer carries its own caveats > says a turn timed out, instead of showing the partial text as final
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/composerAttachmentChip.test.tsx: 4 failed | 4 passed (8)
+  first failure: ConversationThread attachment chip > does not call a file "read" when no text was extracted from it
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/composerAttachWorks.test.tsx: 4 failed | 4 passed (8)
+  first failure: 'ConversationThread' composer attach > renders the paperclip as a real button, not a span
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/conversationRailTwins.test.tsx: 32 failed | 1 passed (33)
+  first failure: a draft survives a history read, and is sent once the conversation is back > typed while history loads, it is held, then sent after loading
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaInterruptedHosts.test.tsx: 19 failed (19)
+  first failure: partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaMessageWarnings.test.tsx: 2 failed (2)
+  first failure: the conversation screen > shows a turn's warnings, as a note, under the answer
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/conversationProjectMismatch.test.tsx: 5 failed (5)
+  first failure: A conversation that belongs to another project > says so, and offers one way out: a new conversation in the open project
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaRunControl.test.tsx: 12 failed (12)
+  first failure: mid-run control reaches the conversation > pauses the run
+  distinct errors: 1, useAuth must be used within an AuthProvider
+__tests__/anaSkillsInUse.test.tsx: 4 failed | 11 passed (15)
+  first failure: a conversation with skills picked > sends what was picked with the turn
+  distinct errors: 1, useAuth must be used within an AuthProvider
+
+Every file, the same error and the same first app frames:
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth client/src/services/portal/authService.tsx:1379
+ ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:124
+ ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1386
+
+Totals: 15 of 15 files fail. 119 cases fail, 40 pass, of 159. Every failing case has this error.
+No unhandled errors.
+
+Completeness pass, run the same way:
+__tests__/authoringCreationHostRecovery.test.tsx: 38 passed (38) (green, left alone)
+__tests__/trackedChangeDecisions.test.ts: 35 passed (35) (green, left alone)

@@ -1,0 +1,30 @@
+# Green: both new tests, with ProjectMarkets.tsx changed and the lead's ProjectHome.tsx:1851 project prop in place
+# npx vitest run client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (De Novo) is given no door and no guessed one
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a device project that records no pathway is given no door
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project
+ ✓ projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a drug project is offered no device door
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-pma' can be opened, and when it cannot, says so with no button
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-cer' can be opened, and when it cannot, says so with no button
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-diagnostics' can be opened, and when it cannot, says so with no button
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > reads the recorded regulatory path when the filing type names no pathway
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a project not yet read is given no door and no words
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a pathway with no feature (De Novo) is given no door and no words
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a device project that records no pathway is given no door and no words
+ ✓ projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a project the step does not treat as a device filing is given no door and no words
+ Test Files  2 passed (2)
+      Tests  26 passed (26)

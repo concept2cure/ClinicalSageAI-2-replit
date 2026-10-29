@@ -1,0 +1,7 @@
+# Mutations of the product lines the gate pins (scratchpad mutate2.py: apply, run the gate, restore byte for byte)
+RED  the row offers the 510(k) door even where the surface is locked (guard dropped): Tests  1 failed | 8 passed (9) | → expected [ …(1) ] to have a length of +0 but got 1
+RED  the row never offers the 510(k) door (back to the old lock): Tests  1 failed | 8 passed (9) | → Unable to find an element with the title: Open the 510(k) surface — the device filing workspace.
+RED  the 510(k) door opens Projects instead: Tests  1 failed | 8 passed (9) | → expected "vi.fn()" to be called with arguments: [ 'device-510k' ]
+RED  the empty state always names the filing panel: Tests  1 failed | 8 passed (9) | → expected 'SubmissionSubmission CenterPlan, buil…' not to match /from the 510\(k\) surface's filing pa…/
+RED  the empty state always says the surface is not in this release: Tests  1 failed | 8 passed (9) | → expected 'SubmissionSubmission CenterPlan, buil…' to match /from the 510\(k\) surface's filing pa…/
+RED  the launch-scope panel loses its one way back: Tests  1 failed | 8 passed (9) | → expected 'Back' to match /Back to Projects/

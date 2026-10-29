@@ -26,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const DOC = { id: 4, device_name: 'Aurora CGM', doc_kind: 'ifu', version: '3', organization_id: 7, status: 'draft', udi_di: null };
 const PROGRAM_ID = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
@@ -39,10 +40,13 @@ beforeEach(() => {
     return { ok: true, status: 200, json: async () => ({ data }) } as Response;
   });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
-const mount = (programId?: string) =>
-  render(<Labeling {...({ onAsk: () => {}, programId } as unknown as React.ComponentProps<typeof Labeling>)} />);
+/* The screen reads the shell's open project (device-features-reach-three, 2026-10-29); it has no programId prop. */
+const mount = (programId?: string) => {
+  if (programId) publishShellProject({ id: programId });
+  return render(<Labeling {...({ onAsk: () => {}, onNav: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />);
+};
 const text = () => document.body.textContent ?? '';
 
 describe('Labeling — warnings and precautions', () => {

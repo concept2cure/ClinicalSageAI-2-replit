@@ -40,7 +40,7 @@ beforeEach(() => {
     status: 200,
     text: async () => '',
     json: async () =>
-      url === '/api/q-sub'
+      url === '/api/q-sub?program_id=p-1'
         ? { data: { rows: ROWS, count: ROWS.length } }
         : { data: { id: 'qs-1', summary: 'One question.', questions: [], timeline: [] } },
   })));
@@ -55,7 +55,7 @@ const listTitles = (container: HTMLElement) =>
 
 describe('PreSubManager — no "Mine" filter without an owner to filter on', () => {
   it('does not offer "Mine", which matched two demo program codes', async () => {
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(listTitles(container)).toHaveLength(2));
     // Where it is offered, record what it claimed: the demo-code row as "mine".
     const mine = screen.queryByRole('button', { name: 'Mine' });
@@ -67,7 +67,7 @@ describe('PreSubManager — no "Mine" filter without an owner to filter on', () 
   });
 
   it('keeps the type filters, which filter on a field the list carries', async () => {
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(listTitles(container)).toHaveLength(2));
     fireEvent.click(screen.getByRole('button', { name: 'Informational' }));
     expect(listTitles(container)).toEqual(['Shelf-life question']);

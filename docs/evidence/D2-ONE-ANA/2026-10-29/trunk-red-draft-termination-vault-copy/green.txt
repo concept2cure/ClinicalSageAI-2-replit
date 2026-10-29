@@ -1,0 +1,20 @@
+# Green after this change (shared tree, HEAD 7d83530f plus the two test edits; no product file changed)
+# npx vitest run client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 790ms
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 104ms
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 78ms
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 98ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > retains the nested 422 classification through the shared generation transport 4ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > a fresh refusal creates no review body or Accept control and reports the repair action 70ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > failed regeneration preserves the prior valid candidate and edited review until explicit acceptance 54ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 3ms
+Test Files  2 passed (2)
+Tests  8 passed (8)
+
+# Same run in the isolated mutation copy (git archive of HEAD + the two edited tests), before any mutation
+Test Files  2 passed (2)
+Tests  8 passed (8)
+
+# eslint (problems per file): HEAD 0 and 0; after 0 and 0
+authoringDraftTermination.test.tsx errors 0 warnings 0
+vaultOpenInEditorCarriesDoc.test.tsx errors 0 warnings 0

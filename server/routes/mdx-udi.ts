@@ -69,6 +69,16 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  * records a submission is assembled from.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+/*
+ * The two reads below filter by `program_id` and by the caller's organization,
+ * so another tenant's rows never came back. They did not ask whether the
+ * organization owns the project: another organization's project, or a missing
+ * one, answered 200 with empty panels, which the project's UDI screen draws as
+ * "this project has none". Both now ask the one ownership answer first, as
+ * mdx-engineering.ts does (D2, 2026-10-29).
+ */
+import { programInOrganization } from '../services/c2c/program-access';
+import { isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-udi');
@@ -163,6 +173,9 @@ router.get('/udi/summary', async (req: Request, res: Response) => {
   const args: unknown[] = programId ? [orgId, programId] : [orgId];
 
   try {
+    if (programId && !(await programInOrganization(pool, programId, orgId))) {
+      return notFoundInTenant(res, 'Project');
+    }
     const udiRows = await panel<Record<string, any>>(
       'devices',
       `SELECT * FROM udi_records
@@ -301,6 +314,7 @@ router.get('/udi/summary', async (req: Request, res: Response) => {
       { scope: programId ? 'program' : 'organization' },
     );
   } catch (err) {
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'udi-summary', err);
   }
 });
@@ -322,6 +336,9 @@ router.get('/udi', async (req: Request, res: Response) => {
   args.push(limit);
 
   try {
+    if (programId && !(await programInOrganization(pool, programId, orgId))) {
+      return notFoundInTenant(res, 'Project');
+    }
     const { rows } = await pool.query(
       `SELECT * FROM udi_records
         WHERE ${filters.join(' AND ')}
@@ -331,6 +348,7 @@ router.get('/udi', async (req: Request, res: Response) => {
     );
     return ok(res, rows, { count: rows.length });
   } catch (err) {
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'list', err);
   }
 });

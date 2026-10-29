@@ -7,7 +7,12 @@
  * region×lang matrix, ISO 15223-1 symbol glossary, and MRI matrix
  * collapse into a "Situational awareness" accordion.
  *
- * Cross-program surface (UDI is per-tenant, not per-program).
+ * The open project's labels and UDI records (D2, 2026-10-29). This said
+ * "Cross-program surface (UDI is per-tenant, not per-program)" and read the
+ * organization's summary with no project, so under a project's title it showed
+ * every project's labels. The route narrows every panel by `program_id`
+ * (server/routes/mdx-udi.ts), so the screen reads the project the host
+ * resolves, and with no project reads nothing.
  *
  * ## Data honesty
  *
@@ -37,9 +42,12 @@ import { DataGate } from '../components/DataGate';
 import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
 import { useUdi, type LabelRow } from '../hooks/useUdi';
 import { readyRows } from '../lib/dataState';
+import { EmptyState } from '../../v2/dataConnect';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface UdiSurfaceProps {
+  /** The open project, from the host's `programForContext`. Null reads nothing. */
+  programId: string | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   onOpenEditor?: (docId: string) => void;
 }
@@ -91,10 +99,10 @@ function toLabelDocuments(rows: readonly LabelRow[]): KitDocument[] {
   });
 }
 
-export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
+export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
-  const live = useUdi();
+  const live = useUdi(programId);
   const issues = readyRows(live.issues);
   const frameworks = UDI_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -152,6 +160,17 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
     .slice(0, 3)
     .join(' · ');
 
+  /* No project, no read. The host does not mount this without one; this holds
+     when something else does, so no label is ever drawn without its project. */
+  if (!programId) {
+    return (
+      <section data-testid="udi-no-project">
+        <EmptyState title="Open a project to check its labels' UDI"
+          hint="Labels and UDI records belong to one project. Choose the project from Projects." />
+      </section>
+    );
+  }
+
   return (
     <>
       <div className="page-header">
@@ -166,7 +185,7 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
           <button
             className="btn ghost small"
             onClick={() =>
-              onAskAna('Summarise our UDI registration status and any labeling blockers.')
+              onAskAna("Summarise this project's UDI registration status and any labeling blockers.")
             }
             type="button"
           >

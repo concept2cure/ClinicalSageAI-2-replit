@@ -1,0 +1,73 @@
+# Mutations of client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx, each run against both new test files, then restored.
+# sha256 of ProjectMarkets.tsx before and after all four: de2db6d41d9d53d3dd202ede30b5241f32595d729c0f0f2b22b0c629d9cb5d0a
+
+# M1-drop-door
+# - doors.push({ surface: assembly.surface, label: assembly.doors.assembly,
+# + void ({ surface: assembly.surface, label: assembly.doors.assembly,
+# vitest exit 1; ProjectMarkets.tsx restored byte-for-byte: True
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-pma' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-cer' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-diagnostics' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > reads the recorded regulatory path when the filing type names no pathway
+ Test Files  2 failed (2)
+      Tests  19 failed | 7 passed (26)
+
+# M2-drop-gate
+# - if (!available(surface)) return unavailable ? <span className="sec-sub" data-testid="pj-mkt-door-unavailable">{unavailable}</span> : null;
+# + (line removed)
+# vitest exit 1; ProjectMarkets.tsx restored byte-for-byte: True
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-pma' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-cer' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-diagnostics' can be opened, and when it cannot, says so with no button
+ Test Files  2 failed (2)
+      Tests  8 failed | 18 passed (26)
+
+# M3-wrong-pathway
+# - return plan ? PATHWAY_FEATURES[plan.primary ?? ''] ?? null : null;
+# + return plan?.primary ? PATHWAY_FEATURES['510k'] ?? null : null;
+# vitest exit 1; ProjectMarkets.tsx restored byte-for-byte: True
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (De Novo) is given no door and no guessed one
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-pma' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-cer' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-diagnostics' can be opened, and when it cannot, says so with no button
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a pathway with no feature (De Novo) is given no door and no words
+ Test Files  2 failed (2)
+      Tests  14 failed | 12 passed (26)
+
+# M4-guess-pathway
+# - return plan ? PATHWAY_FEATURES[plan.primary ?? ''] ?? null : null;
+# + return plan ? PATHWAY_FEATURES[plan.primary ?? '510k'] ?? null : null;
+# vitest exit 1; ProjectMarkets.tsx restored byte-for-byte: True
+ × projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a device project that records no pathway is given no door
+ × projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a device project that records no pathway is given no door and no words
+ Test Files  2 failed (2)
+      Tests  2 failed | 24 passed (26)

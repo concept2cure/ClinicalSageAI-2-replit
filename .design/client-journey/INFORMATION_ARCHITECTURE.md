@@ -1711,6 +1711,9 @@ Today's label, and the job name slice 1 gives it. A device door's name depends o
 | Device workstream | Open clinical evaluation | Write the clinical evaluation (CER) |
 | Device workstream | Open clinical studies | Record the clinical studies behind this filing |
 | Device workstream | Open IVDR evidence | Record analytical and clinical performance (IVDR) |
+| Device workstream | No door | Prepare a Pre-Sub for FDA |
+| Device workstream | No door (the labeling package opens Author) | Write the label and IFU |
+| Device workstream | No door (the registration and UDI package opens Author) | Check each label's UDI |
 
 "Compile and download", "Add a market", "Create from template", "Assign", "Work with AnA" and "Prepare this work
 with AnA" already name their jobs and stay.

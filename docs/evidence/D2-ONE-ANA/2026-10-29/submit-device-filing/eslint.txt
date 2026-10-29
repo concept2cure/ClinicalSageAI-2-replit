@@ -1,0 +1,6 @@
+# eslint, per changed file
+## HEAD: git show HEAD:client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx | npx eslint --stdin --stdin-filename client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+exit 0, 0 problems
+## working tree: npx eslint client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx
+exit 0, 0 problems (the two test files are new: no HEAD version)
+## first draft, before featureDoors(): 1 warning, ProjectMarkets complexity 17 > 15. Moved the door choice out of the component; now 0.

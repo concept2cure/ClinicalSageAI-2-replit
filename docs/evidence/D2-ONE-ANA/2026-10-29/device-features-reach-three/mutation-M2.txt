@@ -1,0 +1,9 @@
+Mutation M2-udi-read-drops-project
+File: client/src/concept2cure/mdx/hooks/useUdi.ts
+- `/api/mdx/udi/summary?program_id=${encodeURIComponent(programId)}`
++ '/api/mdx/udi/summary'
+Test: client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx
+
+× client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > asks for the open project's UDI summary only, and shows no other project's labels 29ms
+× client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > never draws the previous project's labels under the next project 5037ms
+Tests  2 failed | 6 passed (8)
