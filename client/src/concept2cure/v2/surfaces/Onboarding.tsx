@@ -10,6 +10,9 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
+import { useAuthUser } from '@/services/portal/authService';
+import { canAdministerBilling } from '@shared/constants/permissions';
+import { getSurfaceMeta } from '../registryModel';
 import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import { useLiveData } from '../dataConnect';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
@@ -285,6 +288,17 @@ export function Onboarding(props: SurfaceViewProps) {
   return <OnboardingWizard key={String(getOrgId())} {...props} />;
 }
 
+/* Choosing the subscription is billing administration: POST /api/billing/checkout
+   and /dtc-checkout refuse anyone the billing guard does not admit (fold billing
+   into Licensing, Part 1b). Activation is already an administrator's act (the
+   discovery save it starts with admits admin and owner, and a member is told so
+   above the steps), so this is the same rule read where the checkout is sent: a
+   session without the permission sends none, and a refusal (a session older than
+   its permissions) is reported as the role answer, not "did not return a
+   checkout link". */
+const CHECKOUT_NOT_YOURS =
+  'Choosing the subscription is for billing administrators: your organization\u2019s admins and owners. No plan was provisioned.';
+
 const STEPS = [
   'Organization', 'Client discovery', 'Project discovery', 'Pricing model',
   'Choose plan', 'Invite personnel', 'Modules', 'Security & setup',
@@ -293,6 +307,7 @@ const STEPS = [
 
 function OnboardingWizard({ onNav }: SurfaceViewProps) {
   const discovery = useOnboardingDiscovery();
+  const billingAdmin = canAdministerBilling(useAuthUser());
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [step, setStep] = useState(0);
@@ -607,6 +622,9 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     if ('unavailable' in checkoutReq) {
       checkout = 'unavailable';
       checkoutNote = checkoutReq.unavailable;
+    } else if (!billingAdmin) {
+      checkout = 'unavailable';
+      checkoutNote = CHECKOUT_NOT_YOURS;
     } else {
       try {
         const res = await fetch(checkoutReq.path, {
@@ -623,7 +641,10 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
         // that URL would bounce the user to a "checkout=success" screen for a
         // checkout that never happened, so the wizard reports the plan as live
         // and stays put — the outcome panel already offers the next step.
-        if (data && data.sessionId === 'free') {
+        if (res.status === 403) {
+          checkout = 'unavailable';
+          checkoutNote = CHECKOUT_NOT_YOURS;
+        } else if (data && data.sessionId === 'free') {
           checkout = 'provisioned';
           checkoutNote = null;
         } else if (typeof url === 'string' && url) {
@@ -632,12 +653,12 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
         } else {
           checkout = 'failed';
           checkoutNote =
-            'The billing service did not return a checkout link — no plan was provisioned. Retry from Usage & Billing.';
+            `The billing service did not return a checkout link — no plan was provisioned. Retry from ${getSurfaceMeta('licensing').label}.`;
         }
       } catch {
         checkout = 'failed';
         checkoutNote =
-          'Could not reach the billing service — no plan was provisioned. Retry from Usage & Billing.';
+          `Could not reach the billing service — no plan was provisioned. Retry from ${getSurfaceMeta('licensing').label}.`;
       }
     }
 

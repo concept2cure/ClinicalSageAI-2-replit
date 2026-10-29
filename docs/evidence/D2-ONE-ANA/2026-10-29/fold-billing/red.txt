@@ -137,3 +137,70 @@ TestingLibraryElementError: Unable to find an element with the text: /Invoices a
 ## A surviving mutation as red (see mutations.txt): C3 survived the first run because the 'no billingSetUp verdict' body
 ## also lacked nextCursor, so the guard refused it for another reason. The case was tightened (only billingSetUp missing)
 ## and a 'no cursor field' case added; C3 and C12 are both killed by them.
+
+# ═══ Part 1b — RED, against trunk 70c9e75ad before the change ═══
+## server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts — 24/35 failed: every refused role got 200 and reached the Stripe service
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses member before anything is created 25ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses viewer before anything is created 4ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses manager before anything is created 3ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses approver before anything is created 3ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses reviewer before anything is created 4ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses user before anything is created 3ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > refuses business_admin before anything is created 3ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > admits admin, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > admits owner, for the organisation in the token only 4ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > agrees with the session permission the screen reads, for every role 7ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/checkout' > requires the authenticated principal 3ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses member before anything is created 3ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses viewer before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses manager before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses approver before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses reviewer before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses user before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > refuses business_admin before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > admits admin, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > admits owner, for the organisation in the token only 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > agrees with the session permission the screen reads, for every role 5ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/dtc-checkout' > requires the authenticated principal 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses member before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses viewer before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses manager before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses approver before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses reviewer before anything is created 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses user before anything is created 8ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > refuses business_admin before anything is created 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > admits admin, for the organisation in the token only 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > admits owner, for the organisation in the token only 2ms
+ × server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > agrees with the session permission the screen reads, for every role 6ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > '/api/billing/portal' > requires the authenticated principal 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > what stays open > a member still reads which subscription the organisation is on 2ms
+ ✓ server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts > what stays open > the public price list needs no sign-in 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 403 // Object.is equality
+AssertionError: manager: expected true to be false // Object.is equality
+      Tests  24 failed | 11 passed (35)
+
+## licensingBillingControls.test.tsx + onboardingActivatesPlan.test.tsx — 6/6 new cases failed (the 5 existing onboarding cases pass before and after)
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 507ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 317ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 288ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 299ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 271ms
+ × client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a member is told on the plan step, and activation sends no checkout 5297ms
+ × client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a 403 from checkout is reported as the role answer, not as a missing link 5298ms
+ × client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — choosing the subscription is for billing administrators > a failed checkout points to the screen that has checkout now, not "Usage & Billing" 5257ms
+ × client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a member > is offered no checkout and no billing portal, and is told who chooses the subscription 210ms
+ × client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a member > AnA is told the subscription acts are not this viewer’s 5029ms
+ × client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx > a billing administrator > is offered Manage billing and checkout, and each reaches its route 69ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <button class="sp-primary">…(1)</button> to be null
+AssertionError: expected undefined to be truthy
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+AssertionError: expected undefined to be 'offered' // Object.is equality
+AssertionError: expected 'Onboarding  your organizationSet up y…' to match /Choosing the subscription is for bill…/
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+AssertionError: expected 'Onboarding  your organizationSet up y…' to match /Choosing the subscription is for bill…/
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+AssertionError: expected 'Onboarding  your organizationSet up y…' to match /no plan was provisioned\. Retry from …/
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+      Tests  6 failed | 5 passed (11)

@@ -32,3 +32,18 @@ C3 the guard accepts a body without the billingSetUp verdict: KILLED (Tests  1 f
 C11 the invoices sit above the plan status (moved, not duplicated): KILLED (Tests  1 failed | 16 passed (17)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 89bbdfb80ccf6922e6eeba297625f2ee]
 C12 the guard accepts a body without the cursor field: KILLED (Tests  1 failed | 16 passed (17)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
 3/3 killed
+
+# ═══ Part 1b — MUTATIONS: 12/12 killed (tools/mutate-1b.py.txt) ═══
+B1 /checkout loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B2 /dtc-checkout loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B3 /portal loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B4 Manage billing is offered to every member: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B5 a member is offered checkout on the plan cards: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B6 a member loses Ask AnA about Enterprise: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B7 AnA is told a member may buy: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B8 AnA is offered checkout for a member: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B9 a member is not told who chooses the subscription: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B10 onboarding sends checkout without the permission: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+B11 onboarding reports a 403 as a missing link: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+B12 onboarding points to the retired Usage & Billing: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+12/12 killed
