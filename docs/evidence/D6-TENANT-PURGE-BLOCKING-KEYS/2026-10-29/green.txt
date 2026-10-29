@@ -23,3 +23,485 @@ has_function_privilege('app_service', 'public.purge_tenant_vault_seals(integer)'
 ### tests/db/vault-data-room-seal.dbtest.ts (needs a database named platform_ci_vault_fixture_*: a copy of the same database)
  Test Files  1 passed (1)
       Tests  9 passed (9)
+
+## §2 Part 2, the finished tree (71a10fe2b + this change). 2026-10-29T12:19:27Z
+### ci:purge-coverage on install-fresh + deploy-migrate
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+   tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): 15
+     account_canon_resolution_log: Log of AnA's canon resolutions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     account_events: Append-only account event ledger (20260318_ga_immutability_hardening.sql). Blocks: project_id → projects, canon_item_id → account_canon_items, skill_bundle_id → account_skill_bundles (NO ACTION). A tenant holding one is not purged: 23503 at account_canon_items, rolled back. Retention awaits the founder's decision.
+     ana_outcome_log: Log of AnA outcomes. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     bundle_execution_receipts: Receipts of skill-bundle executions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     cer_approvals: CER v1 approval records (who approved what, when). Blocks: project_id → cer_projects, document_id → project_documents (NO ACTION). A tenant holding one is not purged: 23503 at project_documents, rolled back. Retention awaits the founder's decision.
+     data_lineage_records: Data lineage records, update-refused (trg_prevent_lineage_update). Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     document_audit_trail: The legacy documents' audit trail (a registered domain history, server/services/audit/domain-history-link.ts). Blocks: document_id → documents, version_id → document_versions (NO ACTION). A tenant holding one is not purged: 23503 at document_versions, rolled back. Retention awaits the founder's decision.
+     electronic_signatures: Part 11 electronic signatures (trg_electronic_signatures_immutable). Blocks: document_id → documents, version_id → document_versions (NO ACTION). A tenant holding one is not purged: 23503 at document_versions, rolled back. Retention awaits the founder's decision.
+     evidence_chain_records: Evidence chain records, update-refused (trg_prevent_evidence_chain_update). Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     gate_approvals: Stage-gate approvals carrying a signature hash and meaning. Blocks: gate_id → stage_gates, submission_id → regulatory_submissions (NO ACTION). A tenant holding one is not purged: 23503 at stage_gates, rolled back. Retention awaits the founder's decision.
+     governance_boundary_transitions: Governance boundary transitions of artifacts. Blocks: project_id → projects, artifact_id → concept2cure_artifacts (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     immutable_report_records: Sealed report records. Blocks: project_id → projects, client_workspace_id → client_workspaces (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+     reg_questions: Legacy agency questions, read-only since 2026-10-19 (reg_questions_read_only refuses INSERT, UPDATE, DELETE and TRUNCATE from every role, migrations/20261019b_reg_questions_read_only.sql). Blocks: correspondence_id → agency_correspondence, attachment_id → reg_attachments (NO ACTION). A tenant holding one is not purged: 23503 at reg_attachments, rolled back. Whether they are a retained regulatory record awaits the founder's decision; the migration follows from it.
+     review_routes: A signed review workflow (20261023_review_routes.sql); retention undecided. Nothing the purge deletes is named by it, and nothing reaches it, so it is residue by name. Its tasks are unified_tasks rows that refuse DELETE (unified_tasks_route_rows_guard): a tenant holding one is not purged, stopped at unified_tasks (ROUTE_TASK_OWNED_BY_ROUTE) and rolled back.
+     rule_execution_log: Log of rule executions. Blocks: project_id → projects (NO ACTION). A tenant holding one is not purged: 23503 at projects, rolled back. Retention awaits the founder's decision.
+   keys from a table the purge does not erase (a tenant holding such a row is not purged): 27
+     public.account_canon_resolution_log (project_id) → public.projects, NO ACTION [account_canon_resolution_log_project_id_projects_id_fk]
+     public.account_events (canon_item_id) → public.account_canon_items, NO ACTION [account_events_canon_item_id_account_canon_items_id_fk]
+     public.account_events (project_id) → public.projects, NO ACTION [account_events_project_id_projects_id_fk]
+     public.account_events (skill_bundle_id) → public.account_skill_bundles, NO ACTION [account_events_skill_bundle_id_account_skill_bundles_id_fk]
+     public.ana_outcome_log (project_id) → public.projects, NO ACTION [ana_outcome_log_project_id_projects_id_fk]
+     public.bundle_execution_receipts (project_id) → public.projects, NO ACTION [bundle_execution_receipts_project_id_fkey]
+     public.cer_approvals (document_id) → public.project_documents, NO ACTION [cer_approvals_document_id_project_documents_id_fk]
+     public.cer_approvals (project_id) → public.cer_projects, NO ACTION [cer_approvals_project_id_cer_projects_id_fk]
+     public.data_lineage_records (project_id) → public.projects, NO ACTION [data_lineage_records_project_id_projects_id_fk]
+     public.document_audit_trail (document_id) → public.documents, NO ACTION [document_audit_trail_document_id_documents_id_fk]
+     public.document_audit_trail (version_id) → public.document_versions, NO ACTION [document_audit_trail_version_id_document_versions_id_fk]
+     public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_documents_id_fk]
+     public.electronic_signatures (version_id) → public.document_versions, NO ACTION [electronic_signatures_version_id_document_versions_id_fk]
+     public.evidence_chain_records (project_id) → public.projects, NO ACTION [evidence_chain_records_project_id_projects_id_fk]
+     public.gate_approvals (gate_id) → public.stage_gates, NO ACTION [gate_approvals_gate_id_stage_gates_gate_id_fk]
+     public.gate_approvals (submission_id) → public.regulatory_submissions, NO ACTION [gate_approvals_submission_id_regulatory_submissions_submission_]
+     public.governance_boundary_transitions (artifact_id) → public.concept2cure_artifacts, NO ACTION [governance_boundary_transitions_artifact_id_fkey]
+     public.governance_boundary_transitions (project_id) → public.projects, NO ACTION [governance_boundary_transitions_project_id_fkey]
+     public.immutable_report_records (client_workspace_id) → public.client_workspaces, NO ACTION [immutable_report_records_client_workspace_id_client_workspaces_]
+     public.immutable_report_records (project_id) → public.projects, NO ACTION [immutable_report_records_project_id_projects_id_fk]
+     public.ivdr_cdx_status_history (workflow_id) → public.ivdr_cdx_workflows, NO ACTION [ivdr_cdx_status_history_workflow_id_fkey]
+     public.ivdr_evidence_result_history (evidence_id) → public.ivdr_clinical_evidence, NO ACTION [ivdr_evidence_result_history_evidence_id_fkey]
+     public.ivdr_validation_parameter_history (validation_id) → public.ivdr_analytical_validations, NO ACTION [ivdr_validation_parameter_history_validation_id_fkey]
+     public.reg_questions (attachment_id) → public.reg_attachments, NO ACTION [reg_questions_attachment_id_reg_attachments_id_fk]
+     public.reg_questions (correspondence_id) → public.agency_correspondence, NO ACTION [reg_questions_correspondence_id_agency_correspondence_id_fk]
+     public.rule_execution_log (project_id) → public.projects, NO ACTION [rule_execution_log_project_id_projects_id_fk]
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+✅ purge-coverage: no foreign key stops the purge part-way (27 from tables it does not erase, each named).
+✅ purge-coverage: 464 org-keyed tables outside the purge reach (baseline 469, new 0, 5 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     csr_extraction_log
+     document_audit_log
+     qmp_audit_trail
+exit 0
+
+### ci:purge-coverage:selftest
+  ✓ FAILS on an immutable receipt that has no explicit retained-record policy
+  ✓ quiet — explicitly retained immutable receipts are reported separately without expanding the baseline
+  ✓ FAILS on unrelated content even beside explicitly retained evidence
+  ✓ FAILS when a retained record has no meaningful reason
+  ✓ FAILS when retained evidence is explicitly listed for erasure
+  ✓ FAILS when retained evidence has a cascade path from a purged table
+  ✓ FAILS closed when the explicit retention policy cannot be parsed
+  ✓ FAILS on an unclassified receipt despite a commented-out fake retention declaration
+  ✓ FAILS on a new org-keyed table nothing reaches — and a commented-out entry does not count as listed
+  ✓ FAILS on a foreign key to a purged table that does not cascade (SET NULL, NO ACTION)
+  ✓ FAILS on an unlisted parent of a purged table — a purged child does not reach its parent
+  ✓ FAILS on a table that cascades only from organizations — a purge UPDATEs that row, never deletes it
+  ✓ FAILS on a cascade from a parent the purge never reaches (cascade is followed only from reached tables)
+  ✓ FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)
+  ✓ quiet — the same key, its table listed BEFORE the table it names
+  ✓ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✓ quiet — a referrer the SAME statement removes (it cascades from the deleted table as well)
+  ✓ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+  ✓ quiet — ON DELETE SET NULL on a nullable column
+  ✓ FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it
+  ✓ quiet — that table with its PURGE_PARENT_SCOPED predicate
+  ✓ FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it
+  ✓ FAILS on a referrer in another schema
+  ✓ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✓ FAILS on that referrer once it is not named (its residue baselined, so only the order fails)
+  ✓ quiet — an unreached org-keyed table named in PURGE_REFERRERS_NOT_ERASED is not NEW residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when PURGE_REFERRERS_NOT_ERASED names a table the list erases
+  ✓ FAILS when a PURGE_REFERRERS_NOT_ERASED table is reached by a cascade from a purged table
+  ✓ FAILS closed when a PURGE_REFERRERS_NOT_ERASED entry has no meaningful reason
+  ✓ FAILS when one table is named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED
+  ✓ quiet — entries spread from a sibling module are read in place, before the table they name
+  ✓ FAILS on the same spread placed AFTER the table it names — its position is the order
+  ✓ FAILS closed on a spread no purge source declares
+  ✓ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+  ✓ FAILS closed when PURGE_REFERRERS_NOT_ERASED is declared in two service files
+  ✓ quiet — listed, cascade-reached in one and two hops, or baselined; view / non-org / vault tables ignored
+  ✓ quiet — entries after a `/*` inside a // note are still read as listed
+  ✓ FAILS when the entry after that note is only inside a real block comment
+  ✓ quiet — a residue table already in the baseline stays suppressed
+  ✓ reports a baselined table the purge now reaches, and asks for the gain to be locked in
+  ✓ --write-baseline KEEPS a baselined table this database cannot see, drops only an earned one
+  ✓ FAILS closed on a missing baseline — every residue table counts as NEW
+  ✓ FAILS closed when DATABASE_URL is unset
+  ✓ FAILS closed on a placeholder DATABASE_URL
+  ✓ FAILS closed, readably, when the database cannot be reached
+  ✓ FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it
+  ✓ FAILS closed on an empty database rather than measuring it
+  ✓ FAILS closed when the offboarding service is missing
+  ✓ FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read
+  ✓ FAILS closed on an entry it cannot interpret instead of dropping it
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+
+[ci:purge-coverage:selftest] 53 passed — the gate fails on what it exists to catch.
+
+### real-database suites (vitest.db.config.ts, RLS_ENFORCE=on), fresh copy of the database
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] 178 tables seeded for each of A and B (396 rows with their parents); 18 held tables for C
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] the purge of a tenant holding one row of each:
+  account_canon_resolution_log: 23503 update or delete on table "projects" violates foreign key constraint "account_canon_resolution_log_project_id_projects_id_fk" on table "account_canon_resolution_log"
+  account_events: 23503 update or delete on table "account_canon_items" violates foreign key constraint "account_events_canon_item_id_account_canon_items_id_fk" on table "account_events"
+  ana_outcome_log: 23503 update or delete on table "projects" violates foreign key constraint "ana_outcome_log_project_id_projects_id_fk" on table "ana_outcome_log"
+  bundle_execution_receipts: 23503 update or delete on table "projects" violates foreign key constraint "bundle_execution_receipts_project_id_fkey" on table "bundle_execution_receipts"
+  cer_approvals: 23503 update or delete on table "project_documents" violates foreign key constraint "cer_approvals_document_id_project_documents_id_fk" on table "cer_approvals"
+  data_lineage_records: 23503 update or delete on table "projects" violates foreign key constraint "data_lineage_records_project_id_projects_id_fk" on table "data_lineage_records"
+  document_audit_trail: 23503 update or delete on table "document_versions" violates foreign key constraint "document_audit_trail_version_id_document_versions_id_fk" on table "document_audit_trail"
+  electronic_signatures: 23503 update or delete on table "document_versions" violates foreign key constraint "electronic_signatures_version_id_document_versions_id_fk" on table "electronic_signatures"
+  evidence_chain_records: 23503 update or delete on table "projects" violates foreign key constraint "evidence_chain_records_project_id_projects_id_fk" on table "evidence_chain_records"
+  gate_approvals: 23503 update or delete on table "stage_gates" violates foreign key constraint "gate_approvals_gate_id_stage_gates_gate_id_fk" on table "gate_approvals"
+  governance_boundary_transitions: 23503 update or delete on table "projects" violates foreign key constraint "governance_boundary_transitions_project_id_fkey" on table "governance_boundary_transitions"
+  immutable_report_records: 23503 update or delete on table "projects" violates foreign key constraint "immutable_report_records_project_id_projects_id_fk" on table "immutable_report_records"
+  ivdr_cdx_status_history: 23503 update or delete on table "ivdr_cdx_workflows" violates foreign key constraint "ivdr_cdx_status_history_workflow_id_fkey" on table "ivdr_cdx_status_history"
+  ivdr_evidence_result_history: 23503 update or delete on table "ivdr_clinical_evidence" violates foreign key constraint "ivdr_evidence_result_history_evidence_id_fkey" on table "ivdr_evidence_result_history"
+  ivdr_validation_parameter_history: 23503 update or delete on table "ivdr_analytical_validations" violates foreign key constraint "ivdr_validation_parameter_history_validation_id_fkey" on table "ivdr_validation_parameter_history"
+  reg_questions: 23503 update or delete on table "reg_attachments" violates foreign key constraint "reg_questions_attachment_id_reg_attachments_id_fk" on table "reg_questions"
+  rule_execution_log: 23503 update or delete on table "projects" violates foreign key constraint "rule_execution_log_project_id_projects_id_fk" on table "rule_execution_log"
+  submission_orchestrator_inputs: REGULATED_CONTENT_RETENTION_REVIEW_REQUIRED Controlled QMS versions or frozen submission inputs require governed retention review before physical erasure. This organization remains pending deletion and exportable. Nothing was purged.
+  unified_tasks on a review route: P0001 ROUTE_TASK_OWNED_BY_ROUTE: task pbk_24409_mvtige6o-mvtiggewnb belongs to a review route and cannot be deleted.
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS)
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses an approval with no password, and writes nothing
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a meaning an approval cannot carry
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a second approval of the same text
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses the package while one response is unsigned, naming it
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > records a commitment made in a response, naming the project, letter and question
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment under its project, with the letter and question it was made in
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation-wide register does not list a project's commitment (project admission applies)
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it, through either door
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an unsigned PMR fulfilment that names nothing is refused, and nothing changes
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > uses the constrained runtime role, configured transport, and append-only ceilings
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > erases only exported observational metadata through its door with one retained same-transaction audit
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > preserves a genuine signed QMS version, signature, receipts and audit history before any erase call
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > preserves frozen clinical/submission inputs before observational receipt erasure
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > holds observational receipts under an actual active legal hold
+ ✓ tests/db/tenant-source-read-receipt-retention.dbtest.ts > observational receipts cannot bypass regulated tenant retention > rolls back actual receipt-door erasure when mandatory audit persistence fails
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the record a fulfilment is made on > the database signs exactly the types the code signs (SIGNED_FULFILMENT_TYPES), no more and no fewer
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > the recorded fulfilment cannot be changed, cleared, or retyped by the runtime role
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a recorded fulfilment is not removed from the register by an UPDATE (deleted_at)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a recorded fulfilment is fixed > a removal is written once: deleted_at, once set, is not cleared
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR with evidence and no signature fails at COMMIT
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a fulfilled PMR that names nothing fails at COMMIT
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds it, whatever the route > a move into fulfilled must say who recorded it
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > control: a forged signature correct in every respect the guard reads is accepted, so each refusal below is for its own clause
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed by another user than the one recorded (signer) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed over another sequence than the one stored (manifest) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature signed over another date (manifest) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature bound to the ledger hash, not the content (basis) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature meaning review, which does not attest (meaning) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature revoked (withdrawn) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature voided (withdrawn) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature superseded (withdrawn) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature marked invalid (withdrawn) does not count (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the signature the COMMIT requires: each clause refuses for itself > a signature committed by an earlier transaction does not count: the fulfilment and its signature commit together (M5)
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > names only a version of this organisation, at its own sha256
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > names only a sequence the agency received
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > evidence is attached only in the update that records the fulfilment, never to a legacy row afterwards
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > an open PMR cannot be retyped out of its signature: not in the update that fulfils it, nor before it
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > the database holds what is named, and the type, whatever the route > a fulfilled meeting commitment cannot be retyped into a PMR
+ ✓ tests/db/commitment-fulfilment-database.dbtest.ts > a tenant whose commitments name evidence can still be erased > purge removes the commitments before the Vault versions they name, with no 23503; the signature stays
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > probe (a) as found is refused, and no access review is recorded
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a period that ended more than three months ago is refused, naming the date it was due
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > probe (b) as found is refused, and the integrity attestation still says none
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > an audit-trail review of the recent quarter that names no report run is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce whose new role is in effect is accepted
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove the product recorded (member_removed) is accepted
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove SCIM provisioning recorded (scim.user.deactivated) is accepted
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of a member whose account is deactivated is accepted
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period starting the day after it is accepted, signed, and current until three months after it ends
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft that no longer meets the draft rules is refused at signing, and nothing is signed
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-70: the review records are retained at offboarding, and the tenant export returns them > the tenant export carries the organisation's review records, signed ones included
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > capa_records: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_submissions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_sub_questions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all against every role, deliberately and visibly
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07)
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > reads a real schema, not an empty one
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > every text-like secret-shaped column is withheld or recorded as not a secret
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > every column either list names exists in an exported table
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > no column is on both lists
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist
+ Test Files  12 passed (12)
+      Tests  151 passed (151)
+
+### the Vault-fixture suites (they need a database named platform_ci_vault_fixture_*: a copy of the same database)
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+
+### unit and PGlite suites
+ Test Files  29 passed (29)
+      Tests  315 passed (315)
+
+## §3 One fresh tenant per table, holding one row of it (and the parents it needs), purged the way the route runs it, the finished list
+account_canon_items	OK  purged
+account_canon_resolution_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "account_canon_resolution_log_project_id_projects_id_fk" on table "account_canon_resolution_log"
+account_events	ERR 23503 update or delete on table "account_canon_items" violates foreign key constraint "account_events_canon_item_id_account_canon_items_id_fk" on table "account_events"
+account_skill_bundles	OK  purged
+account_template_registry	OK  purged
+account_term_dictionary	OK  purged
+agency_communication_questions	OK  purged
+agency_communications	OK  purged
+agency_correspondence	OK  purged
+ana_client_objectives	OK  purged
+ana_outcome_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "ana_outcome_log_project_id_projects_id_fk" on table "ana_outcome_log"
+ana_project_capabilities	OK  purged
+ana_relational_profiles	OK  purged
+ana_run_events	OK  purged
+bundle_execution_receipts	ERR 23503 update or delete on table "projects" violates foreign key constraint "bundle_execution_receipts_project_id_fkey" on table "bundle_execution_receipts"
+c2c_communication_timeline_events	OK  purged
+c2c_correspondence	OK  purged
+c2c_correspondence_issues	OK  purged
+c2c_documents	OK  purged
+c2c_response_packages	OK  purged
+c2c_secure_attachments	OK  purged
+c2c_submissions	OK  purged
+cer_approvals	ERR 23503 update or delete on table "project_documents" violates foreign key constraint "cer_approvals_document_id_project_documents_id_fk" on table "cer_approvals"
+cer_clinical_evidence	OK  purged
+cer_compliance_checks	OK  purged
+cer_documents	OK  purged
+cer_essential_requirements	OK  purged
+cer_exports	OK  purged
+cer_faers_data	OK  purged
+cer_literature	OK  purged
+cer_projects	OK  purged
+cer_reports	OK  purged
+cer_sections	OK  purged
+cer_version_history	OK  purged
+cer_workflows	OK  purged
+client_access	OK  purged
+client_ingested_documents	OK  purged
+client_intelligence_profiles	OK  purged
+client_memory_entries	OK  purged
+client_security_settings	OK  purged
+client_user_permissions	OK  purged
+client_workspace_settings	OK  purged
+commitment_milestones	OK  purged
+communication_channels	OK  purged
+communication_messages	OK  purged
+compliance_calendar	OK  purged
+concept2cure_artifacts	OK  purged
+concept2cure_provenance_events	OK  purged
+cross_module_task_links	OK  purged
+csr_adverse_events	OK  purged
+csr_biomarkers	OK  purged
+csr_details	OK  purged
+csr_dose_response	OK  purged
+csr_endpoint_results	OK  purged
+csr_knowledge_edges	OK  purged
+csr_pharmacokinetics	OK  purged
+csr_regulatory_intelligence	OK  purged
+csr_reports	OK  purged
+csr_safety_summaries	OK  purged
+csr_statistical_analyses	OK  purged
+csr_studies	OK  purged
+csr_tables_and_figures	OK  purged
+csr_training_data	OK  purged
+ctd_cross_references	OK  purged
+ctd_onboarding_projects	OK  purged
+ctd_programs	OK  purged
+ctq_factors	OK  purged
+data_lineage_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "data_lineage_records_project_id_projects_id_fk" on table "data_lineage_records"
+document_audit_trail	ERR 23503 update or delete on table "document_versions" violates foreign key constraint "document_audit_trail_version_id_document_versions_id_fk" on table "document_audit_trail"
+document_comments	OK  purged
+document_locks	OK  purged
+document_sections	OK  purged
+document_sessions	OK  purged
+document_versions	OK  purged
+documents	OK  purged
+effort_lines	OK  purged
+electronic_signatures	ERR 23503 update or delete on table "document_versions" violates foreign key constraint "electronic_signatures_version_id_document_versions_id_fk" on table "electronic_signatures"
+evidence_chain_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "evidence_chain_records_project_id_projects_id_fk" on table "evidence_chain_records"
+fda_510k_documents	OK  purged
+fda_510k_projects	OK  purged
+fda_510k_stage_progress	OK  purged
+fda_510k_submission_packages	OK  purged
+fda_communications	OK  purged
+gate_approvals	ERR 23503 update or delete on table "stage_gates" violates foreign key constraint "gate_approvals_gate_id_stage_gates_gate_id_fk" on table "gate_approvals"
+governance_boundary_transitions	ERR 23503 update or delete on table "projects" violates foreign key constraint "governance_boundary_transitions_project_id_fkey" on table "governance_boundary_transitions"
+grant_awards	OK  purged
+grant_budget_lines	OK  purged
+grant_closeout_records	OK  purged
+grant_cost_share_contributions	OK  purged
+grant_expenditures	OK  purged
+grant_invoices	OK  purged
+grant_milestones	OK  purged
+grant_nce_records	OK  purged
+grant_proposals	OK  purged
+grant_subawards	OK  purged
+immutable_report_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "immutable_report_records_project_id_projects_id_fk" on table "immutable_report_records"
+ind_package_plan_documents	OK  purged
+ind_package_plan_modalities	OK  purged
+ind_package_plan_regions	OK  purged
+ind_package_plan_requirements	OK  purged
+ind_package_plan_timelines	OK  purged
+ind_package_plans	OK  purged
+ind_projects	OK  purged
+ind_submissions	OK  purged
+ivdr_analytical_validations	OK  purged
+ivdr_cdx_status_history	ERR 23503 update or delete on table "ivdr_cdx_workflows" violates foreign key constraint "ivdr_cdx_status_history_workflow_id_fkey" on table "ivdr_cdx_status_history"
+ivdr_cdx_workflows	OK  purged
+ivdr_clinical_evidence	OK  purged
+ivdr_evidence_result_history	ERR 23503 update or delete on table "ivdr_clinical_evidence" violates foreign key constraint "ivdr_evidence_result_history_evidence_id_fkey" on table "ivdr_evidence_result_history"
+ivdr_validation_parameter_history	ERR 23503 update or delete on table "ivdr_analytical_validations" violates foreign key constraint "ivdr_validation_parameter_history_validation_id_fkey" on table "ivdr_validation_parameter_history"
+labeling_documents	OK  purged
+labeling_symbols	OK  purged
+labeling_translations	OK  purged
+link_edges	OK  purged
+mdx_notification_receipts	OK  purged
+obligation_updates	OK  purged
+patches	OK  purged
+post_approval_commitments	OK  purged
+project_activities	OK  purged
+project_documents	OK  purged
+project_ingested_documents	OK  purged
+project_intelligence_profiles	OK  purged
+project_memory_entries	OK  purged
+project_milestones	OK  purged
+project_modules	OK  purged
+project_predictions	OK  purged
+project_rules	OK  purged
+project_schedule_goals	OK  purged
+project_schedule_of_events	OK  purged
+project_schedule_revisions	OK  purged
+project_tasks	OK  purged
+project_workflow_stages	OK  purged
+projects	OK  purged
+protocols	OK  purged
+qmp_section_gating	OK  purged
+qmp_traceability_matrix	OK  purged
+quality_management_plans	OK  purged
+reg_attachments	OK  purged
+reg_messages	OK  purged
+reg_questions	SEED-FAIL reg_questions is read-only since 2026-10-19 (INSERT refused): agency questions are recorded on the letter they came in, in Communication, where each response is
+regulatory_calendar	OK  purged
+regulatory_commitments	OK  purged
+regulatory_obligations	OK  purged
+regulatory_submissions	OK  purged
+regulatory_tasks	OK  purged
+report_details	OK  purged
+reports	OK  purged
+risk_detections	OK  purged
+rule_execution_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "rule_execution_log_project_id_projects_id_fk" on table "rule_execution_log"
+section_graph_nodes	OK  purged
+section_leaves	OK  purged
+section_links	OK  purged
+section_patches	OK  purged
+section_propagations	OK  purged
+sections	OK  purged
+sentinel_findings	OK  purged
+staff_assignments	OK  purged
+stage_gates	OK  purged
+strategic_reports	OK  purged
+submission_orchestrator_inputs	ERR REGULATED_CONTENT_RETENTION_REVIEW_REQUIRED Controlled QMS versions or frozen submission inputs require governed retention review before physical erasure. This organization remains pending deletion and exportable. Nothing was purged.
+submission_twin_assessments	OK  purged
+submission_twin_challenges	OK  purged
+submission_twin_change_impacts	OK  purged
+submission_twin_claims	OK  purged
+submission_twin_drift_alerts	OK  purged
+submission_twin_evidence_links	OK  purged
+supply_chain_batches	OK  purged
+supply_chain_coas	OK  purged
+supply_chain_materials	OK  purged
+supply_chain_shipments	OK  purged
+supply_chain_suppliers	OK  purged
+supply_chain_temperature_readings	OK  purged
+sync_status	OK  purged
+task_dependencies	OK  purged
+template_usage	OK  purged
+unified_tasks	OK  purged
+vault_data_room_seals	OK  purged
+workflow_progress	OK  purged

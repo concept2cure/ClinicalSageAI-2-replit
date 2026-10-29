@@ -45,7 +45,8 @@ import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
 import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-full-export.service';
 import { readLockedCompanyDocumentSettings, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
   type CompanyDocumentsExportDescriptor } from '../tenant-export/company-document-envelope';
-import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
+import { PURGE_PARENT_SCOPED } from './purge-parent-scope';
+import { PURGE_REFERRER_TABLES, PURGE_REFERRERS_NOT_ERASED } from './purge-referrers';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
 import { reserveSourceReadReceiptPurge } from './tenant-source-read-receipt-purge';
@@ -379,27 +380,17 @@ async function assertPurgePermitted(
 
 /**
  * Tenant-owned tables that are NOT purged by the uniform `organization_id = $1`,
- * with the predicate that scopes them to a tenant instead.
+ * with the predicate that scopes them to a tenant instead: ./purge-parent-scope,
+ * the one map the tenant export reads too.
  *
  * `vault.document_chunks` is keyed only by document_id — it inherits its tenancy
  * from the document it belongs to. Purging it with the uniform predicate raised
  * 42703 (undefined_column), which purgeChildTable treats as "not in this
  * deployment's schema" and skips silently, so a purge left every chunk of every
- * deleted document in place.
- *
- * Frozen and module-local for the same reason the table list is: a purge must
- * never take a predicate derived from request input.
+ * deleted document in place. The legacy children named there since 2026-10-29
+ * had the same gap, and their keys stopped the purge at the parent.
  */
-export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
-  'vault.documents': VAULT_DOCUMENT_TENANCY,
-  'vault.document_chunks':
-    // tenant-isolation-safe: the inner SELECT is filtered by
-    // VAULT_DOCUMENT_TENANCY (./vault-tenancy) — `organization_id = $1 OR program_id IN
-    // (… WHERE organization_id = $1)`. The org predicate IS in the statement;
-    // it arrives through the interpolated constant, which a same-statement
-    // text match cannot follow.
-    `document_id IN (SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY})`,
-});
+export { PURGE_PARENT_SCOPED };
 
 /**
  * Empty one tenant-owned table and return how many rows it deleted, or null
@@ -1086,11 +1077,18 @@ export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.f
   "submission_orchestrator_inputs": "Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
 });
 
+/* Tables the purge does not erase although a row of theirs can name a row it
+   deletes: ./purge-referrers, with each one's reason. */
+export { PURGE_REFERRERS_NOT_ERASED };
+
 function assertNoRetainedRecords(tables: readonly string[]): void {
   for (const table of tables) {
     const name = table.replace(/^public\./, '');
     if (Object.prototype.hasOwnProperty.call(PURGE_RETAINED_RECORDS, name)) {
       throw new OffboardingStateError('PURGE_RETAINED_RECORD', `Tenant purge cannot erase retained evidence: ${table}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(PURGE_REFERRERS_NOT_ERASED, name)) {
+      throw new OffboardingStateError('PURGE_RETAINED_RECORD', `Tenant purge does not erase ${table} until its retention is decided`);
     }
   }
 }
@@ -1171,6 +1169,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'commitment_milestones',
   'regulatory_commitments',
   'agency_communication_questions',
+  /* ── Every table that names a project, a workspace, a document or a program
+     with no delete action (D6, 2026-10-29), children before their parents and
+     all before `projects`: ./purge-referrers says which and why. */
+  ...PURGE_REFERRER_TABLES,
   /* `projects` BEFORE `client_workspaces` (fixed 2026-10-01): a project
      references its workspace with no cascade, so deleting the workspaces first
      failed with 23503 for every tenant that had a project, which is every real
@@ -1178,7 +1180,6 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      not run against a tenant with a workspace and a project. */
   'projects',
   'client_workspaces',
-  'documents',
   /* SCHEMA-QUALIFIED, and chunks BEFORE documents.
      These were `vault_documents` and `document_chunks` — names that resolve to
      public.* tables which do not exist, so both were skipped as 42P01 while the
