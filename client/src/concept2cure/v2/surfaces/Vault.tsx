@@ -625,11 +625,12 @@ function UploadsLane({
               {/* The title is the point of this lane. `.vd-dr-name` caps at 32%
                   of its container, which inside a shrink-wrapped button is a
                   few characters — so the cap moves to the button, a flex item
-                  of the row, and the name fills it. */}
+                  of the row, and the name fills it. The cap is `.vd-dr-open`,
+                  not an inline style, so a narrow screen can lift it: at
+                  390 px the row's fixed parts left the name 0 px wide. */}
               <button
                 type="button"
-                className="vd-crumb"
-                style={{ minWidth: 0, maxWidth: '45%', flexShrink: 1 }}
+                className="vd-crumb vd-dr-open"
                 title={doc.preview || doc.title}
                 onClick={() => onOpen(folder.id, doc.id)}
               >

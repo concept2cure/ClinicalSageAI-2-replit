@@ -480,6 +480,17 @@
   .vd-dr-row:hover{ background:var(--bg-000); }
   .vd-dr-kind{ font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-400); min-width:38px; }
   .vd-dr-name{ color:var(--text-100); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32%; }
+  /* The uploads lane's open button (Vault.tsx UploadsLane): the cap on the name. */
+  .vd-dr-open{ min-width:0; max-width:45%; flex-shrink:1; }
+  /* A narrow screen. The row's fixed parts (type, "Auto-filed · confirm",
+     size and date) took the whole row and the name, the one part that may
+     shrink to nothing, rendered 0 px wide: no document could be opened from
+     the lane at 390 px. The row wraps: the name shares its line with the type
+     at most, and the rest goes under it. */
+  @media (max-width:900px){
+    .vd-dr-row{ flex-wrap:wrap; row-gap:2px; }
+    .vd-dr-open{ flex:1 1 60%; max-width:none; }
+  }
   .vd-dr-detail{ color:var(--text-400); font-size:11px; }
   .vd-dr-suggest{ color:var(--text-300); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .vd-dr-row .rd-chip{ flex-shrink:0; }
