@@ -13,8 +13,8 @@
  * @module client/src/concept2cure/quality/qmsRecordData
  */
 
-import type { CapaState } from '@shared/schema/capa-mdr';
-import { CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
+import type { ActionState, CapaState } from '@shared/schema/capa-mdr';
+import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 import { capaWrite, qmsWrite } from './qmsWrites';
 
 export type QmsRecordTab = 'capa' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
@@ -90,6 +90,23 @@ export interface CapaRow {
 }
 
 export interface CapaSourceRef { kind: string; id: string; label: string }
+
+/** An action item as GET /api/capa-mdr/capa/:id returns it in `actions`. */
+export interface CapaActionRow {
+  id: string;
+  n: number;
+  type: string;
+  description: string;
+  owner: string | null;
+  dueDate: string | null;
+  state: ActionState;
+  completedAt: string | null;
+}
+
+export const ACTION_STATE_LABEL: Record<ActionState, string> = {
+  planned: 'Planned', in_progress: 'In progress', done: 'Done', blocked: 'Blocked', cancelled: 'Cancelled',
+};
+export const actionMoves = (a: CapaActionRow): readonly ActionState[] => ACTION_TRANSITIONS[a.state] ?? [];
 
 /* shared/schema/capa-mdr.ts CAPA_TYPES, CAPA_SOURCES, RISK_LEVELS, CAPA_STATES,
    ACTION_TYPES; the state record is typed by CapaState so it cannot drift. */
@@ -205,11 +222,22 @@ export const createCapa = (v: {
   targetCloseDate?: string; problemStatement?: string; sourceRefs?: CapaSourceRef[];
 }) => capaWrite<CapaRow>('capa', compact(v));
 
+/** A close records the effectiveness check in the shape the schema documents
+ *  ({ outcome, narrative, ... }, shared/schema/capa-mdr.ts). */
 export const transitionCapa = (id: string, v: { to: CapaState; reason: string; effectiveness?: string }) =>
   capaWrite<CapaRow>(`capa/${id}/transition`, {
     to: v.to,
     reason: v.reason,
-    ...(v.effectiveness ? { effectivenessCheckResult: { summary: v.effectiveness } } : {}),
+    ...(v.effectiveness
+      ? { effectivenessCheckResult: { outcome: v.to === 'closed_effective' ? 'effective' : v.to === 'closed_not_effective' ? 'not_effective' : 'inconclusive', narrative: v.effectiveness } }
+      : {}),
+  });
+
+export const transitionCapaAction = (actionId: string, v: { to: ActionState; reason?: string; evidence?: string }) =>
+  capaWrite<CapaActionRow>(`capa/actions/${actionId}/transition`, {
+    to: v.to,
+    ...(v.reason ? { reason: v.reason } : {}),
+    ...(v.evidence ? { evidenceRefs: [{ kind: 'reference', label: v.evidence }] } : {}),
   });
 
 export const addCapaAction = (id: string, v: { type: string; description: string; owner?: string; dueDate?: string }) =>
