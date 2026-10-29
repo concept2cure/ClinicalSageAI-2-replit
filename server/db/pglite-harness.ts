@@ -39,7 +39,6 @@ const PROGRAM_SAME_ORG_KEYS = new URL('../../migrations/20260926b_program_same_o
 const INTEGER_PROJECT_SAME_ORG_KEYS = new URL('../../migrations/20261001_integer_project_same_org_keys.sql', import.meta.url);
 const ONE_ANCHOR_PER_PROGRAM = new URL('../../migrations/20261001b_projects_one_anchor_per_program.sql', import.meta.url);
 const PROGRAM_APPLICANT_SPONSOR = new URL('../../migrations/20261021_regulatory_programs_applicant_sponsor.sql', import.meta.url);
-const COMPANY_LEGAL_REGISTRY = new URL('../../migrations/20261018_company_legal_registry.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS ind_sponsors (
@@ -799,19 +798,4 @@ export async function createIndPgliteDb(
   }
   const db = drizzle(pglite);
   return { pglite, db, schemaGaps, close: () => pglite.close() };
-}
-
-/**
- * What assembly reads of a tenant's company legal documents before it packages
- * (5ebfcfd2c): the requirements saved on `organizations.settings`
- * (stored-legal-readiness.ts) and the registry the Vault lifecycle source reads
- * (legal-registry.ts). Creates `organizations` when the suite has none, then
- * applies the real registry migration. The suite inserts its own tenant row:
- * assembly refuses a tenant whose configuration it cannot read, and reads an
- * empty `settings` as nothing saved.
- */
-export async function applyCompanyLegalReads(pglite: PGlite): Promise<void> {
-  await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (
-    id INTEGER PRIMARY KEY, name TEXT NOT NULL DEFAULT 'Sponsor organization', settings JSONB NOT NULL DEFAULT '{}'::jsonb)`);
-  await pglite.exec(readFileSync(COMPANY_LEGAL_REGISTRY, 'utf8'));
 }

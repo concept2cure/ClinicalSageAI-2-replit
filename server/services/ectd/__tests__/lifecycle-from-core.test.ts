@@ -13,7 +13,8 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { promises as fs } from 'fs';
-import { applyCompanyLegalReads, createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 // The lifecycle read path uses the raw `pool` (loadLatestPriorManifestBySubmission);

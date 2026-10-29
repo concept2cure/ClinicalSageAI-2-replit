@@ -24,7 +24,8 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
 import { readFileSync, promises as fs } from 'fs';
 import JSZip from 'jszip';
-import { applyCompanyLegalReads, createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
 import { plainPdfFixture } from './support/signed-pdf-fixture';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
