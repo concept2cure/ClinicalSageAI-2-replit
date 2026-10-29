@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5197/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 56,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "CONTENT_ALREADY_A_VERSION",
+        "message": "These exact bytes are already version 2.0 of this document. Nothing was saved."
+      }
+    }
+  }
+}
