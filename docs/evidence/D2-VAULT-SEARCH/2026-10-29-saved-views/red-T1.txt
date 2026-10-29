@@ -1,0 +1,11 @@
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > the file is on the deploy path > is in C2C_MIGRATION_FILES, after regulatory_programs' creator and before the tenant tail 7ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > replayed three times from the pushed shape > reaches one shape, keeps precedent rows as they were, and the third replay changes nothing 8256ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > replayed three times from the sql shape > reaches one shape, keeps precedent rows as they were, and the third replay changes nothing 3775ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > replayed three times from the empty shape > reaches one shape, keeps precedent rows as they were, and the third replay changes nothing 3482ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > a Vault row holds parameters only, and only its own organisation's project > refuses every shape that is not a saved view 4281ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > a Vault row holds parameters only, and only its own organisation's project > accepts a library view and a project view, and deleting the project takes only its views 3001ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > install-fresh's overlay can reach the file before regulatory_programs exists > fails with 42P01 "does not exist", which the overlay defers, and leaves nothing behind 2864ms
+ × tests/schema-contract/saved-views-store-replay.pglite.test.ts > every constraint is added only when absent > a copy with one name guard removed fails on its second replay (the guard is what makes it replayable) 3423ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed (8)

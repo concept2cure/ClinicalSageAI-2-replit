@@ -33,7 +33,6 @@
     "migrations/20260429_regulatory_graph.sql",
     "migrations/20260429_reviewer_simulation.sql",
     "migrations/20260504_capa_mdr.sql",
-    "migrations/20260505_saved_precedent_queries.sql",
     "migrations/20260508_preclinical_provenance.sql",
     "migrations/20260509_submission_gateways.sql",
     "migrations/20260510_notifications_and_clinical.sql",

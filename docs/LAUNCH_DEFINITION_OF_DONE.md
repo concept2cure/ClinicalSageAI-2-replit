@@ -813,6 +813,15 @@ close the gap between what we have and what Veeva offers here"). That direction 
 
 ## Product decisions, 2026-10-25 (founder)
 
+- **Who may change an organisation view (left open above; answered 2026-10-29 by the saved-views design,
+  `docs/design/VAULT_SAVED_VIEWS_2026-10-29.md` §3.3, as the founder's delegated product call).** Any member may
+  save a personal view, viewers included, because a personal view is a search remembered. Publishing to the
+  organisation, sharing a personal view, and changing a shared view's parameters take a writing role and are the
+  creator's. An organisation manager may rename or delete any organisation view. The creator may always withdraw
+  their own (make it personal, or delete it), even after losing a writing role. A view is a preference, not a
+  governed record: no chained audit row, with the creator, last editor and time kept on the row. The day a view
+  drives a governed act it becomes a governed record, audited and versioned.
+
 ### P-47 — A client starts at their projects; features live in the project, not in an app list
 
 Decided by the founder on 2026-10-25, after testing the product as a client and finding they could not tell how
