@@ -1,0 +1,37 @@
+Mutation M2: server/routes/mdx-udi.ts
+  replaced: if (!(await admitProject(res, parsed.data.programId, orgId))) return;
+  with:     (nothing)
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 33 passed (39)
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++     "table": "udi_records",
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
++     "table": "udi_records",
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
++     "table": "udi_records",
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++     "table": "udi_records",
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 200, body: { …(2) } } to deeply equal { status: 404, …(1) }
++   "status": 200,
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+AssertionError: expected -1 to be greater than or equal to 0
+
+restored: sha256 before 6ebbba235a739ae4 after 6ebbba235a739ae4 -> identical

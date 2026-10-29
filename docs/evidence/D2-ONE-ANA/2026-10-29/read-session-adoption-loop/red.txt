@@ -1,0 +1,26 @@
+# Red. The final test against the head hook, at b6f1e21a. authoringCurrentRead.ts is byte-identical at
+# 2168fd56 and b6f1e21a (sha256 a31ded5e...), and unchanged since b513b53e.
+$ timeout 240 npx vitest run client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx
+ × the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 25ms
+   → expected [ 2, 3, 4, 5, 6, 7, 8, 9, 10, …(16) ] to deeply equal [ 2 ]
+ × the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 3ms
+   → expected 3 to be 2 // Object.is equality
+ ✓ the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 6ms
+Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+ × the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 681ms
+   → Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:76:23
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:99:22
+Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:113:5
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:157:5
+      Tests  3 failed | 1 passed (4)
+EXIT 1
+elapsed=6s peak_tree_rss_mb=683
+# 'elapsed' and 'peak_tree_rss_mb' come from a 2 s ps sampler around the run, not from vitest.
+
+# The first draft of the test, at 2168fd56, failed in the same three places. The depth error surfaced
+# where the earlier probe's did:
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:113:5
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:157:5

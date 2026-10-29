@@ -1,0 +1,29 @@
+Mutation M11: server/routes/mdx-labeling.ts
+  replaced: if (!isVerificationUnavailable(err)) throw err;
+    respondVerificationUnavailable(res, log, 'The project ownership check', err);
+  with:     throw err;
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 35 passed (39)
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected 500 to be 503 // Object.is equality
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected 500 to be 503 // Object.is equality
+
+== server/__tests__/routes/device-project-reads-admit-program.test.ts
+ × server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+ FAIL  server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+AssertionError: expected 500 to be 503 // Object.is equality
+
+restored: sha256 before f30c571d302ff0c9 after f30c571d302ff0c9 -> identical
