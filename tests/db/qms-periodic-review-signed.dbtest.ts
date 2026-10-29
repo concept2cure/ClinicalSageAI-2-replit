@@ -241,7 +241,8 @@ describe('a review counts only for the version it reviewed', () => {
       (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId, principalId: String(signer.id),
         role: 'APPROVER', grantedBy: String(author.id), reason: 'Independent approver of v2.0' }));
     const sent = await request(app).patch(`/api/mdx/qms/documents/${stale}`).set('Authorization', `Bearer ${author.token}`)
-      .send({ status: 'in_review', reason: 'Saved v2.0 text ready for review' });
+      // RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): sending for review names its route, the QMS approver (here the Approver-role signer, who stands in while the organization has designated none).
+      .send({ status: 'in_review', reason: 'Saved v2.0 text ready for review', route: { reviewers: [], approvers: [signer.id], approvalDueDate: day(5) } });
     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
     const v2 = await approve(stale);
     expect(v2.status, JSON.stringify(v2.body)).toBe(200);

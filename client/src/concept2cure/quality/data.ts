@@ -1,3 +1,4 @@
+import type { RouteRoundView } from '../v2/surfaces/VaultReviewRoute';
 /**
  * Quality / SOP register — typed model, the Quality system template family, and
  * fixtures.
@@ -59,6 +60,10 @@ export interface QmsDoc {
   lastReview?: PeriodicReviewSummary | null;
   /** The next review date the approval signed. `nextReviewDate` is when it is due, after any review. */
   signedReviewDate?: string | null;
+  /** The latest review route and its round (RR4, server review-route-standing.ts readRouteRounds); null when none was sent. */
+  reviewRoute?: RouteRoundView | null;
+  /** The route could not be read: never "no route". */
+  reviewRouteUnread?: boolean;
 }
 
 /** A signed periodic review, as the register shows it. */

@@ -168,28 +168,17 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     expect(reviewRow.textContent).not.toMatch(/Send for review/);
   });
 
-  it('sends the draft for review through the existing PATCH route and refreshes the register', async () => {
+  it('Send for review opens the review route form, which names the QMS approver before anything is sent (RR4)', async () => {
     H.docs = [DRAFT_ROW];
-    H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: { id: 7, status: 'in_review' } }) });
+    H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ ok: true, timeZone: 'UTC', documentId: 7, candidates: [] }) });
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
-    await waitFor(() => expect(H.refresh).toHaveBeenCalled());
-    expect(H.apiRequest).toHaveBeenCalledTimes(1);
-    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review', reason: 'Ready for independent Quality review.' });
-    expect(screen.getByRole('status').textContent).toMatch(/WI-014 was sent for review/);
-  });
-
-  it('shows the server’s refusal as the server words it, and changes nothing on screen', async () => {
-    H.docs = [DRAFT_ROW];
-    H.apiRequest.mockRejectedValue(new Error('This document is effective. An approved document changes only through a revision.'));
-    renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
-    expect(H.refresh).not.toHaveBeenCalled();
+    const form = await screen.findByTestId('qms-route-form');
+    expect(form.textContent).toMatch(/QMS approver/);
+    expect((screen.getByTestId('qms-route-send') as HTMLButtonElement).disabled).toBe(true);
+    // Only the candidates read: the send itself, its refusals and its route are in qmsReviewRoute.test.tsx.
+    await waitFor(() => expect(H.apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === '/api/mdx/qms/documents/7/route-candidates')).toBe(true));
+    expect(H.apiRequest.mock.calls.every(([m]) => m === 'GET')).toBe(true);
   });
 });
 

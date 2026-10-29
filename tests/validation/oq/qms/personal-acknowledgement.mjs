@@ -1,22 +1,9 @@
-/** OQ-006 uses the native text/acknowledgement contract, never a seed attestation. */
-export async function prepareControlledQualificationText({ api, expect }, document) {
-  const context = await api('GET', `/api/mdx/qms/documents/${document.id}`);
-  const current = context.json?.meta?.training;
-  expect(context.status === 200 && current?.documentVersion === document.version && current?.contentDigest,
-    'draft controlled-text context missing', context.json);
-  const text = await api('PATCH', `/api/mdx/qms/documents/${document.id}`, {
-    controlledText: {
-      documentVersion: current.documentVersion,
-      contentDigest: current.contentDigest,
-      sections: [{ key: 'procedure', label: 'Qualification procedure', body: 'For this qualification exercise, inspect the recorded document identifier, revision and controlled text. Record only your own read-and-understood acknowledgement of the released revision.' }],
-    },
-    reason: 'OQ-006 step 06a: record the controlled qualification procedure before review.',
-  });
-  expect(text.status === 200 && text.json?.meta?.auditTrail?.chained === true,
-    'controlled text did not save with its chained audit', text.json);
-  return text.json.data;
-}
-
+/**
+ * OQ-006 uses the native acknowledgement contract, never a seed attestation.
+ * v0.8: the qualification SOP's text is written in its authored section
+ * (controlled-sop.mjs createAuthoredSop), which replaced the registry-only
+ * controlled-text save prepareControlledQualificationText made here.
+ */
 async function readReleasedTraining({ api, expect }, documentId) {
   const document = await api('GET', `/api/mdx/qms/documents/${documentId}`);
   const training = document.json?.meta?.training;

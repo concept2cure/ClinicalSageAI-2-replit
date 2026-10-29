@@ -1,0 +1,957 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/db/review-route-qms-rr4.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-qms-rr4.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > until anyone is designated, the Approver role stands in; a reviewer is not a QMS approver 384ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > is refused, with nothing written, without a reason, to a non-administrator, for oneself, and for a member who cannot sign 152ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > designates with a reason as a governed, chained ledger row; the stand-in then ends; removal is recorded the same way 186ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > a send without a route is refused, REVIEW_ROUTE_REQUIRED, with nothing written 26ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > refuses no approver, the author, a contributor, and another organization’s account, each with nothing written 213ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > with zero reviewers, the one designated approver is asked at once and makes the document effective 376ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > a refusal the route decides is given before the credential: no password is checked or counted 138ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > approval is refused until both reviewers have signed; each review closes its task citing esig:<id> 342ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > the approver approves through the existing approve; the review digest equals the approval digest and the route’s 109ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > Return for revision by a named reviewer: in_review → draft, the route returned, others cancelled, the sender told 306ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > the controlled-text save is refused while the route is open, and demotes once it is returned 158ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > a revision is refused while the route is open 106ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > retiring a document in review withdraws its route on the same transaction 179ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a withdrawn route signs nothing until a new one is sent; re-sending names it afresh 525ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a document already in review with no route keeps today’s rule, until someone names reviewers on it 132ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > a reviewer hands back; the sender reassigns to another reviewer, who signs; a non-designated approver is refused 428ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > another organization cannot read or act on the document 157ms
+ ✓ tests/db/review-route-qms-rr4.dbtest.ts > a document authored in the canonical editor (§2.8, §2.9) > its sections cannot change under the route; the members get access to it; the review and the approval bind the same authored content 423ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+Warning: Indexing all PDF objects
+
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+{
+  "timestamp": "2026-10-29T15:05:25.986Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6791aac3-6d4b-4e33-87c4-f9b0af9c2cbe",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-REASSIGN",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names 8057ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot
+{
+  "timestamp": "2026-10-29T15:05:26.401Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e4ed7a12-7400-4006-a07f-5f9876b972ee",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-REASSIGN-TRAY",
+    "type": "OTHER",
+    "size": 85,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot 538ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete
+{
+  "timestamp": "2026-10-29T15:05:26.952Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "294ec2b8-c508-4248-b782-10075748b5cc",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-REASSIGN-APPROVER",
+    "type": "OTHER",
+    "size": 89,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete 643ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered
+{
+  "timestamp": "2026-10-29T15:05:27.532Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4c15146b-a92b-4810-9ac4-d7b0b62fb2ef",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-PICKER-REASSIGN",
+    "type": "OTHER",
+    "size": 87,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered 378ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2)
+{
+  "timestamp": "2026-10-29T15:05:27.958Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "466dcb5d-2736-4c09-b342-f9c8a0dc65d8",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-REFUSALS",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > without a reason (REASON_REQUIRED) 29ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > by someone who is neither the sender nor an administrator 28ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a member who has signed 18ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a task that is not on this route 19ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > the reassigning actor naming themselves 49ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > an author of the version 32ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > a reviewer of this content named as the approver 19ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > someone already named on this route 25ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned
+{
+  "timestamp": "2026-10-29T15:05:28.429Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2f46cea7-e3f6-4873-9040-81d6f2d5c345",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-REFUSALS-RETURNED",
+    "type": "OTHER",
+    "size": 89,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > another organization's account 14ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > from another organization: the version is not found 10ms
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned 226ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs
+{
+  "timestamp": "2026-10-29T15:05:28.664Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fb35cc4e-7f1d-45db-aa07-00ed2a07185e",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-HANDBACK",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs 806ms
+stdout | tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization
+{
+  "timestamp": "2026-10-29T15:05:29.463Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "88953a2d-ac0f-4c37-a5c3-1a474b36ba59",
+    "code": "DBTEST-RR3-mvtoddqp_18b1345c-HANDBACK-REFUSED",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization 255ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+Warning: Indexing all PDF objects
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+{
+  "timestamp": "2026-10-29T15:05:34.719Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a7dd6d9f-7cd8-4f49-abed-f62dad16173e",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-NOREASON",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED) 3312ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+{
+  "timestamp": "2026-10-29T15:05:34.908Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "17499b3c-9b39-4e98-b9a7-09e5769aa875",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-NOAPPROVER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+{
+  "timestamp": "2026-10-29T15:05:35.033Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d7b4e921-cf59-41ba-a014-0342f7252d5c",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_NOT_IN_ORGANIZATION",
+    "type": "OTHER",
+    "size": 105,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED) 128ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user 197ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+{
+  "timestamp": "2026-10-29T15:05:35.254Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ad8c17a7-86b8-4d2a-ab5a-108b763dacfa",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_CANNOT_SIGN",
+    "type": "OTHER",
+    "size": 97,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority 179ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+{
+  "timestamp": "2026-10-29T15:05:35.428Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ff5ec79b-9d26-47c4-8f6d-a008ceb8b97e",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_NO_PROJECT_ACCESS",
+    "type": "OTHER",
+    "size": 103,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project 171ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+{
+  "timestamp": "2026-10-29T15:05:35.594Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f5679e9f-12e2-4b4d-8fed-9eeedd2f1198",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_IS_AUTHOR",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+{
+  "timestamp": "2026-10-29T15:05:35.723Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0f27aa8b-92b8-4f2a-a418-15ce3c6e9b77",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_IS_SENDER",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author) 162ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+{
+  "timestamp": "2026-10-29T15:05:35.844Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fb7df571-a277-4f2c-b6b4-9b4e8873b3da",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-REFUSE-MEMBER_ALREADY_NAMED",
+    "type": "OTHER",
+    "size": 99,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender 123ms
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+{
+  "timestamp": "2026-10-29T15:05:36.001Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ab38c02e-ce2b-445e-8ea9-60101b0c05a9",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-STAGEROUND",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice 154ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT) 371ms
+stdout | tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+{
+  "timestamp": "2026-10-29T15:05:36.383Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9ef0a7da-0b45-4bcd-b045-808ed96c412d",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-FLOW",
+    "type": "OTHER",
+    "size": 76,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete 755ms
+stdout | tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+{
+  "timestamp": "2026-10-29T15:05:37.152Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1e6fc486-ee45-4f6d-af6c-bd9f366594ee",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-BOUND",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one 493ms
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+{
+  "timestamp": "2026-10-29T15:05:37.599Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3fdb25df-53c9-4b3d-b7d9-e9f340a913d4",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-WITHDRAWDONE",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED 537ms
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+{
+  "timestamp": "2026-10-29T15:05:38.161Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3de0b92e-1853-4771-bfbb-ccbf74a68ca1",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-WITHDRAWN",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN) 307ms
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+{
+  "timestamp": "2026-10-29T15:05:38.505Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "56871abb-44a9-4a02-bd85-54b8ae9d833a",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-RETURN",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled 323ms
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T15:05:38.782Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f4cfb048-9dbf-4028-b015-bdf84d79eb00",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-EXIT-authoring",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one) 208ms
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T15:05:38.979Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b918e6b1-07b0-4b62-8817-3e256e1a81af",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-EXIT-withdrawn",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one) 209ms
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T15:05:39.187Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bde96b13-dd41-4e2f-b509-6e6dc978f104",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-CHECKIN",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T15:05:39.351Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "33db4851-055e-443f-ae5d-551a2ddd3f73",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-CHECKIN",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0" 229ms
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+{
+  "timestamp": "2026-10-29T15:05:39.429Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2a7d5ce8-a201-442c-99a6-75f31cf08a82",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-CONCURRENT",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > routeStanding throws on a failed read, never "none" 2ms
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once 240ms
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+{
+  "timestamp": "2026-10-29T15:05:39.673Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4dae6aa4-aba9-464c-8fec-16ce9e6d8f13",
+    "code": "DBTEST-RR1A-mvtodo5a_ad8511bf-CROSS",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed) 164ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+Warning: Indexing all PDF objects
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-29T15:05:44.971Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "07a6302b-0962-45c7-a48c-9c8d3be1107a",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-START",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 3404ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-29T15:05:45.111Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c5b2727b-05f8-405c-9cea-f5ea4d703b35",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 94ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-29T15:05:45.204Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c4618ba8-cdad-4523-8176-6f62f7327538",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-POLICY",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 182ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T15:05:45.377Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f762f399-c023-470b-9e06-f6d9d74aeb01",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T15:05:45.750Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "80aad3bb-ff76-473e-a129-615ef211f4b8",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 1140ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T15:05:46.514Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "369c4ca7-46b3-4fd7-a2b7-617b3c57375c",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T15:05:46.681Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5919ba49-c863-4b5e-9562-463ffa0537a2",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 285ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T15:05:46.816Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "de3ef427-c17c-478d-bdae-1b26c247c0b1",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T15:05:47.086Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9a83c327-441e-4218-9393-81100939a04b",
+    "code": "DBTEST-VR13-mvtodvwn_14dcbd26-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 487ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+Warning: Indexing all PDF objects
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+{
+  "timestamp": "2026-10-29T15:05:52.863Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "de24370a-6597-4103-9c21-800a166308d6",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-NOROUTE",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring 3698ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it
+{
+  "timestamp": "2026-10-29T15:05:53.011Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b665bae7-f7dd-410b-aa7f-21931c4fab6f",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-WITHROUTE",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written
+{
+  "timestamp": "2026-10-29T15:05:53.213Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "aec517c2-2ae3-4770-ab6d-a126d626510f",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-PICKER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it 194ms
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written 205ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author
+{
+  "timestamp": "2026-10-29T15:05:53.407Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "744238bb-b0c1-492a-9084-0c2f2204c7cc",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-PICKER-STARTED",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve
+{
+  "timestamp": "2026-10-29T15:05:53.588Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "be9a0124-6bc6-4bfc-aeb6-31a637bf2f17",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-PICKER-REVIEWED",
+    "type": "OTHER",
+    "size": 87,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author 185ms
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve 426ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused
+{
+  "timestamp": "2026-10-29T15:05:54.008Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fa6e5e2a-83aa-4c20-8a55-a64f5684ac2e",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-PICKER-CROSS",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused 73ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project
+{
+  "timestamp": "2026-10-29T15:05:54.083Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "59e1b05d-b56f-4f21-aab8-27b9f7b103ea",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-NOTICE",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project 280ms
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome
+{
+  "timestamp": "2026-10-29T15:05:54.374Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "471b0e5a-8dbb-490d-ab01-b0829e7c31ab",
+    "code": "DBTEST-RR1B-mvtoe1nf_dfd3f750-BOARD",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome 581ms
+stderr | tests/db/qms-periodic-review-signed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-periodic-review-signed.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 179ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 7ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is in the controlled document register report beside the date its approval signed 369ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review that finds a revision is required > is recorded, and the document stays due 101ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a next review date that has passed 31ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > "remains current" with no next date 26ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a viewer, who has no signing authority 31ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a wrong password 39ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a version whose approval signature no longer stands 34ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 534ms
+(node:10869) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 150ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a later review of the same version > records the due date the earlier review set, beside the date the approval signed, and supersedes it 72ms
+stderr | tests/db/qms-periodic-review-reminders.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-periodic-review-reminders.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > approval puts the next periodic review on the owner’s task list > writes one Quality task to the author, due on the next review, 30 days’ notice; approving the same date again writes nothing 247ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "remains current" completes the task and writes the next one, for the date the reviewer set 172ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "revision required" makes it a task to revise, due when the document is due 157ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 139ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > a new version’s approval completes the old task and writes one for the new version 527ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the due-date sweep reads the lead the task carries > notifies a review task due in 20 days once, and not a task without a lead 189ms
+stderr | tests/db/qms-document-signature-required.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 13ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 22ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 25ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 15ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 84ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 369ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 74ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 117ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 336ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 35ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 14ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 13ms
+stderr | tests/db/qms-in-force-during-revision.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-in-force-during-revision.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 46ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 31ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 92ms
+(node:10960) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 76ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft 57ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 444ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective 364ms
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 255ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 49ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 8ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 303ms
+(node:10982) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training 226ms
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback 133ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request 143ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose 118ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim 103ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 5ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection 90ms
+stderr | tests/db/qms-current-signing-and-training-admission.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-current-signing-and-training-admission.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 8ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 265ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 273ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 100ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 88ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 83ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 96ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 89ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 90ms
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 157ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 54ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 9ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 16ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 10ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 6ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-29T15:06:33.893Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 97,
+    "granted": 13
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 1055ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 39ms
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-29T15:06:34.576Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-29T15:06:34.591Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 437ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 46ms
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+{
+  "timestamp": "2026-10-29T15:06:37.981Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+{
+  "timestamp": "2026-10-29T15:06:38.042Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 104ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 27ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 34ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 27ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 199ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 66ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 65ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 68ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 77ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s status 13ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s assignee 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s archive 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s blockers 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s due date 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s dependencies 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s route columns 27ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a DELETE of a route row 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT naming a route column 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into task_dependencies naming a route member 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into cross_module_task_links naming a route member 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker) 5ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > the route writer’s own transaction 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS 5ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task 5ms
+
+ Test Files  14 passed (14)
+      Tests  162 passed (162)
+   Start at  15:04:59
+   Duration  99.91s (transform 14.42s, setup 762ms, import 7.29s, tests 88.03s, environment 3ms)
+

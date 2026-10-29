@@ -3617,6 +3617,14 @@ export const C2C_MIGRATION_FILES = [
   // below gives it its policy. Every statement is guarded; no DROP.
   // docs/design/STUDY_PIVOTAL_DECLARATION_2026-10-29.md.
   'migrations/20261029e_study_pivotal_declarations.sql',
+  // The QMS approver designation (D2, 2026-10-29, slice RR4 of
+  // docs/design/REVIEW_ROUTING_2026-10-23.md, decision D-Q): two nullable
+  // columns on organization_users (qms_approver_designated_at / _by), set and
+  // cleared together (a named CHECK, added only when absent). Written only by
+  // server/services/qms/qms-approver-designation.ts, with the governed ledger
+  // pair on the same transaction. After the base schema (organization_users).
+  // Public with organization_id INTEGER NOT NULL; creates no table; no DROP.
+  'migrations/20261029f_qms_approver_designation.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

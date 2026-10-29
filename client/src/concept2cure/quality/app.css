@@ -364,3 +364,16 @@
 }
 .qcc-action-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-100); }
 .qcc-action-meta { color: var(--text-400); font-size: 12px; white-space: nowrap; }
+
+/* The review route in the register (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md §2.12):
+   the round in one line under a document's status, and the route sheet's acts. The sheet
+   itself is the shared drawer (journey-v2.css .de-bd / .de-sheet), as the Vault's is. */
+.qms-route-line { display: block; margin-top: 4px; font-size: 11.5px; color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
+.qms-route-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.qms-route-acts .de-btn { min-height: 44px; }
+@media (max-width: 600px) {
+  .qms-route-acts { flex-direction: column; }
+  .qms-route-acts .de-btn { width: 100%; }
+  /* The shared drawer's close is 30 px (journey-v2.css .de-x); in the register's route sheets it is a 44 px target on a phone. */
+  .c2c-v2 .qms-shell .de-x { width: 44px; height: 44px; }
+}

@@ -13,6 +13,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { AdminSettingsTab, IdentityConsoleDoor, type AdminSettingRow } from './AdminSettings';
 import type { OrganizationProfileContext } from './OrganizationProfileCard';
 import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
+import { AdminQmsApprover, qmsApproverStanding } from './AdminQmsApprover';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
 import { AdminPlatformGrants } from './AdminPlatformGrants';
@@ -70,7 +71,9 @@ import '../styles/admin-access.css';
 
 interface Kpi { label: string; metric: string; unit?: string; meta: string; tone?: string }
 /** `userId` and `self` are what the membership routes need (AdminMemberActions). */
-interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
+interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[];
+  /** QMS approver standing (RR4, decision D-Q): counts now, and designated by an administrator. */
+  qmsApprover?: boolean; qmsApproverDesignated?: boolean }
 interface Role { id: string; label: string; members: number; desc: string; scopes: string[] }
 interface Grant { user: string; program: string; scope: string; granted: string; expires?: string }
 interface Conn { kind: string; provider: string; status?: string; domain: string; users: number; lastSync?: string }
@@ -89,6 +92,8 @@ interface AdminData {
   organizationId?: number;
   kpis: Kpi[]; members: Member[]; roles: Role[]; grants: Grant[];
   sso: Sso | null; apiKeys: ApiKey[]; audit: Audit[]; settings: Setting[];
+  /** While nobody is designated, members with the Approver role stand in as QMS approvers (RR4, D-Q). */
+  qmsApprovers?: { standIn: boolean };
 }
 
 const TABS = [
@@ -542,6 +547,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                     <div><div className="k">SSO</div><div className="v">{member.sso === 'local' || member.sso === '' ? 'Local' : 'SSO'}</div></div>
                     <div><div className="k">Second factor</div><div className="v">{member.mfa ? 'Authenticator app' : 'Emailed code'}</div></div>
                     <div><div className="k">Last seen</div><div className="v">{formatWhen(member.lastSeen) || '—'}</div></div>
+                    <div><div className="k">QMS approver</div><div className="v" data-testid="member-qms-approver-standing">{qmsApproverStanding(member, a?.qmsApprovers?.standIn)}</div></div>
                     <div><div className="k">Groups</div><div className="v adm-groups">{member.groups.length ? member.groups.map((g) => <span key={g} className="adm-group mono tiny">{g}</span>) : '—'}</div></div>
                   </div>
                   <div className="drawer-section-lbl">Role scopes</div>
@@ -564,6 +570,8 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                         (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
                         the server's own answer. */}
                     <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} onInvitationOutcome={rememberInvitation} />
+                    {/* QMS approvers (RR4, D-Q): who approves controlled documents, designated with a reason. */}
+                    <AdminQmsApprover key={`qms-${member.id}`} member={member} organizationId={a?.organizationId} standIn={a?.qmsApprovers?.standIn} onChanged={reload} toast={fireToast} />
                   </div>
                 </aside>
               )}
