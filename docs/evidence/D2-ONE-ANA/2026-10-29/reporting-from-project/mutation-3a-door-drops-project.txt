@@ -1,0 +1,16 @@
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx
+# trimmed: per-test results, failure headlines, the failing assertion's line, and the summary (DOM dumps removed)
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project header offers it, named for the job and the place 347ms
+   → expected null to be '9a7f0b10-0000-4000-8000-0000000000cd' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation 150ms
+   → expected [ '/api/insights-canvas/overview' ] to deeply equal [ Array(1) ]
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered with no project open 13ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project header offers it, named for the job and the place
+AssertionError: expected null to be '9a7f0b10-0000-4000-8000-0000000000cd' // Object.is equality
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:109:30
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation
+AssertionError: expected [ '/api/insights-canvas/overview' ] to deeply equal [ Array(1) ]
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:120:28
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

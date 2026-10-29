@@ -9,7 +9,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
-import { projectStepId, readShellProject, updateShellProject, useShellProject } from '../shellProject';
+import { projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
@@ -1412,6 +1412,31 @@ function AuthorWorkspace({
   );
 }
 
+/* ════ Header: this project's reports ════════════════════════════════════
+   Reporting & analytics was a rail work area only. INFORMATION_ARCHITECTURE.md
+   section 7 (Project home, item 1) puts its door on the project header,
+   "opening Reporting & analytics scoped to the project". The canvas already
+   reads the open project from the shell's program channel (Insights.tsx:
+   shellProgramId(useShellProject()) becomes the overview's ?programId=), so
+   the shell's own navigation opens it on this project. Offered only for a
+   project that channel can name, and only when the work area is in this
+   release. The name follows section 9: the job, then the place it is done in. */
+const REPORTS_DOOR = 'See this project’s reports in Reporting & analytics';
+function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
+  const available = useSurfaceAvailable();
+  const programId = shellProgramId(useShellProject());
+  if (!programId || !available('insights')) return null;
+  return (
+    <div style={{ marginTop: 12 }}>
+      {/* The name is a sentence, so it wraps at phone width rather than overflow. */}
+      <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', height: 'auto', minHeight: 28, whiteSpace: 'normal', textAlign: 'left' }}
+        onClick={() => onNav('insights')}>
+        {REPORTS_DOOR} {I.right}
+      </button>
+    </div>
+  );
+}
+
 /* ════ ProjectHome — the full workspace surface ════ */
 
 export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
@@ -1772,6 +1797,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               )}
             </section>
           )}
+          <ProjectReportsDoor onNav={onNav} />
         </div>
       </div>
 
