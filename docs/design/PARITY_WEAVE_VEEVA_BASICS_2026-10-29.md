@@ -541,6 +541,7 @@ Sizes:
   This is red at HEAD, because no proposal path reaches the inbox.
 - **Evidence:** `docs/evidence/D2-WEAVE-GAP/<date>/question-extraction/`.
 - **Size:** M.
+- **Done 2026-10-29** (`docs/evidence/D2-WEAVE-GAP/2026-10-29/question-extraction/`). The issue parser does not split a letter, it classifies it; the split is the numbered-question split, moved from `draft_fda_ir_response` to `shared/agency/letter-questions.ts`, made verbatim and tightened. The inbox and AnA use it.
 
 **G4. Fix `check_consistency` so that it compares the saved text, not the text in the call.**
 

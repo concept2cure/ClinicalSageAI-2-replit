@@ -1,4 +1,5 @@
 import { statedInputEnvelope, statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
+import { splitLetterQuestions } from '../../../shared/agency/letter-questions.js';
 import { readOnlyToolRefusal } from './read-only-turn.js';
 /**
  * AnA Tool Executor — Agentic Orchestration Loop
@@ -16059,22 +16060,9 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
     });
   }
 
-  // Extract numbered questions: "N." or "N.M." or "Question N:" at line start.
-  const questions: { number: string; text: string }[] = [];
-  const lines = irText.split(/\r?\n/);
-  let current: { number: string; text: string } | null = null;
-  for (const line of lines) {
-    const m = line.match(/^\s*(?:Question\s+)?(\d+(?:\.\d+)*)[\.:)\s]+(.+)$/i);
-    if (m) {
-      if (current) questions.push(current);
-      current = { number: m[1], text: m[2].trim() };
-    } else if (current && line.trim()) {
-      // Continuation line — append to current question text.
-      current.text += ' ' + line.trim();
-      if (current.text.length > 1500) current.text = current.text.slice(0, 1500);
-    }
-  }
-  if (current) questions.push(current);
+  // The numbered questions, by the one splitter the Agency inbox proposes from
+  // (shared/agency/letter-questions.ts, G3): verbatim, no model.
+  const questions = splitLetterQuestions(irText).map((q) => ({ number: q.ref, text: q.text }));
 
   return JSON.stringify({
     questions_extracted: questions.length,
