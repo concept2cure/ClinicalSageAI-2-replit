@@ -1,0 +1,25 @@
+# Fold guard at head, before any fold change (2026-10-29, tree over 1a6701ea6)
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+# Source: foldIvdCompleteness.test.ts.txt beside this file. Taken out of the test tree after this run: the fold is blocked (README).
+ × resolves the old id to device-diagnostics from a link and an in-app move, with or without a project open 5ms
+ × lands on device-diagnostics, which draws the readiness board and the workbench with shell navigation 2ms
+ × claims the IVD calls the device-diagnostics screen makes 1ms
+ × keeps no screen of its own: no view, no registry entry for ⌘K, no client import 2ms
+ × is in neither project scope list, the rail nor a focus list, and its AnA actions moved to device-diagnostics 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'device-diagnostics' // Object.is equality
+AssertionError: expected 'case \'device-diagnostics\':\n      s…' to match /<IvdSurface[\s\S]*\bonNav=\{onNav\}[…/>
+AssertionError: expected [ '/api/mdx/audit', …(5) ] to include '/api/ivd-completeness'
+AssertionError: expected { component: [Function], full: true } to be undefined
+AssertionError: expected [ 'projects', 'project-home', …(22) ] to not include 'ivd-completeness'
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+
+# Who imports the old screen today (the fourth case stops at its first assertion):
+client/src/concept2cure/v2/surfaceViews.ts
+client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx
+# The old id resolves to its own screen today:
+client/src/concept2cure/v2/surfaceViews.ts:490:  'ivd-completeness': { component: IvdCompleteness, full: true },
+client/src/concept2cure/v2/registryModel.ts:247:      'ivd-completeness',
+client/src/concept2cure/v2/registryModel.ts:607:  'ivd-completeness': ['assess_filing_readiness', 'run_validation', 'refine_with_validation', 'export_document'],
+client/src/concept2cure/v2/registryModel.ts:694:        'ivd-completeness',
