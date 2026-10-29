@@ -250,7 +250,7 @@ const CAPAS: RegisterConfig<CapaRow> = {
 const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   title: 'Nonconformances',
   sub:
-    'Deviations and nonconforming material, from detection to disposition. Each record names the product or ' +
+    'Nonconforming product and material, from detection to disposition. Each record names the product or ' +
     'material, the lot, where it was found and what was found; the disposition and its rationale are recorded ' +
     'against it under your name. Link a nonconformance to the change or CAPA it raises from change control.',
   noun: ['nonconformance', 'nonconformances'],
@@ -417,7 +417,12 @@ const SUPPLIERS: RegisterConfig<SupplierRow> = {
       await updateSupplier(r.id, changed);
       return `${r.supplier_name} was updated.`;
     },
-  }],
+  }, raiseCapaFrom<SupplierRow>({
+    source: 'supplier',
+    ref: (r) => ({ kind: 'qms_supplier', id: String(r.id), label: r.supplier_code || r.supplier_name }),
+    title: (r) => `Supplier issue: ${r.supplier_name}`,
+    problem: (r) => [r.supplier_name, r.scope].filter(Boolean).join(': '),
+  })],
   ask: 'Give me a read-out on suppliers: which critical suppliers are not approved, whose audits or re-approvals are past due, and what falls due next quarter.',
   askRow: (r) => `Summarise supplier ${r.supplier_name}: what it supplies, its approval standing, and what its qualification needs next.`,
 };
@@ -546,6 +551,12 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     });
     return `The ${row.period} management review was recorded.`;
   },
+  rowActions: [raiseCapaFrom<ManagementReviewRow>({
+    source: 'management_review',
+    ref: (r) => ({ kind: 'qms_management_review', id: String(r.id), label: `Management review ${r.period}` }),
+    title: (r) => `Action from the ${r.period} management review`,
+    problem: (r) => reviewText(r.outputs, 'decisions'),
+  })],
   ask: 'Prepare the inputs for our next management review from the quality records: nonconformances and their dispositions, internal audit findings, supplier standing, and change control.',
   askRow: (r) => `Summarise the ${r.period} management review: what it reviewed, what it decided, and which actions are still open.`,
 };

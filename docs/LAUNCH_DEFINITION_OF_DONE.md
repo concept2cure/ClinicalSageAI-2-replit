@@ -853,7 +853,10 @@ Launch scope, module grants and every route are unchanged by this decision.
 
 Decided 2026-10-29 by the founder ("we need to offer everything www.weave.bio does and much more plus what Veeva
 basics offers biotechs"). The QMS app was controlled documents and change control. Veeva QMS Basics also keeps
-deviations and nonconformances, the approved supplier list, internal audits and management review. The routes for all four
+deviations, CAPA, the approved supplier list, internal audits and management review. The nonconformance register is
+product-keyed (a product or material, a lot): a deviation with no product, such as a missed environmental-monitoring
+reading, has no record of its own yet, and the QC deviation routes (`server/routes/qc.routes.ts`) are a stub with no
+store. Whether deviations get their own record is open to the founder. The routes for all four
 were already in `server/routes/mdx-qms.ts`, built with the device QMS. Their tables are on the deploy path
 (`migrations/20260511_qms_and_labeling.sql`), they are tenant-scoped, writes need editor access, and every write
 records its audit row. No screen called them. The launch scope refused them in production as "HIDDEN APP".
@@ -861,9 +864,11 @@ records its audit row. No screen called them. The launch scope refused them in p
 The four become tabs of Quality (`client/src/concept2cure/quality/QmsRecords.tsx`). Their paths leave
 `LAUNCH_EXCLUDED_API` and fall under the quality surface's existing `/api/mdx/qms` claim. The catalog entry keeps its id,
 surface and module (`qms`, `quality`), so no grant changes. CAPA is reached the same way. Its register already existed
-(`server/routes/capa-mdr.ts`, tables `capa_records` and `capa_actions` from `migrations/20260504_capa_mdr.sql`), claimed
-only by the hidden device post-market surface. The quality surface now claims `/api/capa-mdr/capa` as well. Complaints,
-MDR and vigilance under `/api/capa-mdr` stay hidden with device post-market. The CAPA lifecycle map moves to
+(`server/routes/capa-mdr.ts`, tables `capa_records` and `capa_actions` from `migrations/20260504_capa_mdr.sql`). Its routes
+were already in the launch scope through `device-postmarket`, a device-project feature of Projects since 2026-10-23, but
+no Quality screen reached them. *(Corrected 2026-10-29: this entry first called that surface hidden.)* The quality
+surface now also claims `/api/capa-mdr/capa`, so Quality reaches CAPA for every project type. Complaints, MDR and
+vigilance stay with device post-market. The CAPA lifecycle map moves to
 `shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
 

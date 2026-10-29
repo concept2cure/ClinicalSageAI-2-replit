@@ -12,7 +12,7 @@ Row: D2 (launch catalog). Decision: P-48 in `docs/LAUNCH_DEFINITION_OF_DONE.md`,
 | Launch gate | `server/services/entitlements/launch-scope-api.ts` | Refused the four paths in production as "HIDDEN APP". | — |
 | Quality shell | `client/src/concept2cure/quality/App.tsx` | Had two tabs: the SOP register and Change control. | Did not reach the four records. |
 | QC deviations, OOS | `server/routes/qc.routes.ts` (`/deviations`, `/oos-investigations`), `server/storage.ts:1495` | A stub. Reads return nothing, and every write throws `NOT_IMPLEMENTED` (an honest 501). No table exists behind it. | It is not a deviation register, so the Nonconformances tab does not duplicate it. Converging or deleting these stub routes is owed. |
-| CAPA | `server/routes/capa-mdr.ts`, `server/services/capa-mdr/` (state machine), `migrations/20260504_capa_mdr.sql` | The CAPA register: per project, a lifecycle state machine, action items, and governed audit rows. Claimed only by the hidden `device-postmarket` surface. | Nothing in Quality reached it. |
+| CAPA | `server/routes/capa-mdr.ts`, `server/services/capa-mdr/` (state machine), `migrations/20260504_capa_mdr.sql` | The CAPA register: per project, a lifecycle state machine, action items, and governed audit rows. Claimed by `device-postmarket`, a Projects launch surface for device projects since 2026-10-23 (not hidden, as this README first said). | Nothing in Quality reached it. |
 
 Searches run: `qms_suppliers|qms_internal_audits|qms_management_reviews|qms_nonconforming_products` across migrations,
 server and client; `nonconform|supplier|internal-audit|management-review` in `client/src/concept2cure/**`; `/capa` in
