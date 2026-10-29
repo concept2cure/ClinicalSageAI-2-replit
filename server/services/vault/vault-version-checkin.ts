@@ -97,13 +97,32 @@ async function assignNextRetainedVersion(q: CheckInQueryable, p: {
 }
 
 /**
+ * Bytes the document already holds are refused, so a version is never added
+ * twice. A restore (MR-08 Stage 5) is the one exception: the bytes are the
+ * version being restored, and they are admitted unless the current version
+ * already holds them.
+ */
+function sameBytesRefusal(
+  same: Array<{ id: string; version: string }>, head: CheckInHead, restoreOf: string | undefined,
+): CheckInRefusal | null {
+  if (!same.length) return null;
+  if (restoreOf && same.some((r) => r.id === head.id)) {
+    return { ok: false, status: 409, code: 'CONTENT_ALREADY_CURRENT',
+      message: `The current version, ${head.version}, already holds these exact bytes. ${NOTHING}` };
+  }
+  if (restoreOf && same.some((r) => r.id === restoreOf)) return null;
+  return { ok: false, status: 409, code: 'CONTENT_ALREADY_A_VERSION',
+    message: `These exact bytes are already version ${same[0].version} of this document. ${NOTHING}` };
+}
+
+/**
  * Plan a check-in against `headId`: refusals in the order a person can act on
  * them, else the head and the version to assign. `lock` takes FOR UPDATE on the
  * head, and holds only inside a transaction.
  */
 export async function planCheckIn(
   q: CheckInQueryable,
-  p: { organizationId: number; programId: string; headId: string; contentHash: string; lock?: boolean },
+  p: { organizationId: number; programId: string; headId: string; contentHash: string; lock?: boolean; restoreOf?: string },
 ): Promise<CheckInPlan> {
   const notFound: CheckInRefusal = {
     ok: false,
@@ -190,19 +209,13 @@ export async function planCheckIn(
   }
 
   const same = await q.query(
-    `SELECT version FROM vault.documents
+    `SELECT id::text AS id, version FROM vault.documents
       WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND content_hash = $4
-      ORDER BY created_at LIMIT 1`,
+      ORDER BY created_at`,
     [p.programId, p.organizationId, head.document_code, p.contentHash],
   );
-  if (same.rows[0]) {
-    return {
-      ok: false,
-      status: 409,
-      code: 'CONTENT_ALREADY_A_VERSION',
-      message: `These exact bytes are already version ${same.rows[0].version} of this document. ${NOTHING}`,
-    };
-  }
+  const sameBytes = sameBytesRefusal(same.rows as Array<{ id: string; version: string }>, head, p.restoreOf);
+  if (sameBytes) return sameBytes;
 
   const assigned = await assignNextRetainedVersion(q, p, head);
   return assigned.ok ? { ok: true, head, version: assigned.version } : assigned;
@@ -262,6 +275,15 @@ export function checkInArgumentRefusal(args: {
   return null;
 }
 
+/**
+ * What a check-in's audit row says of its lineage: the version it succeeds,
+ * and that its filing was kept. A restore (MR-08 Stage 5) also names the
+ * version whose bytes these are, and the person's reason.
+ */
+export function checkInLineage(head: CheckInHead, restoreOf?: { versionId: string; version: string; reason: string }) {
+  return { supersedes: head.id, predecessorVersion: head.version, filingKept: true, ...(restoreOf ? { restoredFrom: restoreOf } : {}) };
+}
+
 /** The filing a new version keeps: its head's, as recorded. */
 export function inheritedPlacement(h: CheckInHead) {
   return {
@@ -284,7 +306,7 @@ export function inheritedPlacement(h: CheckInHead) {
  */
 export async function recheckUnderLock(
   client: CheckInQueryable,
-  p: { organizationId: number; programId: string; contentHash: string },
+  p: { organizationId: number; programId: string; contentHash: string; restoreOf?: string },
   planned: { head: CheckInHead; version: string },
 ): Promise<CheckInRefusal | null> {
   const locked = await planCheckIn(client, { ...p, headId: planned.head.id, lock: true });

@@ -148,6 +148,11 @@ export const vaultDocuments = vault.table(
 
     parentDocumentId: uuid('parent_document_id'),
     supersedesId: uuid('supersedes_id'),
+    /* The version whose bytes this row restores (MR-08 Stage 5): NULL except on
+       a restore, and checked by a trigger to name a live version of the same
+       document holding the same bytes
+       (migrations/20261029_vault_documents_restored_from.sql). */
+    restoredFromId: uuid('restored_from_id'),
 
     /* Dossier placement — where this document sits in the program's vault
        folder taxonomy (migrations/20260823_vault_document_placement.sql).

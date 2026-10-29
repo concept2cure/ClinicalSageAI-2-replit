@@ -2244,6 +2244,15 @@ export const C2C_MIGRATION_FILES = [
   // column, no FK, no DROP.
   'migrations/20260930_vault_documents_version_lineage.sql',
 
+  // MR-08 Stage 5 step 2 (2026-10-29): a restored version holds the bytes of
+  // the version it restores. Adds vault.documents.restored_from_id, a trigger
+  // that admits it only for a live version of the same document holding the
+  // same bytes, and narrows 044c's (program_id, content_hash) unique index to
+  // rows that are not restores, under the same name, only while that index
+  // has no predicate. After the lineage guard, the same table's version rules.
+  // No table; the one DROP is of an index no file in this set creates.
+  'migrations/20261029_vault_documents_restored_from.sql',
+
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS
      (byte-identical to 20260531_template_specs.sql modulo comments — verified)

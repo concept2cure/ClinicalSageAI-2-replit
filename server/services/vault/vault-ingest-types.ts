@@ -24,6 +24,14 @@ export interface VaultIngestArgs {
    */
   supersedesDocumentId?: string;
   /**
+   * Server-owned: these bytes are an earlier version's, restored as the next
+   * version (MR-08 Stage 5, `vault-version-restore.ts`). Only with
+   * `supersedesDocumentId`. The check-in admits bytes the document already
+   * holds only because they are this version's, and the audit row names it and
+   * the person's reason. Never taken from a request body.
+   */
+  restoreOf?: { versionId: string; version: string; reason: string };
+  /**
    * The caller lets the Vault number versions: a typed version is refused for
    * a document code that already has one (vault-ingest.service.ts
    * typedVersionRefusal). The upload route sets it; services with their own
