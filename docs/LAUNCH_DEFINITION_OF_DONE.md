@@ -628,6 +628,11 @@ deletion record the working agreement requires:
    (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`).
 2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
    ungoverned create.
+   *2026-10-29:* converged. The routes and the service had no client, no AnA tool and no MCP tool, and launch scope
+   refused them in production; they are deleted. The table is read-only, and its rows stay as history
+   (`migrations/20261029i_c2c_commitments_read_only.sql`). Recording a commitment and moving its status were already
+   governed on `regulatory_commitments`. The model extraction is not carried over (RULE 2; G3's no-model rule)
+   (`docs/evidence/D2-COMMITMENTS-CONVERGED/2026-10-29/`).
 3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue
    parser and response clock as the inbox's.
 4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,

@@ -185,11 +185,11 @@ describe('SopRegister — a draft is sent for review before it can be approved',
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 
-  it('opens the e-signature dialog for Retire, offering the approval meaning only', () => {
+  it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
-    expect(dialog.getAttribute('data-meanings')).toBe('approval');
+    expect(dialog.getAttribute('data-meanings')).toBe('retirement');
   });
 
   it('posts the signature to the signed retire route and shows the server’s time', async () => {
@@ -210,10 +210,10 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
     expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/retire', {
       password: 'pw',
       mfaToken: '123456',
-      meaning: 'APPROVED',
+      meaning: 'retirement',
       reason: 'Reviewed against ISO 13485 §8.2.2',
     });
-    expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
+    expect(H.signed).toMatchObject({ meaning: 'retirement', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
     expect(H.refresh).toHaveBeenCalled();
   });
 
@@ -289,5 +289,44 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(k.querySelector('.val')?.textContent).toBe('—');
     expect(k.getAttribute('data-tone')).toBe('');
     expect(k.textContent).toMatch(/No training-controlled documents yet/);
+  });
+});
+
+describe('SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4)', () => {
+  const SIGNED = { state: 'valid', version: '1.0', signerName: 'Dana Whitfield', signedAt: '2026-09-01T14:02:09.000Z', meaning: 'APPROVED' };
+
+  it('shows who approved the version in force, when in UTC, and with what meaning', () => {
+    H.docs = [{ ...EFFECTIVE, approvalSignature: SIGNED }];
+    renderRegister();
+    const line = screen.getByTestId('qms-signature-line');
+    expect(line.textContent).toContain('v1.0 · Approved by Dana Whitfield');
+    expect(line.textContent).toContain('2026-09-01 14:02:09 UTC');
+    expect(line.textContent).toContain('Meaning: Approval');
+  });
+
+  it('never shows a changed, withdrawn or unread approval as standing', () => {
+    H.docs = [
+      { ...EFFECTIVE, approvalSignature: { ...SIGNED, state: 'changed' } },
+      { ...EFFECTIVE, id: 7, docNumber: 'SOP-016', approvalSignature: { ...SIGNED, state: 'withdrawn' } },
+      { ...EFFECTIVE, id: 8, docNumber: 'SOP-017', approvalSignature: { state: 'unavailable', signerName: null, signedAt: null, meaning: null } },
+    ];
+    renderRegister();
+    const lines = screen.getAllByTestId('qms-signature-line').map((l) => l.textContent ?? '');
+    expect(lines[0]).toContain('Content changed after approval');
+    expect(lines[1]).toContain('Approval withdrawn');
+    expect(lines[2]).toBe('The approval signature could not be read.');
+    expect(lines.some((l) => l.startsWith('v1.0 · Approved by'))).toBe(false);
+  });
+
+  it('shows who retired a retired document, and says when no retirement signature is on record', () => {
+    H.docs = [
+      { ...EFFECTIVE, status: 'retired', retirementSignature: { state: 'signed', signerName: 'Q. Lead', signedAt: '2026-10-29T09:00:00.000Z', meaning: 'retirement' } },
+      { ...EFFECTIVE, id: 9, docNumber: 'SOP-018', status: 'retired', retirementSignature: { state: 'unsigned', signerName: null, signedAt: null, meaning: null } },
+    ];
+    renderRegister();
+    const lines = screen.getAllByTestId('qms-signature-line').map((l) => l.textContent ?? '');
+    expect(lines[0]).toContain('Retired by Q. Lead');
+    expect(lines[0]).toContain('Meaning: Retirement');
+    expect(lines[1]).toContain('no retirement signature is on record');
   });
 });

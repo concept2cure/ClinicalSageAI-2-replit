@@ -54,9 +54,9 @@ function params(overrides: Partial<GovernedActionSignatureParams> = {}): Governe
 }
 
 describe('the governed sign vocabulary', () => {
-  it('is the union of the two spellings the product uses, and nothing else', () => {
+  it('is the union of the two spellings the product uses, plus the retirement meaning (P-51), and nothing else', () => {
     expect([...GOVERNED_SIGN_MEANINGS].sort()).toEqual(
-      ['APPROVED', 'AUTHORSHIP', 'RESPONSIBILITY', 'REVIEWED', 'approval', 'authorship', 'release', 'responsibility', 'review'].sort(),
+      ['APPROVED', 'AUTHORSHIP', 'RESPONSIBILITY', 'REVIEWED', 'approval', 'authorship', 'release', 'responsibility', 'review', 'retirement'].sort(),
     );
     expect(isGovernedSignMeaning('approval')).toBe(true);
     expect(isGovernedSignMeaning('APPROVED')).toBe(true);

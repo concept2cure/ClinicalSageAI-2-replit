@@ -38,7 +38,7 @@
 import * as React from 'react';
 import { useEsignature, type EsigMeaning } from '../../hooks/useEsignature';
 import { useSigningPosture } from '../signingPosture';
-import { ESIGN_MEANINGS } from '../esignMeanings';
+import { ALL_ESIGN_MEANINGS, ESIGN_MEANINGS } from '../esignMeanings';
 import { GovernedTimestamp } from './GovernedTimestamp';
 import { registerCeremonyOpen } from '../../v2/ceremony';
 import './EsignModal.css';
@@ -214,7 +214,7 @@ export function EsignModal({
   React.useLayoutEffect(() => open ? registerCeremonyOpen() : undefined, [open]);
 
   const offered = React.useMemo(
-    () => (meanings ? MEANINGS.filter((m) => meanings.includes(m.id)) : MEANINGS),
+    () => (meanings ? ALL_ESIGN_MEANINGS.filter((m) => meanings.includes(m.id)) : MEANINGS),
     [meanings],
   );
   const initialMeaning: EsigMeaning = offered.some((m) => m.id === (defaultMeaning ?? 'approval'))

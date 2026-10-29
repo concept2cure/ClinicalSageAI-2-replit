@@ -42,7 +42,7 @@ const DOMAIN: Array<[RegExp, (p: unknown[]) => Rows]> = [
     H.deviation = 'closed';
     return one({ id: 5, deviation_number: 'DEV-2026-001', classification: 'major', status: 'closed', target_closure_date: null });
   }],
-  [/SELECT status, root_cause, resolution_description FROM qc_deviations/, () => one({ status: H.deviation, root_cause: 'x', resolution_description: 'y' })],
+  [/SELECT status, root_cause, resolution_description[\s\S]*FROM qc_deviations/, () => one({ status: H.deviation, root_cause: 'x', resolution_description: 'y', completed_by: null })],
 ];
 
 const client = {

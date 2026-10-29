@@ -35,7 +35,6 @@
     "server/routes/biostat-design-stats.ts",
     "server/routes/biostatPlatform.ts",
     "server/routes/c2c/actions.ts",
-    "server/routes/c2c/commitments.ts",
     "server/routes/c2c/documents.ts",
     "server/routes/c2c/project-vault.ts",
     "server/routes/c2c/projects.ts",

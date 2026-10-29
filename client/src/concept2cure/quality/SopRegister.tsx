@@ -68,6 +68,7 @@ import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
+import { RegisterSignatureLine } from './RegisterSignatureLine';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -471,7 +472,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                 >
                   {d.docNumber}
                 </button>
-                <div className="qms-cell qms-title" title={d.title}>{d.title}</div>
+                <div className="qms-cell qms-title" title={d.title}>{d.title}<RegisterSignatureLine doc={d} /></div>
                 <div className="qms-cell">
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>
@@ -619,8 +620,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           action="Retire controlled document"
           target={`${retiring.docNumber} ${retiring.title} (v${retiring.version})`}
           targetMeta="Retirement is the terminal state: the document leaves use for everyone trained on it when you sign. It is an electronic signature."
-          defaultMeaning="approval"
-          meanings={['approval']}
+          defaultMeaning="retirement"
+          meanings={['retirement']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setRetiring(null)}
           onSign={async (input) => {

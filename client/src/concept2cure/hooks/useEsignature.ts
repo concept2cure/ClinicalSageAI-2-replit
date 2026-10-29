@@ -63,7 +63,8 @@ export type EsigMeaning =
   | 'review'
   | 'approval'
   | 'responsibility'
-  | 'release';
+  | 'release'
+  | 'retirement';
 
 export interface VerifyResult {
   valid: boolean;

@@ -3661,6 +3661,12 @@ export const C2C_MIGRATION_FILES = [
   // Public with organization_id INTEGER NOT NULL, so the sweep below gives it
   // its policy. Every statement is guarded; no DROP.
   'migrations/20261029g_submission_filed_baselines.sql',
+  // A CAPA may be raised from a deviation (D2, 2026-10-29, P-57):
+  // capa_records.capa_source_chk gains 'deviation', replaced only when its
+  // definition lacks it (pg_get_constraintdef), so a replay never re-validates.
+  // Widens only. After 20260504_capa_mdr.sql (the constraint). No table.
+  'migrations/20261029h_capa_source_deviation.sql',
+  'migrations/20261029i_c2c_commitments_read_only.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

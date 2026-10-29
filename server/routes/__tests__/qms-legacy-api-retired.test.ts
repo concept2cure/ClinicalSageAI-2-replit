@@ -232,7 +232,7 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
     { name: 'sign off a management review', method: 'post', path: '/api/mdx/qms/management-reviews', body: { reviewDate: '2026-10-01', period: '2026-Q3' }, state: nothing, before: null },
     {
       name: 'retire a document (already gated by 6582e3a3)', method: 'post', path: '/api/mdx/qms/documents/11/retire',
-      body: { reason: 'Replaced by SOP-002', password: 'x', meaning: 'APPROVED' }, state: docStatus, before: 'effective',
+      body: { reason: 'Replaced by SOP-002', password: 'x', meaning: 'retirement' }, state: docStatus, before: 'effective',
     },
   ];
 

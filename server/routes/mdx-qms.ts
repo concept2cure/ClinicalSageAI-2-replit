@@ -90,6 +90,7 @@ import {
   retireQmsDocumentSigned,
   QmsApprovalRefusedError,
   QMS_DOCUMENT_APPROVAL_MEANING,
+  QMS_DOCUMENT_RETIREMENT_MEANING,
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
@@ -117,7 +118,8 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { saveQmsControlledText } from '../services/qms/training-controlled-text';
 import { describeQmsTrainingDocument } from '../services/qms/training-content';
-import { inForceSummary } from '../services/qms/in-force-release';
+import { inForceSummary, readInForceReleases } from '../services/qms/in-force-release';
+import { readRegisterSignatures } from '../services/qms/register-signatures';
 import {
   QMS_PERIODIC_REVIEW_CODE_STATUS, qmsPeriodicReviewBody, readQmsReviewSchedule, recordQmsPeriodicReview,
   type QmsReviewSchedule,
@@ -363,7 +365,10 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
     // draft; each names its last counted periodic review and when it is next due.
     const schedule = await readQmsReviewSchedule(client, orgId, rows as QmsDocumentRow[]);
     const rounds = await registerRounds(client, orgId, rows);
-    return ok(res, rows.map((row) => withRound(scheduledRegisterRow(row, schedule), rounds)), { count: rows.length });
+    // §11.50: who approved each version in force, when and as what; who retired a retired one.
+    const signatures = await readRegisterSignatures(client, orgId, rows as QmsDocumentRow[], schedule.inForce);
+    return ok(res, rows.map((row) => ({ ...withRound(scheduledRegisterRow(row, schedule), rounds), ...signatures(row as QmsDocumentRow) })),
+      { count: rows.length });
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
@@ -559,8 +564,10 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
       [id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Document');
-    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document: rows[0] as QmsDocumentRow });
-    return ok(res, qmsRegisterRow(rows[0]), { training });
+    const document = rows[0] as QmsDocumentRow;
+    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document });
+    const signatures = await readRegisterSignatures(client, orgId, [document], await readInForceReleases(client, orgId, [document]));
+    return ok(res, { ...qmsRegisterRow(rows[0]), ...signatures(document) }, { training });
   } catch (err) {
     if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     const contentRefusal = qmsContentRefusal(res, err); if (contentRefusal) return contentRefusal;
@@ -629,15 +636,21 @@ const approveBody = z.object({
    2026-09-24): the approve body without effectiveDate, which a retirement does
    not set. The reason keeps the floor the whole governed surface applies
    (`governedReason`, 8), which 6582e3a3 set for this route on 2026-09-25;
-   approve's own floor of 3 predates that rule and is left as it is here. */
-const retireBody = approveBody.omit({ effectiveDate: true }).extend({ reason: governedReason });
+   approve's own floor of 3 predates that rule and is left as it is here. The
+   meaning is retirement's own (P-51): 'APPROVED' is refused here. */
+const retireBody = approveBody.omit({ effectiveDate: true }).extend({
+  meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
+    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+  }),
+  reason: governedReason,
+});
 
 /** §11.200(a)(1): the first signing presents every component. Names the ones that did not arrive. */
 function esignatureComponentMissing(res: Response, act: 'Approval' | 'Retirement', fieldErrors: Record<string, unknown>): Response {
   return clientError(
     res,
     400,
-    `${act} is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+    `${act} is an electronic signature and requires a password, the signature meaning '${act === 'Retirement' ? QMS_DOCUMENT_RETIREMENT_MEANING : QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
     { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
   );
 }

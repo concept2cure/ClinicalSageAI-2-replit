@@ -146,13 +146,14 @@ export interface DeviationTaskSource {
 export function deviationTaskPlan(d: DeviationTaskSource, actorId: number | null): RecordTaskPlan {
   const due = dayOf(d.target_closure_date);
   const closed = d.status === 'closed';
+  const ended = closed || d.status === 'cancelled';
   const priority = d.classification === 'critical' ? 'critical' : d.classification === 'major' ? 'high' : 'medium';
   return {
     sourceEntityType: DEVIATION_TASK_SOURCE,
     sourceEntityId: `qms-deviation:${d.id}`,
     closeAs: closed ? 'completed' : 'cancelled',
     same: (m) => m.due === due,
-    next: closed || !due ? null : {
+    next: ended || !due ? null : {
       moduleType: 'Quality',
       title: `Close deviation ${d.deviation_number}: ${d.title}`,
       description: `Deviation ${d.deviation_number} (${d.classification}) is due to close on ${due}. Record its investigation `

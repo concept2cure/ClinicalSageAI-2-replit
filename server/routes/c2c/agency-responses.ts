@@ -9,6 +9,7 @@
  *
  *   GET  /projects/:projectId/agency-communications/:eventId/questions
  *   POST /projects/:projectId/agency-communications/:eventId/questions
+ *   GET  /projects/:projectId/agency-communications/:eventId/question-proposals   the letter's numbered questions, proposed (G3)
  *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId
  *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId/owner
  *   PUT  /projects/:projectId/agency-communications/:eventId/questions/:questionId/response
@@ -98,6 +99,7 @@ import {
   type Queryable,
 } from '../../services/agency-responses/response-service';
 import { createScopedLogger } from '../../utils/logger';
+import { readLetterQuestionProposals } from '../../services/agency-responses/letter-question-proposals';
 import { governedReason } from '../governed-reason';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act';
 import {
@@ -378,6 +380,23 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
       });
     } catch (err) {
       return refusal(res, err, 'reading the questions on an agency letter');
+    }
+  });
+
+  /* G3 (P-39 step 3): the questions the letter's own text numbers, proposed for
+     a person to record through POST .../questions with a reason. A read: it
+     writes nothing and makes no model call (shared/agency/letter-questions.ts). */
+  router.get(`${BASE}/question-proposals`, async (req, res) => {
+    const scope = scopeOf(req, res);
+    if (!scope) return;
+    try {
+      const client = requestPgClient(req) as unknown as Queryable;
+      await visibleLetter(client, scope, req, canView);
+      const recorded = (await readQuestions(client, scope.orgId, scope.projectId, scope.eventId, today()))
+        .filter((q) => q.approval.state !== 'withdrawn');
+      return sendSuccess(res, await readLetterQuestionProposals(client, scope, recorded));
+    } catch (err) {
+      return refusal(res, err, 'reading the questions in an agency letter');
     }
   });
 

@@ -30,6 +30,7 @@ import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { recordGovernedAction } from './c2c/actions';
 import { requireGovernedReason } from './governed-reason';
 import { DECISION_ACT_MEANINGS, type GovernedSignMeaning } from '../services/part11/signature-meanings';
+import { QMS_DOCUMENT_RETIREMENT_MEANING } from '../services/qms/document-approval-signature';
 import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from '../services/governance/separation-of-duties';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -108,10 +109,11 @@ const NOTHING_SIGNED = 'Nothing was signed.';
 
 /**
  * The meaning a supersession carries: the one a QMS retirement is signed with
- * (QMS_DOCUMENT_APPROVAL_MEANING, services/qms/document-approval-signature.ts,
- * and the retire body in routes/mdx-qms.ts).
+ * (QMS_DOCUMENT_RETIREMENT_MEANING, services/qms/document-approval-signature.ts,
+ * and the retire body in routes/mdx-qms.ts). A supersession withdraws the
+ * document from use; it is not an approval of it (P-51, 2026-10-29).
  */
-const SUPERSEDE_ACT_MEANINGS = ['APPROVED'] as const satisfies readonly GovernedSignMeaning[];
+const SUPERSEDE_ACT_MEANINGS = [QMS_DOCUMENT_RETIREMENT_MEANING] as const satisfies readonly GovernedSignMeaning[];
 
 function signedActRefused(code: SignedActCode, message: string): Error {
   return Object.assign(new Error(message), { code });
