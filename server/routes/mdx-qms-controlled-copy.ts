@@ -54,7 +54,10 @@ router.get('/qms/documents/:id/controlled-copy', async (req: Request, res: Respo
     return res;
   } catch (err) {
     if (err instanceof QmsControlledCopyRefused) return clientError(res, err.status, err.message, { code: err.code });
-    if (err instanceof AuthoringPdfRenderingError) return res.status(503).json({ error: err.message, details: { code: err.code } });
+    if (err instanceof AuthoringPdfRenderingError) {
+      return res.status(503).json({ error: 'The PDF could not be completed. No controlled copy was issued. Download the Word copy, or contact an administrator.',
+        details: { code: 'PDF_RENDERER_UNAVAILABLE' } });
+    }
     if (isUnauditedExportRefusal(err)) {
       return res.status(503).json({ error: 'The issue of this controlled copy could not be recorded, so it was not delivered. Try again.', details: { code: 'CONTROLLED_COPY_NOT_RECORDED' } });
     }
