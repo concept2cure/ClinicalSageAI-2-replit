@@ -122,6 +122,8 @@ interface QuestionsPayload {
     communicationType: string;
     closureStatus: string;
     dueDate: string | null;
+    /** The agency's date, or the one the response clock derives from the letter's class: what overdue is judged by. */
+    responseDueDate?: string | null;
     responseRequired: boolean;
     /** Why the letter may not be closed now, in the server's words; null when it may. */
     closeRefusal: string | null;
@@ -685,7 +687,7 @@ function ScopedAgencyResponses({
           or (a response-required letter) no question to answer recorded. */}
       {!closed && data?.letter.overdue && (
         <p className="cc-q-note" data-tone="err" role="note">
-          Overdue: past its due date{data.letter.dueDate ? ` (${data.letter.dueDate.slice(0, 10)})` : ''}
+          Overdue: past its due date{(data.letter.responseDueDate ?? data.letter.dueDate) ? ` (${(data.letter.responseDueDate ?? data.letter.dueDate)!.slice(0, 10)})` : ''}
           {asked.length === 0 ? ', with no question recorded.' : ', with responses not approved as they stand.'}
         </p>
       )}

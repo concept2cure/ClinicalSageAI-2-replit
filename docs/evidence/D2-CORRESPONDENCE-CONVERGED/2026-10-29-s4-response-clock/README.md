@@ -57,7 +57,23 @@ section maps the clock and the inbox.
   - `ci:migration-set-order`;
   - `tsc --noEmit`: no error.
 
-## Not done here
+## The overdue verdict follows the clock (same day, second commit)
 
-- `letterOverdue` (`response-logic.ts`) still reads the typed due date. Moving the overdue verdict onto the clock
-  changes CMC / Module 3's counts, so it goes with S5, which moves the remaining readers.
+- **`responseDueDate(letter)`** (`response-logic.ts`) is when a response is due:
+  - the agency's stated date;
+  - else the date the clock derives from the letter's class and receipt;
+  - else none.
+- **`letterOverdue` judges by it.** So the letter's questions view (`GET …/questions`, which now also returns
+  `responseDueDate`) and CMC / Module 3's counts (`module-view.ts`) call a refuse-to-file letter with no stated date
+  overdue 30 days after receipt, and both say so with the same verdict.
+- **The letter readers** (`readLetter`, `readProjectLetters`) carry `letter_class`.
+- **Proof.**
+  - `server/services/agency-responses/__tests__/module-view.test.ts`: a refuse-to-file letter received 2026-09-01 is
+    due 2026-10-01 and is overdue on 2026-10-19; one received 2026-10-01 is not; the agency's own date of 2026-12-01
+    wins; and a letter with no class has no derived date.
+  - Mutation: judging by the typed date alone fails the case.
+- **Test setups that build the inbox table without the new column.** S4's create writes `letter_class` and this
+  change's readers select it, so two setups failed until it was added. Both are updated:
+  - `c2c-audit-outcomes.pglite.test.ts` now applies `20261029j`;
+  - `_agency-response-authoring-fixture.ts` gains the column.
+  - The first was red on trunk after S4's commit. The pre-push gates do not run it.

@@ -115,6 +115,7 @@ export interface ViewLetter {
   closureStatus: string;
   responseRequired: boolean;
   linkedSectionCodes: readonly unknown[];
+  letterClass?: string | null;
 }
 
 export interface ViewQuestion extends QuestionRecord {
