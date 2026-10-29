@@ -1,0 +1,17 @@
+# Green. The fixed hook, the final test (sha256 of the hook: eeb1c7f6...).
+$ timeout 240 npx vitest run client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx
+ ✓ the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 25ms
+ ✓ the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 4ms
+ ✓ the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 3ms
+ ✓ the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 563ms
+      Tests  4 passed (4)
+EXIT 0
+elapsed=6s peak_tree_rss_mb=1234
+
+$ npx eslint client/src/concept2cure/v2/editor/authoringCurrentRead.ts client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx
+(no output) EXIT 0. At head, eslint on authoringCurrentRead.ts: (no output) EXIT 0.
+
+$ tsc -p <scratch tsconfig extending tsconfig.json, files: the hook, the test, client/src/types/global.d.ts>
+0 errors in either file. The only errors are 3 TS2307 "Cannot find module './styles.module.css'" in
+components/ana/{BriefingBookPanel,CrlPremortemPanel,GovernedActionSignoff}.tsx, which the scoped check pulls in
+without the project's ambient CSS-module declaration. No whole-project tsc was run (the lead's pre-push runs it).

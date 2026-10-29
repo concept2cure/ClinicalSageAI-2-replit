@@ -25,8 +25,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError, noContent,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { programInOrganization } from '../services/c2c/program-access';
-import { isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome';
+import { admitProject as admitProjectShared } from '../lib/admit-project';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -43,6 +42,10 @@ function getUserId(req: Request): number | null {
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
 }
+
+/** The shared project-ownership refusal (server/lib/admit-project.ts). */
+const admitProject = (res: Response, programId: string | null | undefined, orgId: number) =>
+  admitProjectShared(res, log, programId, orgId);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DOC_KIND = ['ifu', 'package_insert', 'patient_label', 'operator_manual', 'service_manual', 'quick_ref', 'box_label'] as const;
@@ -99,9 +102,7 @@ router.get('/labeling', async (req: Request, res: Response) => {
        missing one, answered 200 with no rows: "this project has no label".
        Ownership is asked first, through the one ownership answer, as
        mdx-engineering.ts does (D2, 2026-10-29). */
-    if (pid && !(await programInOrganization(pool, pid, orgId))) {
-      return notFoundInTenant(res, 'Project');
-    }
+    if (!(await admitProject(res, pid, orgId))) return;
     const { rows } = await pool.query(
       `SELECT * FROM labeling_documents WHERE ${filters.join(' AND ')}
         ORDER BY device_name, doc_kind, language`,
@@ -109,7 +110,6 @@ router.get('/labeling', async (req: Request, res: Response) => {
     );
     return ok(res, rows, { count: rows.length });
   } catch (err) {
-    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'list', err);
   }
 });
@@ -121,6 +121,14 @@ router.post('/labeling', async (req: Request, res: Response) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
+    /* The create and the PATCH below stored the client's `programId` without
+       asking. The same-organization key (20261013b) refused another
+       organization's project and a missing one, but the caller got a 500, and
+       no key refuses a deleted project. Both now ask first and answer as the
+       read above does: 404 and no row when the organization does not own the
+       live project, 503 when the check cannot run. No `programId`, or `null`,
+       is unchanged (D3, 2026-10-29). */
+    if (!(await admitProject(res, p.programId, orgId))) return;
     const { rows } = await pool.query(
       `INSERT INTO labeling_documents (
          organization_id, program_id, device_name, doc_kind, version, status,
@@ -183,6 +191,7 @@ router.patch('/labeling/:id', async (req: Request, res: Response) => {
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
+    if (!(await admitProject(res, parsed.data.programId, orgId))) return;
     const { rows } = await pool.query(
       `UPDATE labeling_documents SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL

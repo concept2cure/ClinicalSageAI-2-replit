@@ -5,7 +5,8 @@
  * layer enforces:
  *  - 403 when the request has no organization context
  *  - 422 for malformed input (bad enum, missing field, invalid date)
- *  - 403 when the service raises TenantAccessError
+ *  - 404 when the create's service raises TenantAccessError (the project is
+ *    not the organization's), 403 when the commitment toggle's does
  *  - 404 when getQSubDetail returns null
  *  - 200/201 happy paths shape the response correctly
  */
@@ -153,12 +154,16 @@ describe('POST /api/q-sub', () => {
     expect(res.status).toBe(422);
   });
 
-  it('returns 403 when service raises TenantAccessError', async () => {
+  /* createQSubmission's one TenantAccessError is "the organization does not own
+     this project". Since D3, 2026-10-29 the create answers it as the project
+     read does, 404 "Project not found"; it was 403. */
+  it('returns 404 when service raises TenantAccessError', async () => {
     svc.createQSubmission.mockRejectedValue(new TenantAccessError('nope'));
     const res = await request(app)
       .post('/api/q-sub')
       .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: 'x' });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Project not found' });
   });
 
   it('returns 201 on success', async () => {

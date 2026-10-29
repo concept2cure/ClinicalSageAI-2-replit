@@ -173,7 +173,12 @@ router.post('/', async (req: Request, res: Response) => {
     });
     return created(res, row);
   } catch (err: unknown) {
-    if (err instanceof TenantAccessError) return clientError(res, 403, err.message);
+    /* createQSubmission asks programInOrganization before it inserts, and its one
+       TenantAccessError is that refusal. It answered 403, and 500 when the check
+       could not run. It now answers as the project read above does: 404, or 503
+       (D3, 2026-10-29). No row is written either way. */
+    if (err instanceof TenantAccessError) return notFoundInTenant(res, 'Project');
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'create', err);
   }
 });

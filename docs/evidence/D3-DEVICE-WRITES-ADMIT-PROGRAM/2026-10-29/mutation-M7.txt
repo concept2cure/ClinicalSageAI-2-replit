@@ -1,0 +1,42 @@
+Mutation M7: server/services/q-sub/q-sub.service.ts, the ownership check in createQSubmission removed.
+  That file is not this slice's to edit, so the working tree was not touched. The route's import of the service
+  resolved to a scratch copy (imports made absolute) through a scratch vitest config's resolve.alias.
+  Control: the same harness with an unmutated copy: Tests  39 passed (39)
+  Diff between the copy and the service, imports aside:
+    -    if (!(await programInOrganization(pool, input.programId, organizationId))) {
+    -    throw new TenantAccessError('Project does not belong to this organization');
+    -  }
+    +    /* MUTANT M7: the ownership check is removed. */
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 33 passed (39)
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++     "table": "q_submissions",
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
++     "table": "q_submissions",
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
++     "table": "q_submissions",
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++     "table": "q_submissions",
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 201, …(1) } to deeply equal { status: 404, …(1) }
++       "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++   "status": 201,
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+AssertionError: expected -1 to be greater than or equal to 0
