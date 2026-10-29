@@ -12,7 +12,9 @@
  *     could not be read says "Reviewers could not be read", never "no
  *     reviewers". The sender reminds a member whose turn it is, through the
  *     task's existing notify route.
- *   - RouteForm: named reviewers and one approver, each from a searchable list
+ *   - RouteForm: named reviewers and approvers (RR2: one or more, and the
+ *     reviewers at the same time or one after another, each step with its own
+ *     due date, ordered by Earlier and Later buttons), each from a searchable list
  *     of the members the send would admit (GET …/route-candidates/:vaultId,
  *     validateRouteMember's own answers), the review and approval due dates
  *     (the end of each day in the sender's time zone, which it names) and the
@@ -20,6 +22,9 @@
  *     At a phone's width it is a sheet.
  *   - RouteActDialog: Withdraw, Return for revision and (RR3) Hand back, each
  *     with a reason.
+ *   - RR2: the sender, or an administrator, adds a reviewer to the open route
+ *     (AddReviewerSheet, v2/reviewRoute/AddReviewer.tsx), until an approver
+ *     has signed.
  *   - RR3: the sender, or an administrator, reassigns a member who has not
  *     signed (ReassignDialog: a sheet with the people the reassignment would
  *     admit, …/route-candidates/:vaultId?for=reassign, and a reason); a
@@ -34,12 +39,15 @@ import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/l
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { DueDateField, PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } from '../editor/reviewFields';
+import { routeShapeBody, routeShapeMissing, withReason, type RouteShapeInput } from '../reviewRoute/routeShape';
+import { RouteOrderFields } from '../reviewRoute/RouteOrderFields';
+import { AddReviewerSheet } from '../reviewRoute/AddReviewer';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { lifecyclePost } from './vaultLifecyclePost';
 import { useRouteCandidates } from './vaultRouteCandidates';
 import type { RouteCandidateView } from '../reviewRoute/routeCandidates';
 import { nameOf, utc } from '../reviewRoute/routeText';
-import { memberLine, routeHeadline, type RouteMemberView, type RouteRoundView } from '../reviewRoute/routeRound';
+import { mayAddReviewer, memberLine, routeHeadline, waitingApprovers, type RouteMemberView, type RouteRoundView } from '../reviewRoute/routeRound';
 import { RouteHistory } from '../reviewRoute/RouteHistory';
 import { ReassignDialog } from './VaultRouteReassign';
 
@@ -93,7 +101,25 @@ export interface RouteReassignContext {
 const reassignable = (m: RouteMemberView, round: RouteRoundView) =>
   round.route.status === 'open' && (m.outcome === 'pending' || m.outcome === 'handed back');
 
-/** Every named member and what each has done; the sender reminds whoever's turn it is, and the sender or an administrator reassigns. */
+/** Add a reviewer (RR2): offered to the sender or an administrator on an open route until an approver has signed. */
+function AddReviewerControl({ round, title, reassign }: { round: RouteRoundView; title: string; reassign: RouteReassignContext }) {
+  const [adding, setAdding] = useState(false);
+  if (!mayAddReviewer(round)) return null;
+  return (
+    <>
+      <button type="button" className="sp-ask" onClick={() => setAdding(true)} data-testid="vr-add-reviewer">Add a reviewer</button>
+      {adding ? (
+        <AddReviewerSheet idPrefix="vr-add" testId="vault-route-add" title={title}
+          candidatesUrl={`/api/regulatory/documents/route-candidates/${encodeURIComponent(reassign.vaultId)}?for=add`}
+          sequential={round.route.order === 'sequential'} waitingApprovers={waitingApprovers(round)} audit="this version’s audit trail"
+          post={(body) => lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(reassign.canonicalId)}/review-route/members`, body, 'The reviewer was not added.')}
+          onClose={() => setAdding(false)} onDone={() => { setAdding(false); reassign.onChanged(); }} />
+      ) : null}
+    </>
+  );
+}
+
+/** Every named member and what each has done; the sender reminds whoever's turn it is, and the sender or an administrator reassigns or adds a reviewer. */
 export function RouteRoundPanel({ view, meId, title, canRemind, reassign }: {
   view: RouteView;
   meId: number | null;
@@ -147,6 +173,7 @@ export function RouteRoundPanel({ view, meId, title, canRemind, reassign }: {
         ))}
       </ul>
       {note ? <span className="vr-round-m" role="status">{note}</span> : null}
+      {mayReassign && reassign ? <AddReviewerControl round={round} title={title} reassign={reassign} /> : null}
       <RouteHistory history={round.history} />
       {reassigning && reassign ? (
         <ReassignDialog member={reassigning} vaultId={reassign.vaultId} canonicalId={reassign.canonicalId} title={title}
@@ -184,39 +211,18 @@ function NotOffered({ candidates }: { candidates: RouteCandidateView[] }) {
 
 export type RouteFormMode = 'send' | 'resend' | 'name';
 
-export interface RouteFormInput {
-  reviewers: string[];
-  approver: string | null;
-  reviewDue: string;
-  approvalDue: string;
+export interface RouteFormInput extends RouteShapeInput {
   reason: string;
 }
 
 /** What Send is waiting for, in words; empty when the form can be sent. */
 export function routeFormMissing(f: RouteFormInput): string[] {
-  const missing: string[] = [];
-  if (f.reviewers.length === 0) missing.push('Choose at least one reviewer.');
-  if (!f.approver) missing.push('Choose the approver.');
-  if (!f.reviewDue) missing.push('Give the date the reviews are due.');
-  if (!f.approvalDue) missing.push('Give the date the approval is due.');
-  if (f.reviewDue && f.approvalDue && f.approvalDue < f.reviewDue) missing.push('The approval is due on or after the reviews.');
-  const reason = reviewReasonProblem(f.reason);
-  if (reason) missing.push(reason);
-  return missing;
+  return withReason(routeShapeMissing(f, { reviewersOptional: false, approverMissing: 'Choose the approver.' }), f.reason);
 }
 
-/** The body the route acts take: one approver, parallel reviewers (RR1a's shape; RR2 adds more). */
+/** The body the route acts take (RR2: one or more approvers, reviewers at the same time or one after another). */
 export function routeBody(f: RouteFormInput): { reason: string; route: Record<string, unknown> } {
-  return {
-    reason: f.reason.trim(),
-    route: {
-      reviewers: f.reviewers.map(Number),
-      approvers: f.approver ? [Number(f.approver)] : [],
-      order: 'parallel',
-      reviewDueDate: f.reviewDue,
-      approvalDueDate: f.approvalDue,
-    },
-  };
+  return { reason: f.reason.trim(), route: routeShapeBody(f) };
 }
 
 /** Send: start the version's record (or find it) and move it into review on the named route; or (re-)name a route on a record in review. */
@@ -245,28 +251,28 @@ function RouteFields({ candidates, zone, f, set }: {
   f: RouteFormInput;
   set: (patch: Partial<RouteFormInput>) => void;
 }) {
+  const names = new Map(candidates.map((c) => [String(c.id), c.name]));
   return (
     <>
       <fieldset className="de-field" data-testid="vr-reviewers">
         <legend className="de-label">Reviewers<span className="req">*</span></legend>
         <div className="de-desc">Each named reviewer signs the review of this version. Only members the route would admit are listed.</div>
         <PeoplePicker name="vr-reviewers" multiple searchLabel="Find a reviewer" testIdPrefix="vr-reviewer"
-          options={optionsFor(candidates, 'reviewer', f.approver ? [f.approver] : [], 'Chosen as the approver.')}
+          options={optionsFor(candidates, 'reviewer', f.approvers, 'Chosen as an approver.')}
           selected={f.reviewers} onChange={(ids) => set({ reviewers: ids })} />
       </fieldset>
+      <RouteOrderFields idPrefix="vr" f={f} nameOf={(id) => names.get(id) ?? `Account #${id}`} set={set} today={today()} />
       <fieldset className="de-field" data-testid="vr-approver">
-        <legend className="de-label">Approver<span className="req">*</span></legend>
-        <div className="de-desc">The approver signs once every reviewer has; their signature approves the version.</div>
-        <PeoplePicker name="vr-approver" multiple={false} searchLabel="Find the approver" testIdPrefix="vr-approver"
+        <legend className="de-label">Approvers<span className="req">*</span></legend>
+        <div className="de-desc">Every approver named signs once every reviewer has; the last signature approves the version.</div>
+        <PeoplePicker name="vr-approver" multiple searchLabel="Find an approver" testIdPrefix="vr-approver"
           options={optionsFor(candidates, 'approver', f.reviewers, 'Chosen as a reviewer.')}
-          selected={f.approver ? [f.approver] : []} onChange={(ids) => set({ approver: ids[0] ?? null })} />
+          selected={f.approvers} onChange={(ids) => set({ approvers: ids })} />
       </fieldset>
       <NotOffered candidates={candidates} />
       <div className="vr-due">
-        <DueDateField id="vr-review-due" label="Reviews due" value={f.reviewDue} onChange={(v) => set({ reviewDue: v })}
-          required min={today()} testId="vr-review-due" />
         <DueDateField id="vr-approval-due" label="Approval due" value={f.approvalDue} onChange={(v) => set({ approvalDue: v })}
-          required min={f.reviewDue || today()} testId="vr-approval-due" />
+          required min={today()} testId="vr-approval-due" />
       </div>
       <div className="de-desc" data-testid="vr-zone">Each date is the end of that day in {zone}, your notification time zone.</div>
       <ReasonField id="vr-reason" label="Reason for sending" value={f.reason} onChange={(v) => set({ reason: v })}
@@ -276,7 +282,7 @@ function RouteFields({ candidates, zone, f, set }: {
   );
 }
 
-/** The route form: named reviewers, one approver, two due dates and a reason. A sheet at a phone's width. */
+/** The route form: named reviewers (in order, one after another), approvers, due dates and a reason. A sheet at a phone's width. */
 export function RouteForm({ mode, vaultId, canonicalId, title, versionLabel, hashPrefix, onClose, onSent }: {
   mode: RouteFormMode;
   vaultId: string;
@@ -288,7 +294,7 @@ export function RouteForm({ mode, vaultId, canonicalId, title, versionLabel, has
   onSent: () => void;
 }) {
   const read = useRouteCandidates(vaultId);
-  const [f, setF] = useState<RouteFormInput>({ reviewers: [], approver: null, reviewDue: '', approvalDue: '', reason: '' });
+  const [f, setF] = useState<RouteFormInput>({ reviewers: [], approvers: [], order: 'parallel', reviewDue: '', stepDue: [], approvalDue: '', reason: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useDialog(() => { if (!busy) onClose(); });

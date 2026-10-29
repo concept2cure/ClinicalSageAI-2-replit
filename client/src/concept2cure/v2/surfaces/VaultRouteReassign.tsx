@@ -22,9 +22,9 @@ import { PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } fro
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { lifecyclePost } from './vaultLifecyclePost';
 import { useRouteCandidates } from './vaultRouteCandidates';
-import type { RouteCandidateView } from '../reviewRoute/routeCandidates';
 import { nameOf, work } from '../reviewRoute/routeText';
 import type { RouteMemberView } from '../reviewRoute/routeRound';
+import { NotOfferedForRole } from '../reviewRoute/AddReviewer';
 
 // ── Reassign (§2.10) ─────────────────────────────────────────────────────────
 
@@ -35,20 +35,6 @@ export function reassignMissing(to: string | null, reason: string): string[] {
   const problem = reviewReasonProblem(reason);
   if (problem) missing.push(problem);
   return missing;
-}
-
-/** The members not offered for this role, each with the validator's sentence. */
-function NotOfferedForRole({ candidates, role }: { candidates: RouteCandidateView[]; role: 'reviewer' | 'approver' }) {
-  const out = candidates.filter((c) => c[role] !== null);
-  if (out.length === 0) return null;
-  return (
-    <details className="de-field" data-testid="vr-reassign-not-offered">
-      <summary className="de-desc">{out.length === 1 ? 'One member is not offered' : `${out.length} members are not offered`}, and why</summary>
-      <ul className="vr-members">
-        {out.map((c) => <li key={c.id} className="vr-member de-desc">{c[role]!.message}</li>)}
-      </ul>
-    </details>
-  );
 }
 
 /**

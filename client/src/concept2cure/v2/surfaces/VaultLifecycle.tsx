@@ -53,7 +53,7 @@ import {
   type RouteFormMode,
   type RouteView,
 } from './VaultReviewRoute';
-import type { RouteRoundView } from '../reviewRoute/routeRound';
+import { approvalShare, type RouteRoundView } from '../reviewRoute/routeRound';
 
 export interface VaultSignOff {
   printedName: string | null;
@@ -266,12 +266,15 @@ export function whoMaySign(
   return `Not assigned to one person. Can ${act}: ${list}.`;
 }
 
+/** The signed-in account's id, as the round names it. */
+const accountIdOf = (authUser: AuthUser | null): number | null => (authUser?.id && /^\d+$/.test(authUser.id) ? Number(authUser.id) : null);
+
 function useActor(): { actor: Actor; authUser: AuthUser | null } {
   const authUser = useAuthUser();
   return {
     authUser,
     actor: {
-      id: authUser?.id && /^\d+$/.test(authUser.id) ? Number(authUser.id) : null,
+      id: accountIdOf(authUser),
       cannotAuthor: rolesCannotAuthor(authUser?.roles ?? []),
       admin: (authUser?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin'),
     },
@@ -280,12 +283,18 @@ function useActor(): { actor: Actor; authUser: AuthUser | null } {
 
 // ── The actions on the current version ──────────────────────────────────────
 
-/** What the approval dialog says about the file and the versions it supersedes. */
-function approveMeta(supersedes: string[]): string {
+/**
+ * What the approval dialog says about the file and the versions it supersedes.
+ * On a route with more approvers (RR2, NEW-4), which approval the reader's is:
+ * the version is approved by the last one.
+ */
+function approveMeta(supersedes: string[], share: { k: number; n: number } | null): string {
+  const when = share && share.k < share.n ? 'once every named approver has signed' : 'when you sign';
   return (
+    (share && share.n > 1 ? `Your approval is ${share.k} of ${share.n} required: the version is approved once every named approver has signed. ` : '') +
     "Your approval applies to this version's stored file as it is now. " +
     (supersedes.length > 0
-      ? `${supersedes.join(', ')} ${supersedes.length === 1 ? 'becomes' : 'become'} superseded when you sign.`
+      ? `${supersedes.join(', ')} ${supersedes.length === 1 ? 'becomes' : 'become'} superseded ${when}.`
       : 'No earlier version of this document is approved, so none is superseded.')
   );
 }
@@ -317,7 +326,7 @@ function SignOffDialog({ signing, p, authUser, onClose, annotationNote }: {
       targetMeta={
         (review
           ? "Your review applies to this version's stored file as it is now. A changed file is a new version and needs its own review."
-          : approveMeta(p.supersedes)) +
+          : approveMeta(p.supersedes, p.lifecycle?.round ? approvalShare(p.lifecycle.round, accountIdOf(authUser)) : null)) +
         (annotationNote ? ` When this dialog opened: ${annotationNote} Signing does not resolve annotations; they stay on each version's record.` : '')
       }
       meanings={review ? ['review'] : ['approval']}
