@@ -29,12 +29,41 @@
  * Explicit immutable receipt retention is read from the same offboarding policy
  * and reported separately; no name pattern or baseline expansion exempts content.
  *
+ * ── The second question: does the purge get to the end? (2026-10-29) ─────────
+ * The purge deletes the list IN ORDER inside one transaction, and rethrows any
+ * error but 42P01/42703. So a foreign key with no delete action (NO ACTION or
+ * RESTRICT), from a table the purge has not yet emptied to a table it deletes,
+ * fails that DELETE with 23503 for any tenant holding one such row, and the
+ * WHOLE erasure rolls back. So does ON DELETE SET NULL on a NOT NULL column
+ * (23502). The residue question above is a set question and could not see it:
+ * risk_items aborted every purge of a tenant with a hazard under a project
+ * (07d0116f9), and on 2026-10-29 the install-fresh + deploy-migrate schema had
+ * 105 such keys into projects, client_workspaces, documents and
+ * regulatory_programs (docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/).
+ *
+ * This walks the list as a sequence over the live catalog. Each entry deletes
+ * its table when the table exists and has organization_id, or has a predicate
+ * in PURGE_PARENT_SCOPED; otherwise the purge skips it (42703) and so does
+ * this. Each delete also takes every table ON DELETE CASCADE reaches from it,
+ * in the same statement. A key fails here when its referenced table is deleted
+ * and its referencing table is not deleted before it, or in that same
+ * statement. The exceptions are named, each with its reason, never baselined:
+ * PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED (tenant-offboarding.ts),
+ * the tables whose rows the purge must not erase, so a tenant holding one is
+ * not purged until a decision is made about them. Those are also not residue.
+ *
+ * Not modelled: what a door function deletes beyond the table its entry names
+ * (company_document_designs' disposal also deletes c2c_template_specs; the Vault
+ * door, vault.document_archives). Those deletes run inside the door, in its own
+ * order.
+ *
  * Run against a provisioned database (the blank-db-provisioning CI job).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 import { stripComments } from './lib/strip-comments.mjs';
+import { blockingKeys, DEL_ACTION, FOREIGN_KEYS_SQL, TABLES_SQL } from './lib/purge-order.mjs';
 
 const repoRoot = process.cwd();
 const OFFBOARDING = path.join(repoRoot, 'server', 'services', 'tenant', 'tenant-offboarding.ts');
@@ -70,7 +99,20 @@ function purgeChildTables() {
      next real block comment, silently dropping every entry in between — which
      this gate would then report as residue the purge does not reach. */
   const body = stripComments(m[1]);
-  const literals = [...body.matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  /* An entry `...NAME` splices in a frozen list a sibling module declares
+     (purge-referrers.ts holds the 2026-10-29 block), in place, so the order
+     read here is the order the purge runs. One it cannot resolve fails closed. */
+  const literals = [];
+  for (const x of body.matchAll(/'([^']+)'|\.\.\.([A-Za-z_$][\w$]*)/g)) {
+    if (x[1] !== undefined) { literals.push(x[1]); continue; }
+    const spread = declaredBody(x[2], '[', '])');
+    if (!spread) {
+      console.error(`❌ purge-coverage: cannot resolve the spread ...${x[2]} in PURGE_CHILD_TABLES.`);
+      console.error('   Refusing to measure a list this gate could not fully read.');
+      process.exit(1);
+    }
+    literals.push(...[...spread.body.matchAll(/'([^']+)'/g)].map((y) => y[1]));
+  }
   if (literals.length === 0) {
     console.error('❌ purge-coverage: PURGE_CHILD_TABLES parsed to zero entries — broken scan.');
     process.exit(1);
@@ -105,7 +147,9 @@ function purgeChildTables() {
         `scope (it measures public.* only): ${outOfScope.join(', ')}`,
     );
   }
-  return tables;
+  // The residue question reads the public entries as a set; the order question
+  // below reads every entry, in order.
+  return { tables, ordered: literals };
 }
 
 /** Read the exact named retention policy, including its nonempty justification. */
@@ -125,6 +169,68 @@ function retainedRecords() {
     console.error(`❌ purge-coverage: cannot read PURGE_RETAINED_RECORDS — ${error.message}`);
     process.exit(1);
   }
+}
+
+/**
+ * PURGE_REFERRERS_NOT_ERASED: tables whose rows the purge does not erase although
+ * a row of theirs can name a row it deletes with no delete action, each with its
+ * reason. JSON-shaped, like PURGE_RETAINED_RECORDS. Absent, it is empty, which
+ * only makes this gate stricter; present but unreadable, it fails closed.
+ */
+function referrersNotErased() {
+  const declared = declaredBody('PURGE_REFERRERS_NOT_ERASED', '{', '})');
+  if (!declared) return {};
+  try {
+    const policy = JSON.parse(`{${declared.body.replace(/,\s*$/, '')}}`);
+    for (const [table, reason] of Object.entries(policy)) {
+      if (!/^[a-z][a-z0-9_]*$/.test(table) || typeof reason !== 'string' || reason.trim().length < 10) {
+        throw new Error('every exact public table needs a nonempty reason');
+      }
+    }
+    return policy;
+  } catch (error) {
+    console.error(`❌ purge-coverage: cannot read PURGE_REFERRERS_NOT_ERASED — ${error.message}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * The service files the purge's literals live in: the list is in OFFBOARDING,
+ * and parts of it and its maps are split into sibling modules beside it.
+ */
+const PURGE_SOURCES = [
+  OFFBOARDING,
+  path.join(repoRoot, 'server', 'services', 'tenant', 'purge-parent-scope.ts'),
+  path.join(repoRoot, 'server', 'services', 'tenant', 'purge-referrers.ts'),
+];
+
+/**
+ * The body of `export const NAME … = Object.freeze(<open>…<close>)` in whichever
+ * purge source declares it, comments stripped; null when none does. Declared in
+ * more than one, it fails closed: two copies are how a list and its reader drift.
+ */
+function declaredBody(name, open, close) {
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`^export\\s+const\\s+${name}\\b[^=]*=\\s*Object\\.freeze\\(${esc(open)}([\\s\\S]*?)${esc(close)}`, 'm');
+  const found = PURGE_SOURCES.filter((f) => fs.existsSync(f))
+    .map((f) => ({ f, m: stripComments(fs.readFileSync(f, 'utf8')).match(re) }))
+    .filter((d) => d.m);
+  if (found.length > 1) {
+    console.error(`❌ purge-coverage: ${name} is declared in more than one service file.`);
+    process.exit(1);
+  }
+  return found.length ? { file: found[0].f, body: found[0].m[1] } : null;
+}
+
+function parentScopedTables() {
+  const declared = declaredBody('PURGE_PARENT_SCOPED', '{', '});');
+  if (!declared) return [];
+  const keys = [...declared.body.matchAll(/^\s*'([a-z0-9_]+(?:\.[a-z0-9_]+)?)'\s*:/gm)].map((x) => x[1]);
+  if (keys.length === 0) {
+    console.error(`❌ purge-coverage: could not read the keys of PURGE_PARENT_SCOPED in ${path.relative(repoRoot, declared.file)}.`);
+    process.exit(1);
+  }
+  return keys;
 }
 
 const RESIDUE_SQL = `
@@ -185,9 +291,22 @@ try {
     process.exit(1);
   }
 
-  const tables = purgeChildTables();
+  const { tables, ordered } = purgeChildTables();
   const retained = retainedRecords();
-  const retainedNames = Object.keys(retained);
+  const notErased = referrersNotErased();
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const twice = Object.keys(notErased).filter((t) => own(retained, t));
+  if (twice.length) {
+    console.error(`❌ purge-coverage: named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED: ${twice.join(', ')}`);
+    process.exit(1);
+  }
+  const listedHeld = Object.keys(notErased).filter((t) => ordered.includes(t) || ordered.includes(`public.${t}`));
+  if (listedHeld.length) {
+    console.error(`❌ purge-coverage: PURGE_REFERRERS_NOT_ERASED names table(s) the purge list erases: ${listedHeld.join(', ')}`);
+    process.exit(1);
+  }
+  const held = { ...retained, ...notErased };
+  const retainedNames = Object.keys(held);
   const { rows } = await client.query(RESIDUE_SQL, [tables]);
   const allResidue = rows.map((r) => r.t);
   const { rows: visibleRetained } = await client.query(
@@ -201,10 +320,37 @@ try {
     console.error(`❌ purge-coverage: retained evidence is reachable by purge: ${reachedRetained.join(', ')}`);
     process.exit(1);
   }
-  const retainedHere = allResidue.filter((t) => Object.prototype.hasOwnProperty.call(retained, t));
-  const residue = allResidue.filter((t) => !Object.prototype.hasOwnProperty.call(retained, t));
+  const retainedHere = allResidue.filter((t) => own(retained, t));
+  const notErasedHere = allResidue.filter((t) => own(notErased, t));
+  const residue = allResidue.filter((t) => !own(held, t));
   console.info(`   records with explicit retention policy (regulated content can block erasure): ${retainedHere.length}`);
   for (const table of retainedHere) console.info(`     ${table}: ${retained[table]}`);
+  if (Object.keys(notErased).length) {
+    console.info(`   tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): ${notErasedHere.length}`);
+    for (const table of notErasedHere) console.info(`     ${table}: ${notErased[table]}`);
+  }
+
+  // The order question (header, "does the purge get to the end?").
+  const { rows: fkRows } = await client.query(FOREIGN_KEYS_SQL);
+  const { rows: tableRows } = await client.query(TABLES_SQL);
+  const keys = blockingKeys(fkRows, tableRows, ordered, parentScopedTables());
+  const bare = (t) => t.replace(/^public\./, '');
+  const heldKeys = keys.filter((k) => own(held, bare(k.child)));
+  const stopping = keys.filter((k) => !own(held, bare(k.child)));
+  const describe = (k) => `${k.child} (${k.cols.join(', ')}) → ${k.parent}, ${DEL_ACTION[k.del]}${k.del === 'n' || k.del === 'd' ? ' on a NOT NULL column' : ''} [${k.conname}]`;
+  if (heldKeys.length) {
+    console.info(`   keys from a table the purge does not erase (a tenant holding such a row is not purged): ${heldKeys.length}`);
+    for (const k of heldKeys) console.info(`     ${describe(k)}`);
+  }
+  if (stopping.length && !writeBaseline) {
+    console.error(`❌ purge-coverage: ${stopping.length} foreign key(s) stop a tenant purge part-way:`);
+    for (const k of stopping) console.error(`  ✗ ${describe(k)}: ${k.why}`);
+    console.error('\nThe purge deletes the list in order in one transaction. For a tenant holding one such row, the');
+    console.error('referenced DELETE fails (23503, or 23502 for SET NULL on a NOT NULL column) and the WHOLE erasure');
+    console.error('rolls back. List the referencing table in PURGE_CHILD_TABLES before the table it names (with a');
+    console.error('PURGE_PARENT_SCOPED predicate when it has no organization_id), or, when its rows must not be erased,');
+    console.error('name it with its reason in PURGE_REFERRERS_NOT_ERASED.');
+  }
 
   if (writeBaseline) {
     /* A table that DISAPPEARED from the residue is not automatically a gain.
@@ -296,6 +442,8 @@ try {
     process.exit(1);
   }
 
+  if (stopping.length) process.exit(1);
+  console.info(`✅ purge-coverage: no foreign key stops the purge part-way (${keys.length} from tables it does not erase, each named).`);
   console.log(
     `✅ purge-coverage: ${residue.length} org-keyed tables outside the purge reach ` +
       `(baseline ${known.size}, new 0${removed.length ? `, ${removed.length} now covered` : ''}).`,

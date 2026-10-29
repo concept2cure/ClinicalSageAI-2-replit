@@ -93,7 +93,14 @@ import { StorageIntegrityError } from '../../services/storage/storage-provider.j
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
-import { artifactGovernance, readArtifactRegistry, type ArtifactRegistryRow } from '../../services/artifact-registry-read.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+  type ArtifactRegistryRow,
+} from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
@@ -128,6 +135,7 @@ interface VaultDoc {
   docId?: string;
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  /** An upload's stored file size; on an artifact, its stored content's size (formatContentBytes). */
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -1147,23 +1155,13 @@ type ArtifactsBranchResult =
   | { kind: 'empty'; block: GovernedArtifactsBlock }
   | { kind: 'unaddressable'; reason: string };
 
-/** The registry's status in the Vault chip's vocabulary. An unrecognised value
- *  is passed through, and the chip says "Status unavailable" rather than a
- *  status nobody recorded. */
-function artifactLeafStatus(raw: string | null): string {
-  switch (raw) {
-    case 'draft': return 'draft';
-    case 'review': return 'review';
-    case 'approved': return 'approved';
-    case 'locked': return 'final';
-    default: return raw || 'unknown';
-  }
-}
+/* The registry's status in the Vault chip's vocabulary is artifactRegistryStatus
+   in the shared read, where it moved (slice B, 2026-10-29) so the Artifacts
+   center's rows say it the same way in the shared manifest. */
 
 export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
   const g = artifactGovernance(row);
-  const raw = row.ctd_section?.trim() || null;
-  const section = normalizeCtdCode(raw) ?? raw;
+  const section = artifactCtdSection(row.ctd_section);
   const title = row.title || section || 'Untitled artifact';
   const author = row.author_name ?? null;
   const version = row.version == null ? null : Number(row.version);
@@ -1173,7 +1171,7 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     num: section ?? '—',
     title,
     type: g.kind,
-    status: artifactLeafStatus(row.status),
+    status: artifactRegistryStatus(row.status),
     // The one completion definition the rest of this read uses (approved or
     // locked is 100, anything else 0).
     pct: sectionCompletionPct(row.status),
@@ -1182,6 +1180,9 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     updated: relativeTime(row.updated_at),
     preview: [title, section ? `CTD §${section}` : null, origin].filter(Boolean).join(' · '),
     src: 'artifact',
+    // The stored content's size, as the Artifacts center states it (slice B: the
+    // two screens share one manifest). Not a rendered file's size: none is stored.
+    sizeLabel: formatContentBytes(Number(row.content_bytes)),
     artifact: {
       artifactId: row.artifact_id,
       kind: g.kind,

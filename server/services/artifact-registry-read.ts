@@ -34,6 +34,7 @@
  * on it (scripts/ci/check-json-operator-types.mjs).
  */
 import { pool } from '../db.js';
+import { normalizeCtdCode } from '../../shared/regulatory/section-code.js';
 import {
   artifactOrigin,
   artifactSignatureFacts,
@@ -167,6 +168,44 @@ export function deriveArtifactFormat(category: string | null | undefined): strin
   const c = (category ?? '').toLowerCase().trim();
   if (!c || c === 'document') return 'docx';
   return c;
+}
+
+/*
+ * One row's section, status and size, said the same way on both screens (fold
+ * F3 slice B, 2026-10-29). Both screens export one CSV manifest of these rows
+ * (client artifactManifest.ts), so a row must not read one way in the Vault and
+ * another in the Artifacts center. Moved here, not copied: the size formatter
+ * was the Artifacts center's (formatBytes), the status mapping the Vault
+ * branch's (artifactLeafStatus), the section rule the Vault leaf's.
+ */
+
+/** The row's CTD section in canonical form, or the recorded text when it is not a code; null when none. */
+export function artifactCtdSection(raw: string | null | undefined): string | null {
+  const trimmed = raw?.trim() || null;
+  return normalizeCtdCode(trimmed) ?? trimmed;
+}
+
+/**
+ * The registry's status in the Vault chip's vocabulary. An unrecognised value
+ * is passed through, and the chip says "Status unavailable" rather than a
+ * status nobody recorded.
+ */
+export function artifactRegistryStatus(raw: string | null | undefined): string {
+  switch (raw) {
+    case 'draft': return 'draft';
+    case 'review': return 'review';
+    case 'approved': return 'approved';
+    case 'locked': return 'final';
+    default: return raw || 'unknown';
+  }
+}
+
+/** Human byte size of the STORED content (octet_length), not of a rendered file: '182 KB', '1.4 MB'. */
+export function formatContentBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /** What both screens show of one row's governance. */

@@ -1,0 +1,185 @@
+# Green: the five new or extended suites, on the working tree over eeaf0ac39 (fold F3 slice B, 2026-10-29).
+# npx vitest run <the five files>; lines trimmed to the verdicts.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Vault exports the branch’s rows as CSV, with their governance
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD section, grouped by CTD module
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, recorded hash, signature, sources, review and origin
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > names an origin only where the row records one
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reports the status breakdown and the count, and the count joins documentCount
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the organization and the program, newest first, one past the window
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a real failure of the registry read is a failure of the read, not an empty branch
+ ✓ server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read
+ ✓ server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > says not recorded as null, never a filled-in value
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export to an organization entitled to the Vault only
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses the versions and audit read to that organization, as before: the prefix is not claimed here
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses all three to an organization entitled to neither
+ ✓ server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged
+ ✓ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > names each version’s author, or says the user id when no name may be shown
+ ✓ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > a name lookup that fails fails the read, never an unnamed list
+ ✓ server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > still answers 404 for an artifact that is not this project’s
+ Test Files  5 passed (5)
+      Tests  41 passed (41)
+
+# Keep-green, client: 58 listed files + adminLegalHolds, authoringVaultPlacementFlow, shellNav
+ Test Files  61 passed (61)
+      Tests  511 passed (511)
+
+# Keep-green, server: 68 files
+ Test Files  68 passed (68)
+      Tests  1006 passed (1006)
+
+# The keep-green file lists:
+client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noInventedRecord.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx
+client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts
+client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx
+client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx
+client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx
+client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx
+client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx
+client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx
+client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx
+client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx
+client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts
+client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx
+client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx
+client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx
+client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx
+client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx
+client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx
+client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx
+client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx
+client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts
+client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx
+client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx
+client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx
+client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx
+client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx
+client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx
+client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx
+client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx
+client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts
+client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx
+client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts
+client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx
+client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx
+client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx
+client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx
+client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx
+client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx
+client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx
+client/src/concept2cure/v2/__tests__/adminLegalHolds.test.tsx
+client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx
+server/middleware/__tests__/core-project-record-gating.test.ts
+server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts
+server/middleware/__tests__/ivd-board-under-diagnostics.test.ts
+server/middleware/__tests__/launch-scope-api-gate.test.ts
+server/middleware/__tests__/launch-scope-device-features.test.ts
+server/middleware/__tests__/moduleEntitlementGate.test.ts
+server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts
+server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+server/routes/__tests__/artifacts-center-export-governance.test.ts
+server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+server/routes/__tests__/vault-data-room-counts.test.ts
+server/routes/__tests__/vault-data-room-file.test.ts
+server/routes/__tests__/vault-download.test.ts
+server/routes/__tests__/vault-file-authorization.test.ts
+server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts
+server/routes/__tests__/vault-ingest-lineage.test.ts
+server/routes/__tests__/vault-ingest-refusal-status.test.ts
+server/routes/__tests__/vault-ingest-type-binding.test.ts
+server/routes/__tests__/vault-legal-holds-labels.pglite.integration.test.ts
+server/routes/__tests__/vault-legal-holds-launch-scope.test.ts
+server/routes/__tests__/vault-legal-holds.test.ts
+server/routes/__tests__/vault-search.test.ts
+server/routes/__tests__/vault-tree-bounded.test.ts
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts
+server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+server/routes/c2c/__tests__/c2c-router.parity.test.ts
+server/routes/c2c/__tests__/project-vault-branches.test.ts
+server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+server/routes/c2c/__tests__/project-vault-completion.test.ts
+server/routes/c2c/__tests__/project-vault-document-count.test.ts
+server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+server/routes/c2c/__tests__/vault-document-details-route.test.ts
+server/routes/c2c/__tests__/vault-document-history-route.test.ts
+server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+server/routes/c2c/__tests__/vault-download-integrity.test.ts
+server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+server/services/entitlements/__tests__/access-requests.test.ts
+server/services/entitlements/__tests__/company-documents-launch-claim.test.ts
+server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts
+server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts
+server/services/entitlements/__tests__/enforcement-mode.test.ts
+server/services/entitlements/__tests__/enforcement-observations.test.ts
+server/services/entitlements/__tests__/grant-expiry.test.ts
+server/services/entitlements/__tests__/ind-launch-claim.test.ts
+server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts
+server/services/entitlements/__tests__/launch-scope.test.ts
+server/services/entitlements/__tests__/master-admin-designation.test.ts
+server/services/entitlements/__tests__/master-admin.test.ts
+server/services/entitlements/__tests__/mdx-entitlements.test.ts
+server/services/entitlements/__tests__/module-grants.test.ts
+server/services/entitlements/__tests__/navigation-entitlements.test.ts
+server/services/entitlements/__tests__/reporting-launch-claim.test.ts
+server/services/entitlements/__tests__/require-entitlement.test.ts
+server/services/entitlements/__tests__/resolver-reports-an-unread-layer-as-unread.test.ts
+server/services/vault/__tests__/vault-archive-builder.test.ts
+server/services/vault/__tests__/vault-seal.service.test.ts
+shared/navigation/__tests__/surface-actions.test.ts
+tests/ui-readiness/ui-surface-registry.test.ts

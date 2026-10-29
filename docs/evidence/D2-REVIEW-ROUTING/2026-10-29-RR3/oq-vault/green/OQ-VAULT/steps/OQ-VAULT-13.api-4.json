@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5197/api/regulatory/documents/2cd50b8a-723b-42fa-b795-e45f8f70095e/advance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "to": "in_review",
+      "reason": "OQ-002 step 13: sent for review for validation",
+      "route": {
+        "reviewers": [
+          6
+        ],
+        "approvers": [
+          8
+        ],
+        "reviewDueDate": "2026-11-05",
+        "approvalDueDate": "2026-11-12"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 78,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": false,
+      "error": "MEMBER_IS_AUTHOR",
+      "message": "OQ Runner is an author of this document (Vault uploader, lifecycle record creator), so cannot review or approve it. Nothing was sent."
+    }
+  }
+}

@@ -1,0 +1,279 @@
+Mutations. Each was applied alone to the file(s) named, the test that should catch it was run, and each file was restored only if it still held exactly the mutated bytes, then sha256-checked (mutate.py, session scratchpad). Database: the deploy-shaped one of red.txt.
+
+## Gate mutants, against node scripts/ci/check-purge-coverage.selftest.mjs (53 cases on the unmutated gate)
+G1-G3 and G7 mutate scripts/ci/lib/purge-order.mjs in place; G4-G6, G8 and G9 run a mutated copy of the gate through SELFTEST_GATE_PATH.
+
+### G1-order-ignored
+command exit: 1
+restored byte for byte (sha256): True
+  ✗ FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)
+  ✗ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✗ FAILS on the same spread placed AFTER the table it names — its position is the order
+### G2-no-cascade-closure
+command exit: 1
+restored byte for byte (sha256): True
+  ✗ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✗ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+  ✗ FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it
+  ✗ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✗ FAILS on that referrer once it is not named (its residue baselined, so only the order fails)
+### G3-set-null-not-null-ignored
+command exit: 1
+restored byte for byte (sha256): True
+  ✗ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+### G7-public-only
+command exit: 1
+restored byte for byte (sha256): True
+  ✗ FAILS on a referrer in another schema
+
+### G4-parent-scoped-ignored (selftest exit 1)
+  ✗ quiet — that table with its PURGE_PARENT_SCOPED predicate
+  ✗ FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it
+[ci:purge-coverage:selftest] FAIL — 2/53 case(s) did not hold.
+### G5-held-not-exempt (selftest exit 1)
+  ✗ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✗ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+[ci:purge-coverage:selftest] FAIL — 2/53 case(s) did not hold.
+### G6-not-erased-still-residue (selftest exit 1)
+  ✗ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✗ quiet — an unreached org-keyed table named in PURGE_REFERRERS_NOT_ERASED is not NEW residue
+  ✗ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+[ci:purge-coverage:selftest] FAIL — 3/53 case(s) did not hold.
+### G8-spread-dropped (selftest exit 1)
+  ✗ quiet — entries spread from a sibling module are read in place, before the table they name
+  ✗ FAILS on the same spread placed AFTER the table it names — its position is the order
+  ✗ FAILS closed on a spread no purge source declares
+[ci:purge-coverage:selftest] FAIL — 3/53 case(s) did not hold.
+### G9-not-erased-read-from-offboarding-only (selftest exit 1)
+  ✗ quiet — entries spread from a sibling module are read in place, before the table they name
+  ✗ FAILS on the same spread placed AFTER the table it names — its position is the order
+  ✗ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+  ✗ FAILS closed when PURGE_REFERRERS_NOT_ERASED is declared in two service files
+[ci:purge-coverage:selftest] FAIL — 4/53 case(s) did not hold.
+
+## Product mutants
+gate = ci:purge-coverage on the database; dbtest = tests/db/tenant-purge-blocking-keys.dbtest.ts on a fresh copy; contract = tests/schema-contract/tenant-export-covers-purge.contract.test.ts; pglite = tenant-purge-raw-program-keys.pglite.test.ts; unit = tenant-purge-referrers.test.ts
+
+### M1-gate
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: 2 foreign key(s) stop a tenant purge part-way:
+  ✗ public.project_tasks (project_id) → public.projects, NO ACTION [project_tasks_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_tasks (workflow_stage_id) → public.project_workflow_stages, NO ACTION [project_tasks_workflow_stage_id_project_workflow_stages_id_fk]: the purge never deletes it
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - project_tasks
+
+### M1-dbtest
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it 206ms
+   → update or delete on table "project_workflow_stages" violates foreign key constraint "project_tasks_workflow_stage_id_project_workflow_stages_id_fk" on table "project_tasks"
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 123ms
+   → A's rows the purge left: expected [ 'client_workspaces', …(190) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: A's rows the purge left: expected [ 'client_workspaces', …(190) ] to deeply equal []
+
+### M2-gate
+files: server/services/tenant/purge-referrers.ts, server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: 2 foreign key(s) stop a tenant purge part-way:
+  ✗ public.documents (client_workspace_id) → public.client_workspaces, NO ACTION [documents_client_workspace_id_client_workspaces_id_fk]: the purge deletes it later ('documents', after 'client_workspaces')
+  ✗ public.documents (project_id) → public.projects, NO ACTION [documents_project_id_projects_id_fk]: the purge deletes it later ('documents', after 'projects')
+
+### M2-dbtest
+files: server/services/tenant/purge-referrers.ts, server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it 262ms
+   → update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 81ms
+   → A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table 1181ms
+   → update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+
+### M2-unit
+files: server/services/tenant/purge-referrers.ts, server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > the referrer block > names documents before projects and client_workspaces, which each document names with no cascade 3ms
+   → expected 171 to be less than 169
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-purge-referrers.test.ts > the referrer block > names documents before projects and client_workspaces, which each document names with no cascade
+AssertionError: expected 171 to be less than 169
+
+### M4-dbtest
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 1320ms
+   → B's rows in A's export: expected [ 'owner: project_predictions' ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 111ms
+   → B's rows the purge of A took: expected [ 'project_predictions' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: project_predictions' ] to deeply equal []
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: B's rows the purge of A took: expected [ 'project_predictions' ] to deeply equal []
+
+### M6-gate
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: 1 foreign key(s) stop a tenant purge part-way:
+  ✗ public.cer_sections (report_id) → public.cer_reports, NO ACTION [cer_sections_report_id_cer_reports_report_id_fk]: the purge never deletes it
+
+### M6-dbtest
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 840ms
+   → A's rows the purge erases, missing from A's export: expected [ 'scoped: cer_sections', …(1) ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it 187ms
+   → update or delete on table "cer_reports" violates foreign key constraint "cer_sections_report_id_cer_reports_report_id_fk" on table "cer_sections"
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 57ms
+   → A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ 'scoped: cer_sections', …(1) ] to deeply equal []
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+
+### M6-contract
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export 6ms
+   → the purge destroys these tables but the export does not return them: cer_sections: expected [ 'cer_sections' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export
+AssertionError: the purge destroys these tables but the export does not return them: cer_sections: expected [ 'cer_sections' ] to deeply equal []
+
+### M7-gate
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - review_routes
+
+### M8-gate
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: 2 foreign key(s) stop a tenant purge part-way:
+  ✗ public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.electronic_signatures (version_id) → public.document_versions, NO ACTION [electronic_signatures_version_id_document_versions_id_fk]: the purge never deletes it
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - electronic_signatures
+
+### M9-contract
+files: server/services/tenant-export/tenant-full-export.service.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export 7ms
+   → the purge destroys these tables but the export does not return them: ind_package_plan_documents, document_comments, document_locks, document_versions, section_propagations, section_patches, project_predictions, risk_detections, cer_clinical_evidence, cer_compliance_checks, cer_essential_requirements, cer_exports, cer_faers_data, cer_literature, cer_sections, cer_version_history, cer_workflows, csr_details, fda_510k_stage_progress, ind_package_plan_modalities, ind_package_plan_regions, ind_package_plan_requirements, ind_package_plan_timelines, obligation_updates, report_details: expected [ 'ind_package_plan_documents', …(24) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export
+AssertionError: the purge destroys these tables but the export does not return them: ind_package_plan_documents, document_comments, document_locks, document_versions, section_propagations, section_patches, project_predictions, risk_detections, cer_clinical_evidence, cer_compliance_checks, cer_essential_requirements, cer_exports, cer_faers_data, cer_literature, cer_sections, cer_version_history, cer_workflows, csr_details, fda_510k_stage_progress, ind_package_plan_modalities, ind_package_plan_regions, ind_package_plan_requirements, ind_package_plan_timelines, obligation_updates, report_details: expected [ 'ind_package_plan_documents', …(24) ] to deeply equal []
+
+### M9-dbtest
+files: server/services/tenant-export/tenant-full-export.service.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 809ms
+   → A's rows the purge erases, missing from A's export: expected [ …(106) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ …(106) ] to deeply equal []
+
+### M10-pglite
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > is purged: every one of them goes, and the other tenant keeps all of its own 1627ms
+   → update or delete on table "regulatory_programs" violates foreign key constraint "udi_records_program_id_fkey" on table "udi_records"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > the list names each before the project, and the IVDR module tables before their classification 1664ms
+   → udi_records: expected -1 to be greater than -1
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a udi_records row, is purged, and the other tenant keeps its own 1553ms
+   → update or delete on table "regulatory_programs" violates foreign key constraint "udi_records_program_id_fkey" on table "udi_records"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > is purged: every one of them goes, and the other tenant keeps all of its own
+ FAIL  server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a udi_records row, is purged, and the other tenant keeps its own
+ FAIL  server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > the list names each before the project, and the IVDR module tables before their classification
+AssertionError: udi_records: expected -1 to be greater than -1
+
+### M11-unit
+files: server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > account_canon_resolution_log on an injected list is refused before any query 7ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > account_events on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > ana_outcome_log on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > bundle_execution_receipts on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > cer_approvals on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > data_lineage_records on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > document_audit_trail on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > electronic_signatures on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > evidence_chain_records on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > gate_approvals on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > governance_boundary_transitions on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > immutable_report_records on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > ivdr_cdx_status_history on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > ivdr_evidence_result_history on an injected list is refused before any query 0ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > a table the purge does not erase > ivdr_validation_parameter_history on an injected list is refused before any query 1ms
+   → expected TypeError: Cannot destructure property 'r… to match object { code: 'PURGE_RETAINED_RECORD' }
+
+### M3-dbtest
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 792ms
+   → B's rows in A's export: expected [ 'owner: document_versions' ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it 156ms
+   → update or delete on table "document_versions" violates foreign key constraint "document_comments_version_id_document_versions_id_fk" on table "document_comments"
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 58ms
+   → A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table 434ms
+   → update or delete on table "document_versions" violates foreign key constraint "document_comments_version_id_document_versions_id_fk" on table "document_comments"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: document_versions' ] to deeply equal []
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: A's rows the purge left: expected [ 'client_workspaces', …(191) ] to deeply equal []
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+
+### M5-dbtest
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 990ms
+   → B's rows in A's export: expected [ 'owner: csr_treatment_arms' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: csr_treatment_arms' ] to deeply equal []
+

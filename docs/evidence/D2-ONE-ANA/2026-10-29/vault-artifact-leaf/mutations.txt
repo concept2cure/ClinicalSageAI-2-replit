@@ -1,0 +1,309 @@
+# Mutations of the product code (fold F3 slice B, 2026-10-29).
+#
+# Each mutation was applied to the product file in the working tree, the named suites were run
+# (npx vitest run <files>), and the file was restored from an in-memory copy of its bytes; the
+# SHA-256 before and after is printed on each "restored:" line and matched every time.
+# Runner: tools/mutate.py.txt with tools/mutation-spec.json.
+#
+# M1-M11 and M14-M20 ran on the tree over 6b70fd0a4; M21-M26, and M12-M13 again, ran after the
+# merge at eeaf0ac39. Every mutated file's bytes at run time equal its bytes now (the hashes below
+# are the files as this slice leaves them), except that M12 and M13 first ran on an earlier
+# artifactManifest.ts; they were re-run on the current one, and those re-runs are what is shown.
+# The first run was stopped once, for main's freeze, by SIGINT to the runner while M21 was applied:
+# the runner's finally-block restored the file, every anchor was then checked present once, and
+# M21 was run again from the start.
+#
+# Result: 26 of 26 red.
+
+## M1 — the leaf reads versions from the organization-only device-vault read instead of the project-bound one
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project 5394ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 157ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 162ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 5162ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code 7ms
+      Tests  5 failed | 19 passed (24)
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > reads the leaf’s calls from the Vault’s own code
+AssertionError: expected [ …(2) ] to deeply equal [ …(3) ]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project
+AssertionError: expected ' The version history could not be rea…' to match /v5/
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is
+AssertionError: expected ' The version history could not be rea…' to match /This artifact was not found in your o…/
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history
+AssertionError: expected ' The version history could not be rea…' to match /This feature is not enabled for your …/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M2 — a failed versions read is rendered as an empty history
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history 5174ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 5152ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 5130ms
+      Tests  3 failed | 16 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M3 — every refusal is worded as a failed read (the classifier is skipped)
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 184ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 155ms
+      Tests  2 failed | 17 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is
+AssertionError: expected ' The version history could not be rea…' to match /This artifact was not found in your o…/
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history
+AssertionError: expected ' The version history could not be rea…' to match /This feature is not enabled for your …/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M4 — the audit report is read on selection, writing a provenance record per click
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 143ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 227ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 155ms
+      Tests  3 failed | 16 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded
+AssertionError: expected [ …(6) ] to not include '/api/concept2cure/projects/11111111-1…'
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M5 — a broken hash chain is shown as intact
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 5165ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason
+AssertionError: expected 'Version hashesIntact: each stored ver…' to match /Not intact/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M6 — a failed audit read is shown as an empty report
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 5166ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M7 — the review-gate refusal falls through to the classifier ("your role")
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 215ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why
+AssertionError: expected 'Documents  project vaultVaultIND · 21…' to match /no recorded human review or signature…/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M8 — a module-gate refusal of the download is worded as an outage
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 5226ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed
+AssertionError: expected 'Documents  project vaultVaultIND · 21…' to match /Clinical overview was not downloaded …/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M9 — an export that could not be recorded is worded as a generic failure
+file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 5203ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent
+AssertionError: expected 'Documents  project vaultVaultIND · 21…' to match /could not be recorded, so nothing was…/
+restored: sha256 before 6fb63d48180394f2 after 6fb63d48180394f2 match
+
+## M10 — an artifact leaf keeps "No file to download" (the export is not reached)
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact 756ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 767ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 698ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 720ms
+      Tests  4 failed | 15 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent
+restored: sha256 before e4d2e9a99dadbd1a after e4d2e9a99dadbd1a match
+
+## M11 — the Artifacts center keeps its own manifest copy (not converged)
+file: client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns 18ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+restored: sha256 before 4809247f4b01905e after 4809247f4b01905e match
+
+## M12 — the manifest says a stale signature is a current one
+file: client/src/concept2cure/v2/artifactManifest.ts
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Vault exports the branch’s rows as CSV, with their governance 43ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Vault exports the branch’s rows as CSV, with their governance
+AssertionError: expected [ 'Clinical overview', …(16) ] to deeply equal [ 'Clinical overview', …(16) ]
+restored: sha256 before a8d45a8dad67abd0 after a8d45a8dad67abd0 match
+
+## M13 — the manifest attributes an unrecorded origin to AnA
+file: client/src/concept2cure/v2/artifactManifest.ts
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns 30ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns
+AssertionError: expected [ 'IND cover letter', …(16) ] to deeply equal [ 'IND cover letter', …(16) ]
+restored: sha256 before a8d45a8dad67abd0 after a8d45a8dad67abd0 match
+
+## M14 — Open in editor navigates empty-handed (no authoring.open-document directive)
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document 185ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the artifact in the editor through authoring.open-document
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+restored: sha256 before e4d2e9a99dadbd1a after e4d2e9a99dadbd1a match
+
+## M15 — Ask AnA on an artifact sends the generic prompt
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance 128ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance
+AssertionError: expected 'Summarize Clinical overview and list …' to match /governed artifact “Clinical overview”/
+restored: sha256 before e4d2e9a99dadbd1a after e4d2e9a99dadbd1a match
+
+## M16 — vault.focus-document guesses the first of several matches
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 48ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss
+AssertionError: expected { status: 'applied', …(1) } to deeply equal { status: 'failed', …(1) }
+restored: sha256 before e4d2e9a99dadbd1a after e4d2e9a99dadbd1a match
+
+## M17 — vault.focus-document is not handled by the Vault
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives 34ms
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 36ms
+      Tests  2 failed | 17 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives
+AssertionError: expected { status: 'unavailable', …(1) } to deeply equal { status: 'applied', …(1) }
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss
+AssertionError: expected { status: 'unavailable', …(1) } to deeply equal { status: 'failed', …(1) }
+restored: sha256 before e4d2e9a99dadbd1a after e4d2e9a99dadbd1a match
+
+## M18 — a failed author lookup is swallowed into an unnamed list
+file: server/routes/c2c/artifacts.ts
+tests: server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+verdict: RED (caught)
+ × server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > a name lookup that fails fails the read, never an unnamed list 8ms
+      Tests  1 failed | 2 passed (3)
+ FAIL  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > a name lookup that fails fails the read, never an unnamed list
+AssertionError: expected 200 to be 500 // Object.is equality
+restored: sha256 before b9ae76be4909c017 after b9ae76be4909c017 match
+
+## M19 — the versions read names no author
+file: server/routes/c2c/artifacts.ts
+tests: server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+verdict: RED (caught)
+ × server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > names each version’s author, or says the user id when no name may be shown 22ms
+      Tests  1 failed | 2 passed (3)
+ FAIL  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts > GET …/artifacts/:artifactId/versions — who made each version > names each version’s author, or says the user id when no name may be shown
+AssertionError: expected [ [ 5, 12, undefined ], …(2) ] to deeply equal [ [ 5, 12, 'R. Writer' ], …(2) ]
+restored: sha256 before b9ae76be4909c017 after b9ae76be4909c017 match
+
+## M20 — the Artifacts center row passes the raw registry status (locked, not final)
+file: server/routes/artifacts-center-routes.ts
+tests: server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+verdict: RED (caught)
+ × server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read 26ms
+      Tests  1 failed | 1 passed (2)
+ FAIL  server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read
+AssertionError: expected { id: 'artifact_9', …(18) } to match object { Object (id, size, ...) }
+restored: sha256 before 4010717470fc878b after 4010717470fc878b match
+
+## M21 — the Artifacts center row drops the recorded origin
+file: server/routes/artifacts-center-routes.ts
+tests: server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+verdict: RED (caught)
+ × server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read 23ms
+      Tests  1 failed | 1 passed (2)
+ FAIL  server/routes/__tests__/artifacts-center-manifest-fields.test.ts > GET /api/artifacts-center — the manifest fields > passes through section, status, origin, author and recorded hash from the shared read
+AssertionError: expected { id: 'artifact_9', …(18) } to match object { Object (id, size, ...) }
+restored: sha256 before 4010717470fc878b after 4010717470fc878b match
+
+## M22 — the Vault leaf carries no stored content size
+file: server/routes/c2c/project-vault.ts
+tests: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+verdict: RED (caught)
+ × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest) 9ms
+      Tests  1 failed | 11 passed (12)
+ FAIL  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)
+AssertionError: expected [ [ 'art-9', undefined ], …(1) ] to deeply equal [ [ 'art-9', '2 KB' ], …(1) ]
+restored: sha256 before 03c18dcfae4df9f3 after 03c18dcfae4df9f3 match
+
+## M23 — the vault claim on /api/artifacts-center is removed (HEAD registry)
+file: shared/constants/ui-surface-registry.ts
+tests: server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+verdict: RED (caught)
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export to an organization entitled to the Vault only 9ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged 3ms
+      Tests  2 failed | 3 passed (5)
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > serves the export to an organization entitled to the Vault only
+AssertionError: expected '403 MODULE_NOT_LICENSED' to be 'served' // Object.is equality
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged
+AssertionError: expected [ 'artifacts-center' ] to deeply equal [ 'artifacts-center', 'vault' ]
+restored: sha256 before 842a1316f15a4141 after 842a1316f15a4141 match
+
+## M24 — the claim is moved off the Artifacts center instead of shared
+file: shared/constants/ui-surface-registry.ts
+tests: server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+verdict: RED (caught)
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged 5ms
+      Tests  1 failed | 4 passed (5)
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged
+AssertionError: expected [ 'vault' ] to deeply equal [ 'artifacts-center', 'vault' ]
+restored: sha256 before 842a1316f15a4141 after 842a1316f15a4141 match
+
+## M25 — the vault also claims /api/concept2cure/projects (the widening main declined)
+file: shared/constants/ui-surface-registry.ts
+tests: server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+verdict: RED (caught)
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses the versions and audit read to that organization, as before: the prefix is not claimed here 7ms
+ × server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged 2ms
+      Tests  2 failed | 3 passed (5)
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > refuses the versions and audit read to that organization, as before: the prefix is not claimed here
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+ FAIL  server/middleware/__tests__/vault-artifact-leaf-gate.test.ts > the Vault’s governed-artifact leaf, under module enforcement > only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged
+AssertionError: expected [ 'conversation-thread', …(2) ] to deeply equal [ 'conversation-thread', …(1) ]
+restored: sha256 before 842a1316f15a4141 after 842a1316f15a4141 match
+
+## M26 — the manifest writes a recorded status the Vault has no label for as "Status unavailable"
+file: client/src/concept2cure/v2/artifactManifest.ts
+tests: client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+verdict: RED (caught)
+ × client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns 17ms
+      Tests  1 failed | 18 passed (19)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault and the Artifacts center > the Artifacts center’s export uses the same builder and columns
+AssertionError: expected 'Status unavailable' to be 'archived' // Object.is equality
+restored: sha256 before a8d45a8dad67abd0 after a8d45a8dad67abd0 match

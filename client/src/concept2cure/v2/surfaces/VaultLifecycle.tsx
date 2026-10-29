@@ -17,9 +17,11 @@
  *   - on a named route only a named member whose turn it is signs, and the
  *     approver approves by signing on the route (POST …/sign, meaning
  *     approved); the sender, or an administrator, withdraws; the sender or a
- *     member whose turn it is returns it for revision. A version in review with
- *     no route (it entered review before the cutover) keeps the steps below and
- *     offers Name reviewers;
+ *     member whose turn it is returns it for revision. Since RR3 the sender or
+ *     an administrator reassigns a member who has not signed, and a named
+ *     member hands their own assignment back to the sender. A version in
+ *     review with no route (it entered review before the cutover) keeps the
+ *     steps below and offers Name reviewers;
  *   - Sign review and Approve: the shared Part 11 EsignModal (meaning, reason,
  *     password, and the authenticator code when one is enrolled), forwarded to
  *     the route, which re-verifies the signer in the transaction that records
@@ -372,6 +374,22 @@ interface RoutedPlan {
 }
 
 /**
+ * The route acts this reader is offered: the sender (or an admin) withdraws;
+ * the sender, or a member whose turn it is, returns it; and (RR3) a named
+ * member who has not signed hands their own assignment back, whether or not
+ * their step is open. The server decides each again.
+ */
+function routeActsFor(round: RouteRoundView, me: Actor, myTurn: boolean): RouteAct[] {
+  if (me.cannotAuthor) return [];
+  const sender = me.id !== null && round.route.senderId === me.id;
+  const acts: RouteAct[] = [];
+  if (sender || me.admin) acts.push('withdraw');
+  if (sender || myTurn) acts.push('return');
+  if (round.members.some((m) => m.userId === me.id && m.outcome === 'pending')) acts.push('hand-back');
+  return acts;
+}
+
+/**
  * The plan for a version in review on its route: a named member whose turn it
  * is signs; the sender (or an admin) withdraws; the sender, or a member whose
  * turn it is, returns it. A withdrawn route signs nothing and is sent again;
@@ -382,30 +400,34 @@ function routedPlan(view: RouteView, me: Actor, signing: VaultSigningPosture | n
   if (view.kind !== 'live') return null;
   const { round } = view;
   const mine = round.members.find((m) => m.userId === me.id && m.stepOpen && m.outcome === 'pending') ?? null;
-  const sender = me.id !== null && round.route.senderId === me.id;
-  const acts: RouteAct[] = [];
-  if (!me.cannotAuthor && (sender || me.admin)) acts.push('withdraw');
-  if (!me.cannotAuthor && (sender || mine)) acts.push('return');
+  const acts = routeActsFor(round, me, mine !== null);
   if (!mine) return { step: null, blocked: null, form: null, acts };
   const step = mine.role === 'reviewer' ? 'review' : 'approve';
   return { step, blocked: signingRefusal(step, signing), form: null, acts };
 }
 
 const FORM_LABEL: Record<RouteFormMode, string> = { send: 'Send for review', resend: 'Send again', name: 'Name reviewers' };
-const ACT_LABEL: Record<RouteAct, string> = { withdraw: 'Withdraw', return: 'Return for revision' };
+const ACT_LABEL: Record<RouteAct, string> = { withdraw: 'Withdraw', return: 'Return for revision', 'hand-back': 'Hand back' };
 
 /**
  * The version's route, as it stands: every member and what each has done, or
- * that its reviewers could not be read. On any version with a round; reminders
- * only on the current one.
+ * that its reviewers could not be read, and its naming history. On any
+ * version with a round; reminders and reassignment (RR3) only on the current
+ * one, when the page can re-read it.
  */
-export function VersionRoute({ lifecycle, title, current }: {
+export function VersionRoute({ lifecycle, title, current, vaultId, onChanged }: {
   lifecycle: VaultVersionLifecycle | null | undefined;
   title: string;
   current: boolean;
+  vaultId?: string;
+  /** Re-read the Vault after a reassignment. */
+  onChanged?: () => void;
 }) {
   const { actor } = useActor();
-  return <RouteRoundPanel view={routeView(lifecycle)} meId={actor.id} title={title} canRemind={current} />;
+  const reassign = current && vaultId && onChanged && lifecycle?.canonicalId && !actor.cannotAuthor
+    ? { vaultId, canonicalId: lifecycle.canonicalId, admin: Boolean(actor.admin), onChanged }
+    : undefined;
+  return <RouteRoundPanel view={routeView(lifecycle)} meId={actor.id} title={title} canRemind={current} reassign={reassign} />;
 }
 
 /** Everything the current version offers this reader, decided before anything renders. */

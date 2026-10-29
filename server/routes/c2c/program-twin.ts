@@ -25,7 +25,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 
 const logger = createScopedLogger('concept2cure-program-twin');
 const router = Router();
@@ -35,6 +35,16 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+// Every route here names a project, and none runs before it is admitted
+// (project-access.ts, the check the sibling routers use): 404 for a missing
+// project or another organization's, 403 when the caller's current role or
+// project permission cannot change it, 409 for a write to an archived project,
+// 503 when the check could not run. The CMC and context routes had no check
+// and no organization predicate, so RLS alone stood between tenants and
+// nothing at all between a private project and the rest of its organization
+// (docs/evidence/D6-CMC-TWIN-TENANT/2026-10-29/). Each handler's queries still
+// carry the organization predicate, so neither layer rests on the other.
+router.param('projectId', projectAdmissionMiddleware());
 
 
 /**
@@ -85,7 +95,12 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
       signatures = await db
         .select()
         .from(concept2cureSignatures)
-        .where(inArray(concept2cureSignatures.artifactId, artifactIds));
+        .where(
+          and(
+            inArray(concept2cureSignatures.artifactId, artifactIds),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        );
     }
 
     // Fetch review comments
@@ -94,7 +109,12 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
       reviewComments = await db
         .select()
         .from(concept2cureReviewComments)
-        .where(inArray(concept2cureReviewComments.artifactId, artifactIds));
+        .where(
+          and(
+            inArray(concept2cureReviewComments.artifactId, artifactIds),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        );
     }
 
     // ── Dossier state ──
@@ -282,12 +302,22 @@ router.get(
       const sigs = await db
         .select()
         .from(concept2cureSignatures)
-        .where(eq(concept2cureSignatures.artifactId, artifact.id));
+        .where(
+          and(
+            eq(concept2cureSignatures.artifactId, artifact.id),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        );
 
       const comments = await db
         .select()
         .from(concept2cureReviewComments)
-        .where(eq(concept2cureReviewComments.artifactId, artifact.id));
+        .where(
+          and(
+            eq(concept2cureReviewComments.artifactId, artifact.id),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        );
 
       // ── Placement verification ──
       const placementFindings: {
@@ -640,13 +670,24 @@ const cmcDataSchema = z.object({
   impurities: z.array(z.any()).optional(),
 });
 
+/** This organization's project row, or none: the route's own predicate, beside admission. */
+async function organizationProject(projectId: number, organizationId: number) {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+    .limit(1);
+  return project;
+}
+
 // GET CMC data for a project
 router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    const project = await organizationProject(projectId, organizationId);
     if (!project) return sendError(res, 404, 'Project not found');
 
     const metadata = (project.metadata as Record<string, any>) || {};
@@ -667,13 +708,14 @@ router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
 // SAVE CMC data for a project
 router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
     const parsed = cmcDataSchema.safeParse(req.body);
     if (!parsed.success) return sendError(res, 400, `Invalid CMC data: ${parsed.error.message}`);
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    const project = await organizationProject(projectId, organizationId);
     if (!project) return sendError(res, 404, 'Project not found');
 
     const existingMetadata = (project.metadata as Record<string, any>) || {};
@@ -688,7 +730,12 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
       cmcLastUpdated: new Date().toISOString(),
     };
 
-    await db.update(projects).set({ metadata: updatedMetadata }).where(eq(projects.id, projectId));
+    const saved = await db
+      .update(projects)
+      .set({ metadata: updatedMetadata })
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+      .returning({ id: projects.id });
+    if (saved.length !== 1) return sendError(res, 404, 'Project not found');
 
     return sendSuccess(res, { saved: true, lastUpdated: updatedMetadata.cmcLastUpdated });
   } catch (error) {
@@ -704,17 +751,18 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
 
 router.get('/projects/:projectId/context', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    const project = await organizationProject(projectId, organizationId);
     if (!project) return sendError(res, 404, 'Project not found');
 
     // Fetch tasks (limit to recent 50 — only 10 are returned to client)
     const tasks = await db
       .select()
       .from(projectTasks)
-      .where(eq(projectTasks.projectId, projectId))
+      .where(and(eq(projectTasks.projectId, projectId), eq(projectTasks.organizationId, organizationId)))
       .orderBy(desc(projectTasks.createdAt))
       .limit(50);
 
