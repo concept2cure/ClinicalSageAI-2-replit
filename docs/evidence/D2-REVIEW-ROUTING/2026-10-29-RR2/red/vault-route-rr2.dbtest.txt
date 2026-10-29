@@ -1,0 +1,486 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T17:15:04.559Z","pid":1572,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T17:15:04.561Z","pid":1572,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T17:15:04.561Z","pid":1572,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T17:15:13.313Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T17:15:13.666Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+{
+  "timestamp": "2026-10-29T17:15:13.666Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+{
+  "timestamp": "2026-10-29T17:15:13.947Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "eb0ceecc-e1f3-4ac1-9c6d-d7d2d97e625c",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-SEQ-SEND",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:14.060Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.073Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+{
+  "timestamp": "2026-10-29T17:15:14.073Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+{
+  "timestamp": "2026-10-29T17:15:14.100Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ab6f265a-8347-47e8-93d2-424be88baf01",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-SEQ-WAIT",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:14.141Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.165Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+{
+  "timestamp": "2026-10-29T17:15:14.166Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+{
+  "timestamp": "2026-10-29T17:15:14.192Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "95235dca-751e-47b5-a46a-fd190713c8bb",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-SEQ-OPEN",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told 9420ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone 86ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+{"level":40,"time":"2026-10-29T17:15:14.251Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.264Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:15:14.264Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 107
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+{
+  "timestamp": "2026-10-29T17:15:14.286Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ed445cc9-e37a-4477-8df8-a3a73f1f4167",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-SEQ-BAD-ROUTE_DUE_DATES_REQUIRED-13",
+    "type": "OTHER",
+    "size": 107,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last 106ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written 94ms
+   → no step dates: expected 'ROUTE_SHAPE_NOT_AVAILABLE' to be 'ROUTE_DUE_DATES_REQUIRED' // Object.is equality
+{"level":40,"time":"2026-10-29T17:15:14.351Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.366Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:15:14.366Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:15:14.392Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dfdc96dc-c358-4818-8537-63f68dbbe44d",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-MULTI-V1",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:14.681Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.707Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:15:14.708Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 80
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+{
+  "timestamp": "2026-10-29T17:15:14.737Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7ecfacc5-6190-4877-bbca-8a3c113e5cc4",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-MULTI-V1",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:14.772Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.789Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+{
+  "timestamp": "2026-10-29T17:15:14.790Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 75
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+{
+  "timestamp": "2026-10-29T17:15:14.813Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "77cf52db-1b6e-479c-bede-de37f5a22135",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-ADD",
+    "type": "OTHER",
+    "size": 75,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes 432ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+{"level":40,"time":"2026-10-29T17:15:14.965Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:14.976Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+{
+  "timestamp": "2026-10-29T17:15:14.976Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 79
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+{
+  "timestamp": "2026-10-29T17:15:14.992Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ec593a94-13f1-493d-9c76-d75cbe54a2e7",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-ADD-SEQ",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:15.040Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:15.053Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+{
+  "timestamp": "2026-10-29T17:15:15.053Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+ × tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves 194ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it 69ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+{
+  "timestamp": "2026-10-29T17:15:15.072Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "545bba86-cc88-422d-855a-107f989fbaaf",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-ADD-REFUSE",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T17:15:15.108Z","pid":1572,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T17:15:15.120Z","pid":1572,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+{
+  "timestamp": "2026-10-29T17:15:15.120Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text left for the processing sweep",
+  "context": {
+    "reason": "needs_ocr",
+    "size": 82
+  }
+}
+
+stdout | tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+{
+  "timestamp": "2026-10-29T17:15:15.137Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a2f21183-f2e9-4ea4-84c8-373b524e50f7",
+    "code": "DBTEST-RR2-mvtt096m_417114d2-ADD-PICKER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed 71ms
+   → {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused 268ms
+   → expected undefined to be 'MEMBER_ALREADY_NAMED' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:243:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:266:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:288:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+AssertionError: no step dates: expected 'ROUTE_SHAPE_NOT_AVAILABLE' to be 'ROUTE_DUE_DATES_REQUIRED' // Object.is equality
+
+Expected: "ROUTE_DUE_DATES_REQUIRED"
+Received: "ROUTE_SHAPE_NOT_AVAILABLE"
+
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:323:37
+    321|       const { id, res } = await trySend(`SEQ-BAD-${code}-${label.lengt…
+    322|       expect(res.status, `${label}: ${JSON.stringify(res.body)}`).toBe…
+    323|       expect(res.body.error, label).toBe(code);
+       |                                     ^
+    324|       expect((await stageOf(id)).stage, label).toBe('authoring');
+    325|       expect(await header(id), label).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:337:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:380:46
+    378|
+    379|     const r = await addReviewer('uploader', id, 'r2', { dueDate: day(4…
+    380|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    381|     const added = await memberOf(id, 'r2');
+    382|     expect(added).toMatchObject({ review_role: 'reviewer', review_step…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:408:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+AssertionError: {"ok":false,"error":"ROUTE_SHAPE_NOT_AVAILABLE","message":"Reviewers one after another, and more than one approver, are not available yet. Nothing was sent."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ sent tests/db/review-route-vault-rr2.dbtest.ts:97:44
+     95|   const id = String(s.body.canonicalId);
+     96|   const r = await post('uploader', `/${id}/advance`, { to: 'in_review'…
+     97|   expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                            ^
+     98|   return { vaultId, id };
+     99| }
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:423:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+AssertionError: expected undefined to be 'MEMBER_ALREADY_NAMED' // Object.is equality
+
+- Expected:
+"MEMBER_ALREADY_NAMED"
+
++ Received:
+undefined
+
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:455:40
+    453|     type C = { id: number; reviewer: { code: string } | null };
+    454|     const byWho = (who: Who) => (r.body.candidates as C[]).find((c) =>…
+    455|     expect(byWho('r1').reviewer?.code).toBe('MEMBER_ALREADY_NAMED');
+       |                                        ^
+    456|     expect(byWho('admin2').reviewer?.code).toBe('MEMBER_IS_ACTOR');
+    457|     expect(byWho('r2').reviewer).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  17:15:01
+   Duration  13.77s (transform 7.26s, setup 101ms, import 296ms, tests 12.96s, environment 0ms)
+

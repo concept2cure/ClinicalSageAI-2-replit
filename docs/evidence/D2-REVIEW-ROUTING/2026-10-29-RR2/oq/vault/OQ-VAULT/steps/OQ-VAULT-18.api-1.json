@@ -1,0 +1,105 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5201/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-002 Library program 20261029182624",
+      "programType": "ind",
+      "productType": "drug",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 201,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "6d6114c0-cffd-4ba3-a0d9-43f2f010ccd2",
+        "title": "OQ-002 Library program 20261029182624",
+        "ws": "Biotech",
+        "pathway": "other",
+        "code": "OQ-002-NK2S",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "OQ Runner",
+        "blocker": null,
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Oct 29",
+        "client_workspace_id": 4,
+        "client_name": "RR3 OQ Validation (synthetic)",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "6d6114c0-cffd-4ba3-a0d9-43f2f010ccd2",
+        "code": "OQ-002-NK2S",
+        "name": "OQ-002 Library program 20261029182624",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-002 Library program 20261029182624",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 6,
+        "team_members": [],
+        "created_at": "2026-10-29T18:29:08.834Z",
+        "updated_at": "2026-10-29T18:29:08.834Z",
+        "application_number": null,
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "RR3 OQ Validation (synthetic)",
+        "client_workspace_id": 4,
+        "client_name": "RR3 OQ Validation (synthetic)",
+        "registry_id": "US_IND",
+        "submission_type_id": null,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-10-29T18:29:08.991Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 6,
+        "actorUserId": 6,
+        "clientWorkspaceId": 4,
+        "clientWorkspaceName": "RR3 OQ Validation (synthetic)",
+        "documentId": "doc_aaf5b7d7311d4352b62d01e1c12066c5",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 7,
+        "submissionCreated": true,
+        "projectAnchorId": 6,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5201/api/c2c/project-vault/b80112f2-5d11-4284-bbe5-a909d26e77e2/documents/d38654f7-128d-40da-a03a-8c518550e1ad/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "kind": "comment",
+      "body": "Posted on the wrong document.",
+      "anchor": {
+        "kind": "document"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "e9d98e5a-b3e5-44db-9383-90f76159481a"
+      }
+    }
+  }
+}

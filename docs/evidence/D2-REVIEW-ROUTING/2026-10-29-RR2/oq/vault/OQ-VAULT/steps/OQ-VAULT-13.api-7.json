@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5201/api/regulatory/documents/42707490-0433-427c-b01d-0ffde2c8b221/advance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "to": "in_review",
+      "reason": "OQ-002 step 13: sent for review for validation",
+      "route": {
+        "reviewers": [
+          7
+        ],
+        "approvers": [
+          8
+        ],
+        "reviewDueDate": "2026-11-05",
+        "approvalDueDate": "2026-11-12"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 112,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "from": "authoring",
+      "to": "in_review",
+      "stage": "in_review",
+      "auditEvent": {
+        "documentId": "42707490-0433-427c-b01d-0ffde2c8b221",
+        "version": 1,
+        "from": "authoring",
+        "to": "in_review",
+        "actor": "6",
+        "reason": "OQ-002 step 13: sent for review for validation",
+        "at": "2026-10-29T18:26:54.239Z",
+        "contentHash": "0a329b5d8c0d86a8a0c47ebd4fc5202e129631e14f2b05d2f6aa2b773be2e758",
+        "prevEventHash": "",
+        "eventHash": "c6030e959a3ca4d2229160494e7bb341d06a2b05b3201bf16741698cf22b2fef"
+      },
+      "superseded": [],
+      "routeId": "aedab57b-0d9f-4e92-8efd-f108acc32e24"
+    }
+  }
+}
