@@ -206,6 +206,12 @@ describe('resolveRequirements — the one dispatch', () => {
 // only because their document_types list names the 17 new ids. No other
 // fingerprint moved.
 // Delta: docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/integration/requirements-snapshot-delta.json
+// 2026-10-29 (CSR slice 4): every ICH E3 heading gained its writing rules, its
+// display model or content (33 were title-only), so the 124 {"document":<CSR
+// alias>,"section":...} fingerprints move — the 118 headings whose brief changed
+// (all but §3) and the six other alias forms of §12.2. The outline answer ({"document":"csr"}),
+// the not-indexed answers and every CTD and lifecycle fingerprint are unchanged.
+// Delta: docs/evidence/D2-CSR/2026-10-29-e3-knowledge/requirements-snapshot-delta.json
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -359,53 +365,53 @@ cabbb8c22a3647ff {"document":"NDA_BLA_ANNUAL_REPORT"}  3fe9f88c24392cbd {"docume
 7e25192cdea757ae {"document":"NDA_PAS"}  96990427db91e661 {"document":"cbe_30"}  96990427db91e661 {"document":"CBE_30"}
 e3db07f73d9464cf {"document":"cbe_0"}  e3db07f73d9464cf {"document":"CBE_0"}  79e3541f0604db3e {"document":"iss"}
 79e3541f0604db3e {"document":"ISS"}  d689c72b125305be {"document":"ise"}  d689c72b125305be {"document":"ISE"}
-176c058cf3810b76 {"document":"csr"}  7437010924e1da0a {"document":"csr","section":"12.2"}  a21d12ad27f75da4 {"document":"csr","section":"99.9"}
-176c058cf3810b76 {"document":"CSR"}  7437010924e1da0a {"document":"CSR","section":"12.2"}  a21d12ad27f75da4 {"document":"CSR","section":"99.9"}
-176c058cf3810b76 {"document":"clinical study report"}  7437010924e1da0a {"document":"clinical study report","section":"12.2"}  a21d12ad27f75da4 {"document":"clinical study report","section":"99.9"}
-176c058cf3810b76 {"document":"Clinical_Study_Report"}  7437010924e1da0a {"document":"Clinical_Study_Report","section":"12.2"}  a21d12ad27f75da4 {"document":"Clinical_Study_Report","section":"99.9"}
-176c058cf3810b76 {"document":"e3"}  7437010924e1da0a {"document":"e3","section":"12.2"}  a21d12ad27f75da4 {"document":"e3","section":"99.9"}
-176c058cf3810b76 {"document":"ICH E3"}  7437010924e1da0a {"document":"ICH E3","section":"12.2"}  a21d12ad27f75da4 {"document":"ICH E3","section":"99.9"}
-176c058cf3810b76 {"document":" csr "}  7437010924e1da0a {"document":" csr ","section":"12.2"}  a21d12ad27f75da4 {"document":" csr ","section":"99.9"}
-ab82177b24f6aac4 {"document":"csr","section":"1"}  2e7d1686e60856ad {"document":"csr","section":"2"}  4d626463bb07c59e {"document":"csr","section":"3"}
-41e12eb815eebaf9 {"document":"csr","section":"4"}  93e5c7e452b7c558 {"document":"csr","section":"5"}  6d1b7f00690e2cef {"document":"csr","section":"5.1"}
-13a5c3314acdeb24 {"document":"csr","section":"5.2"}  31ae51219498075a {"document":"csr","section":"5.3"}  012a2f22099430c6 {"document":"csr","section":"6"}
-c309f041cebf83f8 {"document":"csr","section":"7"}  6df0c7b164f43332 {"document":"csr","section":"8"}  dfcc69702599b494 {"document":"csr","section":"9"}
-48bcce0d30b5463a {"document":"csr","section":"9.1"}  73d0ccb2e0c3b1bb {"document":"csr","section":"9.2"}  1c82ba6d23b265bc {"document":"csr","section":"9.3"}
-cd8e2d04dc1a569a {"document":"csr","section":"9.3.1"}  f954590e17f2132b {"document":"csr","section":"9.3.2"}  2c17be0bab3eee99 {"document":"csr","section":"9.3.3"}
-b259ae1afa3f52e7 {"document":"csr","section":"9.4"}  df4e559eb2ab2a5f {"document":"csr","section":"9.4.1"}  86ddaed5a9b623c8 {"document":"csr","section":"9.4.2"}
-6502660031b37e18 {"document":"csr","section":"9.4.3"}  a249ff23413e7ade {"document":"csr","section":"9.4.4"}  55eaa9db8026f545 {"document":"csr","section":"9.4.5"}
-36e10e70d52ae443 {"document":"csr","section":"9.4.6"}  c73b69b73f8ba021 {"document":"csr","section":"9.4.7"}  5e75b19936afef6f {"document":"csr","section":"9.4.8"}
-d3f4a4fc929b43d2 {"document":"csr","section":"9.5"}  2ab09bd6ef717664 {"document":"csr","section":"9.5.1"}  edf49a5142ce4162 {"document":"csr","section":"9.5.2"}
-7751f5a6c5dd7f5c {"document":"csr","section":"9.5.3"}  3851f61a907a5e8b {"document":"csr","section":"9.5.4"}  bb1686c08e36b564 {"document":"csr","section":"9.6"}
-a3f3a6345ca3d86d {"document":"csr","section":"9.7"}  372cd1923cb3beaa {"document":"csr","section":"9.7.1"}  13f6d6da19b8ece7 {"document":"csr","section":"9.7.2"}
-44381d3cee30160b {"document":"csr","section":"9.8"}  ca6d7acfde682ae6 {"document":"csr","section":"10"}  b1a51a43ae7a2c16 {"document":"csr","section":"10.1"}
-61bd33a55842b2f1 {"document":"csr","section":"10.2"}  948b01a668085192 {"document":"csr","section":"11"}  ac5d46bfe2a26640 {"document":"csr","section":"11.1"}
-01ac3a6c4734641c {"document":"csr","section":"11.2"}  239db409bd27b443 {"document":"csr","section":"11.3"}  00d6cc361dcf1850 {"document":"csr","section":"11.4"}
-ab5c7ab1e475508c {"document":"csr","section":"11.4.1"}  af061f3cc958e7e5 {"document":"csr","section":"11.4.2"}  ca8df2b02e73b46b {"document":"csr","section":"11.4.2.1"}
-80f458d7f5778857 {"document":"csr","section":"11.4.2.2"}  677d18ade8498263 {"document":"csr","section":"11.4.2.3"}  78c96ff0ea03375c {"document":"csr","section":"11.4.2.4"}
-267baace994efc9b {"document":"csr","section":"11.4.2.5"}  72647c894b98f2f6 {"document":"csr","section":"11.4.2.6"}  3af7241d2a3f2655 {"document":"csr","section":"11.4.2.7"}
-283c4f761f58a267 {"document":"csr","section":"11.4.2.8"}  b8f43bebe5b95cf2 {"document":"csr","section":"11.4.3"}  ab5f82257d673f76 {"document":"csr","section":"11.4.4"}
-df29d98e4f78d9df {"document":"csr","section":"11.4.5"}  a61e415838b59f04 {"document":"csr","section":"11.4.6"}  d44ac9d72f4eeadc {"document":"csr","section":"11.4.7"}
-208fc22b9dbcecf6 {"document":"csr","section":"12"}  d10bf2c0d92839e3 {"document":"csr","section":"12.1"}  d7f61c0ff3b3210b {"document":"csr","section":"12.2.1"}
-d5b4b1f0048bd7d5 {"document":"csr","section":"12.2.2"}  87b8984d45d828eb {"document":"csr","section":"12.2.3"}  f4d377fa230077b4 {"document":"csr","section":"12.2.4"}
-e5654fec7f407f33 {"document":"csr","section":"12.3"}  0c3f066c84902e57 {"document":"csr","section":"12.3.1"}  38712a7d1958f36f {"document":"csr","section":"12.3.1.1"}
-71dbc6f04b128d43 {"document":"csr","section":"12.3.1.2"}  5bf28a5001083da4 {"document":"csr","section":"12.3.1.3"}  8eb27e7190842ff8 {"document":"csr","section":"12.3.2"}
-472b6e985a17ed74 {"document":"csr","section":"12.3.3"}  8fcc6d9d7d3e3230 {"document":"csr","section":"12.4"}  3926ac40c828bc67 {"document":"csr","section":"12.4.1"}
-aa93526c039d28b7 {"document":"csr","section":"12.4.2"}  f2084fd642472be5 {"document":"csr","section":"12.4.2.1"}  5a6a52a417d78507 {"document":"csr","section":"12.4.2.2"}
-c6f11983964f6841 {"document":"csr","section":"12.4.2.3"}  101cdc9db8ef0928 {"document":"csr","section":"12.5"}  fddc60c93277befe {"document":"csr","section":"12.6"}
-566cb465bad35586 {"document":"csr","section":"13"}  02c973ee527351fb {"document":"csr","section":"14"}  6c79ba735508c1ca {"document":"csr","section":"14.1"}
-0be7c9aff4291250 {"document":"csr","section":"14.2"}  1f025864991ed654 {"document":"csr","section":"14.3"}  df414b09291427a4 {"document":"csr","section":"14.3.1"}
-c538ba30d42cbf37 {"document":"csr","section":"14.3.2"}  bf0fdf211e750fff {"document":"csr","section":"14.3.3"}  ca1bcea7523d7a52 {"document":"csr","section":"14.3.4"}
-bcc201c3427b1494 {"document":"csr","section":"15"}  19e0488ac710e739 {"document":"csr","section":"16"}  f3d5ef49c239b7fd {"document":"csr","section":"16.1"}
-fda28b95e5183b03 {"document":"csr","section":"16.1.1"}  a61e747f98d18223 {"document":"csr","section":"16.1.2"}  f61b94b430af7a9e {"document":"csr","section":"16.1.3"}
-c85b998830e8592c {"document":"csr","section":"16.1.4"}  e90474baec998f11 {"document":"csr","section":"16.1.5"}  40f02f3b76432a67 {"document":"csr","section":"16.1.6"}
-b1f57f8af456640c {"document":"csr","section":"16.1.7"}  b4f5daee30accf16 {"document":"csr","section":"16.1.8"}  2b48e342b8b92305 {"document":"csr","section":"16.1.9"}
-a1c0a527969e6594 {"document":"csr","section":"16.1.10"}  c83fc53a23bf8e2d {"document":"csr","section":"16.1.11"}  740e5212f3a02793 {"document":"csr","section":"16.1.12"}
-2b14a76f86a14c29 {"document":"csr","section":"16.2"}  b9de12c431283619 {"document":"csr","section":"16.2.1"}  8f5333cf8409d23b {"document":"csr","section":"16.2.2"}
-d7798332af27dd44 {"document":"csr","section":"16.2.3"}  3b7f99d5d5c24451 {"document":"csr","section":"16.2.4"}  0a448f9c2ca59f5d {"document":"csr","section":"16.2.5"}
-24f3fd57d9bc5158 {"document":"csr","section":"16.2.6"}  1ee7ec401624992f {"document":"csr","section":"16.2.7"}  1ef11a0577697e16 {"document":"csr","section":"16.2.8"}
-7602e727296c9374 {"document":"csr","section":"16.3"}  75fe1023a0c71025 {"document":"csr","section":"16.3.1"}  b88469d325da4e13 {"document":"csr","section":"16.3.2"}
-994ce625c10ee3ca {"document":"csr","section":"16.4"}  2edb580827a4ad4f {"document":"9.9.9"}  02cbae3d340f255a {"document":"1.3.1"}
+176c058cf3810b76 {"document":"csr"}  fd055b2bbda191c6 {"document":"csr","section":"12.2"}  a21d12ad27f75da4 {"document":"csr","section":"99.9"}
+176c058cf3810b76 {"document":"CSR"}  fd055b2bbda191c6 {"document":"CSR","section":"12.2"}  a21d12ad27f75da4 {"document":"CSR","section":"99.9"}
+176c058cf3810b76 {"document":"clinical study report"}  fd055b2bbda191c6 {"document":"clinical study report","section":"12.2"}  a21d12ad27f75da4 {"document":"clinical study report","section":"99.9"}
+176c058cf3810b76 {"document":"Clinical_Study_Report"}  fd055b2bbda191c6 {"document":"Clinical_Study_Report","section":"12.2"}  a21d12ad27f75da4 {"document":"Clinical_Study_Report","section":"99.9"}
+176c058cf3810b76 {"document":"e3"}  fd055b2bbda191c6 {"document":"e3","section":"12.2"}  a21d12ad27f75da4 {"document":"e3","section":"99.9"}
+176c058cf3810b76 {"document":"ICH E3"}  fd055b2bbda191c6 {"document":"ICH E3","section":"12.2"}  a21d12ad27f75da4 {"document":"ICH E3","section":"99.9"}
+176c058cf3810b76 {"document":" csr "}  fd055b2bbda191c6 {"document":" csr ","section":"12.2"}  a21d12ad27f75da4 {"document":" csr ","section":"99.9"}
+c33c0a15db83be07 {"document":"csr","section":"1"}  2b6bb9eb04f51cd0 {"document":"csr","section":"2"}  4d626463bb07c59e {"document":"csr","section":"3"}
+3ec6b8cfd376c61c {"document":"csr","section":"4"}  0941e2ab4fbd44e0 {"document":"csr","section":"5"}  3645799937c39cf3 {"document":"csr","section":"5.1"}
+4569c40f1a067292 {"document":"csr","section":"5.2"}  e2ecd3ea88799cd5 {"document":"csr","section":"5.3"}  3afe6dbb4868285e {"document":"csr","section":"6"}
+4b1b8eae9f98ad7b {"document":"csr","section":"7"}  0dd9ad68f77622fa {"document":"csr","section":"8"}  518ec4edaa43810f {"document":"csr","section":"9"}
+6c386c67ba3fb614 {"document":"csr","section":"9.1"}  954f4955221cc02c {"document":"csr","section":"9.2"}  fc30e4299bee33dd {"document":"csr","section":"9.3"}
+05a39000fa730e73 {"document":"csr","section":"9.3.1"}  a835d7591903853a {"document":"csr","section":"9.3.2"}  9a332bfb304af184 {"document":"csr","section":"9.3.3"}
+ee57a185ff7c7d08 {"document":"csr","section":"9.4"}  9a6aed841dc3dabc {"document":"csr","section":"9.4.1"}  2c5445f60ec6c0e9 {"document":"csr","section":"9.4.2"}
+970618ec20890d5f {"document":"csr","section":"9.4.3"}  208d34ccb52f610f {"document":"csr","section":"9.4.4"}  9084e2343f0131d9 {"document":"csr","section":"9.4.5"}
+14b4fe8d9b10e471 {"document":"csr","section":"9.4.6"}  80bd2a747a627fb8 {"document":"csr","section":"9.4.7"}  169a524458a44570 {"document":"csr","section":"9.4.8"}
+96994e4263107d5d {"document":"csr","section":"9.5"}  b67980a7155a6e14 {"document":"csr","section":"9.5.1"}  a3fb1ac9d71ff641 {"document":"csr","section":"9.5.2"}
+9b26f4f788882550 {"document":"csr","section":"9.5.3"}  33c9ef52e0ea5009 {"document":"csr","section":"9.5.4"}  db5880c359985dc7 {"document":"csr","section":"9.6"}
+d8bda3f55c3c968f {"document":"csr","section":"9.7"}  3ab66e061e555db2 {"document":"csr","section":"9.7.1"}  cf93d2be09c597ea {"document":"csr","section":"9.7.2"}
+e229077482bc8118 {"document":"csr","section":"9.8"}  d5fd971ae9757fbb {"document":"csr","section":"10"}  508cbc288610f50c {"document":"csr","section":"10.1"}
+da18dcc110e79b39 {"document":"csr","section":"10.2"}  ff93cf9a9beb4ae8 {"document":"csr","section":"11"}  bde0a06d6a9516f8 {"document":"csr","section":"11.1"}
+16ba2c7068a70b15 {"document":"csr","section":"11.2"}  6baaeab1d6ab3224 {"document":"csr","section":"11.3"}  85d07828bc778a88 {"document":"csr","section":"11.4"}
+16fac40a54ec55c6 {"document":"csr","section":"11.4.1"}  a82d19831552a812 {"document":"csr","section":"11.4.2"}  8201dfa8a2d574b0 {"document":"csr","section":"11.4.2.1"}
+40c2ea38efbd39c8 {"document":"csr","section":"11.4.2.2"}  f4a166977b8a6831 {"document":"csr","section":"11.4.2.3"}  d678e35ba5e4f888 {"document":"csr","section":"11.4.2.4"}
+cab1d0a936bf420d {"document":"csr","section":"11.4.2.5"}  c73fbb6ab6c38e8e {"document":"csr","section":"11.4.2.6"}  42897b86db78ce7b {"document":"csr","section":"11.4.2.7"}
+d475fc80b8e08d34 {"document":"csr","section":"11.4.2.8"}  32d3122e6afb2559 {"document":"csr","section":"11.4.3"}  3e28f86c7e2040a9 {"document":"csr","section":"11.4.4"}
+c31f86fac6a40586 {"document":"csr","section":"11.4.5"}  cd96ce032579d191 {"document":"csr","section":"11.4.6"}  0fdd7f604661e6f5 {"document":"csr","section":"11.4.7"}
+7c6596fa1676e07c {"document":"csr","section":"12"}  164370288f218c76 {"document":"csr","section":"12.1"}  7af1e7195128958b {"document":"csr","section":"12.2.1"}
+f4faab3ae021afe8 {"document":"csr","section":"12.2.2"}  03ebba912032b7cf {"document":"csr","section":"12.2.3"}  7895ee563c71d78d {"document":"csr","section":"12.2.4"}
+f9c7bd11d0237352 {"document":"csr","section":"12.3"}  d68201b24c71aaa8 {"document":"csr","section":"12.3.1"}  b4bbeb7c371649a8 {"document":"csr","section":"12.3.1.1"}
+3234f201fda52164 {"document":"csr","section":"12.3.1.2"}  47c8d07141ed79d1 {"document":"csr","section":"12.3.1.3"}  183e52f04069183e {"document":"csr","section":"12.3.2"}
+2a390982b87cf2dd {"document":"csr","section":"12.3.3"}  4d88e9c91635efcd {"document":"csr","section":"12.4"}  e6a865ab8bde62bb {"document":"csr","section":"12.4.1"}
+600e1d8403000ac7 {"document":"csr","section":"12.4.2"}  6a1543b209de1501 {"document":"csr","section":"12.4.2.1"}  be4a31a9b130f1df {"document":"csr","section":"12.4.2.2"}
+3fc9ec82881d7cbe {"document":"csr","section":"12.4.2.3"}  5e540ca9b1a52299 {"document":"csr","section":"12.5"}  8c543bfa86673804 {"document":"csr","section":"12.6"}
+7128b6bdf52c4d52 {"document":"csr","section":"13"}  83b482eeab8c2856 {"document":"csr","section":"14"}  e40fee330719703e {"document":"csr","section":"14.1"}
+40b37b0cefc0272f {"document":"csr","section":"14.2"}  f3d6d41499b2e614 {"document":"csr","section":"14.3"}  ef2929cdbfc32fd6 {"document":"csr","section":"14.3.1"}
+6cfa2f5f6fe055d7 {"document":"csr","section":"14.3.2"}  3f1bd9903439a2d0 {"document":"csr","section":"14.3.3"}  527522e0eac38249 {"document":"csr","section":"14.3.4"}
+5538b685b8ddfcbb {"document":"csr","section":"15"}  ab077843db7c51d9 {"document":"csr","section":"16"}  e9230c0dadea2ea6 {"document":"csr","section":"16.1"}
+dd5aebb4845f65f8 {"document":"csr","section":"16.1.1"}  178161871b362617 {"document":"csr","section":"16.1.2"}  e5d5a37df0bfd7a5 {"document":"csr","section":"16.1.3"}
+69ec1cc1cd52cfe3 {"document":"csr","section":"16.1.4"}  3127c40906eb67e0 {"document":"csr","section":"16.1.5"}  3ec573049a79c3f8 {"document":"csr","section":"16.1.6"}
+4b277666b7e97940 {"document":"csr","section":"16.1.7"}  01e90623a209e3b9 {"document":"csr","section":"16.1.8"}  8051bed4d3c161c8 {"document":"csr","section":"16.1.9"}
+c2152a4acaea278b {"document":"csr","section":"16.1.10"}  26ec067224d59712 {"document":"csr","section":"16.1.11"}  b407ca7e2cdac40a {"document":"csr","section":"16.1.12"}
+2550858b45fa0dd0 {"document":"csr","section":"16.2"}  2c170eec03a64e47 {"document":"csr","section":"16.2.1"}  3b127b629adf947b {"document":"csr","section":"16.2.2"}
+cb2095f4cc57d6bd {"document":"csr","section":"16.2.3"}  3bd3606592f3cb82 {"document":"csr","section":"16.2.4"}  dd33fe7b720b9e8d {"document":"csr","section":"16.2.5"}
+0eb1f46363dcf454 {"document":"csr","section":"16.2.6"}  9a206cadda79a650 {"document":"csr","section":"16.2.7"}  4b99006bf9a3df62 {"document":"csr","section":"16.2.8"}
+ea1a3123146f0b0a {"document":"csr","section":"16.3"}  2e2a3d028c43b7b2 {"document":"csr","section":"16.3.1"}  f5e2e60b5c4ec7fb {"document":"csr","section":"16.3.2"}
+48315701eac1aa01 {"document":"csr","section":"16.4"}  2edb580827a4ad4f {"document":"9.9.9"}  02cbae3d340f255a {"document":"1.3.1"}
 4a7b88e7b2a831fe {"document":"1.8"}  354109ebd3917f0e {"document":"1.8.2"}  44eb297a5c0dae66 {"document":"1.10"}
 acabd1efd82843e8 {"document":"1.13"}  43facbea9cef5487 {"document":"maa"}  4e2cf094836bdf42 {"document":"eu_maa"}
 af87fb391604b8e9 {"document":"EU_MAA"}  665f243873573cc5 {"document":"jnda"}  fbe5618825ec6b9a {"document":"510k"}

@@ -1095,6 +1095,12 @@ export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
         type: 'string',
         description: 'Optional: pharma, biotech, device, ivd, or cro (informational).',
       },
+      section: {
+        type: 'string',
+        description:
+          'For document_type csr: the ICH E3 heading (e.g. 11.4.1, 12.2.2) whose writing rules — tense, voice, ' +
+          'standard sentences, display model — to return with the CSR writing standard.',
+      },
     },
     required: ['document_type'],
   },

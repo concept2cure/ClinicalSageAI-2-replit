@@ -1,0 +1,19 @@
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §11.4.1 carries its writing rules, the estimand attributes and E9(R1) 19ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §10.1 names its display model, E3 Annex IVa 10ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §16.3.1 (once title-only in spirit, compiled by hand) says how it is compiled 5ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > declares a section input 3ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > a CSR request returns report-wide tense, voice, hedging and causality rules and the terminology standards 5ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > with a section, returns that heading’s own rules from the E3 tree 1ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > an E3 number that does not exist is said, never answered from another heading 1ms
+ × server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > therapeutic-area vocabulary reaches the CSR: oncology, vaccines, psychiatry, endocrinology 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > a non-CSR document carries no CSR writing block 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '{"kind":"ICH E3 clinical study report…' to contain 'How to write it'
+AssertionError: expected '{"kind":"ICH E3 clinical study report…' to contain 'Annex IVa'
+AssertionError: expected '{"kind":"ICH E3 clinical study report…' to contain 'Presented as'
+AssertionError: expected [ 'document_type', …(4) ] to include 'section'
+TypeError: Cannot read properties of undefined (reading 'rules')
+TypeError: Cannot read properties of undefined (reading 'section')
+TypeError: Cannot read properties of undefined (reading 'section')
+TypeError: Cannot read properties of undefined (reading 'join')
+      Tests  8 failed | 1 passed (9)

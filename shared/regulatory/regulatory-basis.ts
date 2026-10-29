@@ -37,6 +37,12 @@ export interface RegulatoryBasis {
   factId?: string;
   /** Free-text qualification, e.g. "search extract of the regulator page; verbatim re-read owed". */
   note?: string;
+  /**
+   * The regulator's words the statement rests on. With `regulator-text` it was
+   * read from the cited copy; with `recall` it is the wording as recalled and is
+   * shown to the reader as such (added 2026-10-29, CSR slice 4).
+   */
+  quote?: string;
 }
 
 /** Hosts whose pages count as the regulator's own text. A subdomain of a listed host also counts. */
