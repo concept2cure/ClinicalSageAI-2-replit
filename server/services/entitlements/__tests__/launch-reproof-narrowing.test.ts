@@ -20,7 +20,7 @@ const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs
+const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs; 75 with /api/mdx/vault again (fold F3)
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -97,6 +97,10 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 si
   /* Found 2026-10-29 (trunk-red-sweep-2): device-510k claims the root and is a
      Projects feature since 62a8d5e7, and no launch screen calls a route under it. */
   '/api/programs',
+  /* Upheld on 2026-10-15, served from 62a8d5e7 while the device vault was a
+     Projects feature, and not served again since it folded into the Vault (D2,
+     fold F3, 2026-10-29): its router and its one screen are gone. */
+  '/api/mdx/vault',
 ];
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
@@ -134,10 +138,8 @@ const STILL_SERVED = [
   '/api/submission-ops/artifact-section-map',
   '/api/submission-ops/packages',
   /* Upheld on 2026-10-15; the device features became Projects features in
-     62a8d5e7 (2026-10-23), and their screens call these: the device vault
-     (mdx/hooks/useVault.ts) and the validation and submission work queues
-     (mdx/hooks/useWorkbench.ts). */
-  '/api/mdx/vault',
+     62a8d5e7 (2026-10-23), and their screens call this: the validation and
+     submission work queues (mdx/hooks/useWorkbench.ts). */
   '/api/submission-ops/blockers',
   '/api/task-management/assignees',
   '/api/task-management/board',
@@ -152,7 +154,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted and the two device features call) are not served at launch', () => {
+describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted and the one a device feature calls) are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.

@@ -1,10 +1,11 @@
 /**
  * The governed artifact registry's one read (fold F3 slice A, D2, 2026-10-29).
  *
- * Two screens list concept2cure_artifacts with their governance state: the
- * organization's Artifacts center (GET /api/artifacts-center) and each
- * project's Vault, whose "Governed artifacts" branch lists every artifact of
- * the project (GET /api/c2c/project-vault/:id). This query was the Artifacts
+ * The Vault lists concept2cure_artifacts with their governance state twice:
+ * each project's "Governed artifacts" branch, every artifact of the project
+ * (GET /api/c2c/project-vault/:id), and its organization view, every artifact
+ * of the projects the caller can open (GET /api/artifacts-center, the retired
+ * Artifacts center's read, fold F3 slice C). This query was the Artifacts
  * center's own (artifacts-center-routes.ts:187-298 at 8b3ee4b57). It moved
  * here so both read the same rows the same way, never a second copy of the
  * signature, review and source sub-reads.
@@ -13,12 +14,19 @@
  *   $1 organization: the caller's integer organization. Repeated on projects,
  *      so an artifact written under another organization's project id never
  *      shows that project (PF-03).
- *   $2 program: a regulatory_programs.id the caller has been admitted to, or
- *      null for the organization. With a program, archived artifacts are left
- *      out and the row must reach the program through
+ *   $2 program: a regulatory_programs.id the caller has been admitted to (the
+ *      project Vault), or null. The row must reach the program through
  *      projects.regulatory_program_id on a project of the same organization.
- *   $3 limit: a window. `total_rows` is counted before the limit, so a window
+ *   $3 projects: the projects.id list the sharing policy admits the caller to
+ *      (getAccessibleReportProjectIds; the Vault's organization view), or null.
+ *      The row's own project must be one of them, on the same organization.
+ *   $4 limit: a window. `total_rows` is counted before the limit, so a window
  *      can say how much it did not list.
+ * Exactly one of program and projects is given; there is no organization-wide
+ * read (fold F3 slice C, 2026-10-29: the Artifacts center's gallery listed
+ * every artifact of the organization to any member, and retired into the
+ * Vault's organization view, which lists only the projects the caller can
+ * open). Archived artifacts are left out in both scopes.
  *
  * Field sources (concept2cure_artifacts a):
  *   kind_source ← COALESCE(metadata->>'documentType', type)
@@ -71,14 +79,20 @@ export interface ArtifactRegistryRow {
   total_rows: number | string | null;
 }
 
-export interface ArtifactRegistryScope {
-  organizationId: number;
-  /** A program the caller has been admitted to, or null for the organization. */
-  programId: string | null;
-  limit: number;
-}
+/** One project's Vault (a program the caller was admitted to), or the projects the caller can open. */
+export type ArtifactRegistryScope =
+  | { organizationId: number; programId: string; projectIds?: undefined; limit: number }
+  | { organizationId: number; programId?: undefined; projectIds: readonly number[]; limit: number };
 
 export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promise<ArtifactRegistryRow[]> {
+  const programId = typeof scope.programId === 'string' && scope.programId ? scope.programId : null;
+  const projectIds = Array.isArray(scope.projectIds) ? scope.projectIds : null;
+  if ((programId === null) === (projectIds === null)) {
+    // Fail closed: neither scope would read the whole organization, both would widen one.
+    throw new Error('readArtifactRegistry needs exactly one of programId and projectIds');
+  }
+  // An admitted caller with no project open to them has nothing to read.
+  if (projectIds && projectIds.length === 0) return [];
   const { rows } = await pool.query(
     `SELECT
        a.id                                            AS id,
@@ -142,10 +156,14 @@ export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promis
      LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
      LEFT JOIN LATERAL public.actor_name(a.created_by_id) au ON TRUE
      WHERE a.organization_id = $1
-       AND ($2::uuid IS NULL OR (a.status <> 'archived' AND p.regulatory_program_id = $2::uuid))
+       AND a.status <> 'archived'
+       AND (
+         ($2::uuid IS NOT NULL AND p.regulatory_program_id = $2::uuid)
+         OR ($3::int[] IS NOT NULL AND p.id = ANY($3::int[]))
+       )
      ORDER BY a.updated_at DESC, a.id DESC
-     LIMIT $3`,
-    [scope.organizationId, scope.programId, scope.limit],
+     LIMIT $4`,
+    [scope.organizationId, programId, projectIds ? [...projectIds] : null, scope.limit],
   );
   return rows as ArtifactRegistryRow[];
 }
@@ -171,10 +189,11 @@ export function deriveArtifactFormat(category: string | null | undefined): strin
 }
 
 /*
- * One row's section, status and size, said the same way on both screens (fold
- * F3 slice B, 2026-10-29). Both screens export one CSV manifest of these rows
- * (client artifactManifest.ts), so a row must not read one way in the Vault and
- * another in the Artifacts center. Moved here, not copied: the size formatter
+ * One row's section, status and size, said the same way in both views (fold
+ * F3 slice B, 2026-10-29). Both export one CSV manifest of these rows (client
+ * artifactManifest.ts), so a row must not read one way in a project's Vault and
+ * another in its organization view (the Artifacts center's gallery until slice
+ * C). Moved here, not copied: the size formatter
  * was the Artifacts center's (formatBytes), the status mapping the Vault
  * branch's (artifactLeafStatus), the section rule the Vault leaf's.
  */

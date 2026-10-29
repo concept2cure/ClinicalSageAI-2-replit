@@ -1,29 +1,25 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
-import { downloadBlob, downloadText, safeFileName } from '../download';
+import { downloadBlob, downloadText } from '../download';
 import { useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import {
-  applySurfaceAction,
   listedChoices,
   notifySurfaceActionReady,
   useSurfaceActionHandlers,
 } from '../surfaceActions';
-import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
-import { consumeNavParams } from '../navParams';
 import { LIC_ROLES } from '../fixtures/licensing';
 import { isLiveModuleEntry, moduleIsOpen, type LiveModuleEntry } from './WorkflowCatalog';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
-// filter taxonomy the server's deriveKind() mirrors; ARTIFACT_FMT is the format→label display
-// map. The fixture DATA constants (audit log, workflow guide, app license,
-// artifacts and access grants) were removed — every surface below now renders
-// real persisted data, an honest empty state, or an honest error state.
+// filter taxonomy the server's deriveKind() mirrors. The fixture DATA constants
+// (audit log, workflow guide, app license, artifacts and access grants) were
+// removed — every surface below now renders real persisted data, an honest
+// empty state, or an honest error state.
 import {
   AUDIT_KINDS,
-  ARTIFACT_FMT,
 } from '../fixtures/admin-data';
 import type {
   AuditEntry,
@@ -52,8 +48,6 @@ import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { getSurfaceMeta } from '../registryModel';
-import { artifactSignatureState, type ArtifactOrigin } from '@shared/artifact-governance';
-import { downloadArtifactManifest, type ArtifactManifestRow } from '../artifactManifest';
 
 /* `window.TXW_ADMIN` used to be published from the Setup panel below and was
    read by nothing in the repository. Its successor, the Translation workspace
@@ -1365,403 +1359,12 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
 // live row decoder/verdict. Keep Apps as the stable surface export/deep-link id.
 export { Apps } from './WorkflowCatalog';
 
-/* ════════════ Artifacts Center ════════════
-   Live-anchored to GET /api/artifacts-center (mounted in
-   server/bootstrap/register-regulatory-routes.ts, router
-   server/routes/artifacts-center-routes.ts). REAL: one row per governed artifact
-   the org owns, from concept2cure_artifacts + concept2cure_signatures + projects,
-   in this surface's display shape. No fixture — real rows, honest empty, honest
-   error. `model` is nullable: the artifacts table does not persist the AnA
-   model/tier, so it is null unless a caller stored metadata.model (rendered '—',
-   never fabricated). */
-
-/** Live artifact row (server ArtifactCenterRow) — the fixture's ArtifactEntry
-    shape but with the truthful nullable `model`. */
-interface ArtifactRow {
-  id: string;
-  name: string;
-  kind: string;
-  /* Derived from the row's category server-side, so a row whose category never
-     got backfilled arrives without one — nullable like `model`, not a contract. */
-  fmt: string | null;
-  size: string;
-  model: string | null;
-  when: string;
-  ver: string;
-  sig: boolean;
-  /** The version the active signature covers; null when it cannot be resolved. */
-  sigVersion?: number | null;
-  /** True when the signature covers an earlier version than the current one;
-   *  null when that cannot be told (the server never guesses). */
-  sigStale?: boolean | null;
-  reviewed: boolean;
-  sourceCount: number;
-  prog: string;
-  /* What the shared manifest writes (fold F3 slice B): from the same read as
-     the Vault's leaves. Absent from an older server, which the manifest says
-     as not recorded. */
-  ctdSection?: string | null;
-  status?: string;
-  origin?: ArtifactOrigin | null;
-  author?: string | null;
-  contentHash?: string | null;
-}
-
-/** What one artifact's signature says about its CURRENT version. The gallery
-    showed the e-signed shield whenever any active signature existed, so a
-    version edited after signing read as signed. The rule is shared with the
-    project Vault's governed artifacts (shared/artifact-governance.ts). */
-const signatureState = (a: Pick<ArtifactRow, 'sig' | 'sigStale'>) => artifactSignatureState(a);
-
-/** A gallery row as the shared governed-artifact manifest writes it (artifactManifest.ts). */
-function manifestRow(r: ArtifactRow): ArtifactManifestRow {
-  return {
-    name: r.name,
-    artifactId: r.id,
-    ctdSection: r.ctdSection ?? null,
-    kind: r.kind,
-    format: r.fmt,
-    origin: r.origin ?? null,
-    model: r.model,
-    author: r.author ?? null,
-    status: r.status ?? 'unknown',
-    version: r.ver,
-    signature: signatureState(r),
-    signedVersion: r.sigVersion ?? null,
-    reviewed: r.reviewed,
-    sourceCount: r.sourceCount ?? 0,
-    contentHash: r.contentHash ?? null,
-    size: r.size,
-    project: r.prog,
-    updated: r.when,
-  };
-}
-
-export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
-  // Real cross-project artifact gallery, unwrapped from { success, data }.
-  const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
-  /* Follow-the-work hand-off (Live Drive): a driven turn that just persisted a
-     draft lands here with its artifactId, and the gallery brings that row into
-     view, highlighted — the subscriber watches the document ARRIVE. Consumed
-     once; a stale or absent hand-off changes nothing. The setter now also
-     serves artifacts-center.focus-artifact, which drives the SAME focus
-     mechanism by name. */
-  const [focusId, setFocusId] = useState<string | null>(
-    () => consumeNavParams('artifacts-center')?.artifactId ?? null,
-  );
-  const focusRowRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    /* Guarded like Review's queue scroll: `scrollIntoView` is absent in jsdom
-       and some embedded webviews, and an unguarded call throws out of the
-       effect — taking the focus highlight down with it. The highlight is the
-       part that matters; the scroll is a courtesy. */
-    try {
-      if (focusId && focusRowRef.current) {
-        focusRowRef.current.scrollIntoView({ block: 'center' });
-      }
-    } catch { /* no scrollIntoView here — the row is still highlighted */ }
-  }, [focusId, rows.length]);
-
-  /* AnA's hands on this screen — the surface-action bus (shared registry:
-     artifacts-center.focus-artifact, identity-resolved). Focus/scroll only —
-     nothing on this surface mutates; downloads and exports stay human acts
-     behind their governance gate. */
-  useSurfaceActionHandlers('artifacts-center', {
-    'artifacts-center.focus-artifact': (params) => {
-      const wanted = (params.artifact ?? '').trim();
-      if (!wanted) return { ok: false, reason: 'No artifact named.' };
-      if (loading)
-        return { ok: false, reason: 'The artifact gallery is still loading.', retry: true };
-      if (error) return { ok: false, reason: 'The artifact gallery could not be read.' };
-      if (rows.length === 0) return { ok: false, reason: 'No artifacts in this gallery.' };
-      const lower = wanted.toLowerCase();
-      const exact = rows.find((a) => a.name.toLowerCase() === lower);
-      const contains = exact ? [] : rows.filter((a) => a.name.toLowerCase().includes(lower));
-      const match = exact ?? (contains.length === 1 ? contains[0] : null);
-      if (!match) {
-        return {
-          ok: false,
-          reason:
-            contains.length > 1
-              ? `"${params.artifact}" matches ${contains.length} artifacts — name one exactly.`
-              : `No artifact named "${params.artifact}" in the gallery.`,
-        };
-      }
-      setFocusId(match.id);
-      return { ok: true, detail: `Focused ${match.name}` };
-    },
-  });
-  /* The ready signal for the retry contract above. */
-  useEffect(() => {
-    if (!loading) notifySurfaceActionReady('artifacts-center');
-  }, [loading]);
-
-  /* What AnA can see of this screen.
-     This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
-     "has that memo been signed?" are the questions it exists to answer — and
-     until now she could not see a single row of it.
-
-     A FAILED read publishes the failure: an empty gallery and an unreachable
-     one look identical from here, and telling a user they have drafted nothing
-     because a fetch failed is a claim about their evidence record. */
-  const anaContext = useMemo(() => {
-    if (loading) {
-      return { summary: 'The artifact gallery is still loading; nothing on screen is final yet.' };
-    }
-    if (error) {
-      return {
-        summary:
-          'The governed artifact gallery could not be read, so this screen is showing no artifacts ' +
-          'because of a failure, not because none exist.',
-        availableActions: ['Retry the artifact gallery read'],
-      };
-    }
-    const signed = rows.filter((a) => signatureState(a) === 'current').length;
-    const stale = rows.filter((a) => signatureState(a) === 'stale').length;
-    const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
-    return {
-      summary:
-        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} project(s), ` +
-        `${signed} with a Part 11 e-signature on the current version` +
-        (stale ? `, ${stale} signed on an earlier version only (the current version is not signed)` : '') +
-        '.',
-      facts: {
-        totalArtifacts: rows.length,
-        eSignedArtifacts: signed,
-        signedOnEarlierVersionOnly: stale,
-        programs,
-        // Enough to name an artifact back to the user, not the whole gallery.
-        artifacts: rows.slice(0, 15).map((a) => ({
-          id: a.id, name: a.name, kind: a.kind, format: a.fmt,
-          version: a.ver, program: a.prog, model: a.model,
-          updated: a.when, eSigned: signatureState(a) === 'current', signature: signatureState(a),
-        })),
-      },
-      availableActions: [
-        'Open a DOCX artifact in the document editor',
-        'Download a rendered artifact',
-        'Read an artifact\u2019s version chain, provenance and signature status',
-      ],
-    };
-  }, [loading, error, rows]);
-  usePublishSurfaceContext('artifacts-center', anaContext);
-
-  /* ── "Export all" was inert, and the code said so ──────────────────────────
-     The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
-     handler and no bulk-export endpoint exists — inert button, left for a later
-     actions pass." An admin clicked it and got nothing: no file, no error, no
-     toast.
-
-     It exports the MANIFEST, and is labelled that way. There is genuinely no
-     bulk-file endpoint — /api/artifacts-center returns a gallery with no
-     content, and the three single-document exporters in routes/concept2cure.ts
-     take { title, content } for one document behind an export-governance gate
-     that a bulk loop must not skip. Building that is a backend change, not a
-     button fix. What this surface HAS is the index, and an index is a real,
-     useful thing to hand someone — so the button now delivers exactly that and
-     its label no longer promises the files. */
-  const downloadArtifact = async (a: ArtifactRow) => {
-    try {
-      const token = getAuthToken();
-      const res = await fetch(
-        `/api/artifacts-center/${encodeURIComponent(a.id)}/export?format=docx`,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
-      );
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
-        const why = (b as { message?: string; error?: string } | null);
-        // eslint-disable-next-line no-alert
-        window.alert(
-          'Not downloaded — ' +
-            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`).replace(/\.$/, '') + '.',
-        );
-        return;
-      }
-      downloadBlob(safeFileName(a.name, 'artifact').slice(0, 80) + '.docx', await res.blob());
-    } catch (e) {
-      // eslint-disable-next-line no-alert
-      window.alert('Not downloaded — ' + (e instanceof Error ? e.message : String(e)) + '.');
-    }
-  };
-
-  /* The manifest is the shared governed-artifact manifest (artifactManifest.ts,
-     fold F3 slice B): the project Vault exports the same columns from the same
-     read, so the two files never disagree about a row. */
-  const exportManifest = () => {
-    downloadArtifactManifest('artifacts-manifest.csv', rows.map(manifestRow));
-  };
-  return (
-    <div className="page-inner">
-      <AdminHeader
-        eyebrow="Workspace — evidence"
-        title="Artifacts center"
-        sub="Every artifact AnA has drafted — across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
-        actions={
-          <button
-            className="btn ghost"
-            onClick={exportManifest}
-            /* Disabled on empty or failed, so it can never present as a
-               no-op again: with no rows there is no manifest to export. */
-            disabled={loading || Boolean(error) || rows.length === 0}
-            title={
-              rows.length === 0
-                ? 'No artifacts to export yet'
-                : 'Download the artifact index as CSV (names, versions, signature status — not the files)'
-            }
-            data-testid="artifacts-export-manifest"
-          >
-            {I.download || I.externalLink} Export manifest
-          </button>
-        }
-      />
-      {loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading artifacts…</div>
-      ) : error ? (
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't load the artifacts center"
-          hint="The governed artifact gallery didn't respond. Sign in and retry, or check the service is reachable."
-        />
-      ) : rows.length === 0 ? (
-        <EmptyState
-          icon={I.fileText}
-          title="No artifacts yet"
-          hint="Every artifact AnA drafts across your projects lands here — with its version chain, provenance and signature status. Draft a section, SAP, memo or report to get started."
-        />
-      ) : (
-      <div className="ctable">
-        <div
-          className="ct-head"
-          style={{ gridTemplateColumns: '1.7fr 78px 90px 96px 84px 60px 132px' }}
-        >
-          <div>Artifact</div>
-          <div>Format</div>
-          <div>Project</div>
-          <div>Model</div>
-          <div>Updated</div>
-          <div>Sig</div>
-          <div></div>
-        </div>
-        {rows.map((a) => {
-          // A row with no `fmt` misses ARTIFACT_FMT and used to fall through to
-          // `a.fmt.toUpperCase()` on the absent value, taking the whole gallery
-          // down with it. No format means no label to show for it.
-          const f = (a.fmt && ARTIFACT_FMT[a.fmt]) || {
-            label: a.fmt ? a.fmt.toUpperCase() : '',
-            tone: 'idle',
-            action: 'Download',
-          };
-          const isDoc = a.fmt === 'docx';
-          return (
-            <div
-              key={a.id}
-              ref={a.id === focusId ? focusRowRef : undefined}
-              className={`ct-row art-row${a.id === focusId ? ' is-focus' : ''}`}
-              style={{ gridTemplateColumns: '1.7fr 78px 90px 96px 84px 60px 132px' }}
-            >
-              <div className="vn">
-                <span
-                  className="vtype"
-                  style={{ background: 'var(--accent-000)', color: 'var(--accent-200)' }}
-                >
-                  {a.ver}
-                </span>
-                <span className="ct-strong">{a.name}</span>
-                <span className="art-kind">{a.kind}</span>
-                <span className="art-kind" data-testid={`artifact-governance-${a.id}`}>
-                  {a.sourceCount ?? 0} cited source{a.sourceCount === 1 ? '' : 's'} ·{' '}
-                  {a.reviewed ? 'Human review recorded' : 'Human review required'}
-                </span>
-              </div>
-              <div>
-                {/* No format on the row -> no badge, rather than an empty pill
-                    that reads as a format the artifact does not have. */}
-                {f.label && (
-                  <span className="art-fmt" data-tone={f.tone}>
-                    {f.label}
-                  </span>
-                )}
-              </div>
-              <div className="mono" style={{ fontSize: 11 }}>
-                {a.prog}
-              </div>
-              <div style={{ color: 'var(--text-400)' }}>{a.model ?? '—'}</div>
-              <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
-              <div>
-                {(() => {
-                  const st = signatureState(a);
-                  if (st === 'current')
-                    return (
-                      <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
-                        {I.shieldCheck}
-                      </span>
-                    );
-                  /* Said in words as well as tone: the signature does not
-                     cover what is on file now. */
-                  if (st === 'stale')
-                    return (
-                      <span className="rd-chip tone-warn" title={`The signature covers v${a.sigVersion}; the current version (${a.ver}) is not signed.`}>
-                        {I.alertTriangle} Signed v{a.sigVersion} only
-                      </span>
-                    );
-                  if (st === 'unknown')
-                    return (
-                      <span className="rd-chip tone-idle" title="Signed, but the version the signature covers could not be determined.">
-                        Signed · version unknown
-                      </span>
-                    );
-                  return <span style={{ color: 'var(--text-500)' }}>--</span>;
-                })()}
-              </div>
-              <div className="art-acts">
-                {/* The non-docx branch used to run
-                    onAsk('Download <name> (PDF, 24 KB)') — it typed the file's
-                    name into the chat rail. No file was produced, and none
-                    could be: the gallery read returns octet_length(a.content),
-                    not the content, and there was no per-artifact endpoint to
-                    ask for it. GET /api/artifacts-center/:id/export now exists
-                    and renders the stored content behind the same
-                    export-review gate the other exporters use. */}
-                <button
-                  className="art-act pri"
-                  onClick={() => {
-                    if (!isDoc) {
-                      void downloadArtifact(a);
-                      return;
-                    }
-                    /* Open used to navigate empty-handed: the editor landed on
-                       its default document, not this artifact. It now rides the
-                       same authoring.open-document directive AnA rides — the
-                       bus stashes it across the navigate→mount gap and the
-                       editor resolves the name with its own honest-miss rules.
-                       An unresolvable name still lands on the editor (what the
-                       bare navigation always did), never a fabricated open. */
-                    const res = resolveSurfaceAction('authoring.open-document', { title: a.name });
-                    if (res.ok) applySurfaceAction(res.directive, (t) => onNav(t));
-                    else onNav('document-authoring');
-                  }}
-                >
-                  {isDoc ? I.penLine : I.download}
-                  {f.action}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      )}
-      <div className="svc-note" style={{ marginTop: 14 }}>
-        {I.info}
-        <span>
-          DOCX artifacts open in the document editor with track-changes and e-sign. PDF/XLSX/PPTX
-          download as final files. Every artifact carries its version chain and, when signed, its
-          Part 11 manifestation.
-        </span>
-      </div>
-    </div>
-  );
-}
+/* No Artifacts center. The gallery folded into the Vault as its organization
+   view (D2, fold F3 slice C, 2026-10-29; surfaces/VaultOrganizationArtifacts.tsx,
+   reached as 'vault', and 'artifacts-center' is an alias of it). Its read, GET
+   /api/artifacts-center, is the Vault's now, bound to the projects the caller
+   can open; its manifest, governed DOCX, editor hand-off and AnA focus moved
+   with it. docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/. */
 
 /* ════════════ Admin Console ════════════ */
 

@@ -155,9 +155,10 @@ describe('project MDX workflow — doors and headings', () => {
 /* Device features inside the project (D2, 2026-10-29;
    docs/evidence/D2-ONE-ANA/2026-10-29/device-features-in-project/). The founder made 21 MDX surfaces features of the
    client's project (MDX_PROJECT_FEATURE_SURFACE_IDS, 62a8d5e7). device-tasks has since folded into Tasks
-   (fold-device-tasks), so 20 remain. Plan's device workflow opens twelve of them. Each of the other eight has no door
-   from inside the project, for the reason given below. Seven fold into a place the project already reaches, and one
-   is the old device home (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section 5 and convergences 3, 7, 8, 11). */
+   (fold-device-tasks) and device-vault into the Vault (fold-f3-vault), so 19 remain. Plan's device workflow opens twelve
+   of them. Each of the other seven has no door from inside the project, for the reason given below. Six fold into a
+   place the project already reaches, and one is the old device home (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md
+   section 5 and convergences 3, 7, 8, 11). */
 const REACHED_FROM_PLAN = [
   'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
   'device-clinical-studies', 'device-software', 'device-engineering', 'device-postmarket',
@@ -171,7 +172,6 @@ const NO_PROJECT_DOOR: Record<string, string> = {
   'design-controls': 'folds into device-engineering, which Plan already opens',
   risk: 'folds into device-engineering, which Plan already opens',
   'ivd-completeness': 'folds into device-diagnostics, which Plan already opens for an IVDR filing',
-  'device-vault': 'folds into Vault',
   'device-analytics': 'folds into Reporting & analytics',
   'device-validation': 'folds into Submission Center',
   'device-submission': 'folds into Submission Center',
@@ -207,7 +207,7 @@ function surfacesPlanOpens(): Set<string> {
 }
 
 describe('device features inside the project', () => {
-  it('places each of the 20 project features once: opened from Plan, or listed with why it has no door', () => {
+  it('places each of the 19 project features once: opened from Plan, or listed with why it has no door', () => {
     expect([...REACHED_FROM_PLAN, ...Object.keys(NO_PROJECT_DOOR)].sort()).toEqual([...MDX_PROJECT_FEATURE_SURFACE_IDS].sort());
   });
 
