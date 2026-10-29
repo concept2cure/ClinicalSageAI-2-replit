@@ -902,6 +902,25 @@ Decided by the founder, 2026-10-29, answering MR-12's NEW-2 and NEW-3 and the di
 
 Not decided here: MR-12 NEW-4 (review quorum and the retirement meaning).
 
+### P-50 — Training: a 14-day grace for late assignment, assignment grants reading the released version, and personal training status is QA's to see
+
+Decided 2026-10-29 under the founder's delegation of that day ("You can make founder decisions"), answering the three
+questions `docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md` §1.4 left open within P-49:
+
+- **Q1, late assignment: 14 days.** Someone assigned after a version is already in force is due 14 days after they are
+  covered (`TRAINING_LATE_ASSIGNMENT_GRACE_DAYS = 14`). A version approved ahead of its effective date keeps P-49's
+  rule: due by the effective date. Due "today" would make every new hire overdue on their first day; Veeva offers
+  "N days after assignment" for the same reason.
+- **Q2, reading what you must train on: yes (the design's D3).** An active person covered by a live assignment may
+  read, through the training reader only, the immutable signed snapshot of that document's version in force and of
+  its pending version. It grants nothing on the editing copy, the editor, the versions route or the project. A task
+  nobody can complete is not distribution.
+- **Q3, who sees each person's training status: the person, administrators and designated QMS approvers.** Every
+  other member sees the coverage counts ("x of y assigned"), not names. Training status is a personnel record; a
+  colleague's lapse is QA's business, not the whole organisation's. The per-person reads (`GET /qms/training`, the
+  expiry list G10, the outstanding-training list) apply this when compliance moves onto assignments (the design's
+  slice 3).
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
