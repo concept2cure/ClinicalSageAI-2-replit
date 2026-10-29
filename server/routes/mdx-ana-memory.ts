@@ -1,51 +1,31 @@
 /**
- * AnA memory + conversation history surfaces. Read-mostly endpoints over
- * the existing client_memory_entries / project_memory_entries / chat_threads
- * / chat_messages tables; backs Surface 20 (AnA memory) and Surface 25 (AnA
- * conversation history) in the gap inventory.
+ * The caller's own relational profile: the notes AnA keeps about working with
+ * them, read beside the conversation ("What AnA remembers",
+ * client/src/concept2cure/v2/WhatAnaRemembers.tsx).
  *
- *   GET    /api/mdx/ana/memory                    list curated memory atoms
- *   POST   /api/mdx/ana/memory/:id/verify         user verification (+ importance boost)
- *   POST   /api/mdx/ana/memory/:id/supersede      mark superseded by a new atom
+ *   GET    /api/mdx/ana/memory/profile            the caller's own relational profile
+ *                                                 (?project_id= for their notes on that project)
  *
- *   GET    /api/mdx/ana/threads                   conversation threads list
- *   GET    /api/mdx/ana/threads/:threadId         single thread + messages
- *   POST   /api/mdx/ana/threads/:threadId/pin     pin/unpin a thread
+ * Tenant-scoped. Returns canonical envelope.
  *
- * Tenant-scoped. Returns canonical envelope. The tables backing this
- * (client_memory_entries, project_memory_entries, chat_threads,
- * chat_messages) are existing — no migration needed.
- *
- * WO-16C #133. This router performs three writes — memory verify, memory
- * supersede, thread pin/unpin — and each records a 21 CFR Part 11 §11.10(e)
- * row. Each did so with `void auditService.logAction({…})`, which discards the
- * `AuditWriteResult` that call resolves. `logAction` never rejects when
- * persistence fails — deliberately, an audit-trail outage must not break the
- * user action it records — so the discarded value was the only place a lost row
- * was visible: the returned row and the envelope came back byte-identical
- * whether the §11.10(e) record existed or not. All three now go through the
- * shared `recordAuditRow` and carry its outcome out in the envelope's
- * `meta.auditTrail`. Every one of them is a log BESIDE an already-committed
- * UPDATE, so none reverts its mutation over a lost log row: the action stands
- * and the caller is told. Each handler writes exactly one audit row, so one
- * unqualified `auditTrail` key per envelope names it unambiguously.
- *
- * `recordAuditRow` returns `{persisted, chained}` or `{persisted: false, code,
- * message}` and never the store's own text; that text goes to its own log line,
- * keyed on the action and the resource id. `auditService` is reached through
- * that module, so it is no longer imported here directly.
+ * D2, fold of `ana-memory` into the conversation, 2026-10-29
+ * (docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). This router used to
+ * back the `ana-memory` screen as well: the memory-atom list (GET /ana/memory),
+ * verify and supersede (POST /ana/memory/:id/verify, /supersede), and a thread
+ * list, read and pin (GET /ana/threads, GET /ana/threads/:threadId, POST
+ * /ana/threads/:threadId/pin). The screen was their only caller, and the
+ * placement map carries none of them (.design/client-journey/FUNCTION_PARITY.md,
+ * "From `ana-memory`": not real today), so they were deleted with it. Threads
+ * are /api/chat/threads; pinning belongs there if it is wanted.
  */
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
-import {
-  ok, clientError, orgRequired, notFoundInTenant, serverError,
-} from '../lib/api-response';
+import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
-import { programIdForThread } from '../services/chat-thread-helpers';
-import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { admitAnaProjectScope, AnaProjectScopeError, type AdmittedAnaProjectScope } from '../services/ana/project-scope-admission';
 
 const router = Router();
 const log = createScopedLogger('mdx-ana-memory');
@@ -63,282 +43,79 @@ function getUserId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/* ─── AnA memory atoms ──────────────────────────────────────── */
-
-const memoryListQuery = z.object({
-  category:    z.enum(['persona', 'regulatory', 'pipeline', 'competitive', 'operational', 'preference', 'history']).optional(),
-  importance:  z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  status:      z.enum(['active', 'superseded', 'archived', 'rejected']).optional(),
-  verified:    z.enum(['true', 'false']).optional(),
-  limit:       z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
-});
-
-router.get('/ana/memory', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = memoryListQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { category, importance, status, verified, limit = 200 } = parsed.data;
-
-  /* organization_id lives in the SQL literal (not the filters array) so the
-     tenant-isolation CI gate can verify the scope statically. */
-  const filters: string[] = [];
-  const args: unknown[] = [orgId];
-  if (category)   { args.push(category);   filters.push(`category = $${args.length}`); }
-  if (importance) { args.push(importance); filters.push(`importance_level = $${args.length}`); }
-  if (status)     { args.push(status);     filters.push(`status = $${args.length}`); }
-  if (verified === 'true')  filters.push(`is_verified_by_user = true`);
-  if (verified === 'false') filters.push(`is_verified_by_user = false`);
-  args.push(limit);
-  const extraFilters = filters.length ? ` AND ${filters.join(' AND ')}` : '';
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, profile_id, category, subcategory, title, content,
-              source_document_name, confidence_score, importance_level,
-              is_verified_by_user, verified_at, verified_by, status,
-              superseded_by_id, extracted_at, extracted_by, created_at, updated_at
-         FROM client_memory_entries
-        WHERE organization_id = $1${extraFilters}
-        ORDER BY
-          CASE importance_level WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-          updated_at DESC
-        LIMIT $${args.length}`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
-    if (code === '42P01') {
-      /* client_memory_entries not provisioned yet — return empty rather
-         than 500 so the surface still renders. */
-      return ok(res, [], { count: 0 });
-    }
-    return serverError(res, log, 'list-memory', err);
-  }
-});
-
 /**
- * The user-level relational profile AnA maintains about how to work with the
- * current user (ana_relational_profiles, project_id IS NULL). This is the
- * read side of the self-developed personality layer whose write side lives in
- * server/services/ana-ri/relational-profile-service.ts — surfaced read-only so
- * the AnA memory surface can show it instead of a fabricated stand-in. Returns
- * the row, or null when AnA hasn't formed notes yet (honest empty, not a 500).
+ * The caller's own relational profile: the notes AnA keeps about how to work
+ * with this person, read into every turn by loadRelationalOverlay
+ * (server/services/ana-ri/relational-profile-service.ts, which also writes
+ * them). Read-only. The conversation's "What AnA remembers" panel reads it
+ * (client/src/concept2cure/v2/WhatAnaRemembers.tsx).
+ *
+ *   no project_id     the user-level row (project_id IS NULL): `meta.scope 'user'`.
+ *   ?project_id=<ref> the caller's row for that project, the one a turn held in
+ *                     it reads: `meta.scope 'project'` with the admitted
+ *                     `projectId` and `projectRef`. The ref is a program UUID
+ *                     or an integer project id, as the stream's `project_id` is,
+ *                     and is admitted by the stream's own admission
+ *                     (admitAnaProjectScope) before anything is read. Its
+ *                     refusal is answered with its own status and code.
+ *
+ * user_id is the session's and no parameter names a user, so another person's
+ * notes are never read. Null data is "AnA has formed no notes yet"; an absent
+ * store says so in `meta.pendingStore` rather than answering that same null
+ * (D2, fold ana-memory into the conversation, 2026-10-29).
  */
+const profileQuery = z.object({ project_id: z.string().trim().min(1).max(100).optional() });
+
 router.get('/ana/memory/profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
   if (userId === null) return clientError(res, 401, 'User context required');
+  const parsed = profileQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
 
+  if (parsed.data.project_id === undefined) {
+    try {
+      /* organization_id lives in the SQL literal so the tenant-isolation CI gate
+         can verify the scope statically. project_id IS NULL = the user-level
+         profile (how AnA works with this person anywhere). */
+      const { rows } = await pool.query(
+        `SELECT interaction_count, last_interaction_at, profile_summary,
+                tone_calibration, emotional_signals, acknowledged_mistakes
+           FROM ana_relational_profiles
+          WHERE organization_id = $1 AND user_id = $2 AND project_id IS NULL
+          LIMIT 1`,
+        [orgId, userId],
+      );
+      return ok(res, rows[0] ?? null, { scope: 'user' });
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === '42P01') return ok(res, null, { scope: 'user', pendingStore: true });
+      return serverError(res, log, 'get-relational-profile', err);
+    }
+  }
+
+  let admitted: AdmittedAnaProjectScope;
   try {
-    /* organization_id lives in the SQL literal so the tenant-isolation CI gate
-       can verify the scope statically. project_id IS NULL = the user-level
-       profile (how AnA works with this person anywhere). */
+    admitted = await admitAnaProjectScope(pool, { organizationId: orgId, userId, projectRef: parsed.data.project_id });
+  } catch (err: unknown) {
+    if (err instanceof AnaProjectScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    return serverError(res, log, 'admit-relational-profile-project', err);
+  }
+  if (admitted.projectId === null) return clientError(res, 400, 'Choose a valid project identifier.');
+  const scope = { scope: 'project', projectId: admitted.projectId, projectRef: admitted.projectRef };
+  try {
     const { rows } = await pool.query(
       `SELECT interaction_count, last_interaction_at, profile_summary,
               tone_calibration, emotional_signals, acknowledged_mistakes
          FROM ana_relational_profiles
-        WHERE organization_id = $1 AND user_id = $2 AND project_id IS NULL
+        WHERE organization_id = $1 AND user_id = $2 AND project_id = $3
         LIMIT 1`,
-      [orgId, userId],
+      [orgId, userId, admitted.projectId],
     );
-    return ok(res, rows[0] ?? null);
+    return ok(res, rows[0] ?? null, scope);
   } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
-    if (code === '42P01') {
-      /* ana_relational_profiles not provisioned yet — null rather than 500 so
-         the surface renders its honest empty state. */
-      return ok(res, null);
-    }
-    return serverError(res, log, 'get-relational-profile', err);
-  }
-});
-
-router.post('/ana/memory/:id/verify', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  const userId = getUserId(req);
-  if (orgId === null) return orgRequired(res);
-  if (userId === null) return clientError(res, 401, 'User context required');
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  /* Optional importance bump when the user explicitly verifies. */
-  const bumpToHigh = req.body?.bumpImportance === true;
-
-  try {
-    const { rows } = await pool.query(
-      `UPDATE client_memory_entries
-          SET is_verified_by_user = true,
-              verified_at = NOW(),
-              verified_by = $3,
-              importance_level = CASE WHEN $4 = true AND importance_level IN ($5, $6)
-                                      THEN $7
-                                      ELSE importance_level END,
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-        RETURNING id, is_verified_by_user, importance_level`,
-      [id, orgId, userId, bumpToHigh, 'low', 'medium', 'high'],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Memory atom');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
-       already stamped `is_verified_by_user`, the verifier and `verified_at` —
-       and applied the importance bump when asked for — so this is a log beside a
-       completed verification, not the verification itself: it is never reverted
-       here. What the caller can now see is whether the Part 11 record of who
-       verified this atom exists — `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId, action: 'mdx.memory.verify',
-      resourceType: 'memory_atom', resourceId: id,
-      details: { bumpImportance: bumpToHigh },
-    });
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) {
-    return serverError(res, log, 'verify-memory', err);
-  }
-});
-
-router.post('/ana/memory/:id/supersede', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const supersededBy = req.body?.supersededById;
-  if (typeof supersededBy !== 'number' || !Number.isFinite(supersededBy)) {
-    return clientError(res, 422, 'supersededById (number) is required');
-  }
-  try {
-    const { rows } = await pool.query(
-      `UPDATE client_memory_entries
-          SET status = $4,
-              superseded_by_id = $3,
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND status = 'active'
-        RETURNING id, status, superseded_by_id`,
-      [id, orgId, supersededBy, 'superseded'],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Memory atom (or not active)');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
-       already moved the atom to `superseded` and pointed `superseded_by_id` at
-       its replacement, so this is a log beside a completed supersession, not the
-       supersession itself: it is never reverted here. What the caller can now
-       see is whether the Part 11 record of that status change exists —
-       `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.memory.supersede',
-      resourceType: 'memory_atom', resourceId: id,
-      details: { supersededById: supersededBy },
-    });
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) {
-    return serverError(res, log, 'supersede-memory', err);
-  }
-});
-
-/* ─── Conversation threads + messages ───────────────────────── */
-
-const threadListQuery = z.object({
-  program_id: z.string().optional(),
-  pinned:     z.enum(['true', 'false']).optional(),
-  limit:      z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
-});
-
-router.get('/ana/threads', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = threadListQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { program_id: rawPid, pinned, limit = 100 } = parsed.data;
-  // The program a thread was held in is chat_threads.program_id (PF-10 S2),
-  // bound at mint time only to a program of the thread's own organization.
-  const pid = rawPid === undefined ? undefined : programIdForThread(rawPid);
-  if (pid === null) return clientError(res, 422, 'program_id must be a UUID');
-
-  const filters: string[] = [`organization_id = $1`];
-  const args: unknown[] = [orgId];
-  if (pid)    { args.push(pid);     filters.push(`program_id = $${args.length}`); }
-  if (pinned === 'true')  filters.push(`(metadata->>'pinned')::boolean = true`);
-  if (pinned === 'false') filters.push(`COALESCE((metadata->>'pinned')::boolean, false) = false`);
-  args.push(limit);
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, user_id, organization_id, program_id, title, metadata, created_at, updated_at
-         FROM chat_threads
-        WHERE ${filters.join(' AND ')}
-        ORDER BY (metadata->>'pinned')::boolean DESC NULLS LAST, updated_at DESC
-        LIMIT $${args.length}`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
-    if (code === '42P01' || code === '42703') {
-      /* chat_threads, or its program_id (20261001c), is not provisioned. This
-         answered an empty list, so "the store is missing" read as "this
-         project has no conversations". Said plainly instead, as
-         routes/chat/threads.ts does. */
-      log.error('list-threads: conversation store not provisioned', { code });
-      return res.status(503).json({ error: 'Conversation store is not provisioned', code: 'THREAD_STORE_UNPROVISIONED' });
-    }
-    return serverError(res, log, 'list-threads', err);
-  }
-});
-
-router.get('/ana/threads/:threadId', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const threadId = String(req.params.threadId);
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM chat_threads WHERE id = $1 AND organization_id = $2`,
-      [threadId, orgId],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Thread');
-    const msgs = await pool.query(
-      `SELECT id, role, content, metadata, created_at
-         FROM chat_messages
-        WHERE thread_id = $1
-        ORDER BY created_at ASC
-        LIMIT 1000`,
-      [threadId],
-    );
-    return ok(res, { ...rows[0], messages: msgs.rows });
-  } catch (err: unknown) {
-    const code = (err as { code?: string }).code;
-    if (code === '42P01') return notFoundInTenant(res, 'Thread');
-    return serverError(res, log, 'get-thread', err);
-  }
-});
-
-router.post('/ana/threads/:threadId/pin', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const threadId = String(req.params.threadId);
-  const pinned = req.body?.pinned !== false; // default true unless explicitly false
-  try {
-    const { rows } = await pool.query(
-      `UPDATE chat_threads
-          SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{pinned}', to_jsonb($3::boolean)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-        RETURNING id, metadata`,
-      [threadId, orgId, pinned],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Thread');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
-       already written `metadata.pinned`, so this is a log beside a completed
-       pin/unpin, not the state change itself: it is never reverted here. What
-       the caller can now see is whether the Part 11 record of the change exists
-       — `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: pinned ? 'mdx.conversation.pin' : 'mdx.conversation.unpin',
-      resourceType: 'chat_thread', resourceId: threadId,
-    });
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) {
-    return serverError(res, log, 'pin-thread', err);
+    if ((err as { code?: string }).code === '42P01') return ok(res, null, { ...scope, pendingStore: true });
+    return serverError(res, log, 'get-project-relational-profile', err);
   }
 });
 

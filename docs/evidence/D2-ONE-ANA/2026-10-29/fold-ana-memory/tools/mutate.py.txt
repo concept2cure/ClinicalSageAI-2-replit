@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Apply each mutation in mutation-spec.json to the working tree, run its
+command, record whether it went red, restore the file byte for byte and check
+the restored SHA-256 against the original. Usage: mutate.py SPEC OUT [ID...]"""
+import hashlib, json, subprocess, sys, os
+
+ROOT = '/home/user/ClinicalSageAI-2-replit'
+spec_path, out_path = sys.argv[1], sys.argv[2]
+only = set(sys.argv[3:])
+spec = json.load(open(spec_path))
+lines = []
+red = 0
+ran = 0
+for m in spec:
+    if only and m['id'] not in only:
+        continue
+    path = os.path.join(ROOT, m['file'])
+    original = open(path, 'rb').read()
+    before = hashlib.sha256(original).hexdigest()
+    text = original.decode('utf8')
+    count = text.count(m['old'])
+    if count != 1:
+        lines.append(f"{m['id']} SKIPPED: anchor found {count} times in {m['file']}")
+        continue
+    try:
+        open(path, 'w').write(text.replace(m['old'], m['new']))
+        proc = subprocess.run(m['run'], shell=True, cwd=ROOT, capture_output=True, text=True, timeout=900)
+        out = proc.stdout + proc.stderr
+        failed = proc.returncode != 0
+        summary = [l.strip() for l in out.splitlines() if 'Tests ' in l and ('failed' in l or 'passed' in l)]
+        fails = [l.strip()[:200] for l in out.splitlines() if l.startswith(' FAIL ') or l.lstrip().startswith('×')][:6]
+        if 'check-ana-surface-context' in m['run']:
+            fails = [l.strip()[:200] for l in out.splitlines() if 'ID' in l or 'baseline' in l.lower()][:4]
+    finally:
+        open(path, 'wb').write(original)
+    after = hashlib.sha256(open(path, 'rb').read()).hexdigest()
+    ran += 1
+    red += 1 if failed else 0
+    lines.append(f"{m['id']} {'RED' if failed else 'SURVIVED'} (exit {proc.returncode}) — {m['what']}")
+    lines.append(f"    file: {m['file']}  restored sha256 {'matches' if after == before else 'DIFFERS'} ({before[:12]})")
+    lines.append(f"    run: {m['run']}")
+    for s in summary[-1:]:
+        lines.append(f"    {s}")
+    for f in fails:
+        lines.append(f"    {f}")
+lines.append(f"\n{red} of {ran} mutations red.")
+open(out_path, 'w').write('\n'.join(lines) + '\n')
+print('\n'.join(lines))

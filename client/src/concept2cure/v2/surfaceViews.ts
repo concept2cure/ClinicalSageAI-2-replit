@@ -277,7 +277,6 @@ const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').t
 const AccessRequests = lazySurface(() => import('./surfaces/AccessRequests').then((m) => ({ default: m.AccessRequests })));
 const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
-const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
 const AuthoringEngine = lazySurface(() => import('./surfaces/AuthoringEngine').then((m) => ({ default: m.AuthoringEngine })));
 const BatchDraft = lazySurface(() => import('./surfaces/BatchDraft').then((m) => ({ default: m.BatchDraft })));
 const BiopharmaJourney = lazySurface(() => import('./surfaces/BiopharmaJourney').then((m) => ({ default: m.BiopharmaJourney })));
@@ -386,7 +385,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'access-requests': { component: AccessRequests },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
-  'ana-memory': { component: AnaMemory },
+  // ana-memory folded into conversation-thread (D2, 2026-10-29): DEEP_LINK_ALIASES takes it there.
   apps: { component: Apps },
   'audit-trail': { component: AuditTrail },
   'authoring-engine': { component: AuthoringEngine },
