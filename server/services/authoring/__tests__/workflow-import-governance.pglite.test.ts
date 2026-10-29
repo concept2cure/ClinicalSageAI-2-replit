@@ -60,17 +60,19 @@ beforeEach(async () => {
   const docId = randomUUID();
   const sectionId = randomUUID();
   const content = workflowCopySectionContent(SOURCE);
-  origin = { kind: 'csr', id: '44', programId: PROGRAM, title: 'Stored CSR', documentType: null, sectionCode: null,
-    fingerprint: 'a'.repeat(64), selection: { kind: 'csr', jobId: 44 }, version: '1', gaps: [],
-    conversion: 'ich-e3-sections', sourceScope: { level: 'project', projectId: 11, programId: PROGRAM },
+  // A protocol import: the adoption predicates are the same for every kind. A
+  // CSR import is also held for its scientific review (the last describe).
+  origin = { kind: 'protocol', id: '44', programId: PROGRAM, title: 'Stored protocol', documentType: null, sectionCode: null,
+    fingerprint: 'a'.repeat(64), selection: { kind: 'protocol', documentId: 44 }, version: '1', gaps: [],
+    conversion: 'protocol-structure', sourceScope: { level: 'project', projectId: 11, programId: PROGRAM },
     association: { mode: 'recorded', reason: null }, sectionOrigins: [{ code: '11', sourceRowId: '44:11',
       contentSha256: 'b'.repeat(64), originalAuthorship: 'unknown', model: null, modelEvidence: 'unrecorded' }] };
   input = { organizationId: ORG, doc: { id: docId, created_by: '9', client_program_id: PROGRAM,
-    title: 'Stored CSR', module: 'M5', locale: 'en', product_code: null, version: '1.0',
+    title: 'Stored protocol', module: 'M5', locale: 'en', product_code: null, version: '1.0',
     provenance: { importSource: origin } }, sections: [{ id: sectionId, code: '11', content }],
     actor: { id: '8', email: 'reviewer@example.test' } };
   await q.query(`INSERT INTO authoring_documents(id,title,module,locale,version,created_by,tenant_id)
-    VALUES($1,'Stored CSR','M5','en','1.0','9',$2)`, [docId,ORG]);
+    VALUES($1,'Stored protocol','M5','en','1.0','9',$2)`, [docId,ORG]);
   await q.query(`INSERT INTO authoring_sections(id,doc_id,code,title,content,tenant_id)
     VALUES($1,$2,'11',NULL,$3,$4)`, [sectionId,docId,content,ORG]);
   await q.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,actor_id,tenant_id,metadata)
@@ -262,7 +264,7 @@ describe('uncontrolled review copies retain the real qualification hold', () => 
   it('renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses', async () => {
     origin.sectionOrigins[0].originalAuthorship='machine';
     await adoptedCopy();
-    const args = { executor:q,tenantId:ORG,doc:{id:input.doc.id,title:'Stored CSR working copy',client_program_id:PROGRAM,
+    const args = { executor:q,tenantId:ORG,doc:{id:input.doc.id,title:'Stored protocol working copy',client_program_id:PROGRAM,
       provenance:input.doc.provenance,created_by:input.doc.created_by},
       sections:input.sections.map(section => ({...section,title:'Clinical findings'})),actor:input.actor,format:'docx' as const };
     await expect(renderAuthoringExport(args)).rejects.toMatchObject({code:'WORKFLOW_MODEL_QUALIFICATION_REQUIRED'});
@@ -297,5 +299,26 @@ describe('IVD saved-source copies use the existing human review and signature li
     await adoptedCopy();await expect(assertWorkflowImportRelease(q,input)).resolves.toBeUndefined();
     await rewrite(workflowCopySectionContent(`${sourceContent} Revised working copy`));
     await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED'});
+  });
+});
+
+describe('a CSR import is also held for its scientific review', () => {
+  const asCsr = () => {
+    origin = { ...origin, kind: 'csr', title: 'Stored CSR', selection: { kind: 'csr', jobId: 44 }, conversion: 'ich-e3-sections' };
+    input = { ...input, doc: { ...input.doc, title: 'Stored CSR', provenance: { importSource: origin } } };
+  };
+  it('neither adopts nor releases a CSR that has no scientific-review receipt, even with an assigned approval', async () => {
+    asCsr();
+    await approvedReview();
+    await expect(prepareWorkflowImportAdoption(q, { ...input, explicit: true }))
+      .rejects.toMatchObject({ code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED' });
+    await expect(assertWorkflowImportRelease(q, input)).rejects.toMatchObject({ code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED' });
+  });
+  it('holds a renamed copy by its stored CSR origin', async () => {
+    asCsr();
+    await q.query(`INSERT INTO authoring_audit_trail(doc_id,operation_type,actor_email,actor_id,tenant_id,metadata)
+      VALUES($1,'CREATE','author@example.test','9',$2,$3::jsonb)`, [input.doc.id, ORG, JSON.stringify({ provenance: { importSource: origin } })]);
+    input = { ...input, doc: { ...input.doc, title: 'Final report', provenance: null } };
+    await expect(assertWorkflowImportRelease(q, input)).rejects.toMatchObject({ code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED' });
   });
 });

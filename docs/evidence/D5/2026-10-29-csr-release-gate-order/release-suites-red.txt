@@ -1,0 +1,25 @@
+# The eleven release-path suites at 91465a856 (before this change; their code is identical at 499a17b82)
+ Test Files  11 failed (11)
+      Tests  105 failed | 19 passed (124)
+
+     12  FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts
+      2  FAIL  server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+      5  FAIL  server/routes/__tests__/authoringApprovalSealBinding.test.ts
+      1  FAIL  server/routes/__tests__/authoringExportDocx.test.ts
+      7  FAIL  server/routes/__tests__/authoringExportPdf.test.ts
+     10  FAIL  server/routes/__tests__/authoringExportSignatureManifest.test.ts
+      1  FAIL  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+      2  FAIL  server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+     32  FAIL  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+      6  FAIL  server/services/authoring/__tests__/ordinary-authoring-pdf.test.ts
+     27  FAIL  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+
+# Grouped first errors
+     32 → relation "authoring_reviews" does not exist
+     20 Export error: ZodError: [
+     13 Serialized Error: { status: 409, code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED' }
+     12 Sign error: ZodError: [
+     11 +   "code": "CSR_SCIENTIFIC_REVIEW_REQUIRED",
+     10 Error creating electronic signature: ZodError: [
+      3 → expected ZodError: [
+      3 ZodError: [

@@ -69,6 +69,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-approval-seal-bi
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -107,6 +108,8 @@ beforeEach(() => {
   h.existingApproved = null;
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: () => undefined }));
   h.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (/^\s*(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return {};
     if (/INSERT INTO frozen_documents/i.test(s)) {
@@ -119,14 +122,16 @@ beforeEach(() => {
       return h.existingApproved ? { rowCount: 1, rows: [{ version: 'approved', ...h.existingApproved }] } : { rowCount: 0, rows: [] };
     }
     if (/SELECT \* FROM authoring_documents/i.test(s)) {
-      return { rowCount: 1, rows: [{ id: 'D1', title: 'Doc', status: 'APPROVED', tenant_id: 3 }] };
+      return { rowCount: 1, rows: [{ id: DOC_ID, title: 'Doc', status: 'APPROVED', tenant_id: 3 }] };
     }
     if (/FROM authoring_sections/i.test(s)) {
-      return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', code: '2.5.1', title: 'Rationale', content: '<p>body</p>', order_index: 100 }] };
+      return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, code: '2.5.1', title: 'Rationale', content: '<p>body</p>', order_index: 100 }] };
     }
     return { rowCount: 1, rows: [{}] };
   });
   h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (s.includes('organization_users')) return { rowCount: 1, rows: [{ role: 'approver', organization_id: 3, user_id: 7 }] };
     if (/SELECT 1 FROM authoring_documents/i.test(s)) return { rowCount: 1, rows: [{ '?column?': 1 }] };
@@ -140,7 +145,7 @@ beforeEach(() => {
 
 async function approve() {
   return request(makeApp())
-    .post('/api/authoring/docs/D1/e-sign')
+    .post(`/api/authoring/docs/${DOC_ID}/e-sign`)
     .set('Authorization', await bearer())
     .send({ password: 'right-password', meaning: 'APPROVER', intent: 'I approve this document' });
 }
@@ -187,17 +192,19 @@ describe('POST /docs/:docId/e-sign APPROVER', () => {
 
   it('a freeze records frozen_at on the document it freezes', async () => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       const s = String(sql);
       if (s.includes('organization_users')) return { rowCount: 1, rows: [{ role: 'approver', organization_id: 3, user_id: 7 }] };
       if (/FROM authoring_documents WHERE id = \$1 AND tenant_id = \$2/i.test(s)) {
-        return { rowCount: 1, rows: [{ id: 'D1', title: 'Doc', status: 'draft', version: '1.0' }] };
+        return { rowCount: 1, rows: [{ id: DOC_ID, title: 'Doc', status: 'draft', version: '1.0' }] };
       }
       if (/FROM authoring_sections/i.test(s)) return { rowCount: 1, rows: [{ id: 'S1', code: '2.5.1', content: '<p>body</p>' }] };
       if (/SELECT name FROM users/i.test(s)) return { rowCount: 1, rows: [{ name: 'Ava Approver' }] };
       return { rowCount: 0, rows: [] };
     });
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/freeze')
+      .post(`/api/authoring/docs/${DOC_ID}/freeze`)
       .set('Authorization', await bearer())
       .send({ password: 'right-password', meaning: 'AUTHOR', reason: 'Sealing the reviewed draft' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -208,7 +215,7 @@ describe('POST /docs/:docId/e-sign APPROVER', () => {
 
   it('a REVIEWER signature still covers only the snapshot in force, and approves nothing', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/e-sign')
+      .post(`/api/authoring/docs/${DOC_ID}/e-sign`)
       .set('Authorization', await bearer())
       .send({ password: 'right-password', meaning: 'REVIEWER', intent: 'I reviewed this document' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);

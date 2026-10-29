@@ -73,6 +73,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-approval-chain';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -108,17 +109,19 @@ function wireWorkflow(counts: { pending: string; total: string }) {
   mockQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
     if (s.includes('FROM authoring_documents')) {
-      return { rowCount: 1, rows: [{ id: 'D1', title: 'Doc', status: 'draft' }] };
+      return { rowCount: 1, rows: [{ id: DOC_ID, title: 'Doc', status: 'draft' }] };
     }
     return { rowCount: 0, rows: [] };
   });
   mockClientQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    const governance = releaseGovernanceRead(s);
+    if (governance) return governance;
     if (s.includes('COUNT(*)') && s.includes('authoring_workflow_steps')) {
       return { rowCount: 1, rows: [counts] };
     }
     if (s.includes('FROM authoring_documents')) {
-      return { rowCount: 1, rows: [{ id: 'D1', status: 'draft' }] };
+      return { rowCount: 1, rows: [{ id: DOC_ID, status: 'draft' }] };
     }
     return { rowCount: 1, rows: [{ id: 'X' }] };
   });
@@ -134,7 +137,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
     // No steps exist at all. Not "all approved" — never required.
     wireWorkflow({ pending: '0', total: '0' });
     await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
@@ -148,7 +151,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
   it('still records the signature — only the APPROVAL is withheld', async () => {
     wireWorkflow({ pending: '0', total: '0' });
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
@@ -159,7 +162,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
   it('does not seal the document into frozen_documents either', async () => {
     wireWorkflow({ pending: '0', total: '0' });
     await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
@@ -173,7 +176,7 @@ describe('POST /docs/:docId/sign where an approval workflow DID exist', () => {
     // The real path must keep working: steps existed, none remain pending.
     wireWorkflow({ pending: '0', total: '3' });
     await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'final approval', password: PASSWORD });
 
@@ -186,7 +189,7 @@ describe('POST /docs/:docId/sign where an approval workflow DID exist', () => {
   it('does NOT approve while a step is still pending', async () => {
     wireWorkflow({ pending: '2', total: '3' });
     await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'my turn', password: PASSWORD });
 
