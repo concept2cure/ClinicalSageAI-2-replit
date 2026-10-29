@@ -8641,6 +8641,17 @@ registerToolHandler('create_risk_item', async (input, ctx) => {
   }
 });
 
+/**
+ * A guarded child-row write (services/part11/signed-content-lock.ts) that wrote
+ * nothing, as the tool answers it: not found, the one refusal of signed content
+ * with its code (P-63), or a record that moved while it was written.
+ */
+function childWriteRefusal(w: { outcome: 'not-found' } | { outcome: 'changed' } | { outcome: 'refused'; refusal: { message: string; details: { code: string } } }, notFound: string): string {
+  if (w.outcome === 'not-found') return JSON.stringify({ error: notFound });
+  if (w.outcome === 'refused') return JSON.stringify({ error: w.refusal.message, code: w.refusal.details.code, details: w.refusal.details });
+  return JSON.stringify({ error: 'The record changed while this was being written. Read it again and retry. Nothing was saved.' });
+}
+
 registerToolHandler('add_risk_control', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'add_risk_control requires tenant context (organizationId).' });
@@ -8659,34 +8670,23 @@ registerToolHandler('add_risk_control', async (input, ctx) => {
   }
   try {
     const { getPool } = await import('../../db.js');
-    const pool = getPool();
-    /* Tenant gate. */
-    const own = await pool.query(
-      `SELECT 1 FROM risk_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [itemId, ctx.organizationId],
-    );
-    if (own.rows.length === 0) {
-      return JSON.stringify({ error: `risk_item ${itemId} not found in this organization.` });
-    }
-    const { rows } = await pool.query(
-      `INSERT INTO risk_controls (
-         risk_item_id, organization_id, description, control_type,
-         implementation_evidence, verification_evidence, effectiveness_evidence,
-         introduces_new_risk, new_risk_item_id, status
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, 'proposed'))
-       RETURNING id, description, control_type, status`,
-      [
-        itemId, ctx.organizationId, desc, ctype,
-        input.implementation_evidence ?? null,
-        input.verification_evidence ?? null,
-        input.effectiveness_evidence ?? null,
-        input.introduces_new_risk === true,
-        typeof input.new_risk_item_id === 'number' ? input.new_risk_item_id : null,
-        typeof input.status === 'string' ? input.status : null,
-      ],
-    );
+    /* The tenant gate and the signed-content rule in one statement, the HTTP
+       route's (P-63): no control is added to a hazard whose residual risk is
+       accepted, because the acceptance signed its controls. */
+    const { insertRiskControl } = await import('../part11/signed-content-lock.js');
+    const written = await insertRiskControl(getPool(), ctx.organizationId, itemId, {
+      description: desc, controlType: ctype,
+      implementationEvidence: (input.implementation_evidence as string | undefined) ?? null,
+      verificationEvidence: (input.verification_evidence as string | undefined) ?? null,
+      effectivenessEvidence: (input.effectiveness_evidence as string | undefined) ?? null,
+      introducesNewRisk: input.introduces_new_risk === true,
+      newRiskItemId: typeof input.new_risk_item_id === 'number' ? input.new_risk_item_id : null,
+      status: typeof input.status === 'string' ? input.status : null,
+    });
+    if (written.outcome !== 'written') return childWriteRefusal(written, `risk_item ${itemId} not found in this organization.`);
+    const { id, description, control_type, status } = written.row ?? {};
     return JSON.stringify({
-      ok: true, ...rows[0],
+      ok: true, id, description, control_type, status,
       message: `Added ${ctype} control to risk item ${itemId}.`,
     });
   } catch (err) {
@@ -15208,29 +15208,18 @@ registerToolHandler('add_labeling_symbol', async (input, ctx) => {
   if (!code || !sname) return JSON.stringify({ error: 'symbol_code and symbol_name are required.' });
   try {
     const { getPool } = await import('../../db.js');
-    const own = await getPool().query(
-      `SELECT 1 FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [docId, ctx.organizationId],
-    );
-    if (own.rows.length === 0) {
-      return JSON.stringify({ error: `Labeling document ${docId} not found.` });
-    }
-    const { rows } = await getPool().query(
-      `INSERT INTO labeling_symbols (
-         labeling_document_id, organization_id, symbol_code, symbol_name,
-         description, required_by
-       ) VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING id, symbol_code, symbol_name`,
-      [
-        docId, ctx.organizationId, code, sname,
-        typeof input.description === 'string' ? input.description : null,
-        Array.isArray(input.required_by)
-          ? (input.required_by as unknown[]).filter((s) => typeof s === 'string')
-          : null,
-      ],
-    );
+    /* The tenant gate and the signed-content rule in one statement, the HTTP
+       route's (P-63): no symbol is added to a label that carries a signature. */
+    const { insertLabelingSymbol } = await import('../part11/signed-content-lock.js');
+    const written = await insertLabelingSymbol(getPool(), ctx.organizationId, docId, {
+      symbolCode: code, symbolName: sname,
+      description: typeof input.description === 'string' ? input.description : null,
+      requiredBy: Array.isArray(input.required_by) ? (input.required_by as unknown[]).filter((s): s is string => typeof s === 'string') : null,
+    });
+    if (written.outcome !== 'written') return childWriteRefusal(written, `Labeling document ${docId} not found.`);
+    const { id, symbol_code, symbol_name } = written.row ?? {};
     return JSON.stringify({
-      ok: true, ...rows[0],
+      ok: true, id, symbol_code, symbol_name,
       message: `Added symbol ${code} (${sname}) to document ${docId}.`,
     });
   } catch (err) {

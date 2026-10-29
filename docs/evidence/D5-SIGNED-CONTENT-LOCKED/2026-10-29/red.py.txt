@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Run the new tests against HEAD's product code, then restore this change's files exactly.
+
+Usage: python3 -I red.py <out.txt>   (from the repository root)
+
+Each changed product file is set to its bytes at HEAD (git show HEAD:<path>);
+each new product module is moved aside. The new tests run. Then every file is
+put back from the bytes read before, and its sha256 checked. A file that no
+longer holds HEAD's bytes at restore time (someone else wrote it meanwhile) is
+not overwritten: the run stops and says so.
+"""
+import hashlib
+import os
+import subprocess
+import sys
+import time
+
+OUT = sys.argv[1]
+S = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/signed-content-locks'
+CHANGED = [
+    'server/services/part11/governed-target-binders.ts',
+    'server/services/part11/signature-persistence.ts',
+    'server/services/part11/signed-content-state.ts',
+    'server/routes/mdx-labeling.ts',
+    'server/routes/mdx-labeling-approvals.ts',
+    'server/routes/mdx-risk-management.ts',
+    'server/services/ana/AnaToolExecutor.ts',
+    'client/src/concept2cure/v2/SignedContentState.tsx',
+]
+NEW = ['server/services/part11/signed-content-lock.ts', 'server/routes/mdx-risk-acceptance-lock.ts']
+TESTS = [
+    'server/__tests__/routes/signed-content-locked.pglite.test.ts',
+    'server/__tests__/routes/risk-acceptance-locked.pglite.test.ts',
+    'server/services/part11/__tests__/signed-content-lock.test.ts',
+    'client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx',
+    'client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx',
+]
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def rd(p):
+    with open(p, 'rb') as f:
+        return f.read()
+
+
+def wr(p, b):
+    with open(p, 'wb') as f:
+        f.write(b)
+
+
+head = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
+mine = {p: rd(p) for p in CHANGED + NEW}
+at_head = {p: subprocess.run(['git', 'show', f'HEAD:{p}'], capture_output=True).stdout for p in CHANGED}
+lines = [f'# Red: the new tests run against HEAD ({head}) product code, {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}.',
+         '# Each changed product file held its bytes at HEAD (git show HEAD:<path>); each new product module was moved aside.',
+         '# Then every file was put back from the bytes read before, and its sha256 checked (end of this file).',
+         '# This change\'s files, sha256 before:'] + [f'#   {sha(mine[p])}  {p}' for p in CHANGED + NEW]
+lines += ['# Set to HEAD:'] + [f'#   {sha(at_head[p])}  {p}' for p in CHANGED] + ['# Moved aside:'] + [f'#   {p}' for p in NEW] + ['']
+for p in CHANGED:
+    wr(p, at_head[p])
+for p in NEW:
+    os.rename(p, os.path.join(S, os.path.basename(p) + '.aside'))
+try:
+    r = subprocess.run(['timeout', '600', 'npx', 'vitest', 'run', *TESTS], capture_output=True, text=True)
+    out = r.stdout + r.stderr
+finally:
+    clobbered = [p for p in CHANGED if rd(p) != at_head[p]]
+    for p in NEW:
+        os.rename(os.path.join(S, os.path.basename(p) + '.aside'), p)
+    for p in CHANGED:
+        if p not in clobbered:
+            wr(p, mine[p])
+keep = [ln for ln in out.splitlines() if not ln.lstrip().startswith('✓')]
+lines += keep
+lines += ['', '# Restored, sha256 after:'] + [f'#   {sha(rd(p))}  {p}  {"equal" if rd(p) == mine[p] else "DIFFERENT"}' for p in CHANGED + NEW]
+if clobbered:
+    lines += ['# NOT RESTORED (written by someone else during the run): ' + ', '.join(clobbered)]
+with open(OUT, 'w') as f:
+    f.write('\n'.join(lines) + '\n')
+print('restored all' if not clobbered else 'CLOBBERED ' + ' '.join(clobbered))

@@ -7,6 +7,7 @@
  *                                                    content state (signedContent)
  *   PATCH  /api/mdx/risk-items/:id                   partial update;
  *                                                    to `accepted`, an e-signature
+ *   POST   /api/mdx/risk-items/:id/reopen            reopen an accepted residual risk: an e-signature
  *   POST   /api/mdx/risk-items/:id/controls          add a risk control
  *   PATCH  /api/mdx/risk-controls/:controlId         update control status
  *   GET    /api/mdx/risk-summary/:programId          aggregate metrics
@@ -30,6 +31,11 @@
  *   - Every write takes an editing role (requireEditorAccess, as the UDI and
  *     labeling writes do since 43fb57cc). The reads stay open to every member.
  *   - Accepting a hazard's residual risk is an electronic signature (below).
+ *
+ * P-63, 2026-10-29 (docs/evidence/D5-SIGNED-CONTENT-LOCKED/2026-10-29/): while a
+ * hazard carries its acceptance, what the acceptance binds is not edited, its
+ * controls included, and the acceptance is taken off only by the signed reopen
+ * (./mdx-risk-acceptance-lock.ts).
  */
 
 import { Router, Request, Response, type RequestHandler } from 'express';
@@ -46,6 +52,10 @@ import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { readSignedContentStates } from '../services/part11/signed-content-state';
+import { insertRiskControl } from '../services/part11/signed-content-lock';
+import {
+  answerControlWrite, hazardEditWhere, refuseAcceptedControlEdit, refuseAcceptedHazardEdit, reopenResidualAcceptanceSigned,
+} from './mdx-risk-acceptance-lock';
 
 const router = Router();
 const log = createScopedLogger('mdx-risk');
@@ -469,20 +479,30 @@ router.patch('/risk-items/:id', requireEditorAccess, refuseUnsignedAcceptability
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
+  // While the hazard carries its acceptance, what it binds is not edited, nor is it taken off (P-63).
+  const { where, guard } = hazardEditWhere(args.length, parsed.data);
 
   try {
     if (await writeRefused(res, orgId, parsed.data.programId, parsed.data.assignedTo)) return;
     const { rows } = await pool.query(
-      `UPDATE risk_items SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
-        RETURNING *`,
+      `UPDATE risk_items SET ${setFrags.join(', ')} WHERE ${where.join(' AND ')} RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk item');
+    // Nothing written: 404, or, for a guarded edit, why (an unguarded one matched no hazard).
+    if (rows.length === 0) return refuseAcceptedHazardEdit(res, id, orgId, guard);
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'patch-item', err);
   }
+});
+
+/* ─── POST /api/mdx/risk-items/:id/reopen ─────────────────────────── */
+
+router.post('/risk-items/:id/reopen', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
+  if (getOrgId(req) === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  return reopenResidualAcceptanceSigned(req, res, id);
 });
 
 /* ─── POST /api/mdx/risk-items/:id/controls ───────────────────────── */
@@ -494,33 +514,12 @@ router.post('/risk-items/:id/controls', requireEditorAccess, async (req: Request
   if (!Number.isFinite(itemId)) return clientError(res, 422, 'id must be numeric');
   const parsed = createControlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-
-  /* Verify the risk item belongs to the caller's org before inserting. */
-  const own = await pool.query(
-    `SELECT 1 FROM risk_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [itemId, orgId],
-  );
-  if (own.rows.length === 0) return notFoundInTenant(res, 'Risk item');
 
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO risk_controls (
-         risk_item_id, organization_id, description, control_type,
-         implementation_evidence, verification_evidence, effectiveness_evidence,
-         introduces_new_risk, new_risk_item_id, status
-       ) VALUES (
-         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-       )
-       RETURNING *`,
-      [
-        itemId, orgId, p.description, p.controlType,
-        p.implementationEvidence ?? null, p.verificationEvidence ?? null,
-        p.effectivenessEvidence ?? null, p.introducesNewRisk ?? false,
-        p.newRiskItemId ?? null, p.status ?? 'proposed',
-      ],
-    );
-    return created(res, rows[0]);
+    /* One statement: the organization's live hazard, and only while it carries
+       no acceptance, which binds its controls (P-63). */
+    const written = await insertRiskControl(pool, orgId, itemId, parsed.data);
+    return written.outcome === 'written' ? created(res, written.row) : answerControlWrite(res, written, 'Risk item');
   } catch (err) {
     return serverError(res, log, 'create-control', err);
   }
@@ -558,13 +557,21 @@ router.patch('/risk-controls/:controlId', requireEditorAccess, async (req: Reque
   args.push(ctrlId, orgId);
 
   try {
+    /* Every field here is one the acceptance binds: no control of a hazard
+       that carries its acceptance is edited (P-63). The hazard's row is share
+       locked, so a signing act waits for this write or this write for it. */
     const { rows } = await pool.query(
       `UPDATE risk_controls SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length}
+          AND EXISTS (
+            SELECT 1 FROM risk_items r
+             WHERE r.id = risk_controls.risk_item_id AND r.organization_id = risk_controls.organization_id
+               AND r.status IS DISTINCT FROM 'accepted' AND r.acceptable IS NOT TRUE
+               FOR SHARE)
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk control');
+    if (rows.length === 0) return refuseAcceptedControlEdit(res, ctrlId, orgId);
     return ok(res, rows[0]);
   } catch (err) {
     return serverError(res, log, 'patch-control', err);

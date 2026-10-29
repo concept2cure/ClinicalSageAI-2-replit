@@ -63,7 +63,7 @@ import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
-import { CONTENT_BINDERS } from './governed-target-binders.js';
+import { CONTENT_BINDERS, type BinderOptions } from './governed-target-binders.js';
 import type { RecordedPackageIdentitySnapshot } from '../ectd/package-identity';
 import { deriveEctdSequenceBinding } from './ectd-sequence-binding';
 import {
@@ -251,6 +251,10 @@ export const BINDING_BASIS = {
    * approver attests it: the document it translates, the language, the
    * translator, the method, the back-translation check, and the sha256 of the
    * translated text it names. No status, stamp or timestamp. Added 2026-10-29.
+   * Since P-64 (the same day) the recipe is labeling-translation/v2, which also
+   * binds the source document's version and labeling-document/v1 digest; the
+   * basis names both, and the manifest's bindingRecipe (or, for a v1 approval,
+   * the recipe tag in its bindingNote) says which.
    */
   LABELING_TRANSLATION_CONTENT: 'labeling-translation-content-sha256',
   /**
@@ -588,6 +592,14 @@ export interface GovernedBinding {
   sequenceContentDigest?: string;
   /** On a ledger fallback only: why no content digest was derivable, in words. Not recorded on the manifest. */
   fallbackReason?: string;
+  /**
+   * Members the binder records on the signature's manifest, after bindingNote:
+   * the recipe it digested by (`bindingRecipe`) and a source it bound
+   * (`boundSource`, P-64), so a later read derives by the same recipe
+   * (signed-content-state.ts). A binding with none leaves the manifest's bytes
+   * exactly as before.
+   */
+  manifest?: Record<string, unknown>;
 }
 
 /**
@@ -604,11 +616,16 @@ export interface GovernedBinding {
  * governed-action-ledger basis: NO content hash is claimed, and the caller
  * records the audit chain hash with that explicit basis instead. A non-42P01
  * database error propagates (fail closed).
+ *
+ * `options` asks a binder for the recipe a signature recorded, and a source as
+ * it was recorded (BinderOptions; signed-content-state.ts, P-64). At signing
+ * it is unset: the binder's current recipe.
  */
 export async function deriveGovernedTargetBinding(
   client: SignatureDbClient,
   target: string,
   orgId: number,
+  options?: BinderOptions,
 ): Promise<GovernedBinding> {
   const colonIdx = target.indexOf(':');
   const prefix = colonIdx === -1 ? target : target.slice(0, colonIdx);
@@ -679,7 +696,7 @@ export async function deriveGovernedTargetBinding(
         // 42P01 still falls back to the ledger basis below.
         const binder = CONTENT_BINDERS[prefix];
         return binder
-          ? await binder(client, rest, orgId, ledgerFallback)
+          ? await binder(client, rest, orgId, ledgerFallback, options)
           : ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
       }
     }
@@ -858,6 +875,7 @@ export async function persistGovernedActionSignature(
     boundPayloadDigest,
     bindingBasis: binding.basis,
     bindingNote: binding.note,
+    ...(binding.manifest ?? {}),
     ...(params.extraManifest ?? {}),
     ...(binding.recordedPackageIdentity ? { recordedPackageIdentity: binding.recordedPackageIdentity, sequenceContentDigest: binding.sequenceContentDigest } : {}),
   };

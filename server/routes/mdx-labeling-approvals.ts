@@ -34,11 +34,27 @@ import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from '../services/governance/separation-of-duties';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { resolveUserId } from '../types/auth-request';
+import { lockedFieldsIn, signedContentRefusal } from '../services/part11/signed-content-lock';
 
 const log = createScopedLogger('mdx-labeling');
 
 /** The document moves that are electronic signatures: to approved, to effective, and to superseded. */
 export const DOC_SIGNED_STATUS: ReadonlySet<string> = new Set(['approved', 'effective', 'superseded']);
+
+/**
+ * The WHERE of a document edit whose SET list fills $1..$(n-2), with the id
+ * at $(n-1) and the organization at $n, and the fields it would change that
+ * the document's signature binds (P-63). Those fields, or a status sent with
+ * other fields (a move, made on its own), are written only while the document
+ * carries no signature. A field it does not bind (the project) is written
+ * whatever the status.
+ */
+export function documentEditWhere(n: number, patch: Record<string, unknown>): { where: string[]; locked: string[] } {
+  const locked = lockedFieldsIn('labeling-document', patch);
+  const where = [`id = $${n - 1}`, `organization_id = $${n}`, 'deleted_at IS NULL'];
+  if (locked.length > 0 || patch.status !== undefined) where.push("status NOT IN ('approved', 'effective', 'superseded')");
+  return { where, locked };
+}
 
 /* ─── Document approval, effectiveness and supersession: electronic signatures
    A labeling document moved to approved or effective releases the label, and
@@ -62,7 +78,13 @@ export const DOC_SIGNED_STATUS: ReadonlySet<string> = new Set(['approved', 'effe
      - a document that carries an approval is not edited. Moving it back to
        draft or review withdraws the approval, as a QMS controlled revision
        does (reviseControlledQmsDocument): a reason, the stamp cleared, and a
-       `transition` ledger row (withdrawApproval, below). */
+       `transition` ledger row (withdrawApproval, below).
+   Since P-63 (2026-10-29) "not edited" is exactly what its signature binds:
+   the fields of its recipe (labeling-document/v1), its symbols, and the
+   effective date the move to effective records, refused with the one answer
+   of services/part11/signed-content-lock.ts. Its project is not signed and
+   stays editable. A change is a new version that supersedes it, or the
+   withdrawal above, and is signed again in its turn. */
 
 /** The per-signer signing-attempt limit, only for the requests that sign. */
 export const signingLimit = (signs: ReadonlySet<string>): RequestHandler => (req, res, next) =>
@@ -344,17 +366,32 @@ export async function moveDocumentStatus(req: Request, res: Response, id: number
   } catch (err) { return serverError(res, log, 'patch-status', err); }
 }
 
-/** After a guarded edit of document `id` changed nothing: 404 when the organization holds no live one, else 409. */
-export async function refuseControlledDocumentEdit(res: Response, id: number, orgId: number) {
+/**
+ * After a guarded edit of document `id` changed nothing: 404 when the
+ * organization holds no live one. Else 409: an edit of `locked`, fields its
+ * signature binds, is the one refusal of signed content (P-63,
+ * services/part11/signed-content-lock.ts); a status sent with fields its
+ * signature does not bind is a move out of a signed status, made on its own,
+ * with a reason; and a document that is not signed changed while it was saved.
+ */
+export async function refuseControlledDocumentEdit(res: Response, id: number, orgId: number, locked: string[]) {
   const { rows } = await pool.query<{ status: string }>(
     `SELECT status FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
   );
   if (!rows[0]) return notFoundInTenant(res, 'Labeling document');
+  const { status } = rows[0];
+  if (!DOC_SIGNED_STATUS.has(status)) {
+    return clientError(res, 409, 'This labeling document changed while it was being saved. Reload it and try again. Nothing was saved.', { code: 'LABELING_STATUS_CHANGED' });
+  }
+  if (locked.length > 0) {
+    const refusal = signedContentRefusal('labeling-document', status, { fields: locked });
+    return clientError(res, refusal.status, refusal.message, refusal.details);
+  }
   return clientError(
     res,
     409,
-    `This labeling document is ${rows[0].status}, so what was signed stays as it is. Move it back to draft or review, with a reason, to change it; that withdraws its approval. Nothing was saved.`,
+    `This labeling document is ${status}. Moving it out of ${status} withdraws its approval, so send that move on its own, with a reason. Nothing was saved.`,
     { code: 'LABELING_DOCUMENT_CONTROLLED' },
   );
 }
@@ -476,17 +513,17 @@ export async function moveTranslationStatus(req: Request, res: Response, transId
   } catch (err) { return serverError(res, log, 'trans-patch-status', err); }
 }
 
-/** After a guarded edit of translation `transId` changed nothing: 409 when it is approved, else 404. */
-export async function refuseApprovedTranslationEdit(res: Response, transId: number, orgId: number) {
+/**
+ * After a guarded edit of translation `transId` changed nothing: 404 unless it
+ * is approved, and then the one refusal of signed content (P-63). Every field a
+ * translation's PATCH can set is one its approval binds (`locked`).
+ */
+export async function refuseApprovedTranslationEdit(res: Response, transId: number, orgId: number, locked: string[]) {
   const { rows } = await pool.query<{ status: string }>(
     `SELECT status FROM labeling_translations WHERE id = $1 AND organization_id = $2`,
     [transId, orgId],
   );
   if (rows[0]?.status !== 'approved') return notFoundInTenant(res, 'Translation');
-  return clientError(
-    res,
-    409,
-    'This translation is approved, and its approval is signed. Move it back to review, with a reason, to change it; that withdraws the approval. Nothing was saved.',
-    { code: 'TRANSLATION_APPROVED_LOCKED' },
-  );
+  const refusal = signedContentRefusal('labeling-translation', 'approved', { fields: locked });
+  return clientError(res, refusal.status, refusal.message, refusal.details);
 }
