@@ -5700,66 +5700,21 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/authoring/export-history/:id - Delete export history entry
-router.delete('/export-history/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-    /* SECURITY (21 CFR Part 11): DELETING a filing's export-history record is a
-       governed action and must be attributed to the VERIFIED principal. This
-       read `x-user-email || 'system'` — a header the router's middleware clears,
-       falling through to the anonymous 'system' that is nobody, and the value
-       drove BOTH the permission check (`entry.exported_by !== userEmail`) and
-       the EXPORT_HISTORY_DELETED audit event. Use getActorEmail, the JWT-derived
-       accessor every other governed mutation here uses, and fail closed when the
-       token carries no identity rather than record a record-deletion against
-       'system'. */
-    const userEmail = getActorEmail(req);
-    if (!userEmail) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    // Check if user has permission (only QA or the original exporter can delete)
-    const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
-    const isQA = roles.includes('QA');
-
-    // Get the export entry
-    const exportEntry = await pool.query(
-      `SELECT exported_by, document_id FROM authoring_export_history
-       WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    if (((exportEntry.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Export entry not found' });
-    }
-
-    const entry = exportEntry.rows[0];
-
-    // Check permission
-    if (!isQA && entry.exported_by !== userEmail) {
-      return res.status(403).json({
-        error: 'Permission denied. Only QA or the original exporter can delete this entry.',
-      });
-    }
-
-    // Delete the entry
-    await pool.query(`DELETE FROM authoring_export_history WHERE id = $1 AND tenant_id = $2`, [
-      id,
-      tenantId,
-    ]);
-
-    // Log the deletion
-    await createAuditTrail(req, entry.document_id, null, 'EXPORT_HISTORY_DELETED', null, null, null, {
-      export_id: id,
-      deleted_by: userEmail,
-    });
-
-    res.json({ success: true, message: 'Export history entry deleted successfully' });
-  } catch (error) {
-    console.error('DELETE /export-history/:id', error);
-    res.status(500).json({ error: 'Failed to delete export history entry' });
-  }
+// DELETE /api/authoring/export-history/:id — refused: an export record is kept.
+//
+// This hard-deleted the row recording what was exported, by whom, with the
+// bytes' SHA-256 and, for a filing, the Vault copy it became; its exporter or
+// anyone with QA in the token could do it. The row is read beyond the Exports
+// rail: data disposition takes it as the proof that a filed Vault rendition
+// carries another document's data (document-data-disposition/impact.ts), so
+// deleting it let that source be withdrawn while its filed copy stayed. No
+// client called the route (CSR path review, 2026-10-29). It answers what was
+// asked and writes nothing.
+router.delete('/export-history/:id', (_req: Request, res: Response) => {
+  res.status(409).json({
+    error: 'An export record is kept: it is part of the audit trail and of the evidence data disposition reads. Nothing was deleted.',
+    code: 'EXPORT_RECORD_RETAINED',
+  });
 });
 
 // Diff since latest export = tokens created/updated after export timestamp

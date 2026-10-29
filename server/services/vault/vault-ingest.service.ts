@@ -92,6 +92,39 @@ function sha256Bytes(buf: Buffer): string {
  * per put, so removing it cannot touch the bytes of a record that already
  * exists — including the one a DUPLICATE_CONTENT refusal points at.
  */
+/**
+ * A version the sender typed, for a document code that already has versions,
+ * without naming it as the next version (Part 11 review F1, 2026-10-22). It
+ * would record a second version of the same document with no supersession and
+ * no lineage, numbered outside the Vault's own numbering (nextMajorVersion).
+ * Refused for the callers that ask (`numberedByVault`, the upload route); a
+ * service that keeps its own numbering through this path (eSTAR, authoring)
+ * does not ask. The version already recorded is not this refusal's: it goes on
+ * to the conflict and same-bytes rules below.
+ */
+async function typedVersionRefusal(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  args: Pick<VaultIngestArgs, 'numberedByVault' | 'version' | 'programId'>,
+  orgId: number,
+  documentCode: string,
+): Promise<VaultIngestResult | null> {
+  if (!args.numberedByVault || args.version === undefined) return null;
+  const { rows } = await client.query(
+    `SELECT 1 FROM vault.documents
+      WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND deleted_at IS NULL LIMIT 1`,
+    [args.programId, orgId, documentCode],
+  );
+  if (!rows.length) return null;
+  const head = await currentVersionOfCode(client, { organizationId: orgId, programId: args.programId, documentCode });
+  return {
+    ok: false, status: 409, code: 'VERSION_FOR_EXISTING_DOCUMENT',
+    message:
+      `Document code "${documentCode}" already has recorded versions in this project${head ? ` (the current one is v${head.version})` : ''}. ` +
+      'The Vault numbers a new version: send this file as the next version of that document, or under a new code. Nothing was saved.',
+    ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
+  };
+}
+
 export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultIngestResult> {
   const stored: StoredUpload = { versionId: null, orgId: null, committed: false };
   let result: VaultIngestResult;
@@ -420,6 +453,8 @@ async function admitVaultDocument(
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
     const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
+    const typedRefusal = !checkIn && !recorded ? await typedVersionRefusal(client, args, orgId, documentCode) : null;
+    if (typedRefusal) return (await client.query('ROLLBACK'), typedRefusal);
     // An empty pre-read can still race with another admission. Only the UUID
     // returned by INSERT / ON CONFLICT proves whether this operation created it.
     const candidateId = randomUUID();

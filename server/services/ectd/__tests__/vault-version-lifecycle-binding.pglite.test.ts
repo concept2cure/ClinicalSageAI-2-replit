@@ -25,6 +25,8 @@ import { createHash } from 'crypto';
 import { readFileSync, promises as fs } from 'fs';
 import JSZip from 'jszip';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
+import { plainPdfFixture } from './support/signed-pdf-fixture';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 vi.mock('../../../db', () => ({
@@ -32,8 +34,10 @@ vi.mock('../../../db', () => ({
   pool: { query: (sql: string, params?: unknown[]) => holder.pglite.query(sql, params) },
 }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
-const pdf = (label: string) => Buffer.from(`%PDF-1.4\n% analytical procedures ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`);
-const BYTES: Record<string, Buffer> = { 'ver-1': pdf('v1'), 'ver-2': pdf('v2'), 'ver-3': pdf('v3'), 'ver-x': pdf('x') };
+/* Real PDFs, one per stored version, filled in beforeAll before anything reads
+   them: since 5ebfcfd2c the packager reads an original PDF's catalog and page
+   tree (original-pdf-integrity.ts) and refuses bytes that only look like one. */
+const BYTES: Record<string, Buffer> = {};
 vi.mock('../../storage', () => {
   const provider = {
     name: 'test',
@@ -79,9 +83,15 @@ const assemble = (sequenceId: number) =>
   assembleSequence({ sequenceId, organizationId: ORG, userId: USER, applicationId: 'IND-123456', sponsorId: 'S', sponsorName: 'S' });
 
 beforeAll(async () => {
+  for (const [versionId, label] of [['ver-1', 'v1'], ['ver-2', 'v2'], ['ver-3', 'v3'], ['ver-x', 'x']]) {
+    BYTES[versionId] = await plainPdfFixture(`analytical procedures ${label}`);
+  }
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
+  // Assembly reads the tenant's saved legal requirements and its legal
+  // registry before it packages; this tenant has saved none.
+  await applyCompanyLegalReads(harness.pglite);
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
     CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}'::jsonb);

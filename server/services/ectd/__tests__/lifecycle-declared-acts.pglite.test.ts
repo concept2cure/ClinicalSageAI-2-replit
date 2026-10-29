@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { promises as fs } from 'fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 vi.mock('../../../db', () => ({
@@ -52,6 +53,10 @@ beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
+  // Assembly reads the tenant's saved legal requirements and its legal
+  // registry before it packages; this tenant has saved none.
+  await applyCompanyLegalReads(harness.pglite);
+  await harness.pglite.exec(`INSERT INTO organizations (id) VALUES (${ORG})`);
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,

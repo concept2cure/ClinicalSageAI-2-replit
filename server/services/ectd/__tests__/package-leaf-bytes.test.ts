@@ -11,9 +11,9 @@ import path from 'path';
 import crypto from 'crypto';
 import JSZip from 'jszip';
 import { packageLeafBytes } from '../package-leaf-bytes';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
-const pdf = (label: string) =>
-  Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = minimalPdf;
 
 describe('packageLeafBytes — canonical conformant packaging', () => {
   it('produces a real <ectd:ectd> tree (not flat <ectd:index>), regional M1, and root index-md5', async () => {

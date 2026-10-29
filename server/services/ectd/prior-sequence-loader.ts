@@ -192,7 +192,8 @@ export async function loadLatestPriorManifestBySubmission(
      only; if its sequence is later sent, what was sent is a separate compile.
      Without this predicate a sent sequence's rehearsal manifest was folded in
      as if the agency held it. */
-  return foldManifestRows(await readFiledManifestRows(pool, organizationId, submissionId, currentSequence));
+  const { priorSequenceNumber, leaves } = foldManifestRows(await readFiledManifestRows(pool, organizationId, submissionId, currentSequence));
+  return { priorSequenceNumber, leaves };
 }
 
 /**
@@ -248,7 +249,7 @@ export interface SubmissionSequenceState {
 export async function loadFiledStateBySubmission(
   pool: PoolLike,
   args: { organizationId: number; submissionId: number },
-): Promise<{ throughSequence: string | null; leaves: PriorLeaf[]; sequences: SubmissionSequenceState[] }> {
+): Promise<{ throughSequence: string | null; leaves: Array<PriorLeaf & { history: FiledAct[] }>; sequences: SubmissionSequenceState[] }> {
   const { organizationId, submissionId } = args;
   if (!organizationId || !submissionId) {
     throw new Error('Cannot read what is on file without the organization and the submission; nothing was read.');
@@ -261,7 +262,8 @@ export async function loadFiledStateBySubmission(
       ORDER BY sequence_number ASC`,
     [organizationId, submissionId],
   );
-  const { priorSequenceNumber, leaves } = foldManifestRows(rows);
+  const { priorSequenceNumber, leaves: onFile, history } = foldManifestRows(rows);
+  const leaves = onFile.map((leaf) => ({ ...leaf, history: history.get(leaf) ?? [] }));
   const filedWithManifest = new Set(rows.map((r) => String(r.sequence_number ?? '')));
   const sequences = (seqs?.rows ?? []).map((r) => {
     const sequenceNumber = String(r.sequence_number ?? '');
@@ -285,11 +287,17 @@ const MODIFIED_FILE = /^(?:\.\.\/)+([0-9A-Za-z._-]+)\/((?:[A-Za-z0-9_-][A-Za-z0-
  * statement of what it superseded. Matching by name alone kept a version on
  * file after a later version replaced it under its own name (P-42, 2026-10-22).
  * An `append` adds to the leaf it names; both stay on file.
+ *
+ * Each leaf on file also keeps the acts that put it there, oldest first
+ * (`history`, gap 6.2): its own earlier filings under the same identity, and,
+ * through a replace that names another leaf, that leaf's acts too. Compile and
+ * transmit read `leaves` only; the history is for the current view.
  */
 function foldManifestRows(
   rows: Array<Record<string, unknown>>,
-): { priorSequenceNumber: string; leaves: PriorLeaf[] } {
+): { priorSequenceNumber: string; leaves: PriorLeaf[]; history: Map<PriorLeaf, FiledAct[]> } {
   const effective = new Map<string, PriorLeaf>();
+  const acts = new Map<string, FiledAct[]>();
   let priorSequenceNumber = '';
   for (const row of rows) {
     const seq = String(row.sequence_number ?? '');
@@ -298,7 +306,10 @@ function foldManifestRows(
       // Same identity the lifecycle diff uses (leafKey, else section + filename).
       const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
       const operation = (leaf.operation ?? '').trim().toLowerCase();
-      if (operation === 'replace' || operation === 'delete') dropNamedLeaf(effective, leaf.modifiedFile);
+      const heldUnderKey = effective.has(key);
+      const takenOff = operation === 'replace' || operation === 'delete' ? dropNamedLeaf(effective, leaf.modifiedFile) : [];
+      recordFiledAct(acts, key, { sequenceNumber: seq, operation: operation || 'new', fileName: leaf.fileName, md5: leaf.md5 },
+        heldUnderKey ? [...takenOff, key] : takenOff);
       if (operation === 'delete') {
         effective.delete(key); // withdrawn — no longer on file
         continue;
@@ -308,17 +319,51 @@ function foldManifestRows(
       effective.set(key, onFile);
     }
   }
-  return { priorSequenceNumber, leaves: [...effective.values()] };
+  const history = new Map<PriorLeaf, FiledAct[]>();
+  for (const [key, leaf] of effective) history.set(leaf, acts.get(key) ?? []);
+  return { priorSequenceNumber, leaves: [...effective.values()], history };
 }
 
-/** Take off file the one leaf a modified-file pointer names, if it is on file. */
-function dropNamedLeaf(effective: Map<string, PriorLeaf>, modifiedFile: string | undefined): void {
-  const named = MODIFIED_FILE.exec(modifiedFile ?? '');
-  if (!named) return;
-  const [, sequence, backbone, leafId] = named;
-  for (const [key, leaf] of effective) {
-    if (leaf.sequenceNumber === sequence && leaf.backbone === backbone && leaf.leafId === leafId) effective.delete(key);
+/** One filed act on a leaf: the sequence it was in, what it did, and the file it carried. */
+export interface FiledAct {
+  sequenceNumber: string;
+  operation: string;
+  fileName: string;
+  md5: string;
+}
+
+/**
+ * Add one filed act to the history it belongs to. `affected` names the leaves
+ * on file the act touches (those a replace or delete took off file, and its own
+ * when it was on file). A withdrawal is the withdrawn document's act: filed
+ * again later, its history says so. A replace under a new name takes the acts
+ * of what it took off file with it; the old name, filed again later, starts
+ * its own.
+ */
+function recordFiledAct(acts: Map<string, FiledAct[]>, key: string, act: FiledAct, affected: string[]): void {
+  if (act.operation === 'delete') {
+    for (const k of new Set(affected)) acts.set(k, [...(acts.get(k) ?? []), act]);
+    return;
   }
+  const others = affected.filter((k) => k !== key);
+  const carried = others.flatMap((k) => acts.get(k) ?? []);
+  for (const k of others) acts.delete(k);
+  acts.set(key, [...carried, ...(acts.get(key) ?? []), act]);
+}
+
+/** Take off file the one leaf a modified-file pointer names, if it is on file; the keys taken off. */
+function dropNamedLeaf(effective: Map<string, PriorLeaf>, modifiedFile: string | undefined): string[] {
+  const named = MODIFIED_FILE.exec(modifiedFile ?? '');
+  if (!named) return [];
+  const [, sequence, backbone, leafId] = named;
+  const dropped: string[] = [];
+  for (const [key, leaf] of effective) {
+    if (leaf.sequenceNumber === sequence && leaf.backbone === backbone && leaf.leafId === leafId) {
+      effective.delete(key);
+      dropped.push(key);
+    }
+  }
+  return dropped;
 }
 
 /**
@@ -361,5 +406,6 @@ export async function loadRehearsalPriorManifestBySubmission(
   const unfiledSequences = rows
     .filter((r) => !['sent', 'acknowledged'].includes(String(r.dispatch_status ?? '')))
     .map((r) => String(r.sequence_number ?? ''));
-  return { ...foldManifestRows(rows), unfiledSequences };
+  const { priorSequenceNumber, leaves } = foldManifestRows(rows);
+  return { priorSequenceNumber, leaves, unfiledSequences };
 }
