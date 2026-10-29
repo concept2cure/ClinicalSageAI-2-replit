@@ -52,6 +52,15 @@ Fixed during this review, each shown failing first (evidence under
   see a posterior (`c173d35f5`, `d9e8b41db`).
 - Four launch downloads could leave unrecorded, or saved a refusal as a file
   (`9acdf6f0e`).
+- A signature's meaning could be spaces, a number or an object (`56504daea`).
+- Module 2 read "Phase 3" and "III" as not pivotal, and "Phase 1" as not
+  clinical pharmacology (`cb14dfc51`).
+- Module 2 called a planned sample size "subjects enrolled", and counted it as
+  exposure (`9b0a63be0`).
+- An information amendment's letter did not say "Clinical", and a CSR had no
+  amendment category (`b9dbaeff4`).
+- An export record could be hard-deleted, which removed data disposition's
+  proof that a filed copy carries another document's data (`239bf4214`).
 
 ## Stage by stage
 
@@ -82,7 +91,7 @@ Fixed during this review, each shown failing first (evidence under
 | ICH E3 outline | market-specs CSR spine | 119 headings (`13bafc62f`). The test that expected 16 is stale. |
 | AI drafting | `server/services/csr/csr-job-runner.ts` | Drafts from Data Room excerpts, with the placeholder gate and the unsupplied-statistics guard. **Gaps:** <ul><li>The §10–12 tables never enter the document text.</li><li>Seven of nine job-runner state tests are disabled by a stale fake database.</li><li>Saved placeholder text is now sent back to the model instead of failing the job (`2f57e2e7f`). This looks like a regression.</li></ul> |
 | Rule 2 (no figure from a model) | `record_endpoint_result`, `narrate_statistical_result`, `draft_safety_narrative`, `log_study_ae` | **Defect:** these AnA tools take clinical figures as model-supplied arguments. |
-| Study facts the draft states | `m2-summary-builders.ts`, `load-csr-inputs-for-project.ts` | **Defects:** planned N is presented as enrolled N, and a Phase 2/3 study is read as "not pivotal". |
+| Study facts the draft states | `m2-summary-builders.ts`, `load-csr-inputs-for-project.ts` | **Fixed:** planned N no longer presented as enrolled (`9b0a63be0`); "Phase 3", "III" and "Phase 1" read as written (`cb14dfc51`). **Open, founder's call:** whether a Phase 2/3 study counts as pivotal; it still reads as Phase 2 first. |
 | Appendices 16.x | — | **Gap:** headings only. |
 | Rendering | the PDF renderer | Works (52/52). **Gap:** no PDF/A output. |
 
@@ -101,8 +110,8 @@ Fixed during this review, each shown failing first (evidence under
 | Release gate order | `csr-scientific-review.ts` `assertCsrScientificRelease` | **Fixed** (`eefcaf2c8`, `b84f297ca`): the gate framed every document as a CSR before checking whether it was one. A malformed row on any document made signing, freezing, export and filing to Vault return 500, and since 2026-10-28 those routes had no passing test. 17 suites are green again. |
 | Named signer set | — | **Gap:** no required set of named signers (sponsor's responsible medical officer, biostatistician). |
 | Investigator signature (16.1.5) | — | **Gap:** not captured. |
-| Export history | the export history API | **Defect:** it can be hard-deleted through the API. |
-| Signing reason | `/sign`, `/e-sign` | **Defect:** a reason that is only whitespace passes. |
+| Export history | `DELETE /api/authoring/export-history/:id` | **Fixed** (`239bf4214`): it refuses; the record is kept. |
+| Signing reason | `/sign`, `/e-sign` | **Fixed** (`56504daea`): a trimmed meaning of at least 8 characters, as the signing dialog asks. |
 
 ### 6. Module 5 placement, STF, compile, validation
 
@@ -120,7 +129,7 @@ Fixed during this review, each shown failing first (evidence under
 | Dispatch readiness, release signature, pre-transmit checks | the submission gateways | Work, offline, against local mTLS fixtures. 567 tests pass. |
 | FDA ESG | ESG REST, SFTP and AS2 clients | **Gap:** never run against FDA. ACK2 and ACK3 are not ingested. |
 | Archive | the transmit path | **Defect:** the package is deleted after transmit, so no copy of what was sent is kept. |
-| The amendment itself | Form 1571, the cover letter | **Gaps:** <ul><li>No "Clinical" information-amendment sub-type.</li><li>The 1571 contents box is not filled.</li><li>The cover letter has no "Clinical" qualifier.</li></ul> |
+| The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here. |
 | ClinicalTrials.gov results | — | **Gap:** no path to post results for NCT05330182 under 42 CFR Part 11. |
 
 ## What AnA can learn from
@@ -145,16 +154,21 @@ and are not used.
 ## Order of work
 
 1. ~~Bayesian result fields~~: done (`c173d35f5`, `d9e8b41db`).
-2. Rule 2: the four AnA tools take figures from the approved source, not from
-   the model.
-3. The study facts the draft states: enrolled vs planned N, NCT, Fast Track,
-   and the phase. Module 2 picks pivotal studies with `phase.startsWith('3')`
-   (`m2-summary-builders.ts`), which misses both "Phase 3" and "Phase 2/3".
-   `phaseNumber` (`cmc/program-stage.ts`) already parses both. Whether a
-   Phase 2/3 study counts as pivotal is the founder's call, not the parser's.
-4. The amendment: the Clinical sub-type, the 1571 contents, the cover letter
-   and the `study-report-body` STF tag.
-5. Signing: the whitespace reason and the protected export history.
+2. Rule 2:
+   - `record_endpoint_result` and `log_study_ae` already need a person's yes
+     before they write (their register class is `confirm`).
+   - `narrate_statistical_result` and `draft_safety_narrative` narrate the
+     figures their call supplies, under a deterministic-sounding source label.
+   - Next: bind them to a retained run's source, or say in their output that
+     each figure is as given.
+3. The study facts the draft states: enrolled vs planned N and the phase are
+   done (`9b0a63be0`, `cb14dfc51`). Open: an NCT field, a Fast Track field,
+   and whether a Phase 2/3 study counts as pivotal (the founder's call).
+4. ~~The amendment's Clinical identification~~: done (`b9dbaeff4`). Open:
+   the 1571 contents box, and whether `study-report-body` is an STF file tag
+   at all; both need the official specification, not recall.
+5. ~~Signing: the whitespace reason and the protected export history~~: done
+   (`56504daea`, `239bf4214`).
 6. Transmission: archive the package sent, and ingest the acknowledgments.
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5
    capture, PDF/A, and the 16.x appendices.

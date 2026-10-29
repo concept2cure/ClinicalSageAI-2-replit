@@ -1,0 +1,1890 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts
+{
+  "timestamp": "2026-10-29T04:41:55.002Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:41:55.004Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts
+{
+  "timestamp": "2026-10-29T04:41:55.004Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-29T04:41:59.160Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stderr | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-29T04:41:59.163Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 9
+  }
+}
+
+stdout | server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+{
+  "timestamp": "2026-10-29T04:41:59.163Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as 38ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as 12ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor 11ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version 143ms
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing 13ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing 15ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed 10ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it 11ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a3333333-3333-4333-8333-333333333333
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one 10ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor 10ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a1111111-1111-4111-8111-111111111111
+ × server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse 10ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a4444444-4444-4444-8444-444444444444
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+{
+  "timestamp": "2026-10-29T04:42:02.395Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:02.398Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+{
+  "timestamp": "2026-10-29T04:42:02.398Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 21ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 5ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 4ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 4ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 4ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 4ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+stdout | server/services/ectd/__tests__/lifecycle-from-core.test.ts
+{
+  "timestamp": "2026-10-29T04:42:09.363Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:09.365Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/lifecycle-from-core.test.ts
+{
+  "timestamp": "2026-10-29T04:42:09.365Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf 20ms
+   → Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+{
+  "timestamp": "2026-10-29T04:42:14.392Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-10-29T04:42:16.376Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:16.377Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-10-29T04:42:16.377Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 1575ms
+   → Cannot read properties of undefined (reading 'dtdStatus')
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation 18ms
+   → expected 'failed' to be 'completed' // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics 11ms
+   → expected false to be true // Object.is equality
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check 10ms
+   → expected '' to contain 'Unexpected validator diagnostic'
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check 9ms
+   → expected undefined to be truthy
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check 8ms
+   → expected undefined to be truthy
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check 8ms
+   → expected undefined to be truthy
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check 8ms
+   → expected undefined to be truthy
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters 10ms
+   → expected 'eCTD assembly refused: A package name…' to match /ich-stf-v2-2\.dtd/
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 6ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with empty proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with duplicate proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with not-ran proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with missing-integrity proof 1ms
+stderr | tests/routes/ectd-compile-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+{
+  "timestamp": "2026-10-29T04:42:17.846Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+{
+  "timestamp": "2026-10-29T04:42:19.748Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:19.749Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+{
+  "timestamp": "2026-10-29T04:42:19.749Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+[eCTD Compile] Program ONC-221: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+[eCTD Compile] Program ONC-221: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with no number recorded for the EU market, nothing is assembled, and the refusal names the market
+[eCTD Compile] Program ONC-221: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with the EU market's number recorded, the MAA compiles under it, never the project's
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > the project's own NDA sequence still compiles under the project's number
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 1438ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 2ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 1ms
+ × tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 6ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining {"sequenceId": 9} ]
+
+Number of calls: 0
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 2ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with no number recorded for the EU market, nothing is assembled, and the refusal names the market 5ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with the EU market's number recorded, the MAA compiles under it, never the project's 11ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > the project's own NDA sequence still compiles under the project's number 11ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-10-29T04:42:21.153Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+{
+  "timestamp": "2026-10-29T04:42:22.978Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:22.979Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+{
+  "timestamp": "2026-10-29T04:42:22.980Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 1442ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 8ms
+   → expected 'eCTD assembly refused: A package name…' to match /could not be materialized into leaf f…/
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 6ms
+   → expected [ 'LEAF_SOURCE_UNRESOLVED' ] to include 'REQUIRED_SECTION_OK'
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 4ms
+   → expected 'eCTD assembly refused: A package name…' to match /not self-contained/
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 3ms
+   → expected 'eCTD assembly refused: A package name…' to match /path-safety/
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 11ms
+   → expected null to be '000204' // Object.is equality
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 2ms
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 4ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder 4ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used 3ms
+   → expected 'eCTD assembly refused: A package name…' to match /records no agency application number/
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used 3ms
+   → expected 'eCTD assembly refused: A package name…' to match /records no agency application number/
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+   → expected 'eCTD assembly refused: A package name…' to match /six digits/
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 5ms
+   → Cannot read properties of undefined (reading 'sha256')
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 4ms
+   → expected 'eCTD assembly refused: A package name…' to match /2 of 2 PDF leaf file\(s\) were not c…/A
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 3ms
+   → Cannot read properties of undefined (reading 'pdfa')
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 5ms
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 4ms
+   → expected [ 'LEAF_SOURCE_UNRESOLVED' ] to include 'REQUIRED_SECTION_OK'
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes jp captured market facts through the existing assembler without FDA identifiers
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes ema captured market facts through the existing assembler without FDA identifiers
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses a missing recorded market number before assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses an unrecognized actual sequence region before assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 13ms
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 6ms
+   → expected 'failed' to be 'completed' // Object.is equality
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 2ms
+   → expected undefined to deeply equal { persisted: false, …(2) }
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes jp captured market facts through the existing assembler without FDA identifiers 10ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes ema captured market facts through the existing assembler without FDA identifiers 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses a missing recorded market number before assembly 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses an unrecognized actual sequence region before assembly 2ms
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-10-29T04:42:24.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+{
+  "timestamp": "2026-10-29T04:42:26.302Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:26.303Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+{
+  "timestamp": "2026-10-29T04:42:26.303Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ × tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 1455ms
+   → expected [ 'LEAF_SOURCE_UNRESOLVED' ] to deeply equal [ 'REQUIRED_SECTION_OK' ]
+ × tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 7ms
+   → expected [ Array(4) ] to deeply equal [ '5.3.5.1' ]
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 3ms
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+{
+  "timestamp": "2026-10-29T04:42:27.681Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+{
+  "timestamp": "2026-10-29T04:42:29.509Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:29.510Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+{
+  "timestamp": "2026-10-29T04:42:29.511Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+ × tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment 1402ms
+   → expected "vi.fn()" to be called at least once
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial 7ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a stated type that contradicts the recorded one is refused, and nothing is assembled 5ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one 4ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > the status read names the type the compile will be recorded as 10ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-10-29T04:42:30.849Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+{
+  "timestamp": "2026-10-29T04:42:32.893Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:42:32.894Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+{
+  "timestamp": "2026-10-29T04:42:32.894Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0001 | 0 leaf file(s) rendered, 0 unresolved
+
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 1590ms
+   → expected 'eCTD assembly refused: A package name…' to contain '1 placed leaf/leaves could not be pac…'
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 7ms
+   → expected 'eCTD assembly refused: A package name…' to contain '1 leaf document(s) are not approved (…'
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 8ms
+   → expected [ { …(5) } ] to deeply equal []
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 10ms
+   → expected undefined to deeply equal { priorSequence: '0000', …(4) }
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 4ms
+   → expected undefined to deeply equal { priorSequence: null, …(4) }
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 5ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 1ms
+ × tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 3ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 55 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+TypeError: Cannot read properties of undefined (reading 'dtdStatus')
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:61:28
+     59|   it('projects complete index, regional and STF proof and persists it …
+     60|     const evidence = proof(); const payload = await compile(evidence);
+     61|     expect(payload.package.dtdStatus).toEqual(dtdStatus(evidence));
+       |                            ^
+     62|     expect(payload.package.regionalStatus).toMatchObject({ region: 'fd…
+     63|     const summary = payload.validationResults.find(row => row.rule ===…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/55]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+AssertionError: expected 'failed' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "failed"
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:72:28
+     70|     const evidence = proof(); evidence.files[2].dtd.valid = false; evi…
+     71|     const payload = await compile(evidence);
+     72|     expect(payload.status).toBe('completed'); expect(payload.submissio…
+       |                            ^
+     73|     expect(payload.contentValidationPassed).toBe(false);
+     74|     expect(payload.errors.some(message => message.includes(EXPECTED[2]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/55]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:80:98
+     78|     const evidence = proof(); evidence.files[2].dtd.valid = false; evi…
+     79|     const payload = await compile(evidence);
+     80|     expect(payload.errors.some(message => message.includes(EXPECTED[2]…
+       |                                                                                                  ^
+     81|     expect(payload.contentValidationPassed).toBe(false);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/55]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check
+AssertionError: expected '' to contain 'Unexpected validator diagnostic'
+
+- Expected
++ Received
+
+- Unexpected validator diagnostic
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:88:40
+     86|     expect(payload.submissionReady).toBe(false);
+     87|     expect(payload.validationResults.find(row => row.rule === 'package…
+     88|     expect(payload.warnings.join(' ')).toContain('Unexpected validator…
+       |                                        ^
+     89|   });
+     90|   it.each(['missing', 'empty', 'not-ran', 'duplicate'] as const)('neve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/55]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:98:21
+     96|     expect(payload.submissionReady).toBe(false);
+     97|     const summary = payload.validationResults.find(row => row.rule ===…
+     98|     expect(summary).toBeTruthy(); expect(summary?.severity).not.toBe('…
+       |                     ^
+     99|     expect(payload.submissionBlockers.join(' ')).toMatch(/DTD/i);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/55]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /ich-stf-v2-2\.dtd/
+
+- Expected:
+/ich-stf-v2-2\.dtd/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled. Section 2.5 (Clinical Overview) is placed but its source document could not be materialized into a leaf file Section 3.2.S (Drug Substance) is placed but its source document could not be materialized into a leaf file"
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:105:38
+    103|     const payload = await compile(evidence);
+    104|     expect(payload.submissionReady).toBe(false);
+    105|     expect(payload.errors.join(' ')).toMatch(/ich-stf-v2-2\.dtd/);
+       |                                      ^
+    106|   });
+    107| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+AssertionError: expected 'eCTD assembly refused: A package name…' to contain '1 placed leaf/leaves could not be pac…'
+
+Expected: "1 placed leaf/leaves could not be packaged (3.2.S: declared replace: no filed prior sequence is on record to act on)"
+Received: "eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:55:50
+     53|
+     54|     expect(payload.submissionReady).toBe(false);
+     55|     expect(payload.submissionBlockers.join(' ')).toContain(
+       |                                                  ^
+     56|       '1 placed leaf/leaves could not be packaged (3.2.S: declared rep…
+     57|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+AssertionError: expected 'eCTD assembly refused: A package name…' to contain '1 leaf document(s) are not approved (…'
+
+Expected: "1 leaf document(s) are not approved (2.5: draft)"
+Received: "eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:76:50
+     74|
+     75|     expect(payload.submissionReady).toBe(false);
+     76|     expect(payload.submissionBlockers.join(' ')).toContain('1 leaf doc…
+       |                                                  ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+AssertionError: expected [ { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "fix": "Re-point the leaf at a renderable document (coauthor/unified) or upload the final PDF",
++     "message": "Section 2.5 (Clinical Overview) is placed but its source document could not be materialized into a leaf file",
++     "rule": "LEAF_SOURCE_UNRESOLVED",
++     "sectionCode": "2.5",
++     "severity": "error",
++   },
++ ]
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:98:73
+     96|
+     97|     // Not an unrenderable leaf: a withdrawal has no document to rende…
+     98|     expect(findings.filter((f) => f.rule === 'LEAF_SOURCE_UNRESOLVED')…
+       |                                                                         ^
+     99|     expect(payload.submissionBlockers.join(' ')).not.toMatch(/could no…
+    100|     // Not coverage: withdrawing 3.2.S.4 does not place 3.2.S.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+AssertionError: expected undefined to deeply equal { priorSequence: '0000', …(4) }
+
+- Expected:
+{
+  "leftOut": [
+    {
+      "reason": "declared append: the content is identical to the filed version, so there is nothing to append",
+      "sectionCode": "3.2.P",
+    },
+  ],
+  "operations": [
+    {
+      "ctdSection": "2.5",
+      "fileName": "clinical-overview.pdf",
+      "href": "m2/25-clin-over/clinical-overview.pdf",
+      "modifiedFile": "../0000/m2/25-clin-over/clinical-overview.pdf",
+      "operation": "replace",
+    },
+    {
+      "ctdSection": "3.2.S.4",
+      "fileName": "specification.pdf",
+      "href": "../0000/m3/32s4-contr-drug-sub/specification.pdf",
+      "modifiedFile": "../0000/m3/32s4-contr-drug-sub/specification.pdf",
+      "operation": "delete",
+    },
+  ],
+  "priorSequence": "0000",
+  "priorState": "filed",
+  "unfiledPriorSequences": [],
+}
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:133:31
+    131|     const payload = res.json.mock.calls[0][0];
+    132|
+    133|     expect(payload.lifecycle).toEqual({
+       |                               ^
+    134|       priorSequence: '0000',
+    135|       operations: [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+AssertionError: expected undefined to deeply equal { priorSequence: null, …(4) }
+
+- Expected:
+{
+  "leftOut": [],
+  "operations": [],
+  "priorSequence": null,
+  "priorState": "filed",
+  "unfiledPriorSequences": [],
+}
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:158:49
+    156|     const res = createMockResponse() as any;
+    157|     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    158|     expect(res.json.mock.calls[0][0].lifecycle).toEqual({
+       |                                                 ^
+    159|       priorSequence: null, operations: [], leftOut: [], priorState: 'f…
+    160|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:198:34
+    196|     const payload = res.json.mock.calls[0][0];
+    197|
+    198|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+    199|     expect(payload.lifecycle).toMatchObject({ priorState: 'rehearsal',…
+    200|     expect(payload.submissionReady).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/55]⎯
+
+ FAIL  tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-lifecycle.test.ts:231:34
+    229|     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    230|
+    231|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+    232|     expect(res.json.mock.calls[0][0].submissionBlockers.join(' ')).not…
+    233|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/55]⎯
+
+ FAIL  tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+AssertionError: expected "vi.fn()" to be called at least once
+ ❯ tests/routes/ectd-compile-recorded-type.test.ts:61:34
+     59|     const res = createMockResponse() as any;
+     60|     await compile(makeReq({}), res);
+     61|     expect(assembleSequenceMock).toHaveBeenCalled();
+       |                                  ^
+     62|     expect(recordedCompilationType()).toBe('amendment');
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/55]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:88:34
+     86|     await compile(makeReq({ submissionType: 'initial', sequenceId: 21 …
+     87|     expect(res.status).not.toHaveBeenCalledWith(404);
+     88|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/55]⎯
+
+ FAIL  tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"sequenceId": 9} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-sequence.test.ts:118:34
+    116|     const res = createMockResponse() as any;
+    117|     await compile(makeReq({ submissionType: 'initial' }), res);
+    118|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+    119|   });
+    120|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:62:34
+     60|     const payload = res.json.mock.calls[0][0];
+     61|     // The canonical assembler ran against the resolved sequence, org-…
+     62|     expect(assembleSequenceMock).toHaveBeenCalledWith(
+       |                                  ^
+     63|       expect.objectContaining({ sequenceId: 9, organizationId: ORG, ap…
+     64|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /could not be materialized into leaf f…/
+
+- Expected:
+/could not be materialized into leaf files/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:92:50
+     90|     const payload = res.json.mock.calls[0][0];
+     91|     expect(payload.submissionReady).toBe(false);
+     92|     expect(payload.submissionBlockers.join(' ')).toMatch(/could not be…
+       |                                                  ^
+     93|     // The unresolved leaf is a named error finding, not a silent drop.
+     94|     expect(payload.validationResults.some((v: any) => v.rule === 'LEAF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+AssertionError: expected [ 'LEAF_SOURCE_UNRESOLVED' ] to include 'REQUIRED_SECTION_OK'
+ ❯ tests/routes/ectd-compile-spine.test.ts:122:43
+    120|     // The leaf that does have a document is unaffected.
+    121|     const at32s = payload.validationResults.filter((v: any) => v.secti…
+    122|     expect(at32s.map((v: any) => v.rule)).toContain('REQUIRED_SECTION_…
+       |                                           ^
+    123|   });
+    124|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /not self-contained/
+
+- Expected:
+/not self-contained/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:135:50
+    133|     const payload = res.json.mock.calls[0][0];
+    134|     expect(payload.submissionReady).toBe(false);
+    135|     expect(payload.submissionBlockers.join(' ')).toMatch(/not self-con…
+       |                                                  ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /path-safety/
+
+- Expected:
+/path-safety/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:153:50
+    151|     expect(payload.submissionReady).toBe(false);
+    152|     expect(payload.submissionBlockers.join(' ')).toMatch(/assembly ref…
+    153|     expect(payload.submissionBlockers.join(' ')).toMatch(/path-safety/…
+       |                                                  ^
+    154|     expect(payload.leafFilesRendered).toBe(0);
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+AssertionError: expected null to be '000204' // Object.is equality
+
+- Expected:
+"000204"
+
++ Received:
+null
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:169:27
+    167|     // application_number + sequence_number recorded (params 7 and 8):…
+    168|     // project's RECORDED number, which the backbone carries — never i…
+    169|     expect(insert![1][6]).toBe('000204');
+       |                           ^
+    170|     expect(insert![1][7]).toBe('0000');
+    171|     // The stored backbone is the real one.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:235:34
+    233|     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    234|
+    235|     expect(assembleSequenceMock).toHaveBeenCalledWith(
+       |                                  ^
+    236|       expect.objectContaining({ applicationId: '000512' }),
+    237|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:254:34
+    252|     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    253|
+    254|     expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectCon…
+       |                                  ^
+    255|       contacts: [{ type: 'regulatory', name: 'Regulatory Contact', pho…
+    256|       recordedPackageIdentity: { version: 1, identity: expect.objectCo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /records no agency application number/
+
+- Expected:
+/records no agency application number/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:278:30
+    276|     expect(payload.submissionReady).toBe(false);
+    277|     const refusal = payload.validationResults.find((v: any) => v.rule …
+    278|     expect(refusal?.message).toMatch(says);
+       |                              ^
+    279|     expect(JSON.stringify(payload)).not.toMatch(/<application-number[^…
+    280|     // Recorded as failed, under no number at all rather than the prog…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /six digits/
+
+- Expected:
+/six digits/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:278:30
+    276|     expect(payload.submissionReady).toBe(false);
+    277|     const refusal = payload.validationResults.find((v: any) => v.rule …
+    278|     expect(refusal?.message).toMatch(says);
+       |                              ^
+    279|     expect(JSON.stringify(payload)).not.toMatch(/<application-number[^…
+    280|     // Recorded as failed, under no number at all rather than the prog…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+TypeError: Cannot read properties of undefined (reading 'sha256')
+ ❯ tests/routes/ectd-compile-spine.test.ts:307:28
+    305|     const payload = res.json.mock.calls[0][0];
+    306|
+    307|     expect(payload.package.sha256).toBe('a'.repeat(64));
+       |                            ^
+    308|     expect(payload.package.files).toEqual([
+    309|       'index-md5.txt',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+AssertionError: expected 'eCTD assembly refused: A package name…' to match /2 of 2 PDF leaf file\(s\) were not c…/A
+
+- Expected:
+/2 of 2 PDF leaf file\(s\) were not converted to PDF\/A/
+
++ Received:
+"eCTD assembly refused: A package names its application and its applicant from the record, never a placeholder, and its project's primary agency is not recognized; correct the project's primary agency before packaging. Nothing was assembled."
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:347:22
+    345|     expect(payload.submissionReady).toBe(false);
+    346|     const blockers = payload.submissionBlockers.join(' ');
+    347|     expect(blockers).toMatch(/2 of 2 PDF leaf file\(s\) were not conve…
+       |                      ^
+    348|     expect(blockers).toMatch(/form-fda-1571\.pdf/);
+    349|     expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+TypeError: Cannot read properties of undefined (reading 'pdfa')
+ ❯ tests/routes/ectd-compile-spine.test.ts:374:28
+    372|     const payload = res.json.mock.calls[0][0];
+    373|
+    374|     expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted…
+       |                            ^
+    375|       agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'] });
+    376|     expect(payload.submissionBlockers.join(' ')).not.toMatch(/PDF\/A/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+AssertionError: expected [ 'LEAF_SOURCE_UNRESOLVED' ] to include 'REQUIRED_SECTION_OK'
+ ❯ tests/routes/ectd-compile-spine.test.ts:423:32
+    421|
+    422|     const bySection = (code: string) => payload.validationResults.filt…
+    423|     expect(bySection('1.1.1')).toContain('REQUIRED_SECTION_OK');
+       |                                ^
+    424|     // 1572 was never filed: its requirement stays unmet, however 1.1 …
+    425|     expect(bySection('1.1.2')).toContain('REQUIRED_SECTION_UNPLACED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+AssertionError: expected 'failed' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "failed"
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:509:28
+    507|
+    508|     const payload = res.json.mock.calls[0][0];
+    509|     expect(payload.status).toBe('completed');
+       |                            ^
+    510|     expect(payload.auditTrail).toEqual(LOST);
+    511|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/55]⎯
+
+ FAIL  tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+AssertionError: expected undefined to deeply equal { persisted: false, …(2) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "message": "The change was saved, but its audit-trail entry could not be written.",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-spine.test.ts:524:32
+    522|     const payload = res.json.mock.calls[0][0];
+    523|     expect(payload.status).toBe('failed');
+    524|     expect(payload.auditTrail).toEqual(LOST);
+       |                                ^
+    525|   });
+    526| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/55]⎯
+
+ FAIL  tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+AssertionError: expected [ 'LEAF_SOURCE_UNRESOLVED' ] to deeply equal [ 'REQUIRED_SECTION_OK' ]
+
+- Expected
++ Received
+
+  [
+-   "REQUIRED_SECTION_OK",
++   "LEAF_SOURCE_UNRESOLVED",
+  ]
+
+ ❯ tests/routes/ectd-compile-vault-uuid.test.ts:88:40
+     86|
+     87|     const at = payload.validationResults.filter((v: any) => v.sectionC…
+     88|     expect(at.map((v: any) => v.rule)).toEqual(['REQUIRED_SECTION_OK']…
+       |                                        ^
+     89|     expect(at[0].message).toMatch(/is placed and rendered/);
+     90|     expect(payload.validationResults.some((v: any) => v.rule === 'LEAF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/55]⎯
+
+ FAIL  tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+AssertionError: expected [ Array(4) ] to deeply equal [ '5.3.5.1' ]
+
+- Expected
++ Received
+
+  [
++   "2.5",
++   "3.2.S",
+    "5.3.5.1",
++   "5.3.5.2",
+  ]
+
+ ❯ tests/routes/ectd-compile-vault-uuid.test.ts:117:55
+    115|
+    116|     const unresolved = payload.validationResults.filter((v: any) => v.…
+    117|     expect(unresolved.map((v: any) => v.sectionCode)).toEqual(['5.3.5.…
+       |                                                       ^
+    118|     expect(payload.submissionReady).toBe(false);
+    119|     const m5 = payload.modules.find((m: any) => m.moduleCode === 'm5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:106:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:119:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:141:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:154:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:180:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts:193:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/55]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf
+Error: Failed query: SELECT settings FROM organizations WHERE id=$1
+params: 7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ assessStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:41:17
+ ❯ requireStoredCompanyLegalRequirements server/services/company-documents/stored-legal-readiness.ts:67:18
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:255:3
+ ❯ server/services/ectd/__tests__/lifecycle-from-core.test.ts:107:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '22', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT settings FROM organizations WHERE id=$1', params: [ 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:163:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:178:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:190:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:218:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:231:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a3333333-3333-4333-8333-333333333333
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:258:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a3333333-3333-4333-8333-333333333333' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a3333333-3333-4333-8333-333333333333' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a2222222-2222-4222-8222-222222222222
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:270:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a2222222-2222-4222-8222-222222222222' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a1111111-1111-4111-8111-111111111111
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:285:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a1111111-1111-4111-8111-111111111111' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a1111111-1111-4111-8111-111111111111' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/55]⎯
+
+ FAIL  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,a4444444-4444-4444-8444-444444444444
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:750:30
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:285:7
+ ❯ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts:297:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a4444444-4444-4444-8444-444444444444' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, 'a4444444-4444-4444-8444-444444444444' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/55]⎯
+
+
+ Test Files  9 failed (9)
+      Tests  55 failed | 42 passed (97)
+   Start at  04:41:47
+   Duration  45.31s (transform 4.76s, setup 272ms, import 22.12s, tests 20.78s, environment 1ms)
+

@@ -455,6 +455,69 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
   });
 });
 
+describe('POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22)', () => {
+  /* A typed version under an existing code, without supersedesDocumentId,
+     recorded a second, unlinked version of the same document: no supersession,
+     no lineage, and a version the Vault's numbering never assigned
+     (nextMajorVersion). The uploader stopped sending a version; an API caller
+     still could. Refused at the route, before anything is stored; the version
+     already recorded still reaches the service's own conflict and retry rules. */
+  async function storedVersionIds(): Promise<Set<string>> {
+    const { getStorageProvider } = await import('../../server/services/storage/index');
+    return new Set((await getStorageProvider().list(orgId, programId)).map((o) => o.vaultVersionId));
+  }
+  const bytes = (tag: string) => Buffer.concat([PDF_BYTES, Buffer.from(`% ${tag}\n`, 'utf8')]);
+  const rowsUnder = async (code: string) => (await owner.query(
+    `SELECT id::text, version FROM vault.documents WHERE program_id = $1::uuid AND document_code = $2 AND deleted_at IS NULL ORDER BY version`,
+    [programId, code])).rows;
+
+  it('refuses a new version number for a code that has versions, names the document, and stores nothing', async () => {
+    const before = await storedVersionIds();
+    const recorded = await rowsUnder(PROBE_CODE);
+    const res = await actingRequest()
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', PROBE_CODE)
+      .field('documentTitle', 'A typed second version')
+      .field('documentType', 'OTHER')
+      .field('version', '2.0')
+      .attach('file', bytes('typed-version'), 'dhf-extract-v2.pdf');
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toMatchObject({ code: 'VERSION_FOR_EXISTING_DOCUMENT', headVersion: recorded.at(-1)!.version });
+    expect(res.body.error.message).toContain('Nothing was saved');
+    expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
+    expect(await rowsUnder(PROBE_CODE)).toEqual(recorded);
+  });
+
+  it('still takes the recorded version to the service, whose own conflict rule answers', async () => {
+    const recorded = await rowsUnder(PROBE_CODE);
+    const res = await actingRequest()
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', PROBE_CODE)
+      .field('documentTitle', 'Different bytes at the recorded version')
+      .field('documentType', 'OTHER')
+      .field('version', recorded[0].version)
+      .attach('file', bytes('recorded-version'), 'dhf-extract.pdf');
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('VERSION_CONTENT_CONFLICT');
+  });
+
+  it('accepts a typed version for a document code that has none yet', async () => {
+    const code = `${PROBE_CODE}-FIRST-TYPED`;
+    const res = await actingRequest()
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', code)
+      .field('documentTitle', 'A first version the sender numbers')
+      .field('documentType', 'OTHER')
+      .field('version', '0.1')
+      .attach('file', bytes('first-typed'), 'first-typed.pdf');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await rowsUnder(code)).map((r) => r.version)).toEqual(['0.1']);
+  });
+});
+
 describe("POST /api/vault/ingest — a file carries its uploader's fields", () => {
   /* Gap 7.1 (docs/design/VEEVA_GAP_2026-10-22.md): the uploader now sends a row's
      own fields. The route already took them; this pins what lands. */

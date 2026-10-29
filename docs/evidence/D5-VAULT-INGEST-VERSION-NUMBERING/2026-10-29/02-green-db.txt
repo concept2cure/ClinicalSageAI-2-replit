@@ -1,0 +1,167 @@
+# GREEN at 77a206e8d + this change: every database suite that posts to /api/vault/ingest. Real PostgreSQL 16, RLS_ENFORCE=on, app_service, on the recorded Vault fixture database (2026-10-29T04:13:15Z)
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 2405ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 20ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 51ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 50ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 58ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 8ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 74ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > refuses a new version number for a code that has versions, names the document, and stores nothing 58ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > still takes the recorded version to the service, whose own conflict rule answers 68ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > accepts a typed version for a document code that has none yet 77ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a file carries its uploader's fields > a file sent with its row's fields is recorded with exactly those, and its folder as the person's filing 68ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses an actual actor without organization membership 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 53ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 1249ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 2899ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 64ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 11462ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 159ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 117ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 113ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 109ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 38ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 289ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 315ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 107ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 84ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing 64ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII 98ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 84ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 15ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall 378ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden 3322ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off 1452ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > chat-upload discovery > lists the current upload with its reopenable file_id and excludes the superseded one 335ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter 348ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure still indexes every chunk for text search, with no partial set of vectors 7068ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index 7089ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable 359ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 10ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 2048ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 425ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 445ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 473ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 18ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 461ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > with no project open, the organization: both projects' studies are found 405ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > the open project's study, never the other project's 445ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > and the other way round, with the coverage of the open project alone 436ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > links a record to a current version, and the section lists it with who and why 312ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses no reason, an unknown record, another program’s or organisation’s document, and a duplicate 100ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses a viewer, and another organisation’s project before anything is read 36ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current 95ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed 118ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > the export gate refuses the approved section and says which record and document 49ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > refuses a link to the superseded version 24ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > linking the current version moves the link with the same reason, and the hold lifts 94ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names a withdrawn version as withdrawn 90ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > requires a reason, keeps the row, and cannot be done twice 65ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > each link and unlink is a chained row on the document’s own history 172ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > the table refuses every other change, for every role, and another organisation reads none of it 16ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates two versions, and both ends list it in their own words 224ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates to a version in another project of the organisation, and names that project 102ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > says when the related version has since been superseded 111ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 136ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 50ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 126ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > each relate and unrelate is a chained row on both documents' histories 169ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 29ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 111ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 1758ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 26ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 29ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 12ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 43ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 126ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 14ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 155ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 5ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 13ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 54ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 2640ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 78ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 151ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 914ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 275ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 395ms
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > serves as app_service, not a superuser, without BYPASSRLS, with enforcement on 4ms
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > the setting table is tenant-isolated by the sweep: RLS enabled and forced, tenant_isolation_policy present 4ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated 1722ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > reads 25 years, the default, for an organisation that has set nothing 11ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > an administrator sets 30 years; the change and its chained audit row are one transaction 42ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years 72ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS 73ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > below 25 years without a reason and the governing rule: 400, and nothing changes 19ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > the database refuses a shorter period with no reason, whatever path writes it 3ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins 175ms
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a member can neither read nor set the period: 403, and nothing changes 10ms
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a refused audit row takes the change down with it, and the 500 carries no error text 12ms
+ ✓ tests/db/org-retention-period.dbtest.ts > a tenant purge erases the period (GDPR Art. 17) > the purge list reaches the setting row; the organisation row the purge updates survives 321ms
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words 228ms
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status 166ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 155ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 139ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 166ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 15ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 148ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 34ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source 2302ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete 305ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses bytes that no longer match the checksum recorded at capture, storing nothing 121ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a viewer is refused before anything is filed 19ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a superseded capture, another project’s capture and a source with no file are each refused with a reason 67ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses an empty or oversized selection 24ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 164ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 112ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 344ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 121ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 23ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 92ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 77ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 30ms
+ ✓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 121ms
+ ✓ tests/db/vault-versions.dbtest.ts > the data room names the version its file became (VR-16) > a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0' 122ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > both uploads are chunked, with no vector on any chunk, and the ledger says chunked 11ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > with passage embedding on but no provider, a new upload is still chunked, all or none embedded 3086ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > returns the passage that answers the question, from the right document 2212ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > answers a tox question from the tox document 415ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > never returns another organization's document, even for identical text 407ms
+ ✓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > a word in no document matches nothing, honestly 276ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > records the extraction tier even with the passage index off 9ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > still lists and reads the document through the tools 1976ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > wrote the chunks with no vector, and the ledger says chunked 5ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > search_document_passages finds the passage by text, and says it ranked by text 565ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures 76ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > writes one chained verdict per version, naming the person 3ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check 93ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > a viewer is refused, and another organisation's program is not found 18ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > the catalog really is off for these organisations 5ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question in plain English finds the current version by its text 1928ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > another organisation's document is never a hit, from either side 238ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > lists and reads the document, with no refusal naming a setting 222ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question no document answers is nothing found, not unavailable 92ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy 1505ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy 98ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs 81ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 97ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 41ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 48ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 34ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 37ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 27ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 12ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 40ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing 129ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing 4ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing 5ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > files a decision inside the vocabulary, as before 52ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored 128ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored 2ms
+ Test Files  20 passed (20)
+      Tests  164 passed (164)

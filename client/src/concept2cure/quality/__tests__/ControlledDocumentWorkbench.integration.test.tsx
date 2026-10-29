@@ -32,9 +32,11 @@ beforeEach(() => {
   content = ''; editable = true; revision = 0; localStorage.clear();
   request.mockReset().mockImplementation(async (method: string, url: string, body?: { content?: string }) => {
     if (url === '/api/mdx/qms/documents/4/editor') return ok({ data: { document: doc, programId: PROGRAM, qmsDocument: { id: 4, status: editable ? 'draft' : 'in_review' } } });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc, access: { edit: { allowed: editable,
+    // The editor reads the editing copy in its program's scope (a85d6885d): an
+    // unscoped read of a controlled document's copy is not served here.
+    if (url === `/api/authoring/docs/${DOC}?programId=${PROGRAM}`) return ok({ document: doc, access: { edit: { allowed: editable,
       reason: editable ? null : 'This controlled document is under review. Open a controlled revision in the Quality register before changing it.' } } });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section()] });
+    if (url === `/api/authoring/docs/${DOC}/sections?programId=${PROGRAM}`) return ok({ sections: [section()] });
     if (method === 'PATCH' && url === `/api/authoring/sections/${SECTION}`) {
       content = body?.content ?? ''; revision += 1;
       return ok({ success: true, revision_created: true, section: section() });

@@ -1,0 +1,23 @@
+# RED at 77a206e8d: a typed version under an existing document is recorded as a second, unlinked version. Real PostgreSQL 16, RLS_ENFORCE=on, app_service (2026-10-29T04:12:43Z)
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 2218ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 8ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 40ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 82ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 69ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 42ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 8ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 67ms
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > refuses a new version number for a code that has versions, names the document, and stores nothing 77ms
+   → {"success":true,"document":{"id":"cf9fbbc4-9c73-4782-9180-2e7f62e879a0","programId":"ba3dc5c0-a62a-4939-a9ac-86c5ad6d078b","documentCode":"DBTEST-W06-768f3657-905","documentTitle":"A typed second version","documentType":"OTHER","version":"2.0","fileName":"dhf-extract-v2.pdf","fileSize":85,"mimeType":"application/pdf","contentHash":"11d8e85ca66bfcbdc827890b61c6f021b12a9689c593cb264b25746944176a6a","processingStatus":"PENDING","hasExtractedText":false,"wordCount":null,"createdAt":"2026-10-29T04:12:50.584Z","updatedAt":"2026-10-29T04:12:50.584Z"},"filing":{"view":"device","folderId":"eng","evidenceKind":"report","ctdSection":null,"placementStatus":"suggested","confidence":"high","rationale":"Matched engineering / DHF / risk file — filed to eng for the device view.","folderLabel":"Engineering (DHF + RMF)","needsReview":false}}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > still takes the recorded version to the service, whose own conflict rule answers 63ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > accepts a typed version for a document code that has none yet 60ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a file carries its uploader's fields > a file sent with its row's fields is recorded with exactly those, and its folder as the person's filing 66ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 7ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses an actual actor without organization membership 9ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 65ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)

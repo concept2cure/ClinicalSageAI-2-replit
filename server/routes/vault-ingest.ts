@@ -259,6 +259,9 @@ export default function createVaultIngestRoutes(): Router {
         evidenceKind: data.evidenceKind,
         ctdSection: data.ctdSection,
         supersedesDocumentId: data.supersedesDocumentId,
+        // A typed version is accepted only for a code with none yet: after that
+        // the Vault numbers versions (vault-ingest.service.ts typedVersionRefusal).
+        numberedByVault: true,
         fileBuffer,
         fileName: (req as any).file?.originalname || 'document',
         mimeType: (req as any).file?.mimetype || 'application/octet-stream',
@@ -268,9 +271,11 @@ export default function createVaultIngestRoutes(): Router {
     );
 
     if (!outcome.ok) {
+      // The document a refused version was offered against, when the refusal names it.
       return res
         .status(outcome.status)
-        .json({ error: { code: outcome.code, message: outcome.message } });
+        .json({ error: { code: outcome.code, message: outcome.message,
+          ...(outcome.headDocumentId ? { headDocumentId: outcome.headDocumentId, headVersion: outcome.headVersion } : {}) } });
     }
     // 200, not 201, when the bytes were already recorded: nothing was created.
     return res.status(outcome.reupload ? 200 : 201).json({
