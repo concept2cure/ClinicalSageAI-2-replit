@@ -27,7 +27,7 @@ import { Kpi } from './Kpi';
 import { shellProgramId } from '../v2/shellProject';
 import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL,
-  addCapaAction, capaMoves, createCapa, isCapaClosed, transitionCapa, type CapaRow,
+  addCapaAction, capaMoves, createCapa, isCapaClosed, transitionCapa, type CapaRow, type CapaSourceRef,
   AUDIT_STATUS_LABEL, CRITICALITY_LABEL, DISPOSITION_LABEL, NC_SOURCE_LABEL, SUPPLIER_STATUS_LABEL,
   createInternalAudit, createManagementReview, createNonconformance, createSupplier,
   dispositionNonconformance, isPast, isUndispositioned, reviewText, updateInternalAudit, updateSupplier,
@@ -85,6 +85,51 @@ const CAPA_TONE: Partial<Record<CapaRow['state'], PillTone>> = {
   open: 'draft', closed_effective: 'effective', closed_not_effective: 'err', escalated: 'err',
 };
 
+const CAPA_FIELDS: C2CFormConfig['fields'] = [
+  { key: 'title', label: 'Title', type: 'text', required: true },
+  { key: 'type', label: 'Type', type: 'seg', required: true, options: optionsOf(CAPA_TYPE_LABEL) },
+  { key: 'source', label: 'Raised from', type: 'select', required: true, half: true, options: optionsOf(CAPA_SOURCE_LABEL) },
+  { key: 'riskLevel', label: 'Risk', type: 'select', half: true, options: optionsOf(RISK_LABEL), default: 'medium' },
+  { key: 'targetCloseDate', label: 'Target close', type: 'date', half: true },
+  { key: 'problemStatement', label: 'Problem statement', type: 'textarea', rows: 4, desc: 'What happened, where, and the evidence for it.' },
+];
+
+/** Raise a CAPA in the open project; with `from`, the record it was raised from. */
+async function raiseCapa(v: Record<string, string>, from?: CapaSourceRef): Promise<string> {
+  const programId = shellProgramId();
+  if (!programId) throw new Refused('open a project first. A CAPA belongs to a project.');
+  const row = await createCapa({
+    programId, title: v.title.trim(), type: v.type, source: v.source, riskLevel: v.riskLevel,
+    targetCloseDate: v.targetCloseDate, problemStatement: v.problemStatement.trim(),
+    ...(from ? { sourceRefs: [from] } : {}),
+  });
+  return from ? `${row.capaCode} was raised from ${from.label}.` : `${row.capaCode} was raised.`;
+}
+
+/** The "Raise CAPA" a quality record takes: the CAPA form, started from the record. */
+function raiseCapaFrom<R>(o: {
+  source: string; ref: (r: R) => CapaSourceRef; title: (r: R) => string; problem: (r: R) => string; show?: (r: R) => boolean;
+}): RowAction<R> {
+  return {
+    label: 'Raise CAPA',
+    title: 'Raise a CAPA from this record, in the open project',
+    show: o.show,
+    form: (r) => ({
+      eyebrow: 'Quality',
+      title: `Raise a CAPA from ${o.ref(r).label}`,
+      sub: 'Raised in the project you have open, as open, with this record as its source.',
+      governed: 'Raising a CAPA writes an audit entry under your name.',
+      submitLabel: 'Raise CAPA',
+      fields: CAPA_FIELDS.map((f) =>
+        f.key === 'title' ? { ...f, default: o.title(r) }
+          : f.key === 'source' ? { ...f, default: o.source }
+            : f.key === 'problemStatement' ? { ...f, default: o.problem(r) }
+              : f),
+    }),
+    submit: (r, v) => raiseCapa(v, o.ref(r)),
+  };
+}
+
 const CAPAS: RegisterConfig<CapaRow> = {
   title: 'CAPA',
   sub:
@@ -98,7 +143,15 @@ const CAPAS: RegisterConfig<CapaRow> = {
     { label: 'Number', cell: (r) => <span className="mono">{r.capaCode}</span> },
     { label: 'Title', cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
     { label: 'Type', cell: (r) => CAPA_TYPE_LABEL[r.type] ?? r.type },
-    { label: 'Source', cell: (r) => <span className="qms-tag">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span> },
+    {
+      label: 'Source',
+      cell: (r) => (
+        <span title={r.sourceRefs?.map((s) => s.label).join(', ') || undefined}>
+          <span className="qms-tag">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span>
+          {r.sourceRefs?.[0] ? <span className="mono"> {r.sourceRefs[0].label}</span> : null}
+        </span>
+      ),
+    },
     { label: 'Risk', cell: (r) => RISK_LABEL[r.riskLevel] ?? r.riskLevel },
     { label: 'State', cell: (r) => pill(CAPA_TONE[r.state] ?? 'review', CAPA_STATE_LABEL[r.state] ?? r.state) },
     { label: 'Target close', cell: (r) => formatDate(r.targetCloseDate) },
@@ -124,24 +177,9 @@ const CAPAS: RegisterConfig<CapaRow> = {
     sub: 'Raised in the project you have open, as open. Its number is assigned by the server.',
     governed: 'Raising a CAPA writes an audit entry under your name.',
     submitLabel: 'Raise CAPA',
-    fields: [
-      { key: 'title', label: 'Title', type: 'text', required: true },
-      { key: 'type', label: 'Type', type: 'seg', required: true, options: optionsOf(CAPA_TYPE_LABEL) },
-      { key: 'source', label: 'Raised from', type: 'select', required: true, half: true, options: optionsOf(CAPA_SOURCE_LABEL) },
-      { key: 'riskLevel', label: 'Risk', type: 'select', half: true, options: optionsOf(RISK_LABEL), default: 'medium' },
-      { key: 'targetCloseDate', label: 'Target close', type: 'date', half: true },
-      { key: 'problemStatement', label: 'Problem statement', type: 'textarea', rows: 4, desc: 'What happened, where, and the evidence for it.' },
-    ],
+    fields: CAPA_FIELDS,
   },
-  create: async (v) => {
-    const programId = shellProgramId();
-    if (!programId) throw new Refused('open a project first. A CAPA belongs to a project.');
-    const row = await createCapa({
-      programId, title: v.title.trim(), type: v.type, source: v.source, riskLevel: v.riskLevel,
-      targetCloseDate: v.targetCloseDate, problemStatement: v.problemStatement.trim(),
-    });
-    return `${row.capaCode} was raised.`;
-  },
+  create: (v) => raiseCapa(v),
   rowActions: [
     {
       label: 'Advance',
@@ -283,7 +321,12 @@ const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
       await dispositionNonconformance(r.id, { disposition: v.disposition, dispositionRationale: rationale });
       return `${r.nc_number}: ${DISPOSITION_LABEL[v.disposition] ?? v.disposition} was recorded.`;
     },
-  }],
+  }, raiseCapaFrom<NonconformanceRow>({
+    source: 'nonconformance',
+    ref: (r) => ({ kind: 'qms_nonconforming_product', id: String(r.id), label: r.nc_number }),
+    title: (r) => `${r.nc_number}: ${r.description}`.slice(0, 200),
+    problem: (r) => [r.description, [r.device_name, r.lot_or_serial].filter(Boolean).join(', ')].filter(Boolean).join('\n'),
+  })],
   ask: 'Give me a read-out on nonconformances: which are awaiting disposition, how long each has been open, and which recur by product, lot or source.',
   askRow: (r) => `Summarise nonconformance ${r.nc_number}: what was found, its disposition, and whether it needs a CAPA or a change.`,
 };
@@ -450,7 +493,13 @@ const AUDITS: RegisterConfig<InternalAuditRow> = {
       });
       return `${r.audit_number} was updated (${(AUDIT_STATUS_LABEL[v.status] ?? v.status).toLowerCase()}).`;
     },
-  }],
+  }, raiseCapaFrom<InternalAuditRow>({
+    source: 'internal_audit',
+    ref: (r) => ({ kind: 'qms_internal_audit', id: String(r.id), label: r.audit_number }),
+    title: (r) => `Findings of ${r.audit_number}`,
+    problem: (r) => `${r.scope}\n${r.major_findings ?? 0} major and ${r.minor_findings ?? 0} minor findings.`,
+    show: (r) => r.status !== 'planned' && r.status !== 'cancelled',
+  })],
   ask: 'Give me a read-out on the internal audit programme: what is planned and overdue, which audits found major findings, and which areas have not been audited this year.',
   askRow: (r) => `Summarise internal audit ${r.audit_number}: its scope, status and findings, and what follow-up it needs.`,
 };
@@ -505,7 +554,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
   const [notice, setNotice] = React.useState<string | null>(null);
   const writing = React.useRef(false);
   const today = new Date().toISOString().slice(0, 10);
-  const grid = config.grid + ' 150px';
+  const grid = config.grid + ' 230px';
   const rowMin = registerRowMinWidth(grid);
 
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };

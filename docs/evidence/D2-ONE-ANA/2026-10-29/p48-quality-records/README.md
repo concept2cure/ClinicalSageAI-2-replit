@@ -39,16 +39,22 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - "Advance" offers exactly the moves in `shared/constants/capa-lifecycle.ts`, now the server state machine's own
     map. A move needs a reason, and a close needs the effectiveness check result.
   - "Add action" adds an action item.
+- Raise CAPA from a record, the third commit. A nonconformance, or an internal audit that has started, carries "Raise
+  CAPA". The CAPA drawer opens with the record's title, source and problem filled in, and the record is sent as the
+  CAPA's `sourceRefs` entry (`{ kind, id, label }`, shared/schema/capa-mdr.ts). The CAPA register's Source column names
+  the record.
 
 ## Proof
 
-- `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 4 of 4 pass.
+- `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 5 of 5 pass.
   - A nonconformance lists. A short rationale is refused and nothing is sent. A full rationale sends
     `PATCH /api/mdx/qms/nonconforming/4/disposition` with the disposition and rationale, and the register confirms.
   - A failed supplier read renders "The suppliers register could not be read", not "No suppliers recorded yet".
   - A CAPA in effectiveness check is offered only its three server moves. A close without the effectiveness result is
     refused and nothing is sent. With the result, the screen sends `POST /api/capa-mdr/capa/:id/transition`.
   - "Raise CAPA" with no project open is refused and nothing is sent.
+  - "Raise CAPA" from NC-2026-004 sends `POST /api/capa-mdr/capa` with the open project and
+    `sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }]`.
 - **Shown failing first:**
   - With the rationale guard removed, the first case fails (1 failed, 1 passed). Restored, both pass.
   - With the effectiveness guard removed, the CAPA case fails (1 failed, 3 passed). Restored, all four pass.
