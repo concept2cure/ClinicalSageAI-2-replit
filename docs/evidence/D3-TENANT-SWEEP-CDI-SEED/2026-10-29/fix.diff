@@ -1,0 +1,24 @@
+diff --git a/tests/schema-contract/tenant-isolation-sweep.contract.test.ts b/tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+index 59fd8758..e6cf36f0 100644
+--- a/tests/schema-contract/tenant-isolation-sweep.contract.test.ts
++++ b/tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+@@ -155,6 +155,19 @@ async function baseSchemaFixture(): Promise<PGlite> {
+   // set order.
+   await safe(readMig('migrations/20260527_mutation_primitives.sql'));
+   await safe(readMig('migrations/20260528_phase9_document_schema.sql'));
++  // Eighth of the same class (2026-10-29). public.cre_evidence_sources is created
++  // by db/migrations/20260724_clinical_regulatory_evidence_spine.sql at index 18
++  // of the set, and migrations/20260726_cre_source_program_scope.sql at index 20
++  // adds client_program_id, both before BATCH_START. Every earlier batch file
++  // that touches the table guards on to_regclass and skipped here with a NOTICE,
++  // so this fixture never had it. migrations/20261027_cdi_public_reference_seed.sql,
++  // IN the batch, inserts its global-public reference rows and fails closed when
++  // the store is absent, so pass 1 aborted with `CDI reference seed requires the
++  // canonical CRE source store` and no assertion below ran. A real deploy applies
++  // both creators first and is unaffected. Applied with pg.exec, not safe(): a
++  // creator that stops applying here is a finding, not something to swallow.
++  await pg.exec(readMig('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
++  await pg.exec(readMig('migrations/20260726_cre_source_program_scope.sql'));
+   // Fresh installs create the notification base before the batch's Oct 14
+   // recipient receipt FK/index. The old journal omits both base tables; use
+   // their actual creator DDL rather than placeholder notification columns.
