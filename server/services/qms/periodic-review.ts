@@ -107,6 +107,12 @@ export interface QmsPeriodicReviewAct {
   previousNextReviewDue: string | null;
 }
 
+/** What the domain write recorded, and the row it reviewed (for the task that follows it). */
+export interface QmsPeriodicReviewRecorded {
+  act: QmsPeriodicReviewAct;
+  document: QmsDocumentRow;
+}
+
 /**
  * The domain write the ceremony runs on its transaction. It locks the row, so
  * a revision or approval cannot interleave, and refuses anything but an
@@ -117,7 +123,7 @@ export async function recordQmsPeriodicReview(
   orgId: number,
   documentId: number,
   input: QmsPeriodicReviewInput,
-): Promise<QmsPeriodicReviewAct> {
+): Promise<QmsPeriodicReviewRecorded> {
   const { rows } = await client.query(
     `SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
     [documentId, orgId],
@@ -131,7 +137,7 @@ export async function recordQmsPeriodicReview(
       `The approval of ${row.doc_number} v${String(row.version)} does not stand (${approval.state}), so a review cannot attest it. Nothing was signed.`);
   }
   const before = await readQmsPeriodicReviews(client, orgId, new Map([[Number(row.id), { release: row, underRevision: false }]]));
-  return {
+  return { document: row, act: {
     kind: QMS_PERIODIC_REVIEW_KIND,
     documentId: Number(row.id),
     docNumber: String(row.doc_number),
@@ -142,7 +148,7 @@ export async function recordQmsPeriodicReview(
     nextReviewDate: input.outcome === 'current' ? input.nextReviewDate ?? null : null,
     previousNextReviewDate: isoDay(row.next_review_date),
     previousNextReviewDue: nextReviewDue(row, before.get(Number(row.id))),
-  };
+  } };
 }
 
 function refuseUnlessEffective(row: QmsDocumentRow): void {
