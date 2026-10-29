@@ -203,8 +203,11 @@ function noCopyWords(r: DossierRow, copy: Exclude<RowCopy, { kind: 'one' }>): st
  *  the document bound to `documentId`). It named the newest document TAGGED
  *  with its module until 2026-10-29, so the home Module 1 row could open an
  *  added market's copy. With no single copy it says why and opens nothing. */
+/** The CTD module a row opens its copy at, or null: a device pack's lettered heading is not a CTD code. */
+const rowModule = (r: DossierRow): string | null => (r.group === 'module' && r.module && /^[1-5]$/.test(r.module) ? `M${r.module}` : null);
+
 function ModuleRow({ r, copy, onOpen }: {
-  r: DossierRow; copy: RowCopy; onOpen: (doc: BuiltDocument) => void;
+  r: DossierRow; copy: RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
 }) {
   const pct = r.figure.state === 'measured' ? r.figure.pct : null;
   const counts = `${r.complete} of ${r.counted} approved or locked${r.inReview ? ` · ${r.inReview} in review` : ''}`;
@@ -222,7 +225,7 @@ function ModuleRow({ r, copy, onOpen }: {
     <div className="pj-lmodrow">
       {copy.kind === 'one' ? (
         <>
-          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(copy.doc)}
+          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(copy.doc, rowModule(r))}
             aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${copy.doc.title}`}>
             {body}
           </button>
@@ -253,7 +256,7 @@ export function ModuleCompletion({ read, copyFor, onOpen, onAsk }: {
   read: DossierState;
   /** The editing copy of the filing (`DossierRow.documentId`) a row measures. */
   copyFor: (filingId: string) => RowCopy;
-  onOpen: (doc: BuiltDocument) => void;
+  onOpen: (doc: BuiltDocument, within: string | null) => void;
   onAsk?: (question: string) => void;
 }) {
   const { state, retry } = read;

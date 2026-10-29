@@ -1349,7 +1349,8 @@ function AuthorWorkspace({
   /** GET /api/authoring/docs?programId= — the project's documents. */
   docs: ListRead;
   onRetryDocs: () => void;
-  onOpenDoc: (doc: BuiltDocument) => void;
+  /** `within`: the CTD module a dossier row opens the document at (F3). */
+  onOpenDoc: (doc: BuiltDocument, within?: string | null) => void;
   /** The project is one CMC / Module 3 composes for (ProjectHome `cmcComposes`). */
   cmcComposes?: boolean;
 }) {
@@ -1504,8 +1505,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const title = sel?.title || prog?.name || null;
   /* A document row opens THAT document: the editor target carries its id and
      this program, so the editor opens it or states why it could not. */
-  const openDocument = (doc: BuiltDocument) => {
-    setEditorTarget({ docType: null, docId: doc.id, programId: pid, programTitle: title });
+  const openDocument = (doc: BuiltDocument, within?: string | null) => {
+    setEditorTarget({ docType: null, docId: doc.id, programId: pid, programTitle: title, ...(within ? { within } : {}) });
     onNav('document-authoring');
   };
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');

@@ -174,7 +174,7 @@ describe('Author — the project\'s documents', () => {
     await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
     // Module 2: at head, the newest M2-tagged document (doc-25), an unbound working document.
     fireEvent.click(moduleRow('Module 2 · Summaries')!);
-    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-copy', programId: PID });
+    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-copy', programId: PID, sectionWithin: 'M2' });
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
     // Module 1: at head, the EMA market's copy, the newest M1-tagged document.
     fireEvent.click(moduleRow('Module 1 · Regional ·')!);
@@ -190,7 +190,7 @@ describe('Author — the project\'s documents', () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(moduleRow('Module 1 · Regional · EMA MAA')?.tagName).toBe('BUTTON'));
     fireEvent.click(moduleRow('Module 1 · Regional · EMA MAA')!);
-    expect(target()).toMatchObject({ docId: 'doc-ema-copy', programId: PID });
+    expect(target()).toMatchObject({ docId: 'doc-ema-copy', programId: PID, sectionWithin: 'M1' });
   });
 
   it('with no editing copy the row says so and has nothing to click; a market\'s says where one is made', async () => {
