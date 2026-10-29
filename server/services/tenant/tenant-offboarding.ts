@@ -1357,6 +1357,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'organization_gateway_accounts',
   'session_activity',
   'coordination_leases',
+  /* study_pivotal_declarations (20261029e): the sponsor's per-study pivotal
+     declaration that Module 2 reads. Append-only to the application (UPDATE
+     and TRUNCATE refused); DELETE is this purge's. No foreign key, so a leaf. */
+  'study_pivotal_declarations',
   /* citation_chains: which of the tenant's documents cite which. It became
      org-keyed in 15af6bc4 (20260813_knowledge_graph_tenant_keys.sql, amended
      2026-10-12), and ci:purge-coverage then failed every Blank DB run: an

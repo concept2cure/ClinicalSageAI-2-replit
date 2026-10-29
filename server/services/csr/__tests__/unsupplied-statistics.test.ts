@@ -34,6 +34,8 @@ const dbRows = vi.hoisted(() => ({
 }));
 vi.mock('../../../db', () => ({
   db: {
+    // The loader's read of each study's pivotal declaration (2026-10-29): none.
+    execute: async () => ({ rows: [] }),
     selectDistinctOn: () => ({ from: () => ({ where: () => ({ orderBy: async () => dbRows.jobs }) }) }),
     select: () => ({
       from: () => ({

@@ -49,6 +49,8 @@ import {
 import type { CSRSummaryInput } from '../m2-summary-builders';
 import type { CSRSection } from '../csr-builder';
 import { resolveCsrScope } from './project-scope';
+import { currentPivotalDeclarations } from './study-pivotal-declaration';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 
 /**
  * Shape of the `studyInfoSnapshot` JSONB column on `csr_build_jobs`. Mirrors
@@ -168,6 +170,10 @@ export async function loadCsrInputsForProject(
     return [];
   }
 
+  // Whether each study is pivotal is the sponsor's declaration, never its
+  // phase (study-pivotal-declaration.ts, founder's decision of 2026-10-29).
+  const declared = await currentPivotalDeclarations(queryableFromDrizzle(db), orgId, projectId);
+
   // ── Step 2: load per-job sections (tenant-scoped at the row level too) ──
   const inputs: CSRSummaryInput[] = [];
   for (const job of jobs) {
@@ -210,6 +216,7 @@ export async function loadCsrInputsForProject(
       // not recorded here; the plan travels as itself.
       sampleSize: null,
       plannedSampleSize: info.sampleSize ?? null,
+      pivotal: declared.get(job.studyId)?.pivotal ?? null,
       csrSections: sections,
     });
   }
