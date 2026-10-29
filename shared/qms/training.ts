@@ -1,5 +1,6 @@
 /** Shared wire contract for the existing Quality register's personal attestation. */
 import { z } from 'zod';
+import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '../constants/governed-reason';
 
 const id = z.number().int().positive().max(2_147_483_647);
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -91,6 +92,23 @@ export const qmsTrainingAcknowledgementResponseSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A new acknowledgement must confirm its chained audit record.' });
   }
 });
+
+/* Job roles and who holds them (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md
+   §3.8). A job role is a job function the organization manages, not a permission
+   role. Every write names its reason; an unknown field is refused, never dropped. */
+const governedReason = z.string().trim().min(GOVERNED_REASON_MIN).max(GOVERNED_REASON_MAX);
+const jobRoleName = z.string().trim().min(1).max(80);
+const jobRoleDescription = z.string().trim().max(500);
+
+export const qmsJobRoleCreateSchema = z.object({ name: jobRoleName, description: jobRoleDescription.optional(), reason: governedReason }).strict();
+export const qmsJobRoleUpdateSchema = z.object({ name: jobRoleName.optional(), description: jobRoleDescription.nullable().optional(), reason: governedReason })
+  .strict().refine(b => b.name !== undefined || b.description !== undefined, { message: 'Change the name or the description.' });
+export const qmsJobRoleMemberSchema = z.object({ userId: id, reason: governedReason }).strict();
+/** A DELETE body: the reason only (DELETE requests carry a JSON body here, as TaskBoard's do). */
+export const qmsGovernedRemovalSchema = z.object({ reason: governedReason }).strict();
+
+export type QmsJobRoleCreate = z.infer<typeof qmsJobRoleCreateSchema>;
+export type QmsJobRoleUpdate = z.infer<typeof qmsJobRoleUpdateSchema>;
 
 export type QmsTrainingAcknowledgementInput = z.infer<typeof qmsTrainingAcknowledgementInputSchema>;
 export type QmsTrainingAcknowledgement = z.infer<typeof qmsTrainingAcknowledgementSchema>;

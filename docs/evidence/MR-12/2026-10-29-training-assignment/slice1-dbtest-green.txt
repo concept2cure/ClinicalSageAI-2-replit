@@ -1,0 +1,19 @@
+# GREEN on the final slice-1 working tree over cbcd32f58b, after the review fixes: tests/db/qms-job-roles.dbtest.ts, 16 cases (the 12 of the first round and the review's 4). Real PostgreSQL 16, RLS_ENFORCE=on, app_service, database c2c_mr12_trn_dbtest (2026-10-29T19:33:26Z)
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > creates a role: one row, one ledger pair, committed together 231ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > renames a role, recording before and after; deletes it softly, so the name can be used again 157ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > adds and removes a member softly; the member can be added again and both history rows stay 109ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > lists the roles with their members, to every member, and says who may administer them 140ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number 199ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403 QMS_JOB_ROLE_AUTHORITY, nothing written 1513ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no change, though the lifecycle guard still holds it as active 58ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a viewer is refused by the editor gate; a member, a manager and an approver by the administrator rule 116ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a seven-character reason is 400 REASON_REQUIRED; an unknown field or a bad id is 422 39ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a name already live, in any case, is 409 QMS_JOB_ROLE_EXISTS, on create and on rename 72ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 94ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > another organization's role is not listed and every change to it is 404 109ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > an administrator does not remove themselves from a role: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 92ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a role a document is assigned to is not deleted: 409 QMS_JOB_ROLE_IN_USE naming the document 46ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > an assignment on a deleted document does not hold the role in use 49ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the role was not created 13ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

@@ -1074,6 +1074,9 @@ export async function purgeTenant(
 export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.freeze({
   "document_data_dispositions": "Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.",
   "qms_document_versions": "Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
+  "qms_job_roles": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
+  "qms_job_role_members": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
+  "qms_training_assignments": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
   "submission_orchestrator_inputs": "Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
 });
 
