@@ -31,3 +31,22 @@ NET: HEAD 14 -> now 14 (0)
 
 # Scoped tsc (tools/tsc-scoped.py.txt; the full-repo typecheck OOMs under parallel load)
 scoped tsc: 21 changed files; errors in them: 0; errors elsewhere (ambient, untouched): 8
+
+# Part 2 — net warnings (HEAD a254c975a vs working tree)
+client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx: HEAD 7 -> now 7
+client/src/concept2cure/v2/surfaceViews.ts: HEAD 0 -> now 0
+shared/constants/ui-surface-registry.ts: HEAD 1 -> now 1
+shared/constants/ui-surface-registry.ui-v2.ts: HEAD 1 -> now 1
+client/src/concept2cure/v2/registryModel.ts: HEAD 1 -> now 1
+shared/constants/launch-scope.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/fixtures/collab-data.ts: HEAD 0 -> now 0
+server/services/entitlements/__tests__/launch-scope.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/foldSetup.test.ts: HEAD 0 -> now 0
+server/services/entitlements/launch-scope-api.ts: HEAD 0 -> now 0
+scripts/ci/check-ana-surface-context.mjs: HEAD 5 -> now 5
+scripts/ci/check-surface-discoverability.mjs: HEAD 2 -> now 2
+shared/types/__tests__/onboarding-discovery-contract.test.ts: HEAD 0 -> now 0
+server/routes/__tests__/vault-legal-holds-launch-scope.test.ts: HEAD 0 -> now 0
+NET: HEAD 17 -> now 17 (0)
+
+scoped tsc: 12 changed files; errors in them: 0; errors elsewhere (ambient, untouched): 10
