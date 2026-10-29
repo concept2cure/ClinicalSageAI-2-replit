@@ -159,7 +159,7 @@ afterAll(async () => { await h.close(); });
 describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
   it('refuses the freeze when a leaf is placed while the gate is assembling', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER});
     `);
@@ -181,7 +181,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
 
   it('refuses the freeze when a leaf is removed while the gate is assembling', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES (2, 5, 'fda', '0000', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES (2, 5, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (id, sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (2001, 2, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER}),
         (2002, 2, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER});
@@ -213,7 +213,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
 
   it('upsertLeaf re-checks the status under the sequence row lock, not only before it', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES (5, 1, 'fda', '0001', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES (5, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated');
     `);
     // The freeze commits after upsertLeaf read 'validated' and before it wrote.
     holder.onSelect = { remaining: 2, hook: async () => { await h.pglite.query(`UPDATE ectd_sequences SET status='frozen', frozen_at=NOW() WHERE id=5`); } };
@@ -225,7 +225,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
 
   it('removeLeaf re-checks the status under the sequence row lock, not only before it', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES (6, 1, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES (6, 1, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (id, sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (6001, 6, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER});
     `);
@@ -240,8 +240,8 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
 describe('the filed inventory the gate judges against cannot move after the lock', () => {
   it('refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (11, 3, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (12, 3, 'fda', '0001', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (11, 3, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (12, 3, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (11, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 400, ${ORG}, ${USER});
     `);
@@ -268,8 +268,8 @@ describe('the filed inventory the gate judges against cannot move after the lock
 
   it('does not refuse a sequence of only new leaves that shares no section with the unsent lower one', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (13, 3, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (13, 3, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       UPDATE ectd_sequences SET status='frozen', dispatch_status=NULL WHERE id=12;
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (13, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 410, ${ORG}, ${USER});
@@ -281,8 +281,8 @@ describe('the filed inventory the gate judges against cannot move after the lock
 
   it('refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing)', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (14, 3, 'fda', '0003', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (14, 3, 'fda', '0003', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (14, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 400, ${ORG}, ${USER});
     `);
@@ -308,8 +308,8 @@ describe('the higher direction: a lower sequence is not filed behind a locked hi
     // withdraws X; 0002 declares replace of X and is frozen+dispatched while
     // 0001 is still being prepared.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (21, 2, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (22, 2, 'fda', '0001', ${ORG}, ${USER}, 'validated'), (23, 2, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (21, 2, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (22, 2, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'), (23, 2, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (21, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 300, ${ORG}, ${USER});
     `);
@@ -352,8 +352,8 @@ describe('the higher direction: a lower sequence is not filed behind a locked hi
     // The remedy the refusal names: the same leaves in 0003. Its withdrawal binds
     // to the leaf 0002 filed, not to the one 0002 replaced.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (24, 2, 'fda', '0003', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (24, 2, 'fda', '0003', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (24, 'm1.2', 'Cover letter', 'new', 'coauthor_documents', 310, ${ORG}, ${USER}),
         (24, 'm3.2.s.1', 'General Information', 'delete', 'coauthor_documents', 300, ${ORG}, ${USER});
@@ -380,8 +380,8 @@ describe('the higher direction: a lower sequence is not filed behind a locked hi
     // withdrawal binds to 0000's leaf whatever 0002 filed. The dependent case
     // is 0002 superseding the very leaf 0001 withdraws, which is what it does now.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (71, 7, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (72, 7, 'fda', '0001', ${ORG}, ${USER}, 'validated'), (73, 7, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (71, 7, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (72, 7, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'), (73, 7, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (71, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 700, ${ORG}, ${USER});
     `);
@@ -404,8 +404,8 @@ describe('the higher direction: a lower sequence is not filed behind a locked hi
 
   it('a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first"', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (91, 9, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (92, 9, 'fda', '0001', ${ORG}, ${USER}, 'validated'), (93, 9, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (91, 9, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (92, 9, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'), (93, 9, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (91, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 900, ${ORG}, ${USER});
     `);
@@ -430,8 +430,8 @@ describe('a pre-existing pair of locked, unsent sequences in a shared section is
   it('lets the lower one dispatch, and holds the higher one until it is sent', async () => {
     // Both frozen before the filing-order rule existed.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (61, 6, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (62, 6, 'fda', '0001', ${ORG}, ${USER}, 'validated'), (63, 6, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (61, 6, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (62, 6, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'), (63, 6, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (61, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 600, ${ORG}, ${USER});
     `);
@@ -457,8 +457,8 @@ describe('a pre-existing pair of locked, unsent sequences in a shared section is
 describe('the ordering rule spans the regions of a submission, as the prior-state loader does', () => {
   it('names the region of the sequence it waits on', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status) VALUES
-        (81, 8, 'ema', '0000', ${ORG}, ${USER}, 'dispatched', 'pending'), (82, 8, 'fda', '0001', ${ORG}, ${USER}, 'validated', NULL);
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status, dispatch_status) VALUES
+        (81, 8, 'ema', '0000', 'original', ${ORG}, ${USER}, 'dispatched', 'pending'), (82, 8, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated', NULL);
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (81, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 800, ${ORG}, ${USER}),
         (82, 'm3.2.s.1', 'General Information', 'new', 'coauthor_documents', 800, ${ORG}, ${USER});
@@ -492,9 +492,9 @@ describe('the ordering rule binds on a shared lifecycle key, not a shared sectio
 
   it('IND sequences with their own 1571 and cover letter freeze and dispatch while the lower one is dispatched, not sent', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (101, 10, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (102, 10, 'fda', '0001', ${ORG}, ${USER}, 'validated'),
-        (103, 10, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (101, 10, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (102, 10, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'),
+        (103, 10, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (101, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 1000, ${ORG}, ${USER}),
         (101, 'm1.2', 'Cover letter', 'new', 'coauthor_documents', 1001, ${ORG}, ${USER});
@@ -527,8 +527,8 @@ describe('the ordering rule binds on a shared lifecycle key, not a shared sectio
   it('a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message', async () => {
     // Continues submission 10: 0001 dispatched, not sent, files cover letter 1011.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (104, 10, 'fda', '0003', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (104, 10, 'fda', '0003', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (104, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 1030, ${ORG}, ${USER}),
         (104, 'm1.2', 'Cover letter', 'replace', 'coauthor_documents', 1011, ${ORG}, ${USER});
@@ -559,9 +559,9 @@ describe('the ordering rule binds on a shared lifecycle key, not a shared sectio
     // The verdict's P5: an urgent safety report 0002 frozen and sent while the
     // protocol amendment 0001 is still being prepared.
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (111, 11, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (112, 11, 'fda', '0001', ${ORG}, ${USER}, 'validated'),
-        (113, 11, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (111, 11, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (112, 11, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'),
+        (113, 11, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (111, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 1000, ${ORG}, ${USER}),
         (111, 'm1.2', 'Cover letter', 'new', 'coauthor_documents', 1001, ${ORG}, ${USER});
@@ -595,9 +595,9 @@ describe('the ordering rule binds on a shared lifecycle key, not a shared sectio
 describe('a withdrawal that names no document still binds the ordering rule by section', () => {
   it('a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (121, 12, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (122, 12, 'fda', '0001', ${ORG}, ${USER}, 'validated'),
-        (123, 12, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (121, 12, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (122, 12, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'),
+        (123, 12, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (121, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 1100, ${ORG}, ${USER});
     `);
@@ -620,9 +620,9 @@ describe('a withdrawal that names no document still binds the ordering rule by s
 
   it('a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section', async () => {
     await h.pglite.exec(`
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status) VALUES
-        (131, 13, 'fda', '0000', ${ORG}, ${USER}, 'validated'), (132, 13, 'fda', '0001', ${ORG}, ${USER}, 'validated'),
-        (133, 13, 'fda', '0002', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status) VALUES
+        (131, 13, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated'), (132, 13, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'validated'),
+        (133, 13, 'fda', '0002', 'amendment', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
         (131, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 1100, ${ORG}, ${USER});
     `);
@@ -658,8 +658,8 @@ describe('freeze and dispatch refuse a signature that declares authorship', () =
     await h.pglite.exec(`
       INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)
         VALUES (${submissionId}, 'sod ${id}', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${FREEZE_PROGRAM_ID}');
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status)
-        VALUES (${id}, ${submissionId}, 'fda', '0000', ${ORG}, ${USER}, 'validated');
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, status)
+        VALUES (${id}, ${submissionId}, 'fda', '0000', 'original', ${ORG}, ${USER}, 'validated');
       INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by)
         VALUES (${id}, 'm1.2', 'Cover letter', 'new', 'coauthor_documents', 310, ${ORG}, ${USER});
     `);

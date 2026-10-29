@@ -76,10 +76,10 @@ beforeAll(async () => {
       (1, 'unfiled original', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'rehearsal row later sent', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (3, 'original recorded before leaf IDs', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
-      (1, 1, 'fda', '0000', ${ORG}, ${USER}, NULL), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, 'sent'),
-      (5, 3, 'fda', '0000', ${ORG}, ${USER}, NULL), (6, 3, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
+      (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, NULL), (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (3, 2, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'sent'),
+      (5, 3, 'fda', '0000', 'original', ${ORG}, ${USER}, NULL), (6, 3, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
     UPDATE submissions SET program_id = '0e000000-0000-4000-8000-0000000000e1' WHERE id = 1;
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (200, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),
