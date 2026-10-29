@@ -18,77 +18,13 @@
  * templates appeared unmarked — indistinguishable from the tenant's own work.
  *
  * ── What this test pins ──────────────────────────────────────────────────────
- * Every panel reads live or reads nothing, and "nothing" is never allowed to
- * absorb a failure. Case 1 is the one that matters: a panel that renders
- * "No tasks assigned" over a request that never landed is telling a regulatory
- * team their queue is clear.
+ * The data module keeps no fabricated record. The Tasks panel and its three
+ * live-read cases went with the fold into Tasks (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/); Tasks pins the same
+ * failed-read-is-not-empty rule in taskBoardResponseShape.test.tsx. The Validation and
+ * Submissions panels have their own tests beside this file.
  */
-import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
-
-import { TasksSurface } from '../Workbench';
-
-const noop = () => {};
-
-/** Every endpoint answers `body`; a null body means the request fails. */
-function serve(body: unknown | null) {
-  return vi.fn(async () =>
-    body === null
-      ? ({ ok: false, status: 503, text: async () => 'upstream unavailable' } as unknown as Response)
-      : ({ ok: true, status: 200, json: async () => body } as unknown as Response),
-  );
-}
-
-describe('Workbench panels read live, and say so when they cannot', () => {
-  beforeEach(() => {
-    vi.stubGlobal('fetch', serve({ data: [] }));
-  });
-  afterEach(() => {
-    cleanup();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
-
-  it('reports a FAILED task read as a failure, never as "no tasks assigned"', async () => {
-    vi.stubGlobal('fetch', serve(null));
-    render(<TasksSurface onAskAna={noop} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('workbench-no-tasks-error')).toBeTruthy();
-    });
-    expect(screen.queryByTestId('workbench-no-tasks')).toBeNull();
-    expect(screen.queryByText('No tasks assigned')).toBeNull();
-  });
-
-  it('a genuinely empty task read says the queue is empty, and offers the action that fills it', async () => {
-    render(<TasksSurface onAskAna={noop} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('workbench-no-tasks')).toBeTruthy();
-    });
-    expect(screen.getByText('No tasks assigned')).toBeTruthy();
-    /* The CTA is inside the empty state, and it is the SAME handler as the
-       header button — hence two matches for the label, which is the point:
-       one definition, so the two controls cannot come to name it differently. */
-    const empty = screen.getByTestId('workbench-no-tasks');
-    expect(empty.querySelector('.c2c-empty-action')?.textContent).toBe('New task');
-    expect(screen.getAllByText('New task')).toHaveLength(2);
-    expect(screen.queryByTestId('workbench-no-tasks-error')).toBeNull();
-  });
-
-  it('renders no row a live read did not return — the example sets are gone', async () => {
-    render(<TasksSurface onAskAna={noop} />);
-    await waitFor(() => expect(screen.getByTestId('workbench-no-tasks')).toBeTruthy());
-
-    /* Titles from the deleted TASKS set. Sample mode is force-disabled in
-       production, so these were only ever reachable in dev — which is where a
-       screenshot for a customer gets taken. */
-    for (const gone of ['Biocompat -11', 'Close CE-01', 'Sign cover letter']) {
-      expect(screen.queryByText(new RegExp(gone, 'i'))).toBeNull();
-    }
-  });
-});
+import { describe, it, expect } from 'vitest';
 
 describe('the workbench data module carries no fabricated record', () => {
   it('holds no signature, clearance number or audit id', async () => {
@@ -103,13 +39,14 @@ describe('the workbench data module carries no fabricated record', () => {
       'VALIDATION_RULES',
       'SUBMISSIONS',
       'TEMPLATES',
+      // The task panel folded into Tasks (D2, 2026-10-29); its columns went with it.
+      'TASKS_COLUMNS',
     ]) {
       expect(exported).not.toContain(gone);
     }
 
-    /* The two that stay: a Kanban's columns and the stages of a regulatory
-       submission are real structure, not an assessment of anybody's work. */
-    expect(exported).toContain('TASKS_COLUMNS');
+    /* The one that stays: the stages of a regulatory submission are real
+       structure, not an assessment of anybody's work. */
     expect(exported).toContain('SUBMISSION_PIPELINE');
 
     /* Nothing reachable from the module serialises a signature or a decision. */

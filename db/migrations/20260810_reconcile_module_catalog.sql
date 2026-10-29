@@ -1,3 +1,11 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
+-- The device task workbench (device-tasks) is folded into Tasks: TaskBoard.tsx
+-- reads the same submission-ops work item by item and marks another store's
+-- blocking work. Remove device-tasks from step 1's keep-list and step 2's upsert,
+-- so step 1 deprecates the existing row on every replay. The row, its metadata,
+-- module_subscriptions FKs and every tenant record stay; no DELETE, and no later
+-- UPDATE this upsert could undo. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/README.md.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
 -- Filing discovery, selected reference and supported build facts now reach the
 -- existing Projects wizard and project Plan. Remove the old keep-list/upsert
@@ -263,7 +271,6 @@ UPDATE available_modules
    'device-presub',
    'device-software',
    'device-submission',
-   'device-tasks',
    'device-udi',
    'device-validation',
    'device-vault',
@@ -373,7 +380,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('submission-center', 'Submission Center', 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.', 'Submit & file', '/concept2cure/submission-center', 'rocket', 390, '{"tiers": [], "industries": []}'::json),
   ('submission-twin', 'Submission Twin', 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id (/api/submission-twin).', 'Submit & file', '/concept2cure/submission-twin', 'layers', 400, '{"tiers": [], "industries": []}'::json),
   ('agency-meetings', 'Agency meetings', 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.', 'Review & govern', '/concept2cure/agency-meetings', 'users', 410, '{"tiers": [], "industries": []}'::json),
-  ('device-tasks', 'Device submission workload', 'The submission-ops workload slice. Deliberately NOT called "Tasks" — task-board is the task board, and two rail entries with the same name is the defect this convergence removed.', 'Review & govern', '/concept2cure/device-tasks', 'clipboardList', 430, '{"tiers": [], "industries": []}'::json),
   ('dispatch-readiness', 'Submission Readiness', 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.', 'Review & govern', '/concept2cure/dispatch-readiness', 'send', 440, '{"tiers": [], "industries": []}'::json),
   ('identity-console', 'Enterprise identity (SSO / SCIM)', 'SCIM provisioning tokens (issue-once/rotate/enable/revoke, §11.10(d) hash-only storage), SCIM IP allowlist, and the live SAML endpoint references for IdP configuration.', 'Review & govern', '/concept2cure/identity-console', 'lock', 450, '{"tiers": [], "industries": []}'::json),
   ('orchestration', 'Orchestration & readiness', 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.', 'Review & govern', '/concept2cure/orchestration', 'workflow', 460, '{"tiers": [], "industries": []}'::json),

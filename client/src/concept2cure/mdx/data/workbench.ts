@@ -1,50 +1,16 @@
 /**
- * Workbench shapes — Tasks, Validation Center, Submission Center, Templates.
+ * Workbench shapes — Validation Center, Submission Center.
  *
  * This module is types and fixed taxonomy now; the row sets it was ported
  * from data-workbench.jsx with are gone. See the note at the foot of the file
  * for what each one was and why it went.
  */
 
-export type TaskCol = 'todo' | 'doing' | 'review' | 'blocked' | 'done';
 export type Tone = 'ok' | 'warn' | 'err' | 'default' | 'active' | 'review' | 'blocked' | 'complete';
 
-export interface TaskColumn {
-  id: TaskCol;
-  label: string;
-  tone: Tone;
-}
-
-export interface Task {
-  id: string;
-  col: TaskCol;
-  prog: string;
-  sect: string;
-  title: string;
-  assignee: string;
-  due: string;
-  tone: Tone;
-  label: string;
-  kind: 'edit' | 'review' | 'sign';
-  esig: boolean;
-  comments: number;
-}
-
-export interface TaskMetric {
-  label: string;
-  metric: string;
-  unit?: string;
-  meta: string;
-  tone?: Tone;
-}
-
-export const TASKS_COLUMNS: TaskColumn[] = [
-  { id: 'todo',     label: 'To do',       tone: 'default' },
-  { id: 'doing',    label: 'In progress', tone: 'active' },
-  { id: 'review',   label: 'In review',   tone: 'review' },
-  { id: 'blocked',  label: 'Blocked',     tone: 'blocked' },
-  { id: 'done',     label: 'Done',        tone: 'complete' },
-];
+/* No task shapes. The task panel folded into Tasks (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/), and its Task,
+   TaskMetric and column types went with it. */
 
 
 
@@ -133,6 +99,7 @@ export const SUBMISSION_PIPELINE: SubmissionStage[] = [
  * four panels has a live endpoint, so the honest reading before it answers is
  * nothing at all.
  *
- * `TASKS_COLUMNS` and `SUBMISSION_PIPELINE` remain: a Kanban's columns and the
- * stages of a regulatory submission are real structure, not an assessment.
+ * `SUBMISSION_PIPELINE` remains: the stages of a regulatory submission are real
+ * structure, not an assessment. `TASKS_COLUMNS` went with the task panel's fold
+ * into Tasks (D2, 2026-10-29).
  */

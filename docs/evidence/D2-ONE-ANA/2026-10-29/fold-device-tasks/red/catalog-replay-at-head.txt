@@ -1,0 +1,8 @@
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered 19ms
+   → expected [ { module_id: 'device-tasks' } ] to deeply equal []
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay 30ms
+   → expected { tiers: [ 'standard' ], …(1) } to deeply equal { deprecated: true, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay
+      Tests  2 failed | 13 passed (15)
