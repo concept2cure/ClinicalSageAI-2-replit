@@ -9,7 +9,6 @@ import {
   organizations,
   organizationUsers,
   projects,
-  projectDocuments,
 } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import {
@@ -58,31 +57,16 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
     // as client-journey counts it: archived projects excluded. This read
     // `cer_projects` until 2026-10-29; fb73f05f8 retired the last writer there,
     // so it answered 0 projects for every tenant (ci:writerless-stores).
-    const liveProjects = and(
-      eq(projects.organizationId, tenantId),
-      ne(projects.status, 'archived')
-    );
     const projectCountResult = await db
       .select({ count: count() })
       .from(projects)
-      .where(liveProjects);
+      .where(and(eq(projects.organizationId, tenantId), ne(projects.status, 'archived')));
 
     const projectCount = projectCountResult[0]?.count || 0;
 
-    // Calculate storage used
-    // This is a simplified calculation - in a real system, you would sum the file sizes
-    const storageResult = await db
-      .select({
-        count: count(),
-        // You would typically sum file sizes here
-      })
-      .from(projectDocuments)
-      .where(eq(projectDocuments.organizationId, tenantId));
-
-    // Assuming average file size of 5MB for this example
-    const avgFileSizeMB = 5;
-    const documentCount = storageResult[0]?.count || 0;
-    const storageUsedMB = documentCount * avgFileSizeMB;
+    // Storage is not measured here: no store this route reads records byte
+    // sizes, and the figure used to be documents x an assumed 5 MB. It is
+    // reported as null (not measured), never as an estimate.
 
     // Get recent projects
     const recentProjects = await db
@@ -93,7 +77,7 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
         updatedAt: projects.updatedAt,
       })
       .from(projects)
-      .where(liveProjects)
+      .where(and(eq(projects.organizationId, tenantId), ne(projects.status, 'archived')))
       .orderBy(desc(projects.createdAt))
       .limit(5);
 
@@ -101,7 +85,6 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
     const maxUsers = tenant.maxUsers || 5; // Default if not specified
     const maxProjects = tenant.maxProjects || 10; // Default if not specified
     const maxStorageGB = tenant.maxStorage || 5; // Default if not specified
-    const storageUsedGB = storageUsedMB / 1024;
 
     const quotaInfo = {
       users: {
@@ -115,9 +98,10 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
         percentage: Math.round((projectCount / maxProjects) * 100),
       },
       storage: {
-        used: Number(storageUsedGB.toFixed(2)),
+        used: null,
         total: maxStorageGB,
-        percentage: Math.round((storageUsedGB / maxStorageGB) * 100),
+        percentage: null,
+        measured: false,
       },
     };
 
@@ -134,8 +118,9 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
     res.json({
       userCount,
       projectCount,
-      storageUsed: storageUsedMB,
-      activeUsers: userCount, // In a real system, you would count users active in last 30 days
+      storageUsed: null,
+      // Activity is not recorded per user here; null, not the member count.
+      activeUsers: null,
       recentProjects: formattedProjects,
       quotaInfo,
     });
