@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/documents/48a3649a-4279-4381-a131-447096bd3594/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "kind": "request_changes",
+      "body": "Give the dose per kilogram.",
+      "anchor": {
+        "kind": "text",
+        "quote": "The dosing table",
+        "charStart": 11,
+        "textSha256": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "c36a0b60-13be-4de2-99ae-e6cf534a0447"
+      }
+    }
+  }
+}

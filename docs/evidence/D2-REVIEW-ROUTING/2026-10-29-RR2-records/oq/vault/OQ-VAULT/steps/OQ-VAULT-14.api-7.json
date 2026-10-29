@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/regulatory/documents",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sources": {
+        "vault_documents": {
+          "nativeId": "31cf7b75-d4a3-49de-8981-9cba9469b8d2",
+          "role": "artifact"
+        }
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 55,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "canonicalId": "bbedba2c-4b1b-4bf4-b689-b5be9c082101",
+      "created": true
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/mdx/qms/documents/7/training-ack",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentVersion": "1.0",
+      "contentDigest": "a4a175ed7e7f215b8a2b6c1a25c883b7e4f984c9f0e5547c74b6670ce13fd163",
+      "understood": true,
+      "method": "attestation"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 48,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 2,
+        "documentId": 7,
+        "userId": 1,
+        "documentVersion": "1.0",
+        "contentDigest": "a4a175ed7e7f215b8a2b6c1a25c883b7e4f984c9f0e5547c74b6670ce13fd163",
+        "acknowledgedAt": "2026-10-29T20:30:32.347Z",
+        "expiresAt": "2027-10-29T20:30:32.347Z",
+        "method": "attestation"
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    }
+  }
+}

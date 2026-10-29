@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/documents/7d60dfd3-a53b-4967-8b01-e25dbd5ffbb2/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 185,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "c51c2bc6-4a70-4ed9-b0e7-ba9aa14b827e",
+            "version": "2.0",
+            "contentHash": "06ed30e644e1789bb78fbb2cba12cc1f643f2e9c98fb21edec4ae5e953cc4ce3",
+            "fileSize": 622,
+            "fileName": "next-version.pdf",
+            "uploader": "Oona Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T20:20:55.036Z",
+            "current": true,
+            "link": "verified",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "not reviewed"
+          },
+          {
+            "id": "7d60dfd3-a53b-4967-8b01-e25dbd5ffbb2",
+            "version": "1.0",
+            "contentHash": "0b46a3c30cf65ca70266c74068846946defc97d66bef26db5203da1ecf30bedf",
+            "fileSize": 611,
+            "fileName": "OQ-002-Protocol-20261029202031.pdf",
+            "uploader": "Oona Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T20:20:35.312Z",
+            "current": false,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "superseded by a later version"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "Abe Approver"
+            },
+            {
+              "id": 1,
+              "name": "Oona Runner"
+            },
+            {
+              "id": 2,
+              "name": "Sid Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

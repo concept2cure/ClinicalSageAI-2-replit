@@ -644,6 +644,13 @@ The signed acts on QMS:
 
 An approver who has signed while others are outstanding shows "Approved (1 of 2 required)".
 
+**Dated note, 2026-10-29 (RR2 records; RR2's design issues 1 and 2).**
+- An approval that is not the last one the route requires is its own record. Its signature type is `qms-document-interim-approval` (QMS) or `regulated-document-lifecycle-interim-approval` (Vault). Its meaning stays APPROVED, and its manifest states its share (`approvalsRecorded` of `approvalsRequired`). Only the last approval carries the type every reader of the subject's approval reads.
+- Signatures stored before this note carry the final type. They are never rewritten: a reader derives their share from the route they are stamped on (`server/services/review/approval-share.ts`).
+- The audit trail, the controlled-document and electronic-signature registers and the by-target read show an interim approval as one, never as the subject's approval.
+- A routed Vault version's review and approval lines list every signer on its round (`roundSignOffs` in `server/services/vault/vault-lifecycle.ts`). `review_signature` stays write-once per round.
+- Evidence: `docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR2-records/`.
+
 **The client** (`VaultLifecycle.tsx` `stepOf`/`nextStep`/`whoMaySign`) is route-aware:
 - "You signed at 14:02 UTC; waiting for B";
 - "Your turn: approve";

@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/mdx/qms/documents/7/retire",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 10: superseded by validation (signed)"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Retirement is an electronic signature and requires a password, the signature meaning 'retirement' and a reason for change; missing or invalid: meaning",
+      "details": {
+        "code": "ESIGNATURE_COMPONENT_MISSING",
+        "fieldErrors": {
+          "meaning": [
+            "Signature meaning must be 'retirement' (21 CFR Part 11 §11.50)"
+          ]
+        }
+      }
+    }
+  }
+}
