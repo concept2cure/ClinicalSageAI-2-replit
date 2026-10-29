@@ -19,9 +19,10 @@
  *   - a module row opens the editing copy of the filing it measures, by the
  *     copy's binding (F3, 2026-10-29); it named the newest document TAGGED with
  *     its module, so the home Module 1 row could open an added market's copy;
- *   - the grid is gone, and its two filing doors are on Submit: "Compile and
+ *   - the grid is gone, and its two filing doors went to Submit: "Compile and
  *     download" (ectd-compile) and "Check what stops sending" (dispatch-readiness;
- *     "Open readiness" until slice A.1 named each door for its job);
+ *     "Open readiness" until slice A.1 named each door for its job). F10
+ *     removed the second: each market row shows the readiness itself;
  *   - the data room is on Evidence, and "Write from these sources" hands the
  *     readable sources to AnA, as "Draft with N pinned" does.
  */
@@ -281,15 +282,16 @@ describe('Evidence — every way a source comes in', () => {
 });
 
 describe('Submit — the grid\'s filing doors', () => {
-  it('"Compile and download" opens eCTD compile, and "Check what stops sending" opens the readiness screen', async () => {
+  it('"Compile and download" opens eCTD compile; readiness has no door of its own', async () => {
     serve();
     const p = props();
     render(<ProjectHome {...p} />);
     await open('Submit');
     fireEvent.click(await screen.findByRole('button', { name: /Compile and download/ }));
     expect(p.onNav).toHaveBeenCalledWith('ectd-compile');
-    fireEvent.click(screen.getByRole('button', { name: 'Check what stops sending' }));
-    expect(p.onNav).toHaveBeenCalledWith('dispatch-readiness');
+    // F10 (P-33): "Check what stops sending" opened a second readiness screen; each market row shows it now
+    // (submitHoldsReadiness.test.tsx).
+    expect(screen.queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
   });
 });
 
