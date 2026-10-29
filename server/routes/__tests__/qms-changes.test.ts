@@ -186,11 +186,23 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
   it('links a change to a deviation', async () => {
     query
       .mockResolvedValueOnce({ rows: [changeRow()] })  // getChange guard
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })  // the deviation is this organisation's (MR-12 Stage 8)
       .mockResolvedValueOnce({ rows: [{ id: 10, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-2026-014', relationship: 'triggered_by' }] });
     const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
       .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', relationship: 'triggered_by' });
     expect(res.status).toBe(201);
     expect(res.body.data.link_type).toBe('deviation');
+  });
+
+  it('422 CHANGE_LINK_TARGET_NOT_FOUND for a deviation the organisation has not recorded; nothing is inserted', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [changeRow()] })  // getChange guard
+      .mockResolvedValueOnce({ rows: [] });             // no such deviation here
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
+      .send({ linkType: 'deviation', linkedRef: 'DEV-NOPE' });
+    expect(res.status).toBe(422);
+    expect(res.body.details.code).toBe('CHANGE_LINK_TARGET_NOT_FOUND');
+    expect(query.mock.calls.some((c) => /INSERT INTO qms_change_links/i.test(String(c[0])))).toBe(false);
   });
 
   it('422 on an invalid link type', async () => {
