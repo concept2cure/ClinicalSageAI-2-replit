@@ -732,7 +732,6 @@ function lifecyclePartBrief(
     first
       ? `SECTION AUTHORING GUIDANCE (the platform's lifecycle record ${source}, served as the ${outline.title} outline — draft to it; do not add requirements from memory):`
       : `SECTION AUTHORING GUIDANCE (the ${outline.title} outline's own section; no record part backs it — draft to it; do not add requirements from memory):`,
-    ...blaSupplementLine(entry),
     `- Section: ${section.number} — ${section.heading}`,
     `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,
     ...(shared ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
@@ -743,12 +742,6 @@ function lifecyclePartBrief(
   return { requirements: lines.join('\n'), requirementsSource: `record:lifecycle:${source}:${section.number}` };
 }
 
-/** The sBLA's outline is the NDA PAS record: say which BLA rule it cites (review finding, 2026-10-18). */
-function blaSupplementLine(entry: RegulatoryApplicationType): string[] {
-  return entry.id === 'US_BLA_SUPP'
-    ? ['- For a BLA supplement: cite 21 CFR 601.12(b) (a manufacturing change) or 601.12(f)(1) (a labeling change) wherever this NDA record cites 21 CFR 314.70(b); the parts are the same.']
-    : [];
-}
 
 /** Each record's brief for a part, named by variant when two records share it; the outline's own purpose when no record part matches. */
 function partBriefs(parts: LifecycleOutlinePart[], section: TemplateSection): string[] {

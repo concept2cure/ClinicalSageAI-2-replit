@@ -200,6 +200,12 @@ describe('resolveRequirements — the one dispatch', () => {
 // cbe_0, ind_annual_report, ind_safety_report, nda_bla_annual_report) move
 // their ten fingerprints (each id and its upper-case form) and nothing else.
 // Delta: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/increment-2/requirements-snapshot-delta.json
+// 2026-10-29: the US biotech filing completion appends 17 lifecycle records
+// (docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md); each id and its
+// upper-case form add 34 fingerprints, and the 44 not-indexed answers move
+// only because their document_types list names the 17 new ids. No other
+// fingerprint moved.
+// Delta: docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/integration/requirements-snapshot-delta.json
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -293,50 +299,50 @@ bf9de3a298d079bf {"document":"m4.2.3.7"}  cb3e5e056cb117cb {"document":"m4.3"}  
 8cb302d44965972e {"document":"m5.3.4"}  14fa4b3b0db4459e {"document":"m5.3.5"}  3af2bcb06d6dc562 {"document":"m5.3.5.1"}
 d150f432370e88ec {"document":"m5.3.5.2"}  5eef0c3ab8f26a22 {"document":"m5.3.5.3"}  95013fb2e32b9e35 {"document":"m5.3.5.4"}
 becb65dfb9ce467e {"document":"m5.3.6"}  f8069a1b774f81aa {"document":"m5.3.7"}  531b306ca6e497f3 {"document":"m5.4"}
-483963c5f159218d {"document":"1.99"}  f8347c77f7c5c98b {"document":"1.1.99"}  00932951b1e51ed0 {"document":"1.1.1.99"}
+d1ee07905047abbb {"document":"1.99"}  3f4bd5a1c980c343 {"document":"1.1.99"}  00932951b1e51ed0 {"document":"1.1.1.99"}
 7d1e408ea4112d8e {"document":"1.1.2.99"}  9ede29ec4de60f77 {"document":"1.1.3.99"}  4e69dd5f1d674e91 {"document":"1.1.4.99"}
-94dd679e2604a16d {"document":"1.12.99"}  a15d4ae1cf3d8230 {"document":"1.12.14.99"}  cd94a004136c2516 {"document":"1.14.99"}
-016d7365cb367b55 {"document":"1.14.1.99"}  558e78fd4f756d42 {"document":"1.14.1.1.99"}  1c5f31ffa300d413 {"document":"1.14.1.3.99"}
-5b729183211d10e8 {"document":"1.14.4.99"}  f8de182052d455c3 {"document":"1.14.4.1.99"}  4ac1fea128652cb5 {"document":"1.14.4.2.99"}
-05de4c6c6f520fc7 {"document":"1.2.99"}  19193ceac30a335c {"document":"1.20.99"}  d1b4b30175dbcbe8 {"document":"1.3.99"}
-50c13c8c766571c6 {"document":"1.3.3.99"}  49f37d0ae23a30e8 {"document":"1.3.4.99"}  fbf31121746dd915 {"document":"1.3.5.99"}
-69db76deac66ac32 {"document":"1.3.5.1.99"}  a17f5d2f230ba30d {"document":"1.9.99"}  b32d44224d460ce7 {"document":"2.99"}
+228fc0b6ec3dc3d0 {"document":"1.12.99"}  a15d4ae1cf3d8230 {"document":"1.12.14.99"}  80ea9f863e8d38c6 {"document":"1.14.99"}
+6e77145bcf90519e {"document":"1.14.1.99"}  558e78fd4f756d42 {"document":"1.14.1.1.99"}  1c5f31ffa300d413 {"document":"1.14.1.3.99"}
+14acdee00b729e0f {"document":"1.14.4.99"}  f8de182052d455c3 {"document":"1.14.4.1.99"}  4ac1fea128652cb5 {"document":"1.14.4.2.99"}
+05de4c6c6f520fc7 {"document":"1.2.99"}  19193ceac30a335c {"document":"1.20.99"}  e80ca238bc935db9 {"document":"1.3.99"}
+50c13c8c766571c6 {"document":"1.3.3.99"}  49f37d0ae23a30e8 {"document":"1.3.4.99"}  960c86cef663a61f {"document":"1.3.5.99"}
+69db76deac66ac32 {"document":"1.3.5.1.99"}  a17f5d2f230ba30d {"document":"1.9.99"}  ac5a28eb3f929d5d {"document":"2.99"}
 a29c49c21b1951f5 {"document":"2.2.99"}  9d80077966cd733f {"document":"2.3.99"}  0006239b5fcd98f9 {"document":"2.3.A.99"}
 8d6cb2e0f4e31342 {"document":"2.3.P.99"}  0d38087ecd30e203 {"document":"2.3.R.99"}  96ef667c42e87caf {"document":"2.3.S.99"}
 dcc717771bd0b7d8 {"document":"2.4.99"}  909cd810f6628b35 {"document":"2.5.99"}  841b3aa8cc230123 {"document":"2.5.1.99"}
 d1ce1e4910a25d57 {"document":"2.5.2.99"}  600865eb961db4de {"document":"2.5.3.99"}  582681f2d314c6bd {"document":"2.5.4.99"}
-496339e5ce2bbfb8 {"document":"2.5.5.99"}  0cca0dab168e9d30 {"document":"2.5.6.99"}  9fde82f903caaadd {"document":"2.6.99"}
+496339e5ce2bbfb8 {"document":"2.5.5.99"}  0cca0dab168e9d30 {"document":"2.5.6.99"}  46c2be1887ab6442 {"document":"2.6.99"}
 0974727479cdce3e {"document":"2.6.1.99"}  9982c44d0324b193 {"document":"2.6.2.99"}  fa42eb1481803330 {"document":"2.6.3.99"}
 47b26a5fad604197 {"document":"2.6.4.99"}  eae90701cc5f0d8f {"document":"2.6.5.99"}  ba45c4f25c26fd83 {"document":"2.6.6.99"}
-7fa3e3a5602a6fc0 {"document":"2.6.7.99"}  0bea37f24563ef63 {"document":"2.7.99"}  544d79bd1d0e9514 {"document":"2.7.1.99"}
+7fa3e3a5602a6fc0 {"document":"2.6.7.99"}  b5c4a9ee73628bbc {"document":"2.7.99"}  544d79bd1d0e9514 {"document":"2.7.1.99"}
 133fac94da64c0cc {"document":"2.7.2.99"}  a88c8b7e2aefe69d {"document":"2.7.3.99"}  05af48cb81641e8b {"document":"2.7.4.99"}
-90d55f5e9fb367a2 {"document":"2.7.5.99"}  43b4abb840a4631d {"document":"2.7.6.99"}  2105bbf3b68a785f {"document":"3.99"}
-a9188d84bd9f4e17 {"document":"3.2.99"}  d5c93b631993ebeb {"document":"3.2.A.99"}  22868f3ce7f99fd2 {"document":"3.2.P.99"}
+90d55f5e9fb367a2 {"document":"2.7.5.99"}  43b4abb840a4631d {"document":"2.7.6.99"}  89d390bf16ac0705 {"document":"3.99"}
+0f4dbab82dd9c9d9 {"document":"3.2.99"}  d5c93b631993ebeb {"document":"3.2.A.99"}  991bd4a38d044b0b {"document":"3.2.P.99"}
 315acf1da0ad34ec {"document":"3.2.P.1.99"}  bff2c775ea40e8b9 {"document":"3.2.P.2.99"}  763853d81e5dd13f {"document":"3.2.P.3.99"}
 78a545814628e30f {"document":"3.2.P.3.1.99"}  ca5431d8dd4aa2e9 {"document":"3.2.P.3.2.99"}  482fcbf403295f60 {"document":"3.2.P.3.3.99"}
 db7b6224003a0c33 {"document":"3.2.P.3.4.99"}  26de81ada63a623f {"document":"3.2.P.3.5.99"}  4f36b30c8d427df1 {"document":"3.2.P.4.99"}
 d81b5b87e9aa27c3 {"document":"3.2.P.5.99"}  874c7bba26e28326 {"document":"3.2.P.5.1.99"}  451c916edef047ad {"document":"3.2.P.5.2.99"}
 0c0bd3ee64b18926 {"document":"3.2.P.5.3.99"}  0649557b147c9d04 {"document":"3.2.P.5.4.99"}  60563d406d8d0ed3 {"document":"3.2.P.5.5.99"}
 369d54e0addfa38b {"document":"3.2.P.5.6.99"}  3c23d019d4106d3c {"document":"3.2.P.6.99"}  27f8140167f38cbd {"document":"3.2.P.7.99"}
-c76aefb1fae0d440 {"document":"3.2.P.8.99"}  3199f016b0e5b3d0 {"document":"3.2.R.99"}  17c33fcc1d31be76 {"document":"3.2.S.99"}
+c76aefb1fae0d440 {"document":"3.2.P.8.99"}  3199f016b0e5b3d0 {"document":"3.2.R.99"}  843c480151d837ca {"document":"3.2.S.99"}
 eba77008c0dce06b {"document":"3.2.S.1.99"}  747e41c06d64073b {"document":"3.2.S.2.99"}  b84e84ace14adb8e {"document":"3.2.S.2.1.99"}
 a47e8c844d42ceac {"document":"3.2.S.2.2.99"}  7deacb982e323174 {"document":"3.2.S.2.3.99"}  96d250ee8f871923 {"document":"3.2.S.2.4.99"}
 eac4d2e9775bf483 {"document":"3.2.S.2.5.99"}  76299ebeaf889b2b {"document":"3.2.S.2.6.99"}  806cbe2c0cbd9c2d {"document":"3.2.S.3.99"}
 314988fb4b41d0ef {"document":"3.2.S.3.1.99"}  cfc057b56c99ec81 {"document":"3.2.S.3.2.99"}  8ca0b14376e06c48 {"document":"3.2.S.4.99"}
 bfa9e48311ccf244 {"document":"3.2.S.4.1.99"}  f9ea5b9bd5360c05 {"document":"3.2.S.4.2.99"}  3bd5faf71b87f753 {"document":"3.2.S.4.3.99"}
 41055a562efa3d08 {"document":"3.2.S.4.4.99"}  fc5168374ee21487 {"document":"3.2.S.4.5.99"}  0c61230efe77e489 {"document":"3.2.S.5.99"}
-0427687a4b3e8a2a {"document":"3.2.S.6.99"}  427f18d4a7d75b5f {"document":"3.2.S.7.99"}  cb81d1444f66f1b8 {"document":"4.99"}
-4349c5b03aed5691 {"document":"4.2.99"}  a8e2432874141112 {"document":"4.2.1.99"}  033a9744fe4f24cb {"document":"4.2.1.1.99"}
+0427687a4b3e8a2a {"document":"3.2.S.6.99"}  427f18d4a7d75b5f {"document":"3.2.S.7.99"}  6cc9231bf698858a {"document":"4.99"}
+9587b4c44b391d67 {"document":"4.2.99"}  a6eeeffbd8c657d1 {"document":"4.2.1.99"}  033a9744fe4f24cb {"document":"4.2.1.1.99"}
 7586ab3d230c4a3d {"document":"4.2.1.2.99"}  b7b08200d0035518 {"document":"4.2.1.3.99"}  08e4f62813f9b084 {"document":"4.2.1.4.99"}
-a1808812f2b3e436 {"document":"4.2.2.99"}  e13cca078273deb6 {"document":"4.2.2.1.99"}  4b04d779bd267a73 {"document":"4.2.2.2.99"}
+698a30dae2881e69 {"document":"4.2.2.99"}  e13cca078273deb6 {"document":"4.2.2.1.99"}  4b04d779bd267a73 {"document":"4.2.2.2.99"}
 56a2a8546272e23b {"document":"4.2.2.3.99"}  11b4d8cc6153888f {"document":"4.2.2.4.99"}  9e006199ba4eb3ff {"document":"4.2.2.5.99"}
-d34dbf779b35dab4 {"document":"4.2.2.6.99"}  c4a646e39e2e501d {"document":"4.2.2.7.99"}  469a7f9f5f40039a {"document":"4.2.3.99"}
+d34dbf779b35dab4 {"document":"4.2.2.6.99"}  c4a646e39e2e501d {"document":"4.2.2.7.99"}  5ae70cb625d2b310 {"document":"4.2.3.99"}
 9991445042f2f70d {"document":"4.2.3.1.99"}  8ea8f530fc3a2383 {"document":"4.2.3.2.99"}  4f8ec712c28209ca {"document":"4.2.3.3.99"}
 743548870785b487 {"document":"4.2.3.4.99"}  20eefec8846d9740 {"document":"4.2.3.5.99"}  f6995a522745297c {"document":"4.2.3.6.99"}
-4344e7c092bfff2e {"document":"4.2.3.7.99"}  1c61551e3bb50e29 {"document":"4.3.99"}  26238edca657f19e {"document":"5.99"}
-f209b3f4c95ff644 {"document":"5.1.99"}  5ed000dd0af6a941 {"document":"5.2.99"}  b4743d49f98a76eb {"document":"5.3.99"}
+4344e7c092bfff2e {"document":"4.2.3.7.99"}  1c61551e3bb50e29 {"document":"4.3.99"}  8122d9b2538c3b63 {"document":"5.99"}
+f209b3f4c95ff644 {"document":"5.1.99"}  5ed000dd0af6a941 {"document":"5.2.99"}  a11e771283824702 {"document":"5.3.99"}
 cd94d42cc1d48e08 {"document":"5.3.1.99"}  d1c481c6a617cf97 {"document":"5.3.2.99"}  a2d45239931bec31 {"document":"5.3.3.99"}
-63802ebd2e82d7ed {"document":"5.3.4.99"}  a374ce578d59d0e6 {"document":"5.3.5.99"}  5d16fc71d0d38f99 {"document":"5.3.5.1.99"}
+63802ebd2e82d7ed {"document":"5.3.4.99"}  592bfdfa5e0d8c10 {"document":"5.3.5.99"}  5d16fc71d0d38f99 {"document":"5.3.5.1.99"}
 30d1774f08827752 {"document":"5.3.5.2.99"}  efcd4f4d540869e4 {"document":"5.3.5.3.99"}  c419526dcaa64c0b {"document":"5.3.5.4.99"}
 4623934792d5358b {"document":"5.3.6.99"}  b82b8fbfbac5ecc2 {"document":"5.3.7.99"}  5a96e5bcb5a77a19 {"document":"5.4.99"}
 71b33c210c74a17c {"document":"3.2.s.4"}  b87f32b2e555bc51 {"document":" 2.7.3 "}  18cd2f57f09a4cca {"document":"pre_ind_meeting"}
@@ -399,14 +405,14 @@ a1c0a527969e6594 {"document":"csr","section":"16.1.10"}  c83fc53a23bf8e2d {"docu
 d7798332af27dd44 {"document":"csr","section":"16.2.3"}  3b7f99d5d5c24451 {"document":"csr","section":"16.2.4"}  0a448f9c2ca59f5d {"document":"csr","section":"16.2.5"}
 24f3fd57d9bc5158 {"document":"csr","section":"16.2.6"}  1ee7ec401624992f {"document":"csr","section":"16.2.7"}  1ef11a0577697e16 {"document":"csr","section":"16.2.8"}
 7602e727296c9374 {"document":"csr","section":"16.3"}  75fe1023a0c71025 {"document":"csr","section":"16.3.1"}  b88469d325da4e13 {"document":"csr","section":"16.3.2"}
-994ce625c10ee3ca {"document":"csr","section":"16.4"}  4985f523855f7582 {"document":"9.9.9"}  c8ca5d92a8db8a2b {"document":"1.3.1"}
-24565ee2c08e646b {"document":"1.8"}  304a30c15dd178d5 {"document":"1.8.2"}  58511ddec2068606 {"document":"1.10"}
-b34053d2c03e34f7 {"document":"1.13"}  3d6f0303e271c8db {"document":"maa"}  d1e057f68596de2e {"document":"eu_maa"}
-b13ef653b9211557 {"document":"EU_MAA"}  1b6c674353948888 {"document":"jnda"}  26daa550015dd8b4 {"document":"510k"}
-3fce6c0ed1a38194 {"document":"pma"}  9d6ebf8bb345d708 {"document":"cer"}  5a89235ff7bd9dfb {"document":"per"}
-f3cfbb2e7d6599e0 {"document":"smpc"}  dac1f91b5987f30e {"document":"II.6.1"}  6aac75d417a06d5a {"document":"jp_shonin"}
-697a765bb33b507b {"document":"Totally Fabricated Section 99"}  c63ab4b951507fa4 {"document":"clinical-study-report"}  1e72548c25606fe8 {"document":"ich-e3"}
-b36291f307ffae23 {"document":"m9"}  176c058cf3810b76 {"document":"csr","section":""}  b87f32b2e555bc51 {"document":"2.7.3","section":"12.2"}
+994ce625c10ee3ca {"document":"csr","section":"16.4"}  2edb580827a4ad4f {"document":"9.9.9"}  02cbae3d340f255a {"document":"1.3.1"}
+4a7b88e7b2a831fe {"document":"1.8"}  354109ebd3917f0e {"document":"1.8.2"}  44eb297a5c0dae66 {"document":"1.10"}
+acabd1efd82843e8 {"document":"1.13"}  43facbea9cef5487 {"document":"maa"}  4e2cf094836bdf42 {"document":"eu_maa"}
+af87fb391604b8e9 {"document":"EU_MAA"}  665f243873573cc5 {"document":"jnda"}  fbe5618825ec6b9a {"document":"510k"}
+58d30c630ae0763d {"document":"pma"}  c16672e802de2de0 {"document":"cer"}  246afc6648a04aa9 {"document":"per"}
+8a4b446629f32eec {"document":"smpc"}  226adf707d6bc7d4 {"document":"II.6.1"}  f5e754bfaf04d704 {"document":"jp_shonin"}
+200ccc3606e94565 {"document":"Totally Fabricated Section 99"}  c74dff821f3b31c3 {"document":"clinical-study-report"}  48ca51b230370a51 {"document":"ich-e3"}
+3769cfe421797856 {"document":"m9"}  176c058cf3810b76 {"document":"csr","section":""}  b87f32b2e555bc51 {"document":"2.7.3","section":"12.2"}
 887533ba3fdd848b {"document":""}  887533ba3fdd848b {"document":42}  887533ba3fdd848b {}
 409d9f3b219d98f0 {"document":"3.2.P.2.1"}  88db3f53d2014d67 {"document":"3.2.P.2.1.1"}  84ddf9feb7b828cc {"document":"3.2.P.2.1.2"}
 94941c1bdab579a2 {"document":"3.2.P.2.2"}  0e77ca0987080d71 {"document":"3.2.P.2.2.1"}  849f182e1f51224d {"document":"3.2.P.2.2.2"}
@@ -444,6 +450,40 @@ f5600f9aea81b9c7 {"document":"m2.6.2.7"}
 1ce8834da9bc0958 {"document":"2.6.2.5.99"}
 c3569e0bebd0ad65 {"document":"2.6.2.6.99"}
 3db3c63cca1e373d {"document":"2.6.2.7.99"}
+1b6cea057a6e1e1c {"document":"us_type_d_meeting"}
+1b6cea057a6e1e1c {"document":"US_TYPE_D_MEETING"}
+6280d567c7f2db90 {"document":"us_interact_meeting"}
+6280d567c7f2db90 {"document":"US_INTERACT_MEETING"}
+5f385d0bec4bdba3 {"document":"expanded_access_individual"}
+5f385d0bec4bdba3 {"document":"EXPANDED_ACCESS_INDIVIDUAL"}
+464febf279a46a3f {"document":"expanded_access_intermediate"}
+464febf279a46a3f {"document":"EXPANDED_ACCESS_INTERMEDIATE"}
+e737bae2006345ec {"document":"expanded_access_treatment"}
+e737bae2006345ec {"document":"EXPANDED_ACCESS_TREATMENT"}
+8f544ae468eebaa8 {"document":"us_bla_annual_report"}
+8f544ae468eebaa8 {"document":"US_BLA_ANNUAL_REPORT"}
+de9f5aef52b81026 {"document":"us_bla_pediatric_annual_report"}
+de9f5aef52b81026 {"document":"US_BLA_PEDIATRIC_ANNUAL_REPORT"}
+fb7e2fa33a306323 {"document":"us_bla_pmr_status_report"}
+fb7e2fa33a306323 {"document":"US_BLA_PMR_STATUS_REPORT"}
+6fe5731264436cdc {"document":"us_bla_distribution_report"}
+6fe5731264436cdc {"document":"US_BLA_DISTRIBUTION_REPORT"}
+b00363d39e1e4d14 {"document":"us_bpdr"}
+b00363d39e1e4d14 {"document":"US_BPDR"}
+50e0de66dacfc0cc {"document":"us_bla_periodic_adverse_experience_report"}
+50e0de66dacfc0cc {"document":"US_BLA_PERIODIC_ADVERSE_EXPERIENCE_REPORT"}
+7dcf28b876a2a50a {"document":"us_bla_pas"}
+7dcf28b876a2a50a {"document":"US_BLA_PAS"}
+7acc47c4c2059050 {"document":"us_bla_cbe_30"}
+7acc47c4c2059050 {"document":"US_BLA_CBE_30"}
+b77e00eaaac3ae23 {"document":"us_bla_cbe_0"}
+b77e00eaaac3ae23 {"document":"US_BLA_CBE_0"}
+c7330e9d17a3e2ce {"document":"us_cber_master_file"}
+c7330e9d17a3e2ce {"document":"US_CBER_MASTER_FILE"}
+0f7d9437f749a4dc {"document":"us_cber_lot_release"}
+0f7d9437f749a4dc {"document":"US_CBER_LOT_RELEASE"}
+60fc65f9b343b055 {"document":"us_eua_therapeutic"}
+60fc65f9b343b055 {"document":"US_EUA_THERAPEUTIC"}
 `;
 
 const PINNED: Record<string, string> = Object.fromEntries(

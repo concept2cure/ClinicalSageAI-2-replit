@@ -234,6 +234,10 @@ describe('the medicines route question', () => {
       'US_NDA',
       'US_505B2',
       'US_ANDA',
+      /* Expanded access (2026-10-29): treatment use, not a route to market. */
+      'US_EXPANDED_ACCESS_INDIVIDUAL',
+      'US_EXPANDED_ACCESS_INTERMEDIATE',
+      'US_EXPANDED_ACCESS_TREATMENT',
       /* And the filing a programme that has not reached an application yet is
          actually making. The frame holds routes to market only, so before
          this a phase 1 programme had nothing here to pick (2026-10-12
@@ -244,7 +248,13 @@ describe('the medicines route question', () => {
 
   it('offers an antibody a biologics licence and nothing under section 505', () => {
     const values = valuesOf(drawnSubmissionField('US', 'monoclonal_antibody'));
-    expect(values).toEqual(['US_BLA', 'US_IND']);
+    expect(values).toEqual([
+      'US_BLA',
+      'US_EXPANDED_ACCESS_INDIVIDUAL',
+      'US_EXPANDED_ACCESS_INTERMEDIATE',
+      'US_EXPANDED_ACCESS_TREATMENT',
+      'US_IND',
+    ]);
     expect(values, 'an antibody is not approved under 505').not.toContain('US_NDA');
   });
 

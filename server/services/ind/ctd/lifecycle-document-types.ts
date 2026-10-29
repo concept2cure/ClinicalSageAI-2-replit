@@ -12,6 +12,13 @@
  */
 import type { E3Basis, LifecycleDocumentType } from './types.js';
 import { recall } from './regulatory-basis.js';
+// US biotech filing completion (2026-10-29): additive source modules. Each imports
+// only types from ./types.js, so appending their records below cannot create a
+// circular initialization; the meeting builder takes the existing core as arguments.
+import { buildUsBiotechMeetingSources, US_BIOTECH_MEETING_SOURCE_IDS } from './us-biotech-meetings-sources.js';
+import { US_EXPANDED_ACCESS_SOURCE_RECORDS } from './us-biotech-expanded-access-sources.js';
+import { US_BLA_REPORT_SOURCES, US_BLA_REPORT_SOURCE_IDS } from './us-biotech-bla-reports-sources.js';
+import { US_BLA_CHANGES_CBER_SOURCES, US_BLA_CHANGES_CBER_SOURCE_IDS } from './us-biotech-bla-changes-cber-sources.js';
 import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
 
 /** One route fact: the checked registry authority is shared by inquiry, package and drafting. */
@@ -3482,7 +3489,35 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "2.7.4",
       "5.3.5.3"
     ]
-  }
+  },
+  // ── US biotech filing completion (2026-10-29) ─────────────────────────────
+  // docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md, interfaces item 2.
+  // Type D and INTERACT read the meeting core above; the rest are self-contained.
+  ...buildUsBiotechMeetingSources({
+    guidance: FDA_FORMAL_MEETINGS_GUIDANCE,
+    timelines: FDA_FORMAL_MEETING_TIMELINES,
+    packageCore: FDA_MEETING_PACKAGE_CORE,
+    meetingTypeName,
+    meetingPackageDeadline,
+    meetingTiming,
+  }),
+  ...US_EXPANDED_ACCESS_SOURCE_RECORDS,
+  ...US_BLA_REPORT_SOURCES,
+  ...US_BLA_CHANGES_CBER_SOURCES,
 ];
+
+/**
+ * Registry id → the one lifecycle record that is that filing's outline, for the
+ * identities added on 2026-10-29. Read by the template outline map
+ * (market-specs/lifecycle-record-outlines.ts) and the exact project section
+ * blueprints (regulatory/registry/blueprints/usLifecycleRecordBlueprints.ts), so
+ * the two cannot disagree. Built from the source modules' own id maps.
+ */
+export const US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries([
+  ...Object.values(US_BIOTECH_MEETING_SOURCE_IDS),
+  ...US_EXPANDED_ACCESS_SOURCE_RECORDS.map((r) => ({ id: r.id, registryId: r.registryId as string })),
+  ...Object.values(US_BLA_REPORT_SOURCE_IDS),
+  ...Object.values(US_BLA_CHANGES_CBER_SOURCE_IDS),
+].map(({ id, registryId }) => [registryId, id])));
 
 export default LIFECYCLE_DOCUMENT_TYPES;

@@ -2,8 +2,11 @@
  * Post-Approval Lifecycle Management (ICH Q12) — Deterministic Knowledge Engine
  * ============================================================================
  *
- * Pure, closed-form, reproducible TypeScript. NO LLM, NO network, NO database,
- * NO imports from other services. Identical input always yields identical output.
+ * Pure, closed-form, reproducible TypeScript. NO LLM, NO network, NO database.
+ * One import, of pure data: the licensed-biologic annual-report record
+ * (ind/ctd/us-biotech-bla-reports-sources.ts, which itself imports only types),
+ * so planAnnualReport gives a BLA its own 21 CFR 601.12(d) parts rather than a
+ * copy of them (2026-10-29). Identical input always yields identical output.
  *
  * This module encodes the regulatory science of managing chemistry, manufacturing
  * and controls (CMC) changes AFTER a product is approved — the "lifecycle" phase
@@ -42,6 +45,8 @@
  *
  * @module server/services/post-approval/post-approval-knowledge
  */
+
+import { US_BLA_REPORT_SOURCES, US_BLA_REPORT_SOURCE_IDS } from '../ind/ctd/us-biotech-bla-reports-sources.js';
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
@@ -176,6 +181,12 @@ const CITATIONS: CitationRecord[] = [
     source: 'US FDA',
     reference: '21 CFR 601.12 — Changes to an approved application (biologics / BLA)',
     note: 'Biologics analogue of 314.70; major (601.12(b)), moderate CBE-30 (601.12(c)), and minor/AR (601.12(d)).',
+  },
+  {
+    key: 'fda_bio_cmc_changes',
+    source: 'US FDA',
+    reference: 'FDA Draft Guidance: Chemistry, Manufacturing, and Controls Changes to an Approved Application: Certain Biological Products (June 2021)',
+    note: 'Biologics counterpart of the NDA/ANDA changes guidance for 601.12 reporting categories. Recall: title and date not re-read on fda.gov.',
   },
   {
     key: 'fda_changes_guidance',
@@ -1332,6 +1343,12 @@ export interface PlanAnnualReportParams {
   productName?: string;
   reportingPeriod?: string;
   modality?: ProductModality;
+  /**
+   * The product is licensed under a BLA (21 CFR part 601). Absent, a biologic,
+   * vaccine or cell/gene therapy modality is taken as licensed; false keeps the
+   * NDA annual report (21 CFR 314.81(b)(2)).
+   */
+  biologicLicense?: boolean;
   changes?: AnnualReportChangeInput[];
   stabilityProtocolOngoing?: boolean;
   includePlcmDocument?: boolean;
@@ -1356,6 +1373,10 @@ export interface PlanAnnualReportResult {
   reportingPeriod: string;
   modality: ProductModality;
   annualReportContents: {
+    /** The governing annual report: the NDA report under 314.81(b)(2), or the BLA report of minor changes under 601.12(d). */
+    regime: 'NDA 21 CFR 314.81(b)(2)' | 'BLA 21 CFR 601.12(d)';
+    /** The lifecycle record the BLA parts are read from; null for the NDA list. */
+    sourceRecord: string | null;
     requiredSections: string[];
     reportableChanges: AnnualReportableChange[];
     nonAnnualReportableFlagged: AnnualReportableChange[];
@@ -1371,6 +1392,65 @@ export interface PlanAnnualReportResult {
   provenance: EngineProvenance;
 }
 
+/** The BLA annual report's own parts, read from its lifecycle record (never a copy). */
+function blaAnnualReportSections(): { record: string; sections: string[] } {
+  const ids = US_BLA_REPORT_SOURCE_IDS.annual;
+  const record = US_BLA_REPORT_SOURCES.find((r) => r.id === ids.id);
+  if (!record) throw new Error('The BLA annual-report lifecycle record is unavailable.');
+  return {
+    record: `LIFECYCLE_DOCUMENT_TYPES:${record.id}`,
+    sections: record.components.map((c) => `${c.title}${c.required ? '' : ' (conditional)'} — ${c.guidance}`),
+  };
+}
+
+/** Licensed under a BLA: as stated, else taken from a biologic, vaccine or cell/gene therapy modality. */
+function isLicensedBiologic(params: PlanAnnualReportParams, modality: ProductModality): boolean {
+  if (params.biologicLicense !== undefined) return params.biologicLicense;
+  return modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy';
+}
+
+/** The report's sections: the BLA record's parts, or the NDA list. */
+function annualReportSections(licensed: boolean): { record: string | null; sections: string[] } {
+  return licensed ? blaAnnualReportSections() : { record: null, sections: [...NDA_ANNUAL_SECTIONS] };
+}
+
+/** The NDA annual report's sections (21 CFR 314.81(b)(2)), unchanged from before 2026-10-29. */
+const NDA_ANNUAL_SECTIONS: readonly string[] = [
+  'Summary of significant new information from the previous year (21 CFR 314.81 / 314.70(d) annual report).',
+  'Distribution data.',
+  'Labeling changes (with current labeling).',
+  'CMC changes made under the annual report category (minor changes).',
+  'Nonclinical/clinical data summaries as applicable.',
+  'Stability data and shelf-life status update.',
+];
+
+/** The per-change note: the rule a minor change is reported under, or why it is not annual-reportable. */
+function annualChangeNote(classified: UsReportingCategory, licensed: boolean): string {
+  if (classified === 'Annual Report') {
+    return licensed
+      ? 'Minor change — describe it in the BLA annual report under 21 CFR 601.12(d); no supplement required.'
+      : 'Minor change — document in the annual report under 21 CFR 314.70(d); no supplement required.';
+  }
+  return `This change is classified ${classified} and requires a supplement${licensed ? ' under 21 CFR 601.12(b) or (c)' : ''}; it is NOT merely annual-reportable. Include only after the supplement is filed/approved as appropriate.`;
+}
+
+function annualStabilityUpdate(licensed: boolean, protocolOngoing: boolean): string {
+  if (licensed) return 'Stability data appear in this report only as data supporting a minor change it describes, or where an approved commitment requires them; this planner does not decide that. Confirm against the BLA\'s approved commitments.';
+  return protocolOngoing
+    ? 'Include updated stability data for batches on the approved stability protocol, any commitment batches, and a statement of conformance to the approved shelf life. Report any confirmed out-of-specification or significant out-of-trend results promptly (these may require a separate field alert or supplement).'
+    : 'Provide a statement on stability status; if no new long-term data are available this period, state so and reference the approved stability commitment.';
+}
+
+/** The regime lines of the guidance: which rule governs, and what is a separate report. */
+function annualRegimeGuidance(licensed: boolean, licenceStated: boolean): string[] {
+  if (!licensed) return ['The annual report captures minor (Annual Report category) CMC changes; moderate/major changes need CBE-30/CBE-0/PAS supplements respectively (21 CFR 314.70).'];
+  return [
+    'The BLA annual report describes minor changes (21 CFR 601.12(d)); moderate changes need a CBE-30 or CBE-0 supplement (601.12(c)) and major changes a prior approval supplement (601.12(b)).',
+    'A licensed biologic\'s pediatric report (21 CFR 601.28), postmarketing requirement and commitment status report (601.70), distribution report (600.81) and periodic adverse experience report (600.80(c)(2)) are separate reports with their own records; they are not sections of this one.',
+    ...(licenceStated ? [] : ['Licensure was taken from the modality. If the product is not licensed under a BLA, plan with biologicLicense: false.']),
+  ];
+}
+
 /**
  * Plan the content of an annual report and (optionally) the ICH Q12 Product
  * Lifecycle Management (PLCM) document: which changes are annual-reportable,
@@ -1379,6 +1459,7 @@ export interface PlanAnnualReportResult {
  */
 export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualReportResult {
   const modality: ProductModality = params.modality ?? 'small_molecule';
+  const licensed = isLicensedBiologic(params, modality);
   const productName = params.productName ?? 'the product';
   const reportingPeriod = params.reportingPeriod ?? 'the current annual reporting period';
 
@@ -1400,26 +1481,18 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
       description: ch.description,
       classifiedCategory: classified,
       annualReportable: isAr,
-      note: isAr
-        ? 'Minor change — document in the annual report under 21 CFR 314.70(d); no supplement required.'
-        : `This change is classified ${classified} and requires a supplement; it is NOT merely annual-reportable. Include only after the supplement is filed/approved as appropriate.`,
+      note: annualChangeNote(classified, licensed),
     };
     if (isAr) reportable.push(entry);
     else nonReportableFlagged.push(entry);
   }
 
-  const stabilityUpdate = params.stabilityProtocolOngoing === true
-    ? 'Include updated stability data for batches on the approved stability protocol, any commitment batches, and a statement of conformance to the approved shelf life. Report any confirmed out-of-specification or significant out-of-trend results promptly (these may require a separate field alert or supplement).'
-    : 'Provide a statement on stability status; if no new long-term data are available this period, state so and reference the approved stability commitment.';
+  const stabilityUpdate = annualStabilityUpdate(licensed, params.stabilityProtocolOngoing === true);
 
-  const requiredSections: string[] = [
-    'Summary of significant new information from the previous year (21 CFR 314.81 / 314.70(d) annual report).',
-    'Distribution data.',
-    'Labeling changes (with current labeling).',
-    'CMC changes made under the annual report category (minor changes).',
-    'Nonclinical/clinical data summaries as applicable.',
-    'Stability data and shelf-life status update.',
-  ];
+  // A licensed biologic's annual report is the 601.12(d) report of minor changes,
+  // read from its own record. Until 2026-10-29 a biologic got the NDA sections
+  // with a one-line note.
+  const { record: sourceRecord, sections: requiredSections } = annualReportSections(licensed);
 
   const plcmIncluded = params.includePlcmDocument === true;
   const plcmSections: PlcmSection[] = plcmIncluded
@@ -1448,19 +1521,18 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
     : [];
 
   const guidance: string[] = [
-    'The annual report captures minor (Annual Report category) CMC changes; moderate/major changes need CBE-30/CBE-0/PAS supplements respectively (21 CFR 314.70).',
+    ...annualRegimeGuidance(licensed, params.biologicLicense !== undefined),
     'The PLCM document is a structured, living summary of ECs, their reporting categories, PACMPs, and post-approval commitments that travels with the dossier (ICH Q12 Section 5).',
     'Keep the PLCM document consistent with the approved application; update it whenever ECs or reporting categories change.',
   ];
-  if (modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy') {
-    guidance.push('For biologics, annual reportable changes are governed by 21 CFR 601.12(d); confirm against the BLA annual report requirements.');
-  }
 
   return {
     productName,
     reportingPeriod,
     modality,
     annualReportContents: {
+      regime: licensed ? 'BLA 21 CFR 601.12(d)' : 'NDA 21 CFR 314.81(b)(2)',
+      sourceRecord,
       requiredSections,
       reportableChanges: reportable,
       nonAnnualReportableFlagged: nonReportableFlagged,
@@ -1473,7 +1545,7 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
       sections: plcmSections,
     },
     guidance,
-    citations: cite('ich_q12', 'ich_q12_plcm', 'cfr_314_70d', 'fda_ar_changes', 'cfr_601_12'),
+    citations: cite('ich_q12', 'ich_q12_plcm', ...(licensed ? ['cfr_601_12', 'fda_bio_cmc_changes'] : ['cfr_314_70d', 'fda_ar_changes'])),
     provenance: provenance('planAnnualReport'),
   };
 }

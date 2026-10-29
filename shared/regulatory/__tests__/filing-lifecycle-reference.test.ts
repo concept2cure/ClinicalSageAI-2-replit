@@ -16,7 +16,7 @@ const projectMatches = [
   ['US_ORPHAN', 'orphan', 'FDA', 'designation'],
   ['EU_MDR_CLASS_IIA', 'mdr', 'Notified_Body', 'euconformity'],
   ['EU_IVDR_CLASS_B', 'ivdr', 'EU / Notified Body', 'euconformity'],
-  ['US_NDA_SUPP', 'pas', 'FDA', 'postmarket'], ['US_BLA_SUPP', 'pas', 'FDA', 'postmarket'],
+  ['US_NDA_SUPP', 'pas', 'FDA', 'postmarket'], ['US_BLA_SUPP', 'bla_pas', 'FDA', 'postmarket'], ['US_BLA_CBE30', 'bla_cbe30', 'FDA', 'postmarket'], ['US_BLA_CBE0', 'bla_cbe0', 'FDA', 'postmarket'],
   ['US_CBE', 'cbe', 'FDA', 'postmarket'], ['US_DMF', 'dmf', 'FDA', 'cmc'],
   ['EU_ASMF', 'dmf', 'EMA', 'cmc'], ['ICH_CSR', 'csr', 'ICH', 'clindoc'],
   ['ICH_PROTOCOL', 'protocol', 'ICH / Global', 'clindoc'],

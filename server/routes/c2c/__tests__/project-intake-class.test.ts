@@ -12,10 +12,11 @@ import { productTypeFixedByFiling, filingTypeInSentence } from '../../../../shar
 
 describe('a filing document class records the product class the filing fixes', () => {
   it('an sBLA is a biologic without being asked, and cannot be recorded as a drug', () => {
+    // 2026-10-29: the sBLA is its own class, bla_pas (its 601.12(b) record), not pas.
     expect(productTypeFixedByFiling('us_bla_supp')).toBe('biologic');
-    expect(productTypeForIntake('pas', '', 'us_bla_supp')).toEqual({ productType: 'biologic' });
-    expect(productTypeForIntake('pas', 'biologic', 'us_bla_supp')).toEqual({ productType: 'biologic' });
-    const refused = productTypeForIntake('pas', 'drug', 'us_bla_supp');
+    expect(productTypeForIntake('bla_pas', '', 'us_bla_supp')).toEqual({ productType: 'biologic' });
+    expect(productTypeForIntake('bla_pas', 'biologic', 'us_bla_supp')).toEqual({ productType: 'biologic' });
+    const refused = productTypeForIntake('bla_pas', 'drug', 'us_bla_supp');
     expect(refused).toHaveProperty('refusal');
     expect((refused as { refusal: string }).refusal).toMatch(/for a biologic, not "drug"/);
   });
@@ -29,10 +30,24 @@ describe('a filing document class records the product class the filing fixes', (
     expect(productTypeForIntake('pas', 'drug', 'us_nda_supp')).toEqual({ productType: 'drug' });
   });
 
-  it('a filing id only fixes a class for the class it belongs to', () => {
-    // An application type keeps its own rule: a BLA is a biologic whatever id is sent.
-    expect(productTypeForIntake('bla', '', 'us_bla_supp')).toEqual({ productType: 'biologic' });
-    expect(productTypeForIntake('ind', '', 'us_bla_supp')).toHaveProperty('refusal');
+  it('a filing that is its own class is created as that class, never as its parent application', () => {
+    // 2026-10-29: 'bla' with an sBLA was accepted and scaffolded the initial BLA.
+    // A subtype start must not silently become the initial IND/NDA/BLA.
+    for (const [programType, filing] of [
+      ['bla', 'us_bla_supp'], ['pas', 'us_bla_supp'], ['ind', 'us_bla_supp'],
+      ['bla', 'us_bla_cbe30'], ['cbe', 'us_bla_cbe0'], ['nda', 'us_bla_annual'], ['annual_report', 'us_bla_annual'],
+      ['ind', 'us_expanded_access_individual'], ['briefing', 'us_type_d_meeting'], ['ind', 'us_interact'],
+      ['bla', 'us_bpdr'], ['pader', 'us_bla_pae_report'], ['dmf', 'us_cber_master_file'],
+    ] as const) {
+      const r = productTypeForIntake(programType, 'biologic', filing);
+      expect(r, `${programType} / ${filing}`).toHaveProperty('refusal');
+      expect((r as { refusal: string }).refusal).toMatch(/create it as that filing/);
+    }
+    expect(productTypeForIntake('bla_cbe30', '', 'us_bla_cbe30')).toEqual({ productType: 'biologic' });
+    expect(productTypeForIntake('type_d_meeting', 'drug', 'us_type_d_meeting')).toEqual({ productType: 'drug' });
+    expect(productTypeForIntake('expanded_access_individual', 'biologic', 'us_expanded_access_individual')).toEqual({ productType: 'biologic' });
+    // An application keeps its own rule when no class filing is named.
+    expect(productTypeForIntake('bla', '', 'us_bla')).toEqual({ productType: 'biologic' });
   });
 
   it('the question names the filing in a sentence a person reads', () => {

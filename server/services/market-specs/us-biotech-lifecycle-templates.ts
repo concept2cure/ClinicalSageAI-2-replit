@@ -9,6 +9,14 @@ const RECORD_IDS = [
   'pre_ind_meeting', 'end_of_phase_2_meeting', 'pre_nda_meeting', 'pre_bla_meeting',
   'ind_protocol_amendment', 'ind_information_amendment', 'ind_cmc_amendment',
   'ind_response_to_clinical_hold', 'cbe_30', 'cbe_0', 'iss', 'ise',
+  // 2026-10-29 US biotech filing completion: the new identities' own records
+  // (ind/ctd/us-biotech-*-sources.ts). Their manual parts are already form/data/
+  // table, so none needs an ORIGINAL_MIXED entry.
+  'us_type_d_meeting', 'us_interact_meeting',
+  'expanded_access_individual', 'expanded_access_intermediate', 'expanded_access_treatment',
+  'us_bla_annual_report', 'us_bla_pediatric_annual_report', 'us_bla_pmr_status_report',
+  'us_bla_distribution_report', 'us_bpdr', 'us_bla_periodic_adverse_experience_report',
+  'us_bla_pas', 'us_bla_cbe_30', 'us_bla_cbe_0', 'us_cber_master_file', 'us_cber_lot_release', 'us_eua_therapeutic',
 ] as const;
 const PREFIX = 'us_lifecycle_';
 const IDS = new Set<string>(RECORD_IDS.map(id => PREFIX + id));
@@ -42,7 +50,10 @@ function projectRecord(recordId: typeof RECORD_IDS[number]): DocumentTemplateStr
       'Confirm the actual product, application, document subtype, current instructions and source versions. Do not infer an applicable FDA pathway or reporting mechanism from this template.',
       'AnA can narrate verified source findings and plans; validated analysis outputs, original forms, datasets, tables, listings, approvals and signatures require their existing controlled sources and review.',
       ...(source.category === 'meeting' ? ['These are the existing PDUFA-product meeting parts. Confirm the FDA center, program and meeting subtype; do not infer that PDUFA procedures or timelines govern a BsUFA or other meeting.'] : []),
-      ...(source.category === 'supplement' ? ['These CBE parts read the existing NDA/ANDA record under 21 CFR 314.70. Licensed-biologic changes require the applicable 21 CFR 601.12 classification and biologics-specific source records; this projection does not independently model those obligations.'] : []),
+      ...(source.category === 'supplement' && !source.regulatoryBasis.some(ref => ref.includes('601.12'))
+        ? ['These CBE parts read the existing NDA/ANDA record under 21 CFR 314.70. Licensed-biologic changes require the applicable 21 CFR 601.12 classification and its own records (US_BLA_SUPP, US_BLA_CBE30, US_BLA_CBE0); this projection does not model those obligations.'] : []),
+      ...(source.category === 'supplement' && source.regulatoryBasis.some(ref => ref.includes('601.12'))
+        ? ['These parts read the licensed-biologic record under 21 CFR 601.12. Which category applies (601.12(b), (c)(1), (c)(5) or (d)) is the filer\'s classification of the change, not this template\'s.'] : []),
       `Source description: ${source.description}`,
       ...(source.ctdSectionCodes?.length ? [`The source record also references CTD content: ${source.ctdSectionCodes.join(', ')}. These type-specific working parts do not replace those controlled sections.`] : []),
     ],
