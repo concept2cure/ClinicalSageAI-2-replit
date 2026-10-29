@@ -1,4 +1,4 @@
-# D2: four Vault search cases red on trunk, fixed where each now stands (2026-10-29)
+# D2: five Vault search cases red on trunk, fixed where each now stands (2026-10-29)
 
 The Vault find view (VR-18, `../2026-10-22-find-view/`) and the editor rail's Vault search each had cases red on trunk at `97c5bace6`. Trunk CI is queued without runners, so nothing reported them. They were found while proving Part 11 F4 (`../../D5-VAULT-FILING-ATTRIBUTION/2026-10-29/`). Both product rules they had fallen behind are correct, and are left as they are.
 
@@ -26,6 +26,8 @@ The Vault find view (VR-18, `../2026-10-22-find-view/`) and the editor rail's Va
 | `02-green.txt` | Both suites, with the two source-intake suites they share the dialog with: 101 of 101. |
 | `03-red-commitment.txt` | Found later by a sweep at `b28db8240` with nothing local: the commitment picker's case asserted the old guard, that a hit sent without `current` is listed. |
 | `04-green-commitment.txt` | The picker refuses it as the find view does, and says the search could not be read: 23 of 23. |
+| `05-red-labels.txt` | Found while proving VR-19, at `1586f81ae` with that change stashed: `vaultSurfaceLabels.test.tsx`'s search hit had no `current`, so the hit's type label never rendered. |
+| `06-green-labels.txt` | The hit says it is current, as the server sends: 4 of 4. |
 
 ## The sweep, 2026-10-29 08:11–09:01 UTC
 
