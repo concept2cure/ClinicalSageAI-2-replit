@@ -1,0 +1,21 @@
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC) 1913ms
+   → body: expected { id: 14, lifecycle_op: 'new', …(4) } to match object { lifecycle_op: 'replace', …(1) }
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC) 801ms
+   → promise resolved "{ state: 'placed', sequenceId: 3, …(7) }" instead of rejecting
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC) 624ms
+   → expected Error: not implemented to match object { Object (code) }
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC) 754ms
+   → expected Error: not implemented to match object { Object (code) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC)
+AssertionError: body: expected { id: 14, lifecycle_op: 'new', …(4) } to match object { lifecycle_op: 'replace', …(1) }
+ FAIL  server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC)
+AssertionError: promise resolved "{ state: 'placed', sequenceId: 3, …(7) }" instead of rejecting
+- Error {
+ FAIL  server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC)
+AssertionError: expected Error: not implemented to match object { Object (code) }
++ Error {
+ FAIL  server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC)
+AssertionError: expected Error: not implemented to match object { Object (code) }
++ Error {
+      Tests  4 failed (4)

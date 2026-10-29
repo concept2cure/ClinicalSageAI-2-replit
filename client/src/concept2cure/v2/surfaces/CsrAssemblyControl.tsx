@@ -15,10 +15,16 @@
  *   (POST …/assembly/:id/place). The server refuses a frozen or transmitted
  *   sequence and a missing blocking appendix; its refusal is shown as stated.
  * A failed read or a refusal is an alert, never an empty list.
+ * - Lifecycle (2026-10-30, CsrPlacementLifecycle.tsx): for the chosen sequence,
+ *   each file's operation (new, or replace of the study's earlier file) and the
+ *   earlier files the assembly no longer has, each chosen to stay on file or
+ *   to be withdrawn in this sequence; and, after a placement refused part-way,
+ *   "Withdraw the partly placed CSR files".
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiCall, apiErrorText } from '../apiCall';
 import { I } from '../icons';
+import { lifecycleOpen, NO_DECISIONS, PlacementLifecycle, useLifecyclePlan, WithdrawPartialPlacement, type LifecycleDecisions } from './CsrPlacementLifecycle';
 
 interface Leaf { appendix: string; title: string; fileName: string; fileTag: string; origin: 'generated' | 'supplied'; ctdSection: string; pages: number | null; sha256: string }
 interface Missing { number: string; title: string; fileTag: string; blocking: boolean; reason: string }
@@ -32,7 +38,11 @@ interface Summary {
 }
 interface Declaration { reason: string; declaredBy: number; declaredAt: string }
 /** 'interrupted': a placement whose worker stopped (no progress for 15 minutes); it is placed again into the same sequence, as a 'partial' one is. */
-interface Placement { state: 'placing' | 'placed' | 'partial' | 'interrupted'; sequenceId?: number; sequenceNumber: string; leaves?: Array<{ fileName: string }>; error?: string; placedAt?: string }
+interface Placement {
+  state: 'placing' | 'placed' | 'partial' | 'interrupted' | 'withdrawn'; sequenceId?: number; sequenceNumber: string; leaves?: Array<{ fileName: string }>; error?: string; placedAt?: string;
+  /** Set when the partly placed files were withdrawn (csr-placement-withdraw.ts). */
+  withdrawal?: { withdrawnBy: number; withdrawnAt: string; reason: string; sequenceNumber: string; removed: Array<{ fileName: string }>; notRemoved: Array<{ fileName: string; why: string }> };
+}
 export interface CsrAssemblyRun {
   id: number; status: 'queued' | 'assembling' | 'assembled' | 'failed'; progress: number; stage: string | null; updatedAt: string;
   notApplicable: Record<string, Declaration>; supplied: Record<string, { documentId: string; sha256: string }>;
@@ -219,10 +229,17 @@ function placementText(p: Placement): string {
   if (p.state === 'placed') return `Placed in sequence ${p.sequenceNumber}: ${files} file(s).`;
   if (p.state === 'partial') return `Partly placed in sequence ${p.sequenceNumber}: ${files} file(s) before ${p.error ?? 'a refusal'}. Place again into sequence ${p.sequenceNumber} to finish.`;
   if (p.state === 'interrupted') return `Placement in sequence ${p.sequenceNumber} stopped before it finished: ${files} file(s) placed. Place again into sequence ${p.sequenceNumber} to finish.`;
+  if (p.state === 'withdrawn' && p.withdrawal) {
+    const w = p.withdrawal;
+    const left = w.notRemoved.length ? ` ${w.notRemoved.length} recorded file(s) were not removed: ${w.notRemoved.map(n => `${n.fileName} (${n.why})`).join('; ')}.` : '';
+    return `The partly placed files in sequence ${w.sequenceNumber} were withdrawn (${w.removed.length} file(s)) by user ${w.withdrawnBy}, ${new Date(w.withdrawnAt).toLocaleString()}: ${w.reason}.${left}`;
+  }
   return `Being placed in sequence ${p.sequenceNumber}.`;
 }
 
 const isResumable = (p: Placement | null) => p?.state === 'partial' || p?.state === 'interrupted';
+/** A placement whose partly placed files were withdrawn may be placed afresh. */
+const isOpen = (p: Placement | null) => !p || isResumable(p) || p.state === 'withdrawn';
 
 /** The program's open sequences, read unless the assembly is placed or being placed. */
 function usePlacementTargets(base: string, wanted: boolean, setMessage: (m: Message) => void) {
@@ -240,11 +257,12 @@ function usePlacementTargets(base: string, wanted: boolean, setMessage: (m: Mess
 function PlacementControl({ assembly, base, onPlaced }: { assembly: CsrAssemblyRun; base: string; onPlaced: () => Promise<void> }) {
   const resumable = isResumable(assembly.placement);
   const [message, setMessage] = useState<Message>(null);
-  const targets = usePlacementTargets(base, !assembly.placement || resumable, setMessage);
-  if (assembly.placement && !resumable) return <p role="status">{placementText(assembly.placement)}</p>;
+  const targets = usePlacementTargets(base, isOpen(assembly.placement), setMessage);
+  if (!isOpen(assembly.placement)) return <p role="status">{placementText(assembly.placement!)}</p>;
   return <div style={{ display: 'grid', gap: 4 }}>
     <strong>Place into a sequence (Module 5.3.5.1)</strong>
-    {assembly.placement && <p role="alert">{placementText(assembly.placement)}</p>}
+    {assembly.placement && <p role={resumable ? 'alert' : 'status'}>{placementText(assembly.placement)}</p>}
+    {resumable && <WithdrawPartialPlacement base={base} assemblyId={assembly.id} sequenceNumber={assembly.placement!.sequenceNumber} onDone={onPlaced} />}
     {targets !== null && targets.length === 0 && <p>This program has no open sequence. Create one in Submission Center first.</p>}
     {targets !== null && targets.length > 0 && <PlacementForm assembly={assembly} base={base} targets={targets} setMessage={setMessage} onPlaced={onPlaced} />}
     {message && <p role={message.alert ? 'alert' : 'status'}>{message.text}</p>}
@@ -258,21 +276,26 @@ function PlacementForm({ assembly, base, targets, setMessage, onPlaced }: {
   const [sequenceId, setSequenceId] = useState(isResumable(assembly.placement) && assembly.placement?.sequenceId ? String(assembly.placement.sequenceId) : '');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
+  const [decisions, setDecisions] = useState<LifecycleDecisions>(NO_DECISIONS);
+  const lifecycle = useLifecyclePlan(base, assembly.id, sequenceId);
   const place = async () => {
     setBusy(true); setMessage(null);
-    const result = await apiCall('POST', `${base}/${assembly.id}/place`, { sequenceId: Number(sequenceId), reason });
+    const result = await apiCall('POST', `${base}/${assembly.id}/place`, { sequenceId: Number(sequenceId), reason,
+      ...(decisions.keepOnFile.length ? { keepOnFile: decisions.keepOnFile } : {}), ...(decisions.withdraw.length ? { withdraw: decisions.withdraw } : {}) });
     setBusy(false);
     if (!result.ok) { setMessage({ alert: true, text: apiErrorText(result, 'The CSR files were not placed.') }); return; }
     await onPlaced();
   };
-  return <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-    <select aria-label="Sequence" value={sequenceId} onChange={e => setSequenceId(e.target.value)}>
+  return <div style={{ display: 'grid', gap: 4 }}><div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+    <select aria-label="Sequence" value={sequenceId} onChange={e => { setSequenceId(e.target.value); setDecisions(NO_DECISIONS); }}>
       <option value="">Choose a sequence</option>
       {targets.map(t => <option key={t.sequenceId} value={t.sequenceId}>{t.submissionTitle} · sequence {t.sequenceNumber} ({t.status})</option>)}
     </select>
     <label>Reason <input className="c2c-input" value={reason} maxLength={2000} onChange={e => setReason(e.target.value)} /></label>
-    <button type="button" className="btn" disabled={busy || !sequenceId || reason.trim().length < 8} onClick={() => void place()}>
+    <button type="button" className="btn" disabled={busy || !sequenceId || reason.trim().length < 8 || lifecycleOpen(lifecycle.plan, decisions)} onClick={() => void place()}>
       {I.send} {busy ? 'Placing…' : 'Place CSR files'}
     </button>
+  </div>
+  <PlacementLifecycle plan={lifecycle.plan} error={lifecycle.error} decisions={decisions} setDecisions={setDecisions} />
   </div>;
 }
