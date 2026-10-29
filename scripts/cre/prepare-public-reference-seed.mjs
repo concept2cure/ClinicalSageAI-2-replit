@@ -107,13 +107,17 @@ export function compileReferenceSeed(manifest, root) {
 -- Existing CRE sources only. No tenant rows, model training, findings, outcomes or design lessons.
 -- Original files are content-addressed release assets. Catalog records remain pending.
 -- Replays never overwrite a retained source. Any conflicting record fails the count/integrity assertion.
+-- 2026-10-29 (MR-02 trunk green, proof tier C-33): an absent cre_evidence_sources now skips with a
+-- NOTICE instead of raising, the guard every file after the CRE spine uses (migration-set.mjs); the
+-- spine precedes this file on every applier, and a store that exists still gets the count assertion.
 DO $cdi_reference_seed$
 DECLARE
   payload jsonb := ${delimiter}${payload}${delimiter}::jsonb;
   actual_count integer;
 BEGIN
   IF to_regclass('public.cre_evidence_sources') IS NULL THEN
-    RAISE EXCEPTION 'CDI reference seed requires the canonical CRE source store';
+    RAISE NOTICE 'cre_evidence_sources absent - CDI reference seed skipped';
+    RETURN;
   END IF;
   LOCK TABLE public.cre_evidence_sources IN SHARE ROW EXCLUSIVE MODE;
   INSERT INTO public.cre_evidence_sources (
