@@ -1,0 +1,21 @@
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > reads the board with the project's id and draws its families 5126ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > mounts the IVD assessment workbench for the same project 5061ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for the organization is not drawn under a project 5047ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for another project is not drawn 5035ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so 5040ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so 5034ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a failed read (500) says so 5029ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a family that could not be read is "Not read", and no overall figure is shown 5026ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project with no records reads empty, as a read that succeeded 5031ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-board"]
+TestingLibraryElementError: Unable to find role="region" and name "IVD assessment workbench"
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-unread"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-unread"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-unread"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-unread"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-unread"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-board"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-empty"]
+ Test Files  1 failed (1)
+      Tests  9 failed (9)

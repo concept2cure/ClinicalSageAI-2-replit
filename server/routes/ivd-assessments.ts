@@ -10,6 +10,14 @@
  *   DELETE /:id                     soft-delete
  *   GET  /documents                 list generated documents (?doc_type=&program_id=)
  *   POST /documents                 save a generated document
+ *
+ * D2, 2026-10-29 (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f2-ivd-completeness/):
+ * a list that names a project (`program_id`) asks admitProject first
+ * (server/lib/admit-project.ts, over programInOrganization): 404 for a foreign,
+ * missing, deleted or malformed project, 503 when the check cannot run, and
+ * nothing listed either way. It filtered by whatever id it was sent, so another
+ * organization's project read as an empty list. With no project named, the
+ * lists are the organization's, as before.
  */
 
 import { Router, Request, Response } from 'express';
@@ -25,6 +33,7 @@ import { authenticateToken } from '../middleware/auth';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { requestPgClient } from '../db/requestDb';
+import { admitProject } from '../lib/admit-project';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import {
   saveAssessment, listAssessments, getAssessment, deleteAssessment,
@@ -74,11 +83,13 @@ function orgGuard(req: Request, res: Response): number | null {
 // ── Assessments ─────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   const orgId = orgGuard(req, res); if (orgId === null) return;
+  const programId = q(req, 'program_id');
   try {
+    if (!(await admitProject(res, logger, programId, orgId))) return;
     const limitRaw = q(req, 'limit');
     const rows = await listAssessments(orgId, {
       assessmentType: q(req, 'type'),
-      programId: q(req, 'program_id'),
+      programId,
       limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
     }, requestPgClient(req));
     res.json({ rows, count: rows.length });
@@ -132,8 +143,10 @@ router.post('/classification', async (req, res) => {
 
 router.get('/documents', async (req, res) => {
   const orgId = orgGuard(req, res); if (orgId === null) return;
+  const programId = q(req, 'program_id');
   try {
-    const rows = await listGeneratedDocuments(orgId, { docType: q(req, 'doc_type'), programId: q(req, 'program_id') }, requestPgClient(req));
+    if (!(await admitProject(res, logger, programId, orgId))) return;
+    const rows = await listGeneratedDocuments(orgId, { docType: q(req, 'doc_type'), programId }, requestPgClient(req));
     res.json({ rows, count: rows.length });
   } catch (e) { serverError(res, logger, 'listing generated IVD documents', e); }
 });

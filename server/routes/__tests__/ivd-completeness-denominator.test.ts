@@ -64,7 +64,8 @@ function completenessHandler() {
 async function callWith(byTable: Record<string, Row[]>) {
   const json = vi.fn();
   const res = { json, status: vi.fn().mockReturnThis() } as unknown as Response;
-  const req = { tenantId: 7, dbClient: fakeClient(byTable) } as unknown as Request;
+  // No project named: the organization's board (scope 'organization').
+  const req = { tenantId: 7, query: {}, dbClient: fakeClient(byTable) } as unknown as Request;
   await completenessHandler()(req, res);
   expect(json, 'the handler did not respond').toHaveBeenCalled();
   return (json.mock.calls[0][0] as { data: any }).data;

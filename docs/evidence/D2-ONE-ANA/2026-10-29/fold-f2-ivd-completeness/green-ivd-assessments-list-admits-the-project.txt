@@ -1,0 +1,16 @@
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > another organization's project: 404, and nothing is listed 18ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a missing project: 404, and nothing is listed 4ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a deleted project: 404, and nothing is listed 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a malformed project: 404, and nothing is listed 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > when the ownership check cannot run: 503, and nothing is listed 4ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > the organization's own project: asked once, then listed by that project on the request client 4ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > no project named: the organization's list, with no ownership check 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > another organization's project: 404, and nothing is listed 2ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a missing project: 404, and nothing is listed 5ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a deleted project: 404, and nothing is listed 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a malformed project: 404, and nothing is listed 2ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > when the ownership check cannot run: 503, and nothing is listed 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > the organization's own project: asked once, then listed by that project on the request client 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > no project named: the organization's list, with no ownership check 2ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)

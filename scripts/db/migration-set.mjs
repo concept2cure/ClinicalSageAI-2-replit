@@ -3565,6 +3565,15 @@ export const C2C_MIGRATION_FILES = [
   // absent). Public with organization_id INTEGER NOT NULL; creates no table;
   // guarded; no DROP.
   'migrations/20261029c_design_controls_and_risk_items_program_keys.sql',
+  // The IVD assessment workbench's store (D2, fold F2, 2026-10-29):
+  // ivd_assessments and ivd_generated_documents, which only install-fresh
+  // created, so saving and listing failed on every deployed database. Every
+  // statement is CREATE ... IF NOT EXISTS; no DROP, ALTER or ADD CONSTRAINT, and
+  // no other file in either root names the two tables. Its one prerequisite is
+  // organizations (base schema). Public with organization_id INTEGER NOT NULL,
+  // so the sweep below polices both. Pinned by
+  // tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts.
+  'migrations/20260610_ivd_assessments.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
