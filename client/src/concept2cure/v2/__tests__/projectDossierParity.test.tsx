@@ -27,7 +27,7 @@ function read({ artifactReadiness: artifacts = artifactReadiness, sectionTrackin
   } as DossierState;
 }
 function show(r: DossierState) {
-  return render(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+  return render(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
 }
 
 describe('old dossier functions in project Author', () => {

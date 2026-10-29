@@ -16,7 +16,9 @@
  *   - Author lists the project's documents from GET /api/authoring/docs?
  *     programId=<uuid>, and a row opens THAT document through the editor
  *     target (docId and programId); a failed read is an error with a retry;
- *   - a module row opens the project's newest document in that module;
+ *   - a module row opens the editing copy of the filing it measures, by the
+ *     copy's binding (F3, 2026-10-29); it named the newest document TAGGED with
+ *     its module, so the home Module 1 row could open an added market's copy;
  *   - the grid is gone, and its two filing doors are on Submit: "Compile and
  *     download" (ectd-compile) and "Check what stops sending" (dispatch-readiness;
  *     "Open readiness" until slice A.1 named each door for its job);
@@ -53,14 +55,19 @@ const DOCS = [
   doc({ id: 'doc-32s', title: 'Drug substance (3.2.S)', module: 'M3', updated_at: '2026-10-05T10:00:00Z' }),
   doc({ id: 'doc-24', title: 'Nonclinical overview (2.4)', module: 'M2', updated_at: '2026-10-01T10:00:00Z' }),
 ];
+/* The two editing copies: the home filing's (one module tag, as the server
+   defaults it) and an added market's (F22b creates it tagged M1), newest. */
+const HOME_COPY = doc({ id: 'doc-copy', title: 'IND editing copy', module: 'M3', updated_at: '2026-09-20T10:00:00Z', c2c_document_id: 'doc_home' });
+const EMA_COPY = doc({ id: 'doc-ema-copy', title: 'EMA MAA editing copy', module: 'M1', updated_at: '2026-10-08T10:00:00Z', c2c_document_id: 'doc_ema' });
 /* GET /:id/dossier (F23): one row per module of the home filing. */
-const dossierRow = (module: string, label: string, counted: number) => ({
-  group: 'module', module, agency: null, label, documentId: 'doc_home', counted, complete: 0, inReview: 0, drafted: 0,
+const dossierRow = (module: string, label: string, counted: number, documentId = 'doc_home', agency: string | null = null) => ({
+  group: 'module', module, agency, label, documentId, counted, complete: 0, inReview: 0, drafted: 0,
   figure: { state: 'measured', pct: 0, counted, complete: 0 }, lastUpdated: null,
 });
 const DOSSIER = {
   projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 0, counted: 6, complete: 0 }, markets: [],
-  rows: [dossierRow('2', 'Module 2 · Summaries', 1), dossierRow('3', 'Module 3 · Quality (CMC)', 3), dossierRow('5', 'Module 5 · Clinical', 2)],
+  rows: [dossierRow('1', 'Module 1 · Regional', 2), dossierRow('2', 'Module 2 · Summaries', 1), dossierRow('3', 'Module 3 · Quality (CMC)', 3), dossierRow('5', 'Module 5 · Clinical', 2),
+    dossierRow('1', 'Module 1 · Regional · EMA MAA', 4, 'doc_ema', 'ema')],
 };
 const source = (id: number, title: string, extractionStatus: string) => ({
   id, title, checksum: `sha-${id}`, ingestionStatus: 'ingested', extractionStatus, createdAt: '2026-10-01T09:00:00Z',
@@ -160,22 +167,55 @@ describe('Author — the project\'s documents', () => {
     expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/drafts'))).toBe(false);
   });
 
-  it('a module row opens the project\'s newest document in that module, not the editor\'s list', async () => {
-    serve();
+  it('a module row opens the editing copy of the filing it measures, never the newest document tagged with its module', async () => {
+    serve({ docs: () => ok({ documents: [EMA_COPY, ...DOCS, HOME_COPY] }) });
     const p = props();
     render(<ProjectHome {...p} />);
-    // A row is a button once there is a document to open.
     await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
+    // Module 2: at head, the newest M2-tagged document (doc-25), an unbound working document.
     fireEvent.click(moduleRow('Module 2 · Summaries')!);
-    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-25', programId: PID });
+    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-copy', programId: PID });
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    // Module 1: at head, the EMA market's copy, the newest M1-tagged document.
+    fireEvent.click(moduleRow('Module 1 · Regional ·')!);
+    expect(target()).toMatchObject({ docId: 'doc-copy' });
+    // Module 5: no document is tagged M5, and it is the same filing's copy.
+    fireEvent.click(moduleRow('Module 5 · Clinical')!);
+    expect(target()).toMatchObject({ docId: 'doc-copy' });
+    expect(screen.getAllByText('Opens IND editing copy').length).toBe(4);
+  });
 
-    // Module 3's row opens the Module 3 document.
-    fireEvent.click(screen.getByRole('button', { name: /^Module 3 · Quality \(CMC\): 0 of 3 approved or locked, 0%\. Open Drug substance \(3\.2\.S\)$/ }));
-    expect(target()).toMatchObject({ docId: 'doc-32s' });
+  it('an added market\'s rows open that market\'s editing copy', async () => {
+    serve({ docs: () => ok({ documents: [EMA_COPY, ...DOCS, HOME_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(moduleRow('Module 1 · Regional · EMA MAA')?.tagName).toBe('BUTTON'));
+    fireEvent.click(moduleRow('Module 1 · Regional · EMA MAA')!);
+    expect(target()).toMatchObject({ docId: 'doc-ema-copy', programId: PID });
+  });
 
-    // Module 5 has no document of this project: a row with nothing to click.
-    expect(moduleRow('Module 5 · Clinical')?.tagName, 'a module with no document is not a button').toBe('DIV');
+  it('with no editing copy the row says so and has nothing to click; a market\'s says where one is made', async () => {
+    serve();
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(moduleRow('Module 2 · Summaries')).toBeTruthy());
+    expect(moduleRow('Module 2 · Summaries')?.tagName, 'a filing with no copy is not a button').toBe('DIV');
+    expect(screen.getAllByText('No editing copy of this filing yet.').length).toBe(4);
+    expect(screen.getByText(/No editing copy of this market.s documents yet\. Create one from the filing list in the editor\./)).toBeTruthy();
+  });
+
+  it('two documents bound to one filing: said, and neither is opened', async () => {
+    const second = doc({ id: 'doc-copy-2', title: 'Second copy', c2c_document_id: 'doc_home' });
+    serve({ docs: () => ok({ documents: [...DOCS, HOME_COPY, second] }) });
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(screen.getAllByText('2 documents are bound to this filing, so none is opened from here.').length).toBe(4));
+    expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('DIV');
+  });
+
+  it('when the documents could not be read, the row says its copy is not known, never that there is none', async () => {
+    serve({ docs: down });
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(screen.getAllByText('The project\'s documents could not be read, so its editing copy is not known.').length).toBe(5));
+    expect(screen.queryByText('No editing copy of this filing yet.')).toBeNull();
+    expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('DIV');
   });
 
   it('offers the editor and the protocol workspace as doors', async () => {
@@ -254,18 +294,18 @@ describe('Submit — the grid\'s filing doors', () => {
 });
 
 describe('Review findings — the row, the handoff and the filing type say what they do', () => {
-  it('a module row names the sections as the figure and the document it opens in words, and how many the module holds', async () => {
-    serve();
+  it('a module row names the sections as the figure and the document it opens in words', async () => {
+    serve({ docs: () => ok({ documents: [...DOCS, HOME_COPY] }) });
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
     // The figure is the module's sections approved or locked, not the document's progress.
     expect(moduleRow('Module 2 · Summaries')!.getAttribute('aria-label'))
-      .toBe('Module 2 · Summaries: 0 of 1 approved or locked, 0%. Open Clinical overview (2.5), the newest of 2 Module 2 documents');
-    // The document is visible in words, not only in a hover title.
+      .toBe('Module 2 · Summaries: 0 of 1 approved or locked, 0%. Open IND editing copy');
+    // The document is visible in words, not only in a hover title; a row with no copy says so.
     const named = Array.from(document.querySelectorAll('[data-testid="pj-lmod-doc"]')).map((e) => e.textContent);
     expect(named).toEqual([
-      'Opens Clinical overview (2.5), the newest of 2 Module 2 documents',
-      'Opens Drug substance (3.2.S)',
+      'Opens IND editing copy', 'Opens IND editing copy', 'Opens IND editing copy', 'Opens IND editing copy',
+      'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.',
     ]);
   });
 

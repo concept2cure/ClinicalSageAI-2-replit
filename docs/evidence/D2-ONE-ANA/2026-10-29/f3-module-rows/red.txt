@@ -1,0 +1,15 @@
+# Red at 8b58354a with the new and rewritten cases only (ProjectHome and ProjectDossier unchanged).
+# The chip test in projectHomeLaunchScope passes at head too: its one document is both the newest tagged and the bound copy.
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the editing copy of the filing it measures, never the newest document tagged with its module
+   → the row named no document: expected { Object (docType, docId, ...) } to match object { docId: 'doc-copy', …(1) }
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an added market's rows open that market's editing copy
+   → expected 'DIV' to be 'BUTTON' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > with no editing copy the row says so and has nothing to click; a market's says where one is made
+   → a filing with no copy is not a button: expected 'BUTTON' to be 'DIV' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > two documents bound to one filing: said, and neither is opened
+   → Unable to find an element with the text: 2 documents are bound to this filing, so none is opened from here.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > when the documents could not be read, the row says its copy is not known, never that there is none
+   → Unable to find an element with the text: The project's documents could not be read, so its editing copy is not known.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 30 passed (35)

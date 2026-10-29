@@ -45,6 +45,8 @@ export interface BuiltDocument {
   source: string | null;
   conversationId: string | null;
   programId: string | null;
+  /** `c2c_document_id`: the filing this document is the editing copy of, or null. */
+  filingDocumentId?: string | null;
   readScope?: AuthoringReadProjection;
 }
 
@@ -76,6 +78,7 @@ function toBuiltDocument(raw: unknown): BuiltDocument | null {
     source: r.readScope === 'sections' ? null : text(r.provenance_source),
     conversationId: r.readScope === 'sections' ? null : text(r.conversation_id),
     programId: text(r.program_id),
+    filingDocumentId: text(r.c2c_document_id),
     ...(r.readScope === 'sections' || r.readScope === 'document' ? { readScope: r.readScope } : {}),
   };
 }
