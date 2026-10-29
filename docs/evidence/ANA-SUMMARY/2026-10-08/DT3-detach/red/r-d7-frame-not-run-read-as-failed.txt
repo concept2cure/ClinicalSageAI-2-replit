@@ -1,0 +1,9 @@
+# r-d7-frame-not-run-read-as-failed: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t did not run
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > a step the server says did not run is not run on this page, never failed 43ms
+   → expected [ { name: 'act_on_screen', …(8) } ] to deeply equal [ ObjectContaining{…} ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > a step the server says did not run is not run on this page, never failed
+AssertionError: expected [ { name: 'act_on_screen', …(8) } ] to deeply equal [ ObjectContaining{…} ]

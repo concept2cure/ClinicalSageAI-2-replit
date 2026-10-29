@@ -1,0 +1,30 @@
+# 2026-10-29, on 7d6f376e0 (trunk 8b58354af): the 21 entries of the open items re-run, and the 7 entries of this change (non-zero = red). Every file restored after each run.
+r-admin-cancel-no-reason: exit 1
+r-admin-cancel-audit-after-the-fact: exit 1
+r-admin-cancel-refusal-unmapped: exit 1
+r-admin-cancel-credited-to-asker: exit 1
+r-controls-carry-no-actor: exit 1
+r-dossier-control-has-no-actor: exit 1
+r-admin-stop-one-click: exit 1
+r-follower-names-no-asker: exit 1
+r-d7-live-drive-stops-on-close: exit 1
+r-d7-screen-action-runs-after-close: exit 1
+r-d7-client-drive-turn-not-followed: exit 1
+r-follower-approval-without-check: exit 1
+r-governed-action-after-run-ended: exit 1
+r-run-ended-during-action-silent: exit 1
+r-stopped-after-approval-says-nobody-decided: exit 1
+r-follow-leaves-running-rows: exit 1
+r-handover-shows-an-empty-answer: exit 1
+r-401-read-as-unreachable: exit 1
+r-marker-read-once: exit 1
+r-marker-waiting-read-as-working: exit 1
+r-marker-failed-read-silent: exit 1
+r-follow-line-hidden-on-a-settled-turn: exit 1
+r-window-deny-overrides-a-claimed-approval: exit 1
+r-window-turn-says-nobody-authorised: exit 1
+r-d7-trace-not-run-read-as-failed: exit 1
+r-d7-frame-not-run-read-as-failed: exit 1
+r-d7-folded-line-silent-on-not-run: exit 1
+r-d7-summary-not-run-read-as-failed: exit 1
+harness-exit=0

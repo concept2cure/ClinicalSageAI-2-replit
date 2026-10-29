@@ -1,11 +1,11 @@
 # r-admin-cancel-credited-to-asker: exit 1 (non-zero = red)
 # tests: client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts
- × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > is credited to the administrator by name, with their reason, and never as "You stopped" 9ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > is credited to the administrator by name, with their reason, and never as "You stopped" 19ms
    → expected { kind: 'control', …(3) } to match object { …(2) }
- × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > read by the administrator who took it: theirs, as an administrator 2ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > an administrator's cancel in the Summary > read by the administrator who took it: theirs, as an administrator 3ms
    → expected 'You stopped the run' to be 'You stopped the run, as an administra…' // Object.is equality
- ✓ client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by the asker: "You …", as before 0ms
- × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by anyone else: the person who asked, never "You" 2ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by the asker: "You …", as before 1ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > read by anyone else: the person who asked, never "You" 3ms
    → expected 'You steered AnA' to be 'The person who asked steered AnA' // Object.is equality
  × client/src/concept2cure/v2/__tests__/turnSummaryControlActor.test.ts > the asker's own controls > an attribution this client cannot read is nobody's "You" 1ms
    → expected 'You stopped the run' to be 'Someone else stopped the run' // Object.is equality

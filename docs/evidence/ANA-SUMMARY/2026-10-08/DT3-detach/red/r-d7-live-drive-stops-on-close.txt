@@ -1,13 +1,13 @@
 # r-d7-live-drive-stops-on-close: exit 1 (non-zero = red)
 # tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts server/routes/ana-ri/__tests__/stream-disconnect.test.ts  -t D-7|detaches too
- × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > detaches like any other turn, and finishes `finished` 1042ms
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > detaches like any other turn, and finishes `finished` 1136ms
    → expected 0 to be greater than 0
- × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on 1016ms
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on 1081ms
    → expected 0 to be greater than 0
- × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run (before context assembly and the drive state) > durable, live_drive: true: detaches too (D-7, 2026-10-22) 42ms
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run (before context assembly and the drive state) > durable, live_drive: true: detaches too (D-7, 2026-10-22) 176ms
    → expected true to be false // Object.is equality
  Test Files  2 failed | 1 skipped (3)
-      Tests  3 failed | 55 skipped (58)
+      Tests  3 failed | 58 skipped (61)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > detaches like any other turn, and finishes `finished`
 AssertionError: expected 0 to be greater than 0

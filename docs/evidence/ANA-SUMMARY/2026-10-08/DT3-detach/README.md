@@ -73,8 +73,8 @@ Searched before each fix, by every name: admin cancel, control event, actor, att
 
 `8fb897868`'s message listed these as open: the admin cancel (the blocker, DP-82 and 4.4), the client (2.2–2.5), the approvals (4.1, 4.3) and D-7. Each was checked against the committed code and its required change, with these steps:
 
-- Its suites were run: 17 files, 233 tests, all passed.
-- Its `red/mutations.py` entries were re-run against that tree. All 21 exited non-zero, and the tree was restored, with `git status` clean.
+- Its suites were run: 17 files, 233 tests, all passed. With this change's file added, 18 files and 244 tests pass on `7d6f376e0`.
+- Its `red/mutations.py` entries were re-run against that tree. All 21 exited non-zero, and the tree was restored, with `git status` clean. They, and this change's 7, were run again on `7d6f376e0`, and all 28 are red.
 - The admin cancel's DB tests were run on fresh2 with RLS on (`green/db-tests-close.txt`).
 
 The fixes the table below names were in the commit. Three gaps were not, and each was closed red first (design §12.7). The reds were captured on `8b58354af` before any source change:
