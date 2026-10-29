@@ -1,0 +1,10 @@
+$ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
+--- first run (adversarial verifier) ---
+server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts(164,86): error TS2322: Type 'CoreLeaf[]' is not assignable to type '{ documentTable: string | null; documentId: number | null; documentUuid?: string | null | undefined; lifecycleOp?: string | null | undefined; }[]'.
+  Type 'CoreLeaf' is not assignable to type '{ documentTable: string | null; documentId: number | null; documentUuid?: string | null | undefined; lifecycleOp?: string | null | undefined; }'.
+    Types of property 'documentTable' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+exit 2
+--- after typing the packaged test materializeLeafSources input as assemble-from-core.ts does ---
+exit 0

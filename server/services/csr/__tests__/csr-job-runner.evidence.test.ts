@@ -142,6 +142,10 @@ describe('a run-bound CSR job drafts §12.2 over the retained tables', () => {
     expect(accepted.lineage).toMatchObject({ reconciliation: { status: 'matches', basis: 'exact_retained_table_cell',
       findings: [{ status: 'matches', table: 'aeOverallSummary', row: 0, column: 1, expected: '12 (10.5%)' }] } });
     expect(accepted.lineage).not.toHaveProperty('rejectedModelDraft');
+    // Slice 5 (2026-10-30): the claim receipts bind each figure to its cell, this exact text and the pack digest.
+    expect(accepted.lineage).toMatchObject({ claimReceipts: { schema: 'c2c.csr-claim-receipts.v1', runId: RUN, studyId: 'STUDY-7',
+      sectionNumber: '12.2.1', outputSha256: accepted.contentHash, evidenceDigest: (accepted.lineage as { evidence: { evidenceDigest: string } }).evidence.evidenceDigest,
+      claims: [{ table: 'aeOverallSummary', row: 0, column: 1, value: '12 (10.5%)' }] } });
   });
 
   it('refuses a claim whose value is not the cell it names', async () => {

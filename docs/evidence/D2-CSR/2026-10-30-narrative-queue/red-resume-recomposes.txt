@@ -1,0 +1,7 @@
+# Red: the job without its per-subject resume (every subject is composed again).
+ × server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 510ms
+   → expected { id: 1, jobId: 1, …(11) } to match object { Object (status, attempt, ...) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { id: 1, jobId: 1, …(11) } to match object { Object (status, attempt, ...) }
+ ❯ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts:89:18
+      Tests  1 failed | 2 skipped (3)
