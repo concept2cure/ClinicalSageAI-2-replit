@@ -24,6 +24,7 @@ import { registerRowMinWidth } from './registerGrid';
 import { listOf } from './changeHooks';
 import { formatDate } from './data';
 import { Kpi } from './Kpi';
+import { CapaActions } from './CapaActions';
 import { shellProgramId } from '../v2/shellProject';
 import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL,
@@ -65,6 +66,8 @@ interface RegisterConfig<R extends { id: number | string }> {
   rowActions?: RowAction<R>[];
   ask: string;
   askRow: (r: R) => string;
+  /** What a row opens to, under it; its first cell becomes the toggle. */
+  detail?: { label: string; render: (r: R, onChanged: () => void) => React.ReactNode };
 }
 
 const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
@@ -239,6 +242,7 @@ const CAPAS: RegisterConfig<CapaRow> = {
       },
     },
   ],
+  detail: { label: 'Show action items', render: (r, onChanged) => <CapaActions capa={r} onChanged={onChanged} /> },
   ask: 'Give me a read-out on CAPA: which are open past their target close, which are high risk, which effectiveness checks failed, and what each needs next.',
   askRow: (r) => `Summarise CAPA ${r.capaCode} ${r.title}: the problem, its root cause, the action plan, and what it needs next.`,
 };
@@ -553,6 +557,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
   const [refusal, setRefusal] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const writing = React.useRef(false);
+  const [openId, setOpenId] = React.useState<R['id'] | null>(null);
+  /* Bumped by every write, so an open detail re-reads what the write changed. */
+  const [version, setVersion] = React.useState(0);
   const today = new Date().toISOString().slice(0, 10);
   const grid = config.grid + ' 230px';
   const rowMin = registerRowMinWidth(grid);
@@ -566,6 +573,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
       const text = await write();
       setDrawer(null);
       setNotice(text);
+      setVersion((n) => n + 1);
       read.refresh();
     } catch (err) {
       setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
@@ -632,8 +640,14 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
             <div className="qms-empty">No {config.noun[1]} recorded yet.</div>
           )}
           {loaded && rows.map((r) => (
-            <div key={r.id} className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-              {config.columns.map((c) => <div key={c.label} className="qms-cell">{c.cell(r)}</div>)}
+            <React.Fragment key={r.id}>
+            <div className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
+              {config.columns.map((c, i) => (i === 0 && config.detail ? (
+                <button key={c.label} className="qms-cell qms-num" aria-expanded={openId === r.id} title={config.detail.label}
+                  onClick={() => setOpenId(openId === r.id ? null : r.id)}>
+                  {c.cell(r)}
+                </button>
+              ) : <div key={c.label} className="qms-cell">{c.cell(r)}</div>))}
               <div className="qms-cell qms-rowacts">
                 {config.rowActions?.filter((a) => a.show?.(r) ?? true).map((a) => (
                   <button key={a.label} className="qms-chip" title={a.title} onClick={() => open({ kind: 'row', row: r, action: a })}>
@@ -645,6 +659,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
                 </button>
               </div>
             </div>
+            {config.detail && openId === r.id && (
+              <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, read.refresh)}</div>
+            )}
+            </React.Fragment>
           ))}
         </div>
       </section>
