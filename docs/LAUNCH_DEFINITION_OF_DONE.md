@@ -921,6 +921,129 @@ questions `docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md` §1.4 left open wi
   expiry list G10, the outstanding-training list) apply this when compliance moves onto assignments (the design's
   slice 3).
 
+### P-51 — A departing tenant's regulated records leave with the tenant, after custody passes to the customer
+
+Decided 2026-10-29 under the founder's delegation of that day ("make the best decisions based on our highly
+regulated clients and their needs and the longevity of our product"). The question came from
+`docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/`: 18 tables are held out of the tenant purge
+(`PURGE_REFERRERS_NOT_ERASED`), so a tenant holding a signature, an audit row or an approval cannot be purged at all.
+
+- **Every held record is exported, then erased with the tenant.** That covers `electronic_signatures`,
+  `document_audit_trail`, `immutable_report_records`, the account and outcome logs and receipts,
+  `evidence_chain_records`, `data_lineage_records`, `governance_boundary_transitions`, `gate_approvals`,
+  `cer_approvals`, the IVDR Part 11 histories, `reg_questions`, `review_routes` and their route tasks. The export
+  carries each chain's integrity verdict and each signature's manifest, so the customer can show an inspector that
+  the copy is whole.
+- **Custody is a signed act.** Before the purge erases a held record, the customer's administrator signs that they
+  have received the export and taken custody of it. Where the organization's retention period has not elapsed for
+  any record, the attestation names those records and the customer accepts the retention obligation.
+- **The platform keeps one offboarding certificate per tenant**: the export manifest's hash, the counts per table,
+  the custody signature and the purge time. No customer content.
+- **A table whose trigger refuses DELETE is erased through a reviewed purge door** (SECURITY DEFINER, platform
+  scope, `pending_deletion`, no active legal hold), as `purge_tenant_vault_seals` is. A session-settable setting is
+  never a door.
+
+Why: retention is the sponsor's and the manufacturer's obligation (21 CFR 312.57 and 312.62, 21 CFR 820.180 and ISO
+13485 §4.2.5, EU GMP Annex 11 §17), and the platform is their processor. A customer can only keep their records for
+years if they leave with a complete, verifiable copy. Records a vendor keeps after the customer has gone cannot be
+inspected by that customer and remain a data-protection liability. Erasing them before custody passes would break
+the customer's retention. So: export, sign for custody, then erase.
+
+### P-52 — The review-route guard admits a role, not a session setting
+
+`unified_tasks_route_rows_guard` (`migrations/20261023_review_routes.sql`) lets any session that sets
+`c2c.review_route_writer = 'on'` past it, and the runtime role can set it (`guc-probe.txt` in the purge evidence). It
+converges on the platform's pattern for append-only guards: a NOLOGIN role that only the route writer's path
+assumes, as `ana_run_events_purger` does (`20261008f_ana_run_events.sql`). The file is amended in place (Rule 1), and
+the tenant purge reaches route rows through a door (P-51), not the setting. Why: a signed review workflow is a
+Part 11 record, and a control any session can switch off is not a control.
+
+### P-53 — Design history and design changes are kept per product
+
+Engineering's change-request panel reads the QMS change-control register (`qms_change_controls`) by a project key.
+`change_requests`, which nothing writes, leaves the panel. The DHF panel reads the project's own document sections
+(`c2c_document_sections`); the organization's one-kit store (`cerv2_510k_sections`) is not shown under a project.
+Why: a device or diagnostics company runs several products, and their design history file and design changes are
+per product (21 CFR 820.30(j), ISO 13485 §7.3.10). Change control has one register (zero duplication).
+
+### P-54 — The device folds' five decisions (`docs/design/DEVICE_FOLDS_2026-10-29.md`)
+
+1. **One device-filing store: `estar_submissions`.** It is on the deploy set and admits the project.
+   `c2c_submission_packages`, whose creator is on no applier, is migrated behind `to_regclass` guards and retired.
+2. **No organization-wide blocker list.** Blockers belong to a filing, from that filing's deterministic readiness
+   (EstarFilingPanel). `device-validation` and its `c2c_blockers` list retire. Its "Pass" for low-severity
+   blockers is not carried: a blocker is closed by fixing it or by a named person's signed waiver.
+3. **Device analytics joins Reporting & analytics at its tier (standard).** Reporting is a central service for
+   every client type (decision of 2026-09-26). It reads accessible projects only.
+4. **Grant continuity, not new grants.** A subscription to a folded module entitles its holder to the fold's target,
+   through one mapping in code that the entitlement resolver reads (`FOLDED_MODULE_SUCCESSORS`). No grant row is
+   written and subscriptions are kept. This covers risk and design-controls into device-engineering, ivd-completeness
+   into device-diagnostics, and every fold already made (device-vault and artifacts-center into vault,
+   part11-console into audit-trail, ana-memory into conversation-thread, setup into admin-console, ectd-publishing
+   into ectd-compile, billing into licensing). Why: a customer who paid for a capability keeps it when its screen
+   moves.
+5. **Device workstream into Projects** shows only figures computed from the project's own records; any strip figure
+   no engine computes is dropped. The Client Review Room admits the project (`admitProject`) before anything is read
+   or shared.
+
+### P-55 — A project's CMC data has one home: the CMC / Module 3 register
+
+The CMC data that `GET` and `PUT /api/concept2cure/projects/:projectId/cmc` keep in project metadata converges on
+the CMC / Module 3 register (`server/api/cmc`). Its one reader (`server/routes/c2c/tasks.ts`) moves onto the
+register, and the routes retire. Why: two CMC answers for one project is a filing risk (zero duplication).
+
+### P-56 — Signed content is not edited in place
+
+An approved or effective label, an approved translation and an accepted hazard refuse edits to the fields their
+signature binds (the content-digest recipes of `84aada8f7`). A change is a new version or a reopening, signed in its
+turn. "Changed since it was signed" stays as the detector for records signed before this rule. Why: a signature must
+stay attached to what was signed (21 CFR 11.10(e) and 11.70), and controlled records change only under change
+control (21 CFR 820.40, ISO 13485 §4.2.4).
+
+### P-57 — A translation's approval binds the source it translates
+
+The translation recipe (`labeling-translation`) moves to v2: it binds the source document's version and content
+digest as well as the translation. Why: a translation is valid only against the text it translates; approving it
+against a later source would be approving the wrong thing. RIM's label approval (`rim-product:`) binds content too
+when RIM reopens (outside the launch catalog under P-37; no session now).
+
+### P-58 — An audit-chain verdict is for those who may review the audit trail
+
+`GET /api/part11/audit-trail/chain-integrity` takes the gate the ledger takes (`requireAuditReader`). Why: audit
+trail review is a role-scoped duty, and both of Audit trail's verdicts should answer to one policy.
+
+### P-59 — Three tenant-isolation hardenings
+
+- An evidence citation may cite only its own organization's document. The Vault citation policy checks both ends
+  (`20260911_vault_evidence_citations.sql`, amended in place, made conditional on `pg_get_constraintdef` and policy
+  text). Until then, one organization can cite another's document, and that document's purge deletes the citing
+  organization's row.
+- The Vault child tables FORCE row-level security, so the table owner is no exception.
+- The public CDI reference (`migrations/20261027_cdi_public_reference_seed.sql`) carries no tenant's study as its
+  "fit" target. Today every tenant can see that a reference was tailored to NCT05330182. A new seed version drops
+  the field (Rule 1: a seed is never corrected in place), and fit is computed for each project when it is read.
+
+### P-60 — The GAMP 5 validation kit is reached in Settings, over the real route
+
+The kit (`server/routes/validation-kit.ts`, with a recorded download) is reached on administration's Settings,
+claiming only what its contents are. The unmounted `AdminConsole`, unmounted since `af973c5e8`, is deleted once the kit is reached
+there (zero duplication). Why: a regulated customer must validate the system they use (21 CFR 11.10(a), EU GMP
+Annex 11 §4), and a vendor validation package is what they ask for first. It must describe the deployed system
+truthfully, or it is worse than none.
+
+### P-61 — One subscription entry, one rate-limit source
+
+A billing administrator's account menu has one entry, "Subscription & billing", opening Licensing
+(INFORMATION_ARCHITECTURE.md §9); every member keeps "Usage & limits". The usage screen reads its rate-limit table
+from `GET /api/billing/rate-limits` instead of a copy in the client.
+
+### P-62 — Module enforcement stays off until no gated prefix denies everyone
+
+`MODULE_ENFORCEMENT` is not switched to `enforce` while any gated prefix has only claimants without a catalog row
+(38 of 283 on 2026-10-29, among them `/api/chat`, `/api/setup`, `/api/onboarding` and `/api/tenant-users`). A gate
+that fails on such a prefix comes first; enforcement follows when it is green. Why: turning enforcement on today
+would lock every customer out of AnA's own conversations.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
