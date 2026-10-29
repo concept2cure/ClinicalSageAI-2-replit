@@ -123,7 +123,7 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName,
 } & WorkstreamPlanSlots) {
   const planned = packageDestination(item, plan.primary);
   /* A feature the organization cannot open is never offered: the door goes where its fallback says, or Evidence. */
-  const destination = planned.surface && !available(planned.surface) ? planned.fallback ?? EVIDENCE_DESTINATION : planned;
+  const destination: WorkDestination = planned.surface && !available(planned.surface) ? planned.fallback ?? EVIDENCE_DESTINATION : planned;
   const further = packageFurtherDoors(item, plan).filter(door => available(door.surface));
   return (
     <details className="pj-mdx-workstream" data-work-package={item.id}>
