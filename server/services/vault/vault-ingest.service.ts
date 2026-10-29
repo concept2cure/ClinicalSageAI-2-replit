@@ -56,7 +56,8 @@ import {
 } from './vault-ingest-discard.js';
 import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers } from './vault-reupload.js';
-import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
+import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
@@ -632,11 +633,18 @@ async function admitVaultDocument(
       },
     });
 
+    // A check-in supersedes its head: the head's open review route, if any,
+    // is withdrawn on this transaction (RR1a, §2.9); its notices wait for COMMIT.
+    const routeNotices = checkIn && doc.id === candidateId && userId
+      ? await withdrawHeadReviewRoute(client, { organizationId: orgId, headId: checkIn.head.id, version, actorUserId: userId })
+      : [];
+
     // Protect possibly held bytes before COMMIT: losing its acknowledgement
     // cannot establish whether the row and audit committed.
     commitAttempted = true;
     stored.committed = true;
     await client.query('COMMIT');
+    for (const notice of routeNotices) notifyTaskEvent(notice);
     // Committed means a committed record holds THIS copy. A retry's record
     // keeps the copy it already names, and the wrapper removes this one.
     stored.committed = doc.storage_version_id === storageVersionId;

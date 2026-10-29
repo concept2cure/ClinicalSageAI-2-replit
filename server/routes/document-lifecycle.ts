@@ -89,6 +89,9 @@ import {
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import { serverError } from '../lib/api-response';
+import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
+import { ReviewRouteRefusal } from '../services/review/review-route';
+import { afterRoutedAdvance, mountReviewRouteActs, parseRoutedAdvance, routedAdvanceGate, routedSignGate, type RoutedSigningDeps } from './document-lifecycle-review-route';
 import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('document-lifecycle');
@@ -227,6 +230,11 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       try {
         return await fn(req, res);
       } catch (err) {
+        // A refusal thrown out of a transaction (rolled back, nothing written)
+        // is answered as itself; anything else is a server error.
+        if (err instanceof ReviewRouteRefusal) return res.status(err.status).json({ ok: false, error: err.code, message: err.message });
+        if (err instanceof LifecycleRecordRefusal) return res.status(409).json({ ok: false, error: err.code, message: err.message });
+        if (err instanceof SupersessionRefused) return res.status(409).json({ ok: false, error: err.code, message: `${err.message} Nothing was approved.` });
         return serverError(res, log, 'handling the document lifecycle request', err);
       }
     };
@@ -297,9 +305,12 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       /** The signer's own reason, required and validated by the route (never written for them). */
       reason: string;
       occurredAt: Date;
+      /** The review route this sign-off is made on (RR1a), carried in its record. */
+      routeId?: string;
     },
   ): Promise<ApprovalSignature> {
     const { doc, signer, binding, occurredAt } = params;
+    const onRoute = params.routeId ? { routeId: params.routeId } : {};
     const target = lifecycleTarget(doc.canonicalId);
     const meaning = LIFECYCLE_DECLARED_MEANING[params.meaning];
     const reason = params.reason;
@@ -310,7 +321,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       command: 'sign',
       target,
       reason,
-      payload: { meaning, contentDigest: binding.digest, bindingBasis: binding.basis, version: doc.version, stage: doc.stage },
+      payload: { meaning, contentDigest: binding.digest, bindingBasis: binding.basis, version: doc.version, stage: doc.stage, ...onRoute },
       domain: 'regulatory',
       surface: 'document-lifecycle',
     });
@@ -319,7 +330,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       userId: signer.userId,
       target,
       reason,
-      payload: { meaning },
+      payload: { meaning, ...onRoute },
       actionId: gov.actionId,
       auditId: gov.auditId,
       sha256Chain: gov.sha256Chain,
@@ -446,6 +457,9 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
   const send = (res: Response, outcome: Outcome): Response | void =>
     'responded' in outcome ? undefined : res.status(outcome.status).json(outcome.body);
   const refusalBody = (err: LifecycleRecordRefusal) => ({ ok: false, error: err.code, message: err.message });
+  /** The router's one ceremony, handed to the review route (RR1a); its notices wait for COMMIT. */
+  const routedDeps: RoutedSigningDeps = { signingPrecheck, reverifiedSigner, recordLifecycleSignature, bindingsFactory };
+  const sendNotices = (notices: TaskEventNotice[]) => notices.forEach((n) => notifyTaskEvent(n));
 
   /**
    * Record the review sign-off (Part 11) for the current review round.
@@ -471,13 +485,15 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (noReason) return res.status(400).json(noReason);
     const reason = String(req.body.reason).trim();
     const id = String(req.params.id);
-    if (meaning === 'reviewed') await askSigningAuthority(req);
+    await askSigningAuthority(req);
 
-    let outcome: Outcome;
-    try {
-      outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
+    const notices: TaskEventNotice[] = [];
+    const outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
         const existing = await loadProjectionInput(tx, id, organizationId, { forUpdate: true });
         if (!existing) return { status: 404, body: { ok: false, error: 'not_found' } };
+        // A routed record signs only through its route (RR1a, B3/B8).
+        const routed = await routedSignGate(req, res, tx, routedDeps, { doc: existing, meaning, reason, notices });
+        if (routed) return routed;
         if (meaning === 'approved') {
           return {
             status: 409,
@@ -517,10 +533,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         if (!event) throw new Error(`Canonical document ${id} disappeared while its sign-off was recorded`);
         return { status: 200, body: { ok: true, signature } };
       });
-    } catch (err) {
-      if (err instanceof LifecycleRecordRefusal) return res.status(409).json(refusalBody(err));
-      throw err;
-    }
+    sendNotices(notices);
     return send(res, outcome);
   }));
 
@@ -543,14 +556,18 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     // Approving signs, so it carries the signer's own reason (as /:id/sign does).
     const noReason = to === 'approved' ? reasonRefusal(req.body?.reason) : null;
     if (noReason) return res.status(400).json(noReason);
+    // Sending with a named route (RR1a, §2.6): the reason and the route's shape first.
+    const parsed = parseRoutedAdvance(req, to);
+    if ('status' in parsed) return res.status(parsed.status).json(parsed.body);
     const id = String(req.params.id);
     if (to === 'approved') await askSigningAuthority(req);
 
-    let outcome: Outcome;
-    try {
-      outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
+    const notices: TaskEventNotice[] = [];
+    const outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
         const input = await loadProjectionInput(tx, id, organizationId, { forUpdate: true });
         if (!input) return { status: 404, body: { ok: false, error: 'not_found' } };
+        const routeGate = await routedAdvanceGate(req, tx, { doc: input, to, route: parsed.route });
+        if ('status' in routeGate) return routeGate;
 
         const projected = projectCanonicalDocument(input);
         try {
@@ -664,20 +681,18 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
           to === 'approved' && projected.state.stage === 'in_review'
             ? await supersedeOnVaultApproval(tx, client, input, bindings, ctx)
             : [];
+        const routeId = await afterRoutedAdvance(req, tx, { doc: input, gate: routeGate, route: parsed.route, actorUserId, notices });
         return {
           status: 200,
-          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed, superseded },
+          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed, superseded, ...(routeId ? { routeId } : {}) },
         };
       });
-    } catch (err) {
-      if (err instanceof LifecycleRecordRefusal) return res.status(409).json(refusalBody(err));
-      if (err instanceof SupersessionRefused) {
-        return res.status(409).json({ ok: false, error: err.code, message: `${err.message} Nothing was approved.` });
-      }
-      throw err;
-    }
+    sendNotices(notices);
     return send(res, outcome);
   }));
+
+  // Re-send, withdraw and return on the review route (RR1a, §2.9–§2.10).
+  mountReviewRouteActs({ router, guard: requireRole(AUTHOR), wrap, getDb, deps: routedDeps });
 
   /**
    * Read the projection and verify the audit chain. The verifier RECOMPUTES every

@@ -57,6 +57,9 @@ const DOC_OTHER_ORG = '40000000-0000-4000-8000-0000000000d4';
 /** Another organisation's document that names THIS organisation's program. */
 const DOC_FOREIGN_POINTER = '40000000-0000-4000-8000-0000000000d5';
 
+const CANONICAL = '40000000-0000-4000-8000-0000000000c1';
+const CANONICAL_OTHER_ORG = '40000000-0000-4000-8000-0000000000c2';
+
 let pg: PGlite;
 let rdb: RequestDb;
 
@@ -100,6 +103,10 @@ beforeAll(async () => {
       ('TASK-CROSS', 1, NULL, 'Authoring', '${DOC_OTHER_ORG}', 'authoring_document', 'Names another org''s document', 'pending', 4),
       ('TASK-OTHER', 1, NULL, 'IND', '${DOC}', 'section', 'Not an authoring-document task', 'pending', 4);
   `);
+  // A Vault version's lifecycle record (the columns this read needs): the
+  // subject of a review route (RR1a).
+  await pg.exec(`CREATE TABLE canonical_documents (canonical_id text PRIMARY KEY, organization_id integer NOT NULL, project_id text);
+    INSERT INTO canonical_documents VALUES ('${CANONICAL}', 1, '${PROGRAM}'), ('${CANONICAL_OTHER_ORG}', 2, '${PROGRAM}');`);
   rdb = drizzle(pg) as unknown as RequestDb;
   h.db = rdb;
 }, 60_000);
@@ -109,6 +116,12 @@ afterAll(async () => {
 });
 
 describe('projectForTaskSource — the project a new task is recorded on', () => {
+  it('a task raised on a Vault version\u2019s lifecycle record: its program\u2019s project, in the caller\u2019s organisation only (RR1a)', async () => {
+    const { projectForTaskSource } = await import('../task-project');
+    expect(await projectForTaskSource(rdb, { orgId: 1, sourceEntityType: 'canonical_document', sourceEntityId: CANONICAL })).toBe(25);
+    expect(await projectForTaskSource(rdb, { orgId: 1, sourceEntityType: 'canonical_document', sourceEntityId: CANONICAL_OTHER_ORG })).toBeNull();
+  });
+
   it('a review raised on an authoring document: its program’s project record', async () => {
     const { projectForTaskSource } = await import('../task-project');
     expect(await projectForTaskSource(rdb, { orgId: 1, sourceEntityType: 'authoring_document', sourceEntityId: DOC })).toBe(25);
