@@ -353,3 +353,22 @@ describe('security review 2026-10-15: name binding gaps', () => {
     expect(verifyDeclaredTypeForName(Buffer.from([0, 1, 2, 0, 0]), 'ae.ndjson', 'application/octet-stream').ok).toBe(false);
   });
 });
+
+describe('every format the Vault admits is checked by its bytes and bound to its name (MR-08 Stage 3 step 3)', () => {
+  it('has a byte check and a name binding', async () => {
+    const { DOCUMENT_INTAKE_FORMATS } = await import('../../../shared/constants/document-intake-formats');
+    const { UPLOAD_NAME_BINDINGS } = await import('../../../shared/constants/upload-name-bindings');
+    const unbound = DOCUMENT_INTAKE_FORMATS.filter((f) => f.vault && (!f.byteCheckSupported || !UPLOAD_NAME_BINDINGS.has(f.extension)));
+    expect(unbound.map((f) => f.extension)).toEqual([]);
+  });
+
+  it('admits the define.xml stylesheet as text under the types it is sent as, and only under its own name', () => {
+    const xsl = Buffer.from('<?xml version="1.0"?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>');
+    for (const declared of ['application/xslt+xml', 'text/xsl', 'text/xml', 'application/xml', 'text/plain']) {
+      expect(verifyDeclaredTypeForName(xsl, 'define2-1.xsl', declared).ok, declared).toBe(true);
+    }
+    expect(verifyFileSignature(xsl, 'application/xslt+xml').ok).toBe(true);
+    expect(verifyFileSignature(Buffer.concat([Buffer.from('MZ'), Buffer.alloc(512, 0)]), 'application/xslt+xml').ok).toBe(false);
+    expect(verifyDeclaredTypeForName(Buffer.from('<html><script>x</script></html>'), 'page.html', 'application/xslt+xml').ok).toBe(false);
+  });
+});

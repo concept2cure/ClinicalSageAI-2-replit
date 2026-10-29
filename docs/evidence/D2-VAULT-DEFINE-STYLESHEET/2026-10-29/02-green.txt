@@ -1,0 +1,26 @@
+# Green, real PostgreSQL 16 (RLS_ENFORCE=on, app_service)
+
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xslt+xml, read as text, and stored as the type its name binds
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xsl, read as text, and stored as the type its name binds
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xml, read as text, and stored as the type its name binds
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xml, read as text, and stored as the type its name binds
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > travels with its define.xml
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is refused when its bytes are not text
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > a SAS transport file > a browser sends as octet-stream is stored as the transport type its name binds
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > a slide deck > is admitted as a ZIP container within the archive limit
+      Tests  8 passed (8)
+
+# Every dbtest that touches intake formats, name bindings, Vault ingest or text extraction (26 files)
+ Test Files  26 passed (26)
+      Tests  236 passed (236)
+
+# Every unit suite that touches them (48 files)
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 46 passed (48)
+      Tests  23 failed | 897 passed (920)
+Failing files, each failing without this change too (docs/evidence/D6/2026-10-29-archive-limits/04-baseline.txt):
+     15  FAIL  server/services/report-os/pdf/__tests__/run-pdf.test.ts
+      8  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+
+# tsc --noEmit -p tsconfig.json
+EXIT 0
