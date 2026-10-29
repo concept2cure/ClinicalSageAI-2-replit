@@ -133,6 +133,24 @@ const ABBR_STOPWORDS = new Set([
 ]);
 
 /**
+ * The trailing words of `before` whose initials spell the abbreviation's
+ * capitals ("study of an Investigational Medicinal Product" → the last three
+ * for IMP; hyphenated parts count, so "progression-free survival" spells PFS).
+ * When no run of trailing words spells it, the capture is returned as it was.
+ * CSR slice 8, 2026-10-29: the assembled CSR prints this in its §4 list.
+ */
+function matchingWords(before: string, abbr: string): string {
+  const target = abbr.replace(/[^A-Z]/g, '');
+  const words = before.split(/\s+/);
+  for (let k = 1; k <= words.length; k++) {
+    const tail = words.slice(words.length - k);
+    const initials = tail.flatMap(w => w.split('-')).map(p => p.charAt(0).toUpperCase()).join('');
+    if (initials === target) return tail.join(' ');
+  }
+  return before;
+}
+
+/**
  * Extract acronyms (2–6 uppercase letters/digits) and check whether each is
  * defined at first use via the conventional patterns:
  *   "Full Term (ABC)"  or  "ABC (Full Term)".
@@ -164,7 +182,7 @@ export function buildAbbreviationList(text: string): AbbreviationReport {
       let expansion: string | undefined;
       if (pre) {
         definedAtFirstUse = true;
-        expansion = pre[1].trim();
+        expansion = matchingWords(pre[1].trim(), abbr);
       } else if (post && /[a-z]/.test(post[1])) {
         definedAtFirstUse = true;
         expansion = post[1].trim();

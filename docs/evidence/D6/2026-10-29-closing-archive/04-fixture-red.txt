@@ -1,0 +1,15 @@
+# Trunk red from VR-19 (765f2b399): vaultSurfaceAnaContext's shared fixture answers /seals with {}, the seals card reports a failed read with role=alert, and the suite's findByRole('alert') finds two
+
+4005: FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection
+4006-TestingLibraryElementError: Found multiple elements with the role "alert"
+4007-
+4008-Here are the matching elements:
+4009-
+4010-Ignored nodes: comments, script, style
+4011-<p
+4012-  data-testid="vault-seals-error"
+4013-  role="alert"
+4014->
+4015-  The seals could not be read. This is not an empty list.
+4016-   
+4017-  <button

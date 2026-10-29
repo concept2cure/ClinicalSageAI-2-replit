@@ -1,0 +1,99 @@
+# Review red (2026-10-29): csr-assembly-review.test.ts run with the review's fixes reverted (lab ABLFL/ADT, drawn-cell receipt, empty §14 gap).
+# The two structure-read tests import readLeafTargets, added by the review; its before/after is measured in structure-read-memory.ndjson.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T10:35:23.548Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:35:23.550Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T10:35:23.551Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+[database] Database connection successful
+
+ × server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 588ms
+   → expected false to be true // Object.is equality
+ × server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 415ms
+   → expected true to be false // Object.is equality
+ × server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 417ms
+   → expected [] to include 'Section 14: the retained run holds no…'
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 113ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/csr/__tests__/csr-assembly-review.test.ts:55:62
+     53|     expect(lab.verification.ok).toBe(true);
+     54|     const rows = await receiptRows(lab.receiptPath);
+     55|     expect(rows.every(cells => cells[5] === 'not recorded')).toBe(true…
+       |                                                              ^
+     56|     expect(rows.some(cells => cells[1] === subjectId && cells[3] === '…
+     57|     expect(rows.some(cells => cells[3] === String(SAS_DAY_2024_03_01))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/csr/__tests__/csr-assembly-review.test.ts:69:34
+     67|     const result = await assembleCsr({ ...input, listingSource: { ...i…
+     68|     const demo = result.listings.find(l => l.number === '16.2.4')!;
+     69|     expect(demo.verification.ok).toBe(false);
+       |                                  ^
+     70|     expect(demo.verification.findings).toContain(`Listing 16.2.4: a ro…
+     71|     expect(demo.verification.findings.some(f => f.includes(study.demog…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete
+AssertionError: expected [] to include 'Section 14: the retained run holds no…'
+ ❯ server/services/csr/__tests__/csr-assembly-review.test.ts:81:29
+     79|     const result = await assembleCsr(input);
+     80|     expect(result.leaves.some(l => l.appendix === '14')).toBe(false);
+     81|     expect(result.bodyGaps).toContain('Section 14: the retained run ho…
+       |                             ^
+     82|     expect(result.status).toBe('incomplete');
+     83|   }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  10:35:19
+   Duration  6.95s (transform 2.66s, setup 142ms, import 4.82s, tests 1.57s, environment 0ms)
+

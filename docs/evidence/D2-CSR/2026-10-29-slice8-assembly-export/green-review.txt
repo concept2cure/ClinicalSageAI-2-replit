@@ -1,0 +1,966 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T10:37:04.069Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:37:04.071Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T10:37:04.071Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 564ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 456ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 401ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 109ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 36ms
+stderr | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:37:09.635Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:37:19.793Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:37:19.795Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:37:19.795Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.333Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.384Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.450Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.510Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.552Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.609Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.693Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.800Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence
+{
+  "timestamp": "2026-10-29T10:37:21.887Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > previews every projected blank form and preserves exact saved source identity 172ms
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.105Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.145Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.219Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.279Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.338Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.400Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.479Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.574Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes
+{
+  "timestamp": "2026-10-29T10:37:22.665Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12716c0c-2804-4c42-b861-41ff0b018df4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved-study CRF working copy through the existing authoring route > creates every editable form with honest gaps and canonical source-copy evidence 819ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > literal saved CRF values remain plain editable content > preserves hostile-looking title, item and eligibility text with escaped markup and independently checked hashes 772ms
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > saved CRF working copies remain independently editable and verifiable > reopens, saves a real editor amendment, and reuses the copy without replacing the amendment
+{
+  "timestamp": "2026-10-29T10:37:22.887Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc c93635da-3303-4c13-96f7-a27a33160282 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > saved CRF working copies remain independently editable and verifiable > reopens, saves a real editor amendment, and reuses the copy without replacing the amendment 286ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > saved CRF working copies remain independently editable and verifiable > rejects design drift after preview without writing or replacing a working copy 68ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > saved CRF working copies remain independently editable and verifiable > rejects source-metadata drift after preview without writing or replacing a working copy 63ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > saved CRF working copies remain independently editable and verifiable > rejects timestamp drift after preview without writing or replacing a working copy 59ms
+stderr | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > refuses current private-project access and revoked membership without full-source reads or writes
+{
+  "timestamp": "2026-10-29T10:37:23.225Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 3,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.389Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.440Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.537Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.619Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.665Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.728Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.808Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly
+{
+  "timestamp": "2026-10-29T10:37:23.868Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3123253e-cd87-4697-a7ec-a53809610943 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > refuses a foreign source and a different target before reading the full saved design 26ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > refuses current private-project access and revoked membership without full-source reads or writes 21ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > requires explicit association for an organization source and never associates the saved source implicitly 662ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > current source scope, association and exact selector boundaries > refuses a disabled current actor before reading or projecting their saved study 14ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector undefined without reading content 12ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector null without reading content 7ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector 17 without reading content 5ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector "" without reading content 5ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector "   " without reading content 5ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" without reading content 6ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector "saved\u0000study" without reading content 5ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > rejects malformed saved-study selector "saved\nstudy" without reading content 6ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses creation without a preview and cannot import client-pasted design content 15ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses contradictory saved design id identity 18ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses contradictory saved design programId identity 22ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses contradictory saved design organizationId identity 15ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses present invalid saved design programId null 15ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses present invalid saved design programId "" 18ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses present invalid saved design programId "not-a-program-uuid" 21ms
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > exact saved CRF selector and source identity > refuses a direct null study identity before any SQL and refuses a malformed saved null identity 3ms
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.266Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.327Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.413Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.475Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.524Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.589Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.638Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.701Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.760Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.854Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.927Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing
+{
+  "timestamp": "2026-10-29T10:37:24.980Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eb9edf1d-cb31-4197-866a-6c65aa6cf3d8 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts > recorded safety assessments reach the existing editor working copy > previews, creates and reopens exact safety fields and rejects changed safety source before writing 972ms
+stdout | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+{
+  "timestamp": "2026-10-29T10:37:26.698Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:37:26.699Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+{
+  "timestamp": "2026-10-29T10:37:26.699Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text
+{
+  "timestamp": "2026-10-29T10:37:26.971Z",
+  "level": "error",
+  "message": "[csr-section-evidence-tool] get_csr_section_evidence failed",
+  "context": {
+    "err": "relation \"submission_orchestrator_inputs\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a run whose source receipt was revoked, typed, never as an empty pack 3ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses when the person has no access to the open project 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a section no retained table supports (12.5 vital signs) instead of borrowing safety tables 2ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses without an open project or an identified member, and on a malformed selection 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > returns the §12.2 tables, their digest and limitations, within the result budget 3ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > pages a large table by whole rows instead of cutting it 9ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reports an AE count one off from aeBySOC as not reconciling, with the cell value 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reconciles figures that match and flags a figure no table holds 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses to reconcile against evidence other than the digest the draft was written from 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses malformed claims rather than reporting them reconciled 1ms
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic
+{
+  "timestamp": "2026-10-29T10:37:28.482Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic 8664ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is the first thing the clinical.study-report skill does for a results section 1123ms
+stdout | server/services/csr/__tests__/csr-assembly-scale.test.ts
+{
+  "timestamp": "2026-10-29T10:37:38.419Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:37:38.420Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-scale.test.ts
+{
+  "timestamp": "2026-10-29T10:37:38.421Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-scale.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap under a fixed ceiling 10297ms
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+{
+  "timestamp": "2026-10-29T10:37:50.968Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local visit, composes live rows, and fingerprints retained cells 117ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local assessment, composes live rows, and fingerprints retained cells 92ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a missing retired endpoint rather than dropping its retained cell 42ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-protocol retired endpoint rather than dropping its retained cell 37ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-organization retired endpoint rather than dropping its retained cell 39ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 37ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > holds an unverified controlled export while caller-executor content-only export excludes signature authority 42ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 38ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 61ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 54ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 35ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 38ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 50ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation 35ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 30ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 27ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 27ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 30ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 39ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 29ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > returns the import’s verified sections and gaps with the job’s study, retained run and newest generation time 39ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > refuses through the import’s own checks: another actor, a forged hash, a non-CSR source 33ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > reports a job with no retained run as such, never inventing one 30ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier 90ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > requires actual current source access, refuses a different target and a withdrawn saved source 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time 33ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > imports saved generated-document payloads as draft copies without transferring approval or transmission 27ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source 24ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > honors newly filed protocol scope even before its first study design and refuses binding disagreement 44ms
+stdout | server/services/csr/__tests__/csr-assembly.test.ts
+{
+  "timestamp": "2026-10-29T10:37:57.018Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:37:57.020Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly.test.ts
+{
+  "timestamp": "2026-10-29T10:37:57.020Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 635ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 650ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 729ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 356ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 130ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 157ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 393ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 14ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 292ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 462ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 444ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 397ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 863ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > composes from the bound run’s ADaM bundle, as the user, and lands §14.3.3 and §12.3.2 244ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run 14ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a hand-built source by name, as the Vault reader states it 13ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses an ADAE row that does not establish seriousness, naming the row 17ms
+stdout | server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts
+{
+  "timestamp": "2026-10-29T10:38:10.417Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:10.418Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts
+{
+  "timestamp": "2026-10-29T10:38:10.418Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts > renderStructuredLeafPdf — bookmark destinations > points every bookmark at the page its heading is drawn on 462ms
+ ✓ server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts > renderStructuredLeafPdf — bookmark destinations > nests subsections under their parent rather than flattening the tree 136ms
+stdout | server/services/csr/__tests__/csr-assembly-source.test.ts
+{
+  "timestamp": "2026-10-29T10:38:13.458Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:13.459Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-source.test.ts
+{
+  "timestamp": "2026-10-29T10:38:13.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-source.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 542ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 53ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 52ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a dotted study id and states the one-dot rule it applied 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 9ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 132ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 9ms
+ ✓ server/services/csr/__tests__/lmn201-synthetic-tables.integration.test.ts > LMN-201-like 500-subject synthetic CSR table journey > generates and reconciles source-backed ICH E3 tables with no invented statistical inference 160ms
+stdout | server/services/csr/__tests__/adam-source-derivation.test.ts
+{
+  "timestamp": "2026-10-29T10:38:17.370Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:17.371Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/adam-source-derivation.test.ts
+{
+  "timestamp": "2026-10-29T10:38:17.372Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/adam-source-derivation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent ADAE row whose subject is outside the ADSL safety population 9ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE subject that ADSL does not list, and never adds it as a participant 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unmapped planned treatment 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a reassigned actual treatment 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a subject still ongoing at the data cut 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unknown sex 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a severity outside MILD/MODERATE/SEVERE 9ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an uncoded treatment-emergent event 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a dataset in the wrong slot 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a different STUDYID 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a safety subject without exposure 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a missing variable by name, and an efficacy file for another protocol 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE that cannot establish fatal outcomes or AE discontinuations, rather than counting them 0 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH and AEOUT both blank rather than counting it 0 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH blank and AEOUT UNKNOWN rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN blank rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN UNKNOWN rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > accepts AESDTH = N with no AEOUT: the event is recorded as not fatal 6ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a last on-treatment value it cannot order, and two baselines 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > lists every ADSL subject once and no other, with populations from the flags 7ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > derives the same source from SAS transport as from Dataset-JSON 23ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.2 / §12.3 count TEAE subjects, the SAE and the fatal event against the safety population 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.1 exposure, §12.4 lab shifts and the Bayesian primary result come through 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §11.2 concomitant medications count subjects, and say when a class was not coded 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.5 is available from the vital-sign table, and its figures reconcile to their cells 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.2 reconciles the TEAE, SAE and fatal-event figures 2ms
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T10:38:19.024Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:19.026Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T10:38:19.026Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T10:38:19.542Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags the same document-level quantity stated with two different values 8ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag legitimately multi-valued quantities (n per arm, p per endpoint, week per visit) 4ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a value that is stated consistently 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not treat a leading qualifier as a second expansion 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags an acronym expanded two different ways 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags US/UK spelling drift and mixed interchangeable terms 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a single consistent spelling 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > combined report reports ok when clean 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > flags absolute safety, guarantees, and causal overreach as claims findings 24ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > does not flag appropriately hedged scientific prose 3ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > penalizes an ungrounded number and a self-contradiction, verdict revise 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > a grounded, consistent regulator paragraph passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > buildRevisionBrief lists findings most-severe first, or empty on pass 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > is well-formed and requires text 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > runs live and returns a score, verdict, and revision brief 3ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > rejects an empty draft as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > confirms a revision that fixes the finding improved and now passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > detects a non-improving revision 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > tool contract requires both texts and runs live 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > catches a value stated inconsistently ACROSS sections 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > passes a coherent two-section document 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > tool accepts supplied sections as an explicit alternative to saved records 1ms
+stdout | server/services/csr/__tests__/narrative-subject-selection.test.ts
+{
+  "timestamp": "2026-10-29T10:38:23.496Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:23.498Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/narrative-subject-selection.test.ts
+{
+  "timestamp": "2026-10-29T10:38:23.498Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/narrative-subject-selection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 16ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 9ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 15ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 24ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 3ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 2ms
+stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-29T10:38:25.017Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:25.019Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-29T10:38:25.019Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > carries every ICH_E3_GUIDANCE heading, in report order, and nothing else 8ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > uses E3's titles and nests each heading under its E3 parent 14ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > has no builder-invented synopsis or objectives children 4ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > records the E3 drafting mode on every heading 6ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > marks §1–§13 required 44ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > no longer exports the duplicate outline or a second section-number list 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a full build drafts every narrative heading that carries content, and no manual heading 9ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a selected heading drafts its narrative subtree 6ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §3 by name 2ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14 by name 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14.3.1 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §15 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16.2.7 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["99"] 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["2.1"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["5","5"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection [] 0ms
+stdout | server/services/csr/__tests__/vault-adam-bundle.test.ts
+{
+  "timestamp": "2026-10-29T10:38:26.635Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:26.637Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/vault-adam-bundle.test.ts
+{
+  "timestamp": "2026-10-29T10:38:26.637Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/vault-adam-bundle.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > previews engine tables derived from the datasets, bound to the manifest digest, with no subject identifier 41ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a run while any named file is unapproved, and previews it as not approved 9ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a dataset whose current bytes are not the version the manifest pins 3ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > carries the derivation’s typed refusal out of the Vault path 5ms
+stdout | server/services/csr/__tests__/saved-clinical-tables.test.ts
+{
+  "timestamp": "2026-10-29T10:38:27.994Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:38:27.996Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/saved-clinical-tables.test.ts
+{
+  "timestamp": "2026-10-29T10:38:27.997Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/saved-clinical-tables.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows 15ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt 3ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables 5ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > returns the verified subject rows and their tables for the job’s study, through the same checks 3ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > refuses a study the run does not hold, a source no longer approved, and an altered run, rather than assembling from nothing 2ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > countSyllables > estimates syllables for common words 2ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > rates simple prose as easy and meeting the patient target 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > flags dense regulatory prose as too complex for a patient audience, with suggestions 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > assessReadability > returns a no-text verdict for empty input 0ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > detects definitions at first use (both patterns) and counts occurrences 9ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > keeps only the words the abbreviation stands for, not the sentence before them (CSR slice 8, 2026-10-29) 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > flags abbreviations used without a first-use definition 1ms
+ ✓ server/services/ana/__tests__/medical-writing-qc.test.ts > buildAbbreviationList > ignores trivial all-caps stopwords and pure numbers 1ms
+
+ Test Files  18 passed (18)
+      Tests  224 passed (224)
+   Start at  10:36:57
+   Duration  91.30s (transform 22.02s, setup 483ms, import 33.88s, tests 52.56s, environment 3ms)
+

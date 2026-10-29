@@ -18,7 +18,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 import { supersededSql } from './vault-version-family.js';
 import { vaultLifecycleStageSql } from './vault-document-filter.js';
 import { programInOrganization } from '../c2c/program-access.js';
@@ -191,7 +191,7 @@ export async function listSeals(q: Queryable, organizationId: number, programId:
 }
 
 /** The bytes check's reader: the one verified reader, or a refusal in its words. */
-export type SealByteCheck = (doc: { id: string; contentHash: string | null }, recorded: Record<string, unknown>) => Promise<string | null>;
+export type SealByteCheck = (doc: SealDocument, recorded: Record<string, unknown>) => Promise<string | null>;
 
 /**
  * Verify a seal against the Vault as it is now. Intact only when the stored
@@ -203,7 +203,7 @@ export type SealByteCheck = (doc: { id: string; contentHash: string | null }, re
 export async function verifySeal(
   q: Queryable,
   input: { organizationId: number; programId: string; sealId: string; checkBytes?: SealByteCheck },
-): Promise<{ seal: VaultSeal; verification: SealVerification }> {
+): Promise<{ seal: VaultSeal; manifest: SealManifest; verification: SealVerification }> {
   const { rows } = await q.query(
     `SELECT s.id::text, s.program_id::text, s.reason, s.manifest, s.manifest_sha256, s.document_count, s.sealed_by, s.sealed_at,
             COALESCE(u.name, u.email) AS sealed_by_name
@@ -219,7 +219,8 @@ export async function verifySeal(
   const docs = Array.isArray(manifest?.documents) ? manifest.documents : [];
   const now = docs.length
     ? (await q.query(
-      `SELECT d.id::text AS id, d.content_hash, d.storage_version_id, d.s3_key, d.storage_provider
+      `SELECT d.id::text AS id, d.content_hash, d.file_name, d.storage_version_id, d.s3_key, d.storage_provider,
+              ${vaultBinaryAvailableSql('d')} AS binary_available
          FROM vault.documents d
         WHERE d.id = ANY($1::uuid[]) AND d.organization_id = $2 AND d.program_id = $3::uuid AND d.deleted_at IS NULL`,
       [docs.map((d) => d.id), input.organizationId, input.programId],
@@ -241,5 +242,5 @@ export async function verifySeal(
   const verdict: SealVerdict = !manifestIntact || unreadable.length
     ? 'could_not_verify'
     : changed.length ? 'changed' : 'intact';
-  return { seal, verification: { verdict, changed, unreadable, manifestIntact, bytesChecked: Boolean(input.checkBytes) } };
+  return { seal, manifest, verification: { verdict, changed, unreadable, manifestIntact, bytesChecked: Boolean(input.checkBytes) } };
 }

@@ -11,8 +11,13 @@
  *   It lists the job's headings against the canonical ICH E3 tree with their
  *   review state, records a decision as the signed-in reviewer, and hands the
  *   approved set to the existing Authoring import (workflow-source-import).
+ * - CsrNarrativeBuild sits under the section review on the same board (slice
+ *   7): "Build narratives" composes the build's patient safety narratives from
+ *   its bound run's ADaM data into §14.3.3 and §12.3.2, and the QC list shows
+ *   each subject's qualifying events, missing fields, how the prose was written,
+ *   any refusal, and whether §14.3.3 still awaits review.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { CsrSourceReceipt } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { I } from '../icons';
@@ -153,4 +158,74 @@ function SendBackForm({ reason, setReason, busy, num, onConfirm }: {
     <button type="button" className="btn" disabled={busy || !reason.trim()} onClick={onConfirm}>Record send-back</button>
     <button type="button" className="btn" disabled={busy} onClick={() => setReason(null)}>Cancel</button>
   </div>;
+}
+
+/** One row of GET /api/csr/jobs/:jobId/narratives (csr-narrative-store.ts readCsrNarrativeQc). */
+export interface CsrNarrativeQcRow {
+  subjectId: string; sequence: number; status: 'composed' | 'refused'; contentHash: string | null;
+  qc: { armName: string; categories: string[]; events: string[]; missingFields: string[]; prose: 'template' | 'model' | null;
+    model?: string; modelProseRefused?: Array<{ code: string; detail: string }>; refusal?: { reason: string } };
+}
+interface NarrativeBuildResult { status: 'complete' | 'incomplete' | 'failed' | 'stopped'; selected: number; composed: number; refused: number;
+  sections: { written: string[]; kept: string[] } }
+
+const CATEGORY: Record<string, string> = { death: 'Death', serious: 'SAE', discontinuation: 'Withdrawn for AE', aesi: 'AESI' };
+
+function narrativeOutcome(r: NarrativeBuildResult): string {
+  if (r.status === 'incomplete') return `${r.composed} of ${r.selected} narratives composed. ${r.refused} subject(s) could not be narrated from the source rows, so §14.3.3 was not written.`;
+  const kept = r.sections.kept.length ? ` §${r.sections.kept.join(', §')} already held drafted text and was kept.` : '';
+  return `${r.composed} of ${r.selected} narratives composed from the ADaM rows; §${r.sections.written.join(' and §')} written.${kept}`;
+}
+
+/** "Build narratives" and the per-subject narrative QC list, on the build board. */
+export function CsrNarrativeBuild({ jobId, headings, onChanged }: { jobId: number; headings: CsrBoardHeading[]; onChanged: () => void }) {
+  const [rows, setRows] = useState<CsrNarrativeQcRow[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ alert: boolean; text: string } | null>(null);
+  const load = useCallback(async () => {
+    const result = await apiCall<{ subjects?: CsrNarrativeQcRow[] }>('GET', `${JOBS}/${jobId}/narratives`);
+    if (result.ok && Array.isArray(result.body?.subjects)) { setRows(result.body!.subjects!); return; }
+    setMessage({ alert: true, text: apiErrorText(result, 'The narrative QC list could not be read.') });
+  }, [jobId]);
+  useEffect(() => { void load(); }, [load]);
+  const build = async () => {
+    if (busy) return;
+    setBusy(true); setMessage(null);
+    const result = await apiCall<NarrativeBuildResult>('POST', `${JOBS}/${jobId}/narratives`);
+    setBusy(false);
+    if (result.ok && result.body) { setMessage({ alert: result.body.status !== 'complete', text: narrativeOutcome(result.body) }); onChanged(); }
+    else setMessage({ alert: true, text: apiErrorText(result, 'The narratives were not composed.') });
+    await load();
+  };
+  const section = headings.find(h => h.num === '14.3.3');
+  return <section aria-label="Patient safety narratives" style={{ marginTop: 16, maxWidth: 900 }}>
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      <strong>Patient safety narratives</strong>
+      <span>Deaths, other serious adverse events, withdrawals for an adverse event and protocol-defined AESIs, from the run’s ADaM data</span>
+      <button type="button" className="btn" disabled={busy} onClick={() => void build()}>{I.fileText} {busy ? 'Building…' : 'Build narratives'}</button>
+    </div>
+    {section && section.state !== 'not_drafted' && <p>§14.3.3 is {STATE_LABEL[section.state].toLowerCase()}{section.state !== 'approved' ? '; each narrative below awaits that review' : ''}.</p>}
+    {message && <p role={message.alert ? 'alert' : 'status'}>{message.text}</p>}
+    {rows === null ? null : rows.length === 0
+      ? <p>No narratives have been composed for this build.</p>
+      : <ul aria-label="Narrative QC" style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>{rows.map(r => <NarrativeQcItem key={r.subjectId} row={r} />)}</ul>}
+  </section>;
+}
+
+function NarrativeQcItem({ row }: { row: CsrNarrativeQcRow }) {
+  const { qc } = row;
+  const prose = qc.prose === 'model' ? `Prose: ${qc.model ?? 'model'}` : qc.prose === 'template' ? 'Prose: template (facts only)' : null;
+  return <li style={{ display: 'grid', gap: 2, padding: '4px 0' }}>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <span className="mono">{row.subjectId}</span>
+      <span>{qc.armName}</span>
+      <span>{qc.events.join('; ')}</span>
+      {qc.categories.map(c => <span key={c} className="rd-chip tone-idle">{CATEGORY[c] ?? c}</span>)}
+      <span className={`rd-chip tone-${row.status === 'composed' ? 'ok' : 'warn'}`}>{row.status === 'composed' ? 'Composed' : 'Not composed'}</span>
+      {prose && <span>{prose}</span>}
+    </div>
+    {qc.refusal && <span>{qc.refusal.reason}</span>}
+    {qc.missingFields.length > 0 && <span>Not recorded in the source: {qc.missingFields.join(', ')}</span>}
+    {qc.modelProseRefused?.length ? <span>Model prose refused: {qc.modelProseRefused.map(i => i.detail).join(' ')}</span> : null}
+  </li>;
 }

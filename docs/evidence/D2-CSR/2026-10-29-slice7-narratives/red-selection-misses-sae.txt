@@ -1,0 +1,14 @@
+# RED: selection narrowed to treatment-emergent SAEs (sabotage: AESER=Y && TRTEMFL=Y), 2026-10-29T09:22:13Z
+ × server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 22ms
+ × server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 9ms
+   → SAE subject SYN-NARR-0014 was not selected: expected false to be true // Object.is equality
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 11ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 24ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI
+AssertionError: expected [ 'SYN-NARR-0004', …(35) ] to deeply equal [ 'SYN-NARR-0004', …(39) ]
+ FAIL  server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included
+AssertionError: SAE subject SYN-NARR-0014 was not selected: expected false to be true // Object.is equality
+      Tests  2 failed | 4 passed (6)

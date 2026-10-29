@@ -1,0 +1,472 @@
+{
+  "synthetic": "SYNTHETIC — slice-6 LMN-201-shaped ADaM set (adam-lmn201-synthetic.ts), invented prose and invented supplied PDFs",
+  "assembly": {
+    "status": "complete",
+    "structure": {
+      "ok": true,
+      "findings": [],
+      "bodyOutlineDepth": 4,
+      "linksChecked": 91
+    },
+    "unresolvedReferences": [],
+    "missing": [
+      {
+        "number": "16.1.6",
+        "title": "Listing of patients receiving test drug(s)/investigational product(s) from specific batches, where more than one batch was used",
+        "fileTag": "list-patients-with-batches",
+        "blocking": false,
+        "reason": "Only the sponsor can supply this document; the platform does not compose it."
+      },
+      {
+        "number": "16.1.8",
+        "title": "Audit certificates (if available)",
+        "fileTag": "audit-certificates-report",
+        "blocking": false,
+        "reason": "Only the sponsor can supply this document; the platform does not compose it."
+      },
+      {
+        "number": "16.1.10",
+        "title": "Documentation of inter-laboratory standardisation methods and quality assurance procedures if used",
+        "fileTag": "inter-laboratory-standardisation-methods-quality-assurance",
+        "blocking": false,
+        "reason": "Only the sponsor can supply this document; the platform does not compose it."
+      },
+      {
+        "number": "16.1.11",
+        "title": "Publications based on the study",
+        "fileTag": "publications-based-on-study",
+        "blocking": false,
+        "reason": "Only the sponsor can supply this document; the platform does not compose it."
+      },
+      {
+        "number": "16.1.12",
+        "title": "Important publications referenced in the report",
+        "fileTag": "publications-referenced-in-report",
+        "blocking": false,
+        "reason": "Only the sponsor can supply this document; the platform does not compose it."
+      },
+      {
+        "number": "16.2.5",
+        "title": "Compliance and/or drug concentration data (if available)",
+        "fileTag": "compliance-and-drug-concentration-data",
+        "blocking": false,
+        "reason": "The source carries no subject-level compliance or drug concentration data."
+      }
+    ],
+    "notApplicable": [
+      {
+        "number": "16.2.6",
+        "reason": "SYNTHETIC test: the source carries no subject-level efficacy data"
+      }
+    ],
+    "abbreviations": {
+      "total": 9,
+      "undefinedAtFirstUse": [
+        "E2A",
+        "ICH",
+        "LMN",
+        "LMN201",
+        "MedDRA",
+        "SYN"
+      ]
+    },
+    "stfWarnings": [],
+    "pdfa": "Leaves are PDF 1.7. PDF/A conversion is the packager’s finalizePdfA (Ghostscript) at packaging, where installed; ECTD_REQUIRE_PDFA=true refuses an unconverted leaf.",
+    "leaves": [
+      {
+        "appendix": "body",
+        "fileName": "csr-body.pdf",
+        "title": "Part B — SYNTHETIC — invented test data, not LMN-201 or any patient — Clinical Study Report",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "study-report",
+        "origin": "generated",
+        "pages": 6,
+        "bytes": 48215,
+        "sha256": "e0c15894daa2d19eb1f29a8deb42a4dc2ddd6a5b78a8a3ad66285feae4375a1f"
+      },
+      {
+        "appendix": "14",
+        "fileName": "csr-14-tables.pdf",
+        "title": "14 Tables, Figures and Graphs Referred to But Not Included in the Text",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "study-report",
+        "origin": "generated",
+        "pages": 4,
+        "bytes": 15595,
+        "sha256": "26fd77165429cf7af14df48f84db296e012a9cd4f39a1a10049596896ed869c3"
+      },
+      {
+        "appendix": "16.1.1",
+        "fileName": "csr-16-1-1-protocol.pdf",
+        "title": "16.1.1 Protocol and protocol amendments",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "protocol-or-amendment",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "9ad3831a8acd4c087a537383c2dee7742d0e2304a26d8adcaa9c399b00b4dfb3"
+      },
+      {
+        "appendix": "16.1.2",
+        "fileName": "csr-16-1-2-sample-crf.pdf",
+        "title": "16.1.2 Sample case report form (unique pages only)",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "sample-case-report-form",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "4bad4e9d80118fd467b6185ae7f576deda649687f3bb74aea6807e3cd9e10bc8"
+      },
+      {
+        "appendix": "16.1.3",
+        "fileName": "csr-16-1-3-iec-irb.pdf",
+        "title": "16.1.3 List of IECs or IRBs (plus the name of the committee chair if required by the regulatory authority) — Representative written information for patient and sample consent forms",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "iec-irb-consent-form-list",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "04198f8286da540901715eef92dcec71ae107f67f6160a748896e22d99e0ceec"
+      },
+      {
+        "appendix": "16.1.4",
+        "fileName": "csr-16-1-4-investigators.pdf",
+        "title": "16.1.4 List and description of investigators and other important participants in the study, including brief (1 page) CVs or equivalent summaries of training and experience relevant to the performance of the clinical study",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "list-description-investigator-site",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "9582e5e1db7308e4d6eedc71c628b9521d99ff628df9193025e8a187151a5f92"
+      },
+      {
+        "appendix": "16.1.5",
+        "fileName": "csr-16-1-5-signatures.pdf",
+        "title": "16.1.5 Signatures of principal or coordinating investigator(s) or sponsor’s responsible medical officer, depending on the regulatory authority’s requirement",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "signatures-investigators",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "72987ba5321deabc9977aa4a7ca334202a0e10aabbe40eba3791b7c11513592f"
+      },
+      {
+        "appendix": "16.1.7",
+        "fileName": "csr-16-1-7-randomisation.pdf",
+        "title": "16.1.7 Randomisation scheme and codes (patient identification and treatment assigned)",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "randomisation-scheme",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "2117e042332836d420b99165f62c6eda7dca188dde39e020c4df2e008f4797e1"
+      },
+      {
+        "appendix": "16.1.9",
+        "fileName": "csr-16-1-9-statistical-methods.pdf",
+        "title": "16.1.9 Documentation of statistical methods",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "statistical-methods-interim-analysis-plan",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1364,
+        "sha256": "55dad8cf80061bcb051faddf737f5c0a2a7813061d1b48193ffd88b3ab084061"
+      },
+      {
+        "appendix": "16.2.1",
+        "fileName": "csr-16-2-1-discontinued.pdf",
+        "title": "Listing 16.2.1 Discontinued patients",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "discontinued-patients",
+        "origin": "generated",
+        "pages": 1,
+        "bytes": 4227,
+        "sha256": "e7e907ef4701213cfbc1ca01381c93d2341bb667f93d6a7f63deaa22affea860"
+      },
+      {
+        "appendix": "16.2.2",
+        "fileName": "csr-16-2-2-deviations.pdf",
+        "title": "Listing 16.2.2 Protocol deviations",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "protocol-deviations",
+        "origin": "generated",
+        "pages": 1,
+        "bytes": 3589,
+        "sha256": "fa60e6f4b5f77a2530c0b6394fa9a91c3dc93da501b188ee49ac2556c5e0d651"
+      },
+      {
+        "appendix": "16.2.3",
+        "fileName": "csr-16-2-3-efficacy-exclusions.pdf",
+        "title": "Listing 16.2.3 Patients excluded from the efficacy analysis",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "patients-excluded-from-efficacy-analysis",
+        "origin": "generated",
+        "pages": 1,
+        "bytes": 4226,
+        "sha256": "a9e483c04480b7d6525a102b8953788c0ee09023d9772afab032a95d07c0de10"
+      },
+      {
+        "appendix": "16.2.4",
+        "fileName": "csr-16-2-4-demographics.pdf",
+        "title": "Listing 16.2.4 Demographic data",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "demographic-data",
+        "origin": "generated",
+        "pages": 1,
+        "bytes": 8083,
+        "sha256": "ed17c193a11d9637cffb7386dd3d4cb1072824232953e33db838b7e3e35a8483"
+      },
+      {
+        "appendix": "16.2.7",
+        "fileName": "csr-16-2-7-adverse-events.pdf",
+        "title": "Listing 16.2.7 Adverse event listings (each patient)",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "adverse-event-listings",
+        "origin": "generated",
+        "pages": 1,
+        "bytes": 5230,
+        "sha256": "410ff0cbdf7f1f7ce3ac65d4a6bdb09a1b206bfc05d209465bfb7576a6468cdc"
+      },
+      {
+        "appendix": "16.2.8",
+        "fileName": "csr-16-2-8-laboratory.pdf",
+        "title": "Listing 16.2.8 Listing of individual laboratory measurements by patient, when required by regulatory authorities",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "listing-individual-laboratory-measurements-by-patient",
+        "origin": "generated",
+        "pages": 3,
+        "bytes": 12472,
+        "sha256": "06a4503b05150355c249bf514ba5466febc442a9b6f1906e483d95411b8fd856"
+      },
+      {
+        "appendix": "16.3",
+        "fileName": "csr-16-3-crfs.pdf",
+        "title": "16.3 Case Report Forms",
+        "ctdSection": "5.3.5.1",
+        "stfFileTag": "case-report-forms",
+        "origin": "supplied",
+        "pages": null,
+        "bytes": 1362,
+        "sha256": "d00c74501048b90c2ad1b295d1941614f6870a5aa3b150a442b1f184a1e3303f"
+      }
+    ],
+    "listings": [
+      {
+        "number": "16.2.1",
+        "rows": 3,
+        "pages": 1,
+        "receiptSha256": "6cb391c54ee1b816eeb496f6c4ecea28ef6244c4b3802bc89cc902c7678325d0",
+        "verification": {
+          "number": "16.2.1",
+          "ok": true,
+          "rows": 3,
+          "findings": []
+        }
+      },
+      {
+        "number": "16.2.2",
+        "rows": 0,
+        "pages": 1,
+        "receiptSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verification": {
+          "number": "16.2.2",
+          "ok": true,
+          "rows": 0,
+          "findings": []
+        }
+      },
+      {
+        "number": "16.2.3",
+        "rows": 3,
+        "pages": 1,
+        "receiptSha256": "44d749438d05f682e07aa9c097f9944e818fe38ec2b455d83574950ffb0531af",
+        "verification": {
+          "number": "16.2.3",
+          "ok": true,
+          "rows": 3,
+          "findings": []
+        }
+      },
+      {
+        "number": "16.2.4",
+        "rows": 23,
+        "pages": 1,
+        "receiptSha256": "0d1efe4acd3b576549c16f76ff0ebbc08a648b01d474fe609358248bec78ead4",
+        "verification": {
+          "number": "16.2.4",
+          "ok": true,
+          "rows": 23,
+          "findings": []
+        }
+      },
+      {
+        "number": "16.2.7",
+        "rows": 6,
+        "pages": 1,
+        "receiptSha256": "5827c2096a7a47bffc7332cf1d2b560f70a407fcf607d8d1b0f012733bdb0bce",
+        "verification": {
+          "number": "16.2.7",
+          "ok": true,
+          "rows": 6,
+          "findings": []
+        }
+      },
+      {
+        "number": "16.2.8",
+        "rows": 69,
+        "pages": 3,
+        "receiptSha256": "b291cf1920d8af98ef222cba5b41703a05ccc2aae4dda63cf99b4ff534b6812b",
+        "verification": {
+          "number": "16.2.8",
+          "ok": true,
+          "rows": 69,
+          "findings": []
+        }
+      }
+    ],
+    "crossReferences": 15
+  },
+  "packager": {
+    "stf": {
+      "studies": 1,
+      "leaves": 16,
+      "untagged": 0
+    },
+    "crossReferenceStatus": {
+      "resolved": 15,
+      "broken": [],
+      "ok": true
+    },
+    "submissionGrade": {
+      "total": 16,
+      "pdfLeaves": 16,
+      "pdfaConverted": 0,
+      "notConverted": [
+        "csr-14-tables.pdf",
+        "csr-16-1-1-protocol.pdf",
+        "csr-16-1-2-sample-crf.pdf",
+        "csr-16-1-3-iec-irb.pdf",
+        "csr-16-1-4-investigators.pdf",
+        "csr-16-1-5-signatures.pdf",
+        "csr-16-1-7-randomisation.pdf",
+        "csr-16-1-9-statistical-methods.pdf",
+        "csr-16-2-1-discontinued.pdf",
+        "csr-16-2-2-deviations.pdf",
+        "csr-16-2-3-efficacy-exclusions.pdf",
+        "csr-16-2-4-demographics.pdf",
+        "csr-16-2-7-adverse-events.pdf",
+        "csr-16-2-8-laboratory.pdf",
+        "csr-16-3-crfs.pdf",
+        "csr-body.pdf"
+      ],
+      "allPdfA": false,
+      "agencyFormsAsIssued": []
+    },
+    "dtdStatus": {
+      "required": [
+        "ich-ectd-3-2.dtd",
+        "us-regional-v3-3.dtd",
+        "ich-stf-v2-2.dtd"
+      ],
+      "present": [],
+      "missing": [
+        "ich-ectd-3-2.dtd",
+        "us-regional-v3-3.dtd",
+        "ich-stf-v2-2.dtd"
+      ],
+      "missingStylesheets": [
+        "ectd-2-0.xsl",
+        "us-regional.xsl"
+      ],
+      "requiredStylesheets": [
+        "ectd-2-0.xsl",
+        "us-regional.xsl"
+      ],
+      "presentStylesheets": [],
+      "selfContained": false,
+      "validation": {
+        "version": 1,
+        "expectedFiles": [
+          "index.xml",
+          "m1/us/us-regional.xml",
+          "m5/5-3-5-1/syn-lmn201-b/stf-syn-lmn201-b.xml"
+        ],
+        "files": [
+          {
+            "relPath": "index.xml",
+            "wellFormed": {
+              "ran": true,
+              "valid": true,
+              "errors": [],
+              "mode": "well-formed"
+            },
+            "doctype": {
+              "valid": true,
+              "errors": []
+            },
+            "dtd": {
+              "ran": false,
+              "valid": false,
+              "mode": "dtd",
+              "errors": [
+                "Declared DTD ich-ectd-3-2.dtd is missing from the package."
+              ]
+            }
+          },
+          {
+            "relPath": "m1/us/us-regional.xml",
+            "wellFormed": {
+              "ran": true,
+              "valid": true,
+              "errors": [],
+              "mode": "well-formed"
+            },
+            "doctype": {
+              "valid": true,
+              "errors": []
+            },
+            "dtd": {
+              "ran": false,
+              "valid": false,
+              "mode": "dtd",
+              "errors": [
+                "Declared DTD us-regional-v3-3.dtd is missing from the package."
+              ]
+            }
+          },
+          {
+            "relPath": "m5/5-3-5-1/syn-lmn201-b/stf-syn-lmn201-b.xml",
+            "wellFormed": {
+              "ran": true,
+              "valid": true,
+              "errors": [],
+              "mode": "well-formed"
+            },
+            "doctype": {
+              "valid": true,
+              "errors": []
+            },
+            "dtd": {
+              "ran": false,
+              "valid": false,
+              "mode": "dtd",
+              "errors": [
+                "Declared DTD ich-stf-v2-2.dtd is missing from the package."
+              ]
+            }
+          }
+        ],
+        "integrity": {
+          "verified": [],
+          "mismatched": [],
+          "missingFiles": [],
+          "unlistedFiles": [],
+          "ok": true
+        },
+        "passed": false
+      }
+    },
+    "sizeBytes": 62742,
+    "files": 17
+  }
+}

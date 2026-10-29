@@ -1,0 +1,37 @@
+SYNTHETIC — invented test data, not LMN-201 or any patient
+
+RESULT {"status":"complete","selected":7,"composed":7,"refused":0,"resumed":0,"counts":{"death":1,"serious":4,"discontinuation":2,"aesi":2},"sections":{"written":["14.3.3","12.3.2"],"kept":[]}}
+
+=== §12.3.2 ===
+Narratives are provided for every subject in study SYN-LMN201-PROTOCOL who died (1), had any other serious adverse event (4), or discontinued study treatment because of an adverse event (2), and 2 with an adverse event of special interest as the protocol defines it. A subject in more than one category is counted in each and has one narrative. Subjects were selected from the ADSL and ADAE datasets, and every date, study day, event and outcome in the narratives is taken from those records. The 7 narratives are presented in Section 14.3.3, in treatment-group and subject order.
+
+Subjects with a narrative: SYN-NARR-0005, SYN-NARR-0004, SYN-NARR-0008, SYN-NARR-0012, SYN-NARR-0014, SYN-NARR-0024, SYN-NARR-0030.
+
+=== §14.3.3 (first 3 narratives) ===
+Narratives are provided for every subject in study SYN-LMN201-PROTOCOL who died (1), had any other serious adverse event (4), or discontinued study treatment because of an adverse event (2), and 2 with an adverse event of special interest as the protocol defines it. A subject in more than one category is counted in each and has one narrative. Subjects were selected from the ADSL and ADAE datasets, and every date, study day, event and outcome in the narratives is taken from those records.
+
+Subject SYN-NARR-0005 (LMN-201): Alanine aminotransferase increased — adverse event of special interest
+
+Subject SYN-NARR-0005, a 34-year-old male subject randomized to the LMN-201 arm in study SYN-NARR. Relevant medical history included Type 2 diabetes mellitus. Concomitant medications included PARACETAMOL. The subject received LMN-201 beginning 2026-01-09. On study day 15, the subject experienced mild Alanine aminotransferase increased. Action taken with study drug: dose not changed. The event was not serious. The outcome was reported as recovered/resolved. The investigator assessed the event as possibly related to LMN-201.
+
+The subject received LMN-201 for 28 days.
+
+Subject SYN-NARR-0004 (Placebo): Pneumonia — serious adverse event
+
+Subject SYN-NARR-0004, a 33-year-old female subject randomized to the Placebo arm in study SYN-NARR. Relevant medical history included Hypertension. Concomitant medications included PARACETAMOL. The subject received Placebo beginning 2026-01-08. On study day 10, the subject experienced moderate Pneumonia. The event was assessed as serious (criteria: hospitalization or prolonged hospitalization). Action taken with study drug: dose not changed. The outcome was reported as recovered/resolved. The investigator assessed the event as not related to Placebo.
+
+The subject received Placebo for 28 days.
+
+Subject SYN-NARR-0008 (Placebo): Septic shock — death, serious adverse event, discontinuation of study treatment for an adverse event
+
+Subject SYN-NARR-0008, a 37-year-old male subject randomized to the Placebo arm in study SYN-NARR. Relevant medical history included Hypertension. Concomitant medications included PARACETAMOL. The subject received Placebo beginning 2026-01-12. On study day 19, the subject experienced severe Septic shock. The event was assessed as serious (criteria: death). Action taken with study drug: drug withdrawn. The outcome was reported as fatal. The investigator assessed the event as not related to Placebo.
+
+The subject received Placebo for 19 days. The subject died on study day 21. The recorded cause of death was septic shoc
+
+=== QC rows ===
+{"subjectId":"SYN-NARR-0005","status":"composed","qc":{"armName":"LMN-201","categories":["aesi"],"events":["Alanine aminotransferase increased"],"missingFields":[],"prose":"template"},"contentHash":"61087b7f14385db6cafd68cbf8d3bdb509c6cdea287d4dd8d6f656c648575762"}
+{"subjectId":"SYN-NARR-0004","status":"composed","qc":{"armName":"Placebo","categories":["serious"],"events":["Pneumonia"],"missingFields":[],"prose":"template"},"contentHash":"65a80901d18dbf44ee2db4bd155891dad30dcc436ce93d64b11914f7577d05a6"}
+{"subjectId":"SYN-NARR-0008","status":"composed","qc":{"armName":"Placebo","categories":["death","serious","discontinuation"],"events":["Septic shock"],"missingFields":[],"prose":"template"},"contentHash":"3c7ebe3bbe2a63dd9947a6ef642739376eccc246f5f4dd7680b56b9cb75ce98b"}
+{"subjectId":"SYN-NARR-0012","status":"composed","qc":{"armName":"Placebo","categories":["discontinuation"],"events":["Rash"],"missingFields":[],"prose":"template"},"contentHash":"91f53b47d4d4a8302d6c7264f6031500d96c68a599caaa48b292716a673bb927"}
+{"subjectId":"SYN-NARR-0014","status":"composed","qc":{"armName":"Placebo","categories":["serious"],"events":["Pneumonia"],"missingFields":["event1.action"],"prose":"template"},"contentHash":"d8a6205fca00c4abb7df92b8d8aef3b4244247b7e5a1e3dc085909adb6cfa866"}
+{"subjectId":"SYN-NARR-0024","status":"composed","qc":{"armName":"Placebo","categories":["serious"],"events":["Pneumonia"],"missingFields":[],"prose":"template"},"contentHash":"fc6d70d5f27463cdef0a9db88b82a90e00f661238d4d8e9bf2dea6c28f58eccf"}
