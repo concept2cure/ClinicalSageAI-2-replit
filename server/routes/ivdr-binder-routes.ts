@@ -64,8 +64,17 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
     });
   }
 
+  /** A pack download whose PACK_DOWNLOADED event did not persist (recordPackDownload). */
+  class PackDownloadNotRecordedError extends Error {}
+
   // ── Safe error response ────────────────────────────────────────────────────
   function safeError(res: Response, error: any, code: string, label: string): Response {
+    if (error instanceof PackDownloadNotRecordedError) {
+      return res.status(503).json({
+        error: 'The download was refused because it could not be recorded in the audit trail. Nothing was sent.',
+        code: 'PACK_DOWNLOAD_NOT_RECORDED',
+      });
+    }
     if (error instanceof StorageIntegrityError) {
       return res.status(409).json({
         error: 'This pack artifact failed its integrity check. No file was served.',
@@ -110,7 +119,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
   }
 
   // ── Audit event emitter ────────────────────────────────────────────────────
-  async function emitAuditEvent(
+  async function writeAuditEvent(
     req: Request,
     orgId: number,
     projectId: string,
@@ -118,26 +127,43 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
     eventType: string,
     payload: Record<string, unknown>
   ): Promise<void> {
+    const userName =
+      (req as any).user?.displayName ||
+      (req as any).user?.username ||
+      (req as any).user?.email ||
+      userId;
+    // userId is the signed-in user's positive integer id (getUserId).
+    // entity_id stays 0: audit_events.entity_id is INTEGER and binder,
+    // claim, job and pack ids are UUIDs, carried in metadata.
+    const numericUserId = Number(userId);
+    const now = new Date();
+    await pool.query(
+      `INSERT INTO audit_events
+         (organization_id, event_type, entity_type, entity_id, user_id, user_name, metadata, "timestamp", created_at)
+       VALUES ($1, $2, 'ivdr_binder', 0, $3, $4, $5::json, $6, $6)`,
+      [orgId, eventType, numericUserId, userName, JSON.stringify({ ...payload, projectId }), now]
+    );
+  }
+
+  async function emitAuditEvent(...args: Parameters<typeof writeAuditEvent>): Promise<void> {
     try {
-      const userName =
-        (req as any).user?.displayName ||
-        (req as any).user?.username ||
-        (req as any).user?.email ||
-        userId;
-      // userId is the signed-in user's positive integer id (getUserId).
-      // entity_id stays 0: audit_events.entity_id is INTEGER and binder,
-      // claim, job and pack ids are UUIDs, carried in metadata.
-      const numericUserId = Number(userId);
-      const now = new Date();
-      await pool.query(
-        `INSERT INTO audit_events
-           (organization_id, event_type, entity_type, entity_id, user_id, user_name, metadata, "timestamp", created_at)
-         VALUES ($1, $2, 'ivdr_binder', 0, $3, $4, $5::json, $6, $6)`,
-        [orgId, eventType, numericUserId, userName, JSON.stringify({ ...payload, projectId }), now]
-      );
+      await writeAuditEvent(...args);
     } catch (err) {
       // Audit failures are logged but never block the primary operation
-      console.error(`[IVDR-Binder] Audit emit failed for ${eventType}:`, err);
+      console.error(`[IVDR-Binder] Audit emit failed for ${args[4]}:`, err);
+    }
+  }
+
+  /* A download is the one event here that must not be best-effort: a pack that
+     leaves the system unrecorded is a regulated file with no trace of who took
+     it (D5; recorded-downloads.contract.test.ts). It is recorded before a byte
+     is sent, and refused when the record does not persist. */
+  async function recordPackDownload(...args: Parameters<typeof writeAuditEvent>): Promise<void> {
+    try {
+      await writeAuditEvent(...args);
+    } catch (err) {
+      console.error('[IVDR-Binder] PACK_DOWNLOADED was not recorded; the download is refused:', err);
+      throw new PackDownloadNotRecordedError('PACK_DOWNLOAD_NOT_RECORDED');
     }
   }
 
@@ -988,7 +1014,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       // Storage self-consistency is not the approved pack identity: a sidecar
       // and its file can change together. Bind loaded bytes to this pack's
       // recorded format receipt, and never audit a refused read as downloaded.
-      const recordDownload = () => emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
+      const recordDownload = () => recordPackDownload(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
         packId, packVersion: pack.pack_version, format,
       });
       const serveStored = async (artifact: StorageGetResult) => {
