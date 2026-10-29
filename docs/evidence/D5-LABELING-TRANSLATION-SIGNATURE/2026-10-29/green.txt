@@ -1,0 +1,21 @@
+# green, each file alone (timeout 240), tree over b390ed22
+server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts  exit=0   Tests 23 passed (23)
+server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts  exit=0   Tests 24 passed (24)
+server/routes/__tests__/labeling-translations-shape.test.ts  exit=0   Tests 3 passed (3)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts  exit=0   Tests 28 passed (28)
+client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx  exit=0   Tests 10 passed (10)
+client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx  exit=0   Tests 3 passed (3)
+client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx  exit=0   Tests 2 passed (2)
+client/src/concept2cure/v2/__tests__/labelingMapping.test.ts  exit=0   Tests 9 passed (9)
+client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx  exit=0   Tests 4 passed (4)
+client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx  exit=0   Tests 6 passed (6)
+client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx  exit=0   Tests 4 passed (4)
+
+$ npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 18 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+(exit 0)
+
+$ npm run -s ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest] 29 passed — the gate fails on what it exists to catch.
+(exit 0)

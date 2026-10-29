@@ -1,0 +1,12 @@
+# M6: the signing-attempt limit is not mounted on the approval
+# file: server/routes/mdx-labeling.ts  (sha256 before: 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563)
+# mutation:
+#   - router.patch('/labeling/translations/:transId', requireEditorAccess, whenApproving, async
+#   + router.patch('/labeling/translations/:transId', requireEditorAccess, async
+
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × the signed approval > goes through the per-signer signing-attempt limit; a plain status change does not 7ms
+      Tests  1 failed | 22 passed (23)
+
+# restored: sha256 after = 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563  (MATCH)
