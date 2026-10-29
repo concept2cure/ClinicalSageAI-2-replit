@@ -6,6 +6,7 @@
  *   POST   /api/mdx/qms/deviations              record one (open)
  *   PATCH  /api/mdx/qms/deviations/:id          its investigation, and its status move
  *   POST   /api/mdx/qms/deviations/:id/close    close it, by electronic signature
+ *   POST   /api/mdx/qms/deviations/:id/cancel   cancel one recorded in error, by electronic signature
  *
  * The writes are server/services/qms/deviations.ts; the lifecycle is
  * shared/constants/deviation-lifecycle.ts. Each write records its audit row,
@@ -24,13 +25,14 @@ import { requireEditorAccess } from '../middleware/orgMembership';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
-  DEVIATION_CODE_STATUS, DeviationRefused, closeDeviation, recordNewDeviation, updateDeviation,
+  DEVIATION_CODE_STATUS, DeviationRefused, cancelDeviation, closeDeviation, recordNewDeviation, updateDeviation,
 } from '../services/qms/deviations';
 import { scheduleDeviationTask, type DeviationTaskSource } from '../services/qms/qms-record-tasks';
 import {
   DEVIATION_CATEGORIES, DEVIATION_CLASSIFICATIONS, DEVIATION_STATUSES, DEVIATION_TYPES,
 } from '../../shared/constants/deviation-lifecycle';
 import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import { governedReason } from './governed-reason';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -128,6 +130,30 @@ router.post('/qms/deviations/:id/close', requireEditorAccess, signedActAttempts,
     run: async (client, orgId, userId) => {
       row = await closeDeviation(client, orgId, id, userId);
       return { target, payload: { deviationNumber: row.deviation_number, classification: row.classification }, body: { data: row } };
+    },
+    afterCommit: async (_result, orgId, userId) => {
+      if (row) await scheduleDeviationTask(orgId, row as unknown as DeviationTaskSource, userId);
+    },
+  });
+});
+
+/* A deviation recorded in error is cancelled, not deleted: a signed decision
+   whose reason is the signer's, kept on the record. Not by the person who
+   recorded it (DEVIATION_SELF_CANCEL). */
+router.post('/qms/deviations/:id/cancel', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');
+  const target = `qms-deviation:${id}`;
+  let row: Record<string, unknown> | null = null;
+  await signGovernedAct(req, res, {
+    domain: 'qms',
+    target,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: DEVIATION_CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      // The ceremony has already admitted the reason; it is the cancellation's.
+      row = await cancelDeviation(client, orgId, id, userId, governedReason.parse(req.body?.reason));
+      return { target, payload: { deviationNumber: row.deviation_number, cancelled: true }, body: { data: row } };
     },
     afterCommit: async (_result, orgId, userId) => {
       if (row) await scheduleDeviationTask(orgId, row as unknown as DeviationTaskSource, userId);

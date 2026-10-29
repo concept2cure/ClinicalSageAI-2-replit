@@ -13,7 +13,7 @@ vi.mock('../../audit/audit-write-outcome', async (orig) => ({
 }));
 
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { DeviationRefused, closeDeviation, recordNewDeviation, updateDeviation } from '../deviations';
+import { DeviationRefused, cancelDeviation, closeDeviation, recordNewDeviation, updateDeviation } from '../deviations';
 
 let jdb: JourneyDb;
 const client = () => ({ query: (sql: string, params?: unknown[]) => jdb.pglite.query<Record<string, any>>(sql, params) });
@@ -75,5 +75,18 @@ describe('the deviation record', () => {
       .toMatchObject({ investigation_details: { completedBy: '9' } });
     expect(await refusal(closeDeviation(client(), 1, row.id, 9))).toBe('DEVIATION_SELF_CLOSE');
     expect(await closeDeviation(client(), 1, row.id, 8)).toMatchObject({ status: 'closed', qa_approved_by: '8' });
+  });
+
+  it('is cancelled with its reason by someone other than its recorder, stays listed, and is not changed again', async () => {
+    const { row } = await recordNewDeviation(client(), 1, 7, EM);
+    expect(await refusal(cancelDeviation(client(), 1, row.id, 7, 'Duplicate of DEV-2026-000.'))).toBe('DEVIATION_SELF_CANCEL');
+    expect(await refusal(cancelDeviation(client(), 2, row.id, 8, 'Duplicate of DEV-2026-000.'))).toBe('DEVIATION_NOT_FOUND');
+    const cancelled = await cancelDeviation(client(), 1, row.id, 8, 'Duplicate of DEV-2026-000.');
+    expect(cancelled).toMatchObject({ status: 'cancelled', metadata: { cancelled: { reason: 'Duplicate of DEV-2026-000.', by: '8' } } });
+    expect(await refusal(cancelDeviation(client(), 1, row.id, 8, 'Again.'))).toBe('DEVIATION_NOT_READY');
+    expect(await refusal(closeDeviation(client(), 1, row.id, 8))).toBe('DEVIATION_NOT_READY');
+    expect(await refusal(updateDeviation(client(), 1, row.id, { rootCause: 'After cancel.' }, 8))).toBe('DEVIATION_MOVE_REFUSED');
+    expect(await refusal(updateDeviation(client(), 1, (await recordNewDeviation(client(), 1, 7, { ...EM, deviationNumber: 'DEV-2026-002' })).row.id,
+      { status: 'cancelled' }, 7))).toBe('DEVIATION_MOVE_REFUSED');
   });
 });

@@ -41,9 +41,12 @@ export interface DeviationRow {
   target_closure_date: string | null;
   actual_closure_date: string | null;
   qa_approved_by: string | null;
+  /** The signed cancellation of a deviation recorded in error: its reason, who and when. */
+  metadata?: { cancelled?: { reason?: string; by?: string; at?: string } } | null;
 }
 export const DEVIATION_STATUS_LABEL: Record<string, string> = {
   open: 'Open', under_investigation: 'Under investigation', pending_approval: 'Pending approval', closed: 'Closed',
+  cancelled: 'Cancelled',
 };
 export const DEVIATION_CLASS_LABEL: Record<string, string> = { minor: 'Minor', major: 'Major', critical: 'Critical' };
 export const DEVIATION_TYPE_LABEL: Record<string, string> = { unplanned: 'Unplanned', planned: 'Planned' };

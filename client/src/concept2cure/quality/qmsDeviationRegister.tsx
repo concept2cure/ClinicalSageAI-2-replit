@@ -3,14 +3,15 @@
  *
  * A deviation is a departure from an approved procedure or instruction. It is
  * recorded open, investigated (immediate action, root cause, resolution),
- * sent for approval and closed by a signature. The moves offered are the
+ * sent for approval and closed by a signature. One recorded in error is
+ * cancelled by a signature and stays listed with its reason. The moves offered are the
  * server's (shared/constants/deviation-lifecycle.ts); a nonconforming product
  * itself is recorded in Nonconformances.
  *
  * @module client/src/concept2cure/quality/qmsDeviationRegister
  */
 import * as React from 'react';
-import { DEVIATION_TRANSITIONS, type DeviationStatus } from '@shared/constants/deviation-lifecycle';
+import { DEVIATION_ENDED, DEVIATION_TRANSITIONS, type DeviationStatus } from '@shared/constants/deviation-lifecycle';
 import { formatDate } from './data';
 import { CAPA_SOURCE_KIND } from './capaSources';
 import {
@@ -19,11 +20,13 @@ import {
 } from './qmsRecordData';
 import { type PillTone, type RegisterConfig, type RowAction, optionsOf, pill, Refused } from './qmsRegisterKit';
 import { raiseCapaFrom } from './qmsCapaRegister';
-import { signDeviationClose } from './qmsApproval';
+import { signDeviationCancel, signDeviationClose } from './qmsApproval';
 
-const STATUS_TONE: Record<string, PillTone> = { open: 'draft', under_investigation: 'review', pending_approval: 'review', closed: 'effective' };
+const STATUS_TONE: Record<string, PillTone> = {
+  open: 'draft', under_investigation: 'review', pending_approval: 'review', closed: 'effective', cancelled: 'muted',
+};
 const CLASS_TONE: Record<string, PillTone> = { minor: 'muted', major: 'review', critical: 'err' };
-const isOpen = (r: DeviationRow) => r.status !== 'closed';
+const isOpen = (r: DeviationRow) => !DEVIATION_ENDED.includes(r.status as DeviationStatus);
 const clip = (s: string | null, n: number) => (!s ? '—' : s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 const INVESTIGATE: RowAction<DeviationRow> = {
@@ -90,6 +93,34 @@ const CLOSE: RowAction<DeviationRow> = {
   }),
 };
 
+const CANCEL: RowAction<DeviationRow> = {
+  label: 'Cancel deviation',
+  title: 'Cancel this deviation, recorded in error, with your signature',
+  show: isOpen,
+  form: (r) => ({
+    eyebrow: 'Quality',
+    title: `Cancel ${r.deviation_number}`,
+    sub: 'For a deviation recorded in error, such as a duplicate or an event that was not a departure. It stays on the register, marked cancelled, with your reason.',
+    governed: 'You sign the cancellation in the next step, and your reason is kept with it. The person who recorded the deviation does not sign its cancellation.',
+    submitLabel: 'Continue to sign',
+    fields: [],
+  }),
+  sign: (r) => ({
+    action: 'Cancel deviation',
+    target: `${r.deviation_number} ${r.title}`.slice(0, 160),
+    meta: `You cancel ${r.deviation_number} as recorded in error. It stays on the register, marked cancelled, with your reason, and is not changed again.`,
+    rows: [
+      { label: 'Class', value: DEVIATION_CLASS_LABEL[r.classification] ?? r.classification },
+      { label: 'Status', value: DEVIATION_STATUS_LABEL[r.status] ?? r.status },
+    ],
+    meanings: ['approval', 'responsibility'],
+    post: (input) => signDeviationCancel(r.id, input),
+    done: `${r.deviation_number} was cancelled.`,
+  }),
+};
+
+const cancelReason = (r: DeviationRow) => r.metadata?.cancelled?.reason ?? null;
+
 export const DEVIATIONS: RegisterConfig<DeviationRow> = {
   title: 'Deviations',
   sub:
@@ -101,7 +132,15 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
   grid: '120px minmax(0, 1fr) 96px 140px 110px 110px',
   columns: [
     { label: 'Deviation', cell: (r) => <span className="mono">{r.deviation_number}</span> },
-    { label: 'What happened', cell: (r) => <span title={r.description}>{r.title}</span> },
+    {
+      label: 'What happened',
+      cell: (r) => (
+        <span title={r.description}>
+          {r.title}
+          {r.status === 'cancelled' && cancelReason(r) ? ` (cancelled: ${cancelReason(r)})` : null}
+        </span>
+      ),
+    },
     { label: 'Class', cell: (r) => pill(CLASS_TONE[r.classification] ?? 'muted', DEVIATION_CLASS_LABEL[r.classification] ?? r.classification) },
     { label: 'Status', cell: (r) => pill(STATUS_TONE[r.status] ?? 'muted', DEVIATION_STATUS_LABEL[r.status] ?? r.status) },
     { label: 'Detected', cell: (r) => formatDate(r.detected_date) },
@@ -109,10 +148,11 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
   ],
   kpis: (rows, today) => {
     const open = rows.filter(isOpen);
+    const cancelled = rows.filter((r) => r.status === 'cancelled').length;
     const critical = open.filter((r) => r.classification === 'critical').length;
     const late = open.filter((r) => isPast(r.target_closure_date, today)).length;
     return [
-      { label: 'Open', val: String(open.length), sub: `${rows.length - open.length} closed` },
+      { label: 'Open', val: String(open.length), sub: `${rows.length - open.length - cancelled} closed${cancelled ? `, ${cancelled} cancelled` : ''}` },
       { label: 'Critical, open', val: String(critical), sub: critical ? 'Not yet closed' : 'None', tone: critical ? 'err' : 'ok' },
       { label: 'Past target close', val: String(late), sub: late ? 'Target date has passed' : 'None past due', tone: late ? 'warn' : 'ok' },
     ];
@@ -146,8 +186,9 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
     });
     return `${row.deviation_number} was recorded as open.`;
   },
-  rowActions: [INVESTIGATE, CLOSE, raiseCapaFrom<DeviationRow>({
+  rowActions: [INVESTIGATE, CLOSE, CANCEL, raiseCapaFrom<DeviationRow>({
     source: 'deviation',
+    show: (r) => r.status !== 'cancelled',
     ref: (r) => ({ kind: CAPA_SOURCE_KIND.deviation, id: String(r.id), label: r.deviation_number }),
     title: (r) => `${r.deviation_number}: ${r.title}`.slice(0, 200),
     problem: (r) => [r.description, r.root_cause ? `Root cause: ${r.root_cause}` : null].filter(Boolean).join('\n'),
@@ -158,6 +199,6 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
   facts: (r) => ({
     deviation: r.deviation_number, title: r.title, class: r.classification, status: r.status, category: r.category,
     detected: r.detected_date?.slice(0, 10) ?? null, targetClose: r.target_closure_date?.slice(0, 10) ?? null,
-    rootCause: r.root_cause, closed: r.actual_closure_date?.slice(0, 10) ?? null,
+    rootCause: r.root_cause, closed: r.actual_closure_date?.slice(0, 10) ?? null, cancelledBecause: cancelReason(r),
   }),
 };

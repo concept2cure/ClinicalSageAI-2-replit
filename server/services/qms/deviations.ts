@@ -14,13 +14,13 @@
  */
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { RequestConnectable } from '../../db/requestDb';
-import { DEVIATION_TRANSITIONS, type DeviationStatus } from '../../../shared/constants/deviation-lifecycle';
+import { DEVIATION_ENDED, DEVIATION_TRANSITIONS, type DeviationStatus } from '../../../shared/constants/deviation-lifecycle';
 
 interface SqlClient { query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, any>> }> }
 
 export const DEVIATION_CODE_STATUS: Readonly<Record<string, number>> = {
   DEVIATION_NOT_FOUND: 404, DEVIATION_NUMBER_TAKEN: 409, DEVIATION_MOVE_REFUSED: 422, DEVIATION_NOT_READY: 409,
-  DEVIATION_SELF_CLOSE: 403,
+  DEVIATION_SELF_CLOSE: 403, DEVIATION_SELF_CANCEL: 403,
 };
 
 export class DeviationRefused extends Error {
@@ -92,14 +92,17 @@ const COLUMN: Record<Exclude<keyof DeviationUpdate, 'immediateActions'>, string>
 
 async function readForMove(client: SqlClient, organizationId: number, id: number) {
   const { rows } = await client.query(
-    `SELECT status, root_cause, resolution_description, investigation_details->>'completedBy' AS completed_by
+    `SELECT status, root_cause, resolution_description, investigation_details->>'completedBy' AS completed_by, detected_by
        FROM qc_deviations WHERE id = $1 AND organization_id = $2`, [id, organizationId]);
   if (rows.length === 0) throw new DeviationRefused('DEVIATION_NOT_FOUND', 'That deviation is not in this organization.');
-  return rows[0] as { status: DeviationStatus; root_cause: string | null; resolution_description: string | null; completed_by: string | null };
+  return rows[0] as {
+    status: DeviationStatus; root_cause: string | null; resolution_description: string | null;
+    completed_by: string | null; detected_by: string | null;
+  };
 }
 
 function refusedMove(from: DeviationStatus, u: DeviationUpdate, current: Awaited<ReturnType<typeof readForMove>>): string | null {
-  if (from === 'closed') return 'A closed deviation is not changed.';
+  if (DEVIATION_ENDED.includes(from)) return `A ${from} deviation is not changed.`;
   if (!u.status || u.status === from) return null;
   if (!DEVIATION_TRANSITIONS[from].includes(u.status)) {
     return `A deviation that is ${from.replace('_', ' ')} moves to ${DEVIATION_TRANSITIONS[from].join(' or ') || 'nothing'}; it is closed only by a signature.`;
@@ -162,7 +165,32 @@ export async function closeDeviation(client: SqlClient, organizationId: number, 
     throw new DeviationRefused('DEVIATION_SELF_CLOSE',
       'You sent this deviation for approval, so another person signs its close. Nothing was signed.');
   }
-  throw new DeviationRefused('DEVIATION_NOT_READY', current.status === 'closed'
-    ? 'This deviation is already closed. Nothing was signed.'
+  throw new DeviationRefused('DEVIATION_NOT_READY', DEVIATION_ENDED.includes(current.status)
+    ? `This deviation is already ${current.status}. Nothing was signed.`
     : 'A deviation is closed once it is pending approval with its root cause and resolution recorded. Nothing was signed.');
+}
+
+/**
+ * On the signing transaction: cancel a deviation recorded in error. It stays on
+ * the register, with the signer's reason, who and when, in `metadata.cancelled`.
+ * The person who recorded it does not sign its cancellation, so no one voids
+ * their own record (ALCOA+; 21 CFR 211.192). A closed deviation is not cancelled.
+ */
+export async function cancelDeviation(
+  client: SqlClient, organizationId: number, id: number, signerId: number, reason: string,
+): Promise<Record<string, any>> {
+  const { rows } = await client.query(`UPDATE qc_deviations
+        SET status = 'cancelled', updated_at = NOW(),
+            metadata = (COALESCE(metadata::jsonb, '{}'::jsonb)
+              || jsonb_build_object('cancelled', jsonb_build_object('reason', $4::text, 'by', $3::text, 'at', NOW())))::json
+      WHERE id = $1 AND organization_id = $2 AND status IN ('open', 'under_investigation', 'pending_approval')
+        AND COALESCE(detected_by, '') <> $3
+      RETURNING *`, [id, organizationId, String(signerId), reason]);
+  if (rows.length === 1) return rows[0];
+  const current = await readForMove(client, organizationId, id);
+  if (!DEVIATION_ENDED.includes(current.status) && current.detected_by === String(signerId)) {
+    throw new DeviationRefused('DEVIATION_SELF_CANCEL',
+      'You recorded this deviation, so another person signs its cancellation. Nothing was signed.');
+  }
+  throw new DeviationRefused('DEVIATION_NOT_READY', `This deviation is ${current.status}, so it is not cancelled. Nothing was signed.`);
 }

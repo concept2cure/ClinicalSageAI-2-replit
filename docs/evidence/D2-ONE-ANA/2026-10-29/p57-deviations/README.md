@@ -131,8 +131,33 @@ deviation's investigation to be independent of it (21 CFR 211.192; ICH Q10 §2.6
     pass.
   - `qms-signed-decisions.test.ts`, `qms-governed-writes-audited.test.ts` and `QmsRecords.test.tsx` pass.
 
+## Cancelling a deviation recorded in error (2026-10-29)
+
+A deviation recorded in error, such as a duplicate or an event that was not a departure, is cancelled. It is never
+deleted.
+
+- **`cancelled` is a lifecycle end.** It joins `closed` in `DEVIATION_STATUSES` and `DEVIATION_ENDED`, and it has no
+  moves. A status PATCH to it is refused, like one to `closed`, and a cancelled deviation is not changed.
+- **`POST /qms/deviations/:id/cancel`** is a signed decision (`approval` or `responsibility`), through
+  `signGovernedAct`.
+  - `cancelDeviation` stores the signer's reason, who and when in `metadata.cancelled`, from any status that has not
+    ended.
+  - The person who recorded the deviation (`detected_by`) does not sign its cancellation (`DEVIATION_SELF_CANCEL`, 403),
+    so no one voids their own record.
+  - The task plan closes the deviation's reminder as cancelled.
+- **The register.**
+  - A "Cancel deviation" row action states both rules before the signing step.
+  - The row shows "(cancelled: reason)".
+  - The Open KPI counts cancelled deviations apart from closed ones, and the AnA facts carry the reason.
+  - Raise CAPA is not offered on a cancelled deviation.
+- **Proof.**
+  - `deviations.pglite.test.ts`: "is cancelled with its reason by someone other than its recorder…".
+    - The recorder is refused, and another tenant gets 404.
+    - Someone else cancels, and the reason is stored.
+    - A second cancel, a close, an edit, and a PATCH to `cancelled` are each refused.
+  - Mutation: deleting the `detected_by` guard fails that case, and only that case. Restoring it makes it pass.
+
 ## Owed
 
-- **Cancelling a deviation** opened in error, with a reason: not offered.
 - **A project key on a deviation**, as the nonconformance register gained in 20261029d: not added.
 
