@@ -58,9 +58,11 @@ describe('CSR scope before persistence', () => {
     await enqueueCSRBuildJob({ ...request, projectId: 11 }, { organizationId: 7, requestedBy: 5 });
     expect(await rows()).toEqual([{ organization_id: 7, project_id: 11 }]);
   });
-  it('keeps genuine organization-wide builds when no target was supplied', async () => {
-    await enqueueCSRBuildJob(request, { organizationId: 7, requestedBy: 5 });
-    expect(await rows()).toEqual([{ organization_id: 7, project_id: null }]);
+  // 6f57de780 (2026-10-27, "require resolved project anchor for regulated CSR
+  // build jobs") deliberately ended organization-wide CSR builds.
+  it('refuses a build with no project or program anchor before storing a job', async () => {
+    await expect(enqueueCSRBuildJob(request, { organizationId: 7, requestedBy: 5 })).rejects.toMatchObject({ code: 'CSR_PROJECT_REQUIRED', status: 400 });
+    expect(await rows()).toEqual([]);
   });
   it('resolves a real program through its own unique anchor and rejects a foreign program or conflicting project', async () => {
     const handle = state.database as Parameters<typeof resolveCsrScope>[0];
