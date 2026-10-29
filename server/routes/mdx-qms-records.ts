@@ -33,6 +33,7 @@ import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTas
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
 import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import { recordNewNonconformance, recordNewSupplier } from '../services/qms/qms-record-create';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -101,13 +102,6 @@ const SIGNED_STANDING = "A supplier's approval standing is a signed decision: ap
 const setsStanding = (s: { approvalStatus?: string | null; approvalDate?: string | null }, create: boolean) =>
   (s.approvalStatus != null && !(create && s.approvalStatus === 'pending')) || s.approvalDate != null;
 
-function supplierInsertArgs(orgId: number, supplier: z.infer<typeof supplierCreate>): unknown[] {
-  return [orgId, supplier.supplierName, supplier.supplierCode ?? null, supplier.scope ?? null, supplier.criticality,
-    null, null, supplier.reapprovalDate ?? null,
-    supplier.qualityAgreementId ?? null, supplier.lastAuditDate ?? null, supplier.nextAuditDate ?? null,
-    supplier.isoCertifications ?? null];
-}
-
 router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -118,27 +112,12 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
   try {
     const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
     if (agreementRefusal) return clientError(res, 422, agreementRefusal);
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_suppliers (
-         organization_id, supplier_name, supplier_code, scope, criticality,
-         approval_status, approval_date, reapproval_date, quality_agreement_id,
-         last_audit_date, next_audit_date, iso_certifications
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'pending'),$7,$8,$9,$10,$11,$12)
-       RETURNING *`,
-      supplierInsertArgs(orgId, p),
-    );
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The supplier row is
-       inserted by the query above, so the qualification record stands; what the
-       caller could not tell is whether the §11.10(e) entry naming who qualified
-       a critical supplier landed with it. Now in `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.supplier.qualify',
-      resourceType: 'qms_supplier', resourceId: rows[0]?.id,
-      details: { supplierName: p.supplierName, criticality: p.criticality },
-    }, requestConnectable(req));
+    /* WO-16C #133: `meta.auditTrail` says whether the §11.10(e) entry naming who
+       qualified the supplier landed with it. One writer with AnA's register_supplier. */
+    const { row, auditTrail } = await recordNewSupplier(qmsClient(req), orgId, getUserId(req), p, requestConnectable(req));
     const actor = getUserId(req);
-    if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, [], actor);
-    return created(res, rows[0], { auditTrail });
+    if (actor) await scheduleSupplierTasks(orgId, row as SupplierTaskSource, [], actor);
+    return created(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
 
@@ -372,29 +351,11 @@ router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res:
        written. The program key (20261029d) holds every other writer to the
        same rule. Engineering reads a project's records by this column. */
     if (!(await admitProject(res, log, programId, orgId))) return;
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_nonconforming_products (
-         organization_id, nc_number, device_name, lot_or_serial, source, description,
-         detected_by, disposition, program_id
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8)
-       RETURNING *`,
-      [
-        orgId, p.ncNumber, p.deviceName ?? null, p.lotOrSerial ?? null,
-        p.source ?? null, p.description, getUserId(req), programId,
-      ],
-    );
-    /* Recording a nonconforming product is §8.3 / 21 CFR 820.90 evidence, and it
-       recorded no 21 CFR Part 11 §11.10(e) row at all — while the DISPOSITION of
-       the same NCR, forty lines below, has always recorded one. Found by the
-       review of the #133 conversion of this file, which had nothing to convert
-       here because nothing was written. The NCR row is already committed, so this
-       is a log beside it; `meta.auditTrail` says whether the log exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.nonconforming.create',
-      resourceType: 'qms_nonconforming_product', resourceId: String(rows[0].id),
-      details: { ncNumber: p.ncNumber, lotOrSerial: p.lotOrSerial ?? null, source: p.source ?? null, programId },
-    }, requestConnectable(req));
-    return created(res, rows[0], { auditTrail });
+    /* Recording a nonconforming product is §8.3 / 21 CFR 820.90 evidence: the
+       record carries its §11.10(e) row, and `meta.auditTrail` says whether it
+       exists. One writer with AnA's log_nonconforming_product. */
+    const { row, auditTrail } = await recordNewNonconformance(qmsClient(req), orgId, getUserId(req), { ...p, programId }, requestConnectable(req));
+    return created(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'nc-create', err); }
 });
 
