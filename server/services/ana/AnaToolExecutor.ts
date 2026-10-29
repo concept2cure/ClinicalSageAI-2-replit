@@ -234,6 +234,7 @@ import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
 import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
+import { registerCsrSectionEvidenceHandlers } from './csr-section-evidence-tool.js';
 import { registerCmcKnowledgeHandlers } from './cmc-knowledge-tools.js';
 import { registerCmcQualitySummaryHandler } from './cmc-quality-summary-tool.js';
 import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
@@ -2359,6 +2360,7 @@ registerToolHandler('medical_writing_guidance', async (input) => {
     region: asStr(input.region),
     audience: asStr(input.audience),
     clientSegment: asStr(input.client_segment),
+    section: asStr(input.section),
   });
   return JSON.stringify({
     source: 'AnA Medical-Writing Knowledge Base',
@@ -16090,6 +16092,8 @@ registerDocumentCatalogHandlers(registerToolHandler);
 registerAuthoringReadHandlers(registerToolHandler);
 // The canonical regulatory record (ind/ctd), read-only — same injected-register pattern.
 registerRegulatoryKnowledgeHandlers(registerToolHandler);
+// The retained CSR evidence pack (csr/cortex-authoring-reader), read-only — same injected-register pattern.
+registerCsrSectionEvidenceHandlers(registerToolHandler);
 // The cited CMC regulatory record (cmc/knowledge), read-only — same injected-register pattern.
 registerCmcKnowledgeHandlers(registerToolHandler);
 // The 2.3 QOS of the open program, from its recorded CMC data (no model-supplied figures).

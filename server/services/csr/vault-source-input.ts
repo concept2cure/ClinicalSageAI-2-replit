@@ -1,6 +1,6 @@
 import { CsrSourceEnvelopeSchema, CSR_SOURCE_FORMAT, type CsrSourceEnvelope, type CsrSourceReceipt, type CsrSourceSelection } from '../../../shared/csr-source-input.js';
 import type { RequestConnectable, RequestSqlClient } from '../../db/requestDb.js';
-import { authorizeAuthoringProgram, AuthoringProgramAccessError } from '../authoring/authoring-program-access.js';
+import { authorizeCsrSourceProgram, CsrSourceInputError, type CsrSourceScope } from './source-access.js';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock.js';
 import { supersededSql } from '../vault/vault-version-family.js';
@@ -10,27 +10,14 @@ import { buildCSRTables, type CSRTables } from '../csr-tabulation-builders.js';
 import { createHash } from 'node:crypto';
 
 const MAX_SOURCE_BYTES = 5 * 1024 * 1024;
-export interface CsrSourceScope { organizationId: number; userId: number; programId: string }
-export class CsrSourceInputError extends Error {
-  constructor(readonly status: 400 | 403 | 404 | 409 | 413 | 422 | 503, readonly code: string, message: string,
-    readonly issues?: Array<{ path: string; message: string }>) { super(message); this.name = 'CsrSourceInputError'; }
-}
+// Defined in source-access.ts (no Vault byte reader behind it); re-exported for existing importers.
+export { authorizeCsrSourceProgram, CsrSourceInputError, type CsrSourceScope };
 type SourceRow = Record<string, unknown> & {
   id: string; document_title: string; version: string; content_hash: string; file_name: string; mime_type: string;
   storage_version_id: string | null; storage_provider: string | null; s3_key: string | null; file_size: number | string;
 };
 export interface LoadedCsrSource { source: CsrSourceReceipt; approved: boolean; tables: CSRTables; envelope: CsrSourceEnvelope }
 export interface CsrSourceInputDeps { readBytes: (row: SourceRow, organizationId: number) => Promise<Buffer> }
-
-export async function authorizeCsrSourceProgram(q: RequestSqlClient, scope: CsrSourceScope, forWrite = false) {
-  try {
-    return await authorizeAuthoringProgram(q, { tenantId: scope.organizationId, actor: { id: String(scope.userId), email: '' },
-      programId: scope.programId, forWrite });
-  } catch (error) {
-    if (error instanceof AuthoringProgramAccessError) throw new CsrSourceInputError(error.status, error.code, error.message);
-    throw error;
-  }
-}
 
 /** Candidate metadata, not a declaration that file contents have been parsed. */
 export async function listCsrVaultSources(q: RequestSqlClient, scope: CsrSourceScope) {

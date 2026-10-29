@@ -3964,6 +3964,19 @@
     "source": "knowledge"
    }
   },
+  "get_csr_section_evidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "csr-section-evidence-tool.ts register('get_csr_section_evidence')",
+   "present": {
+    "verb": "read",
+    "object": "the study's retained CSR tables",
+    "source": "engine",
+    "preview": [
+     "section"
+    ]
+   }
+  },
   "get_csr_template": {
    "class": "read",
    "writes": "none",

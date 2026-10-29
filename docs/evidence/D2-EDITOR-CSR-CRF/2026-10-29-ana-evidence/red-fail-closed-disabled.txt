@@ -1,0 +1,42 @@
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a run whose source receipt was revoked, typed, never as an empty pack 10ms
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses when the person has no access to the open project 2ms
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a section no retained table supports (12.5 vital signs) instead of borrowing safety tables 4ms
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses without an open project or an identified member, and on a malformed selection 2ms
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text 1ms
+   → expected undefined to be 'CSR_EVIDENCE_READ_FAILED' // Object.is equality
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > returns the §12.2 tables, their digest and limitations, within the result budget 4ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > pages a large table by whole rows instead of cutting it 10ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reports an AE count one off from aeBySOC as not reconciling, with the cell value 2ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reconciles figures that match and flags a figure no table holds 2ms
+ × server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses to reconcile against evidence other than the digest the draft was written from 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses malformed claims rather than reporting them reconciled 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic 10740ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is the first thing the clinical.study-report skill does for a results section 1069ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a run whose source receipt was revoked, typed, never as an empty pack
+AssertionError: expected undefined to be 'CSR_SECTION_EVIDENCE_UNAVAILABLE' // Object.is equality
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses when the person has no access to the open project
+AssertionError: expected undefined to be 'CSR_SECTION_EVIDENCE_UNAVAILABLE' // Object.is equality
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a section no retained table supports (12.5 vital signs) instead of borrowing safety tables
+AssertionError: expected undefined to be 'CSR_SECTION_EVIDENCE_UNAVAILABLE' // Object.is equality
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses without an open project or an identified member, and on a malformed selection
+AssertionError: expected undefined to be 'CSR_EVIDENCE_SELECTION_INVALID' // Object.is equality
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text
+AssertionError: expected undefined to be 'CSR_EVIDENCE_READ_FAILED' // Object.is equality
+- Expected:
+"CSR_EVIDENCE_READ_FAILED"
++ Received:
+    117|     expect(JSON.parse(raw).reason).toBe('CSR_EVIDENCE_READ_FAILED');
+ FAIL  server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses to reconcile against evidence other than the digest the draft was written from
+AssertionError: expected undefined to be 'CSR_SECTION_EVIDENCE_UNAVAILABLE' // Object.is equality
+- Expected:
++ Received:
+      Tests  6 failed | 7 passed (13)

@@ -4,7 +4,7 @@ import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.j
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock.js';
 import { STEADY_STAGES } from '../vault/vault-lifecycle.js';
 import { supersededSql } from '../vault/vault-version-family.js';
-import { CsrSourceInputError, type CsrSourceScope } from './vault-source-input.js';
+import { CsrSourceInputError, type CsrSourceScope } from './source-access.js';
 
 function parseRetainedSourceReceipts(raw: unknown): CsrSourceReceipt[] {
   if (raw === undefined) return [];
