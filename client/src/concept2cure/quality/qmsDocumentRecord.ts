@@ -1,5 +1,5 @@
 import type {DocStatus,DocType,PeriodicReviewSummary,QmsDoc} from './data';
-import type {RouteRoundView} from '../v2/surfaces/VaultReviewRoute';
+import type {RouteRoundView} from '../v2/reviewRoute/routeRound';
 export interface ServerDoc {
   id:number;doc_number:string;title:string;doc_type:string;category:string|null;version:string;status:string;
   effective_date:string|null;next_review_date:string|null;updated_at:string|null;authoring_document_id?:string|null;

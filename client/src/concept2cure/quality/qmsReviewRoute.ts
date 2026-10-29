@@ -15,7 +15,7 @@
  */
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
-import type { RouteMemberView, RouteRoundView } from '../v2/surfaces/VaultReviewRoute';
+import type { RouteMemberView, RouteRoundView } from '../v2/reviewRoute/routeRound';
 import { reviewReasonProblem } from '../v2/editor/reviewFields';
 
 export type { RouteRoundView, RouteMemberView };

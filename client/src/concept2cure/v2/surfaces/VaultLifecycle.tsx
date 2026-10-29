@@ -51,9 +51,9 @@ import {
   routeView,
   type RouteAct,
   type RouteFormMode,
-  type RouteRoundView,
   type RouteView,
 } from './VaultReviewRoute';
+import type { RouteRoundView } from '../reviewRoute/routeRound';
 
 export interface VaultSignOff {
   printedName: string | null;

@@ -52,7 +52,7 @@ import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
 import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
 import { myTurn, qmsRouteView } from './qmsReviewRoute';
-import { routeHeadline } from '../v2/surfaces/VaultReviewRoute';
+import { routeHeadline } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { reviewRowOf, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';

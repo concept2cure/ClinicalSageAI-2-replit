@@ -1,4 +1,4 @@
-import type { RouteRoundView } from '../v2/surfaces/VaultReviewRoute';
+import type { RouteRoundView } from '../v2/reviewRoute/routeRound';
 /**
  * Quality / SOP register — typed model, the Quality system template family, and
  * fixtures.
