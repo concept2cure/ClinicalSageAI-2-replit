@@ -1,0 +1,25 @@
+Green. Same database as red.txt.
+
+## §1 Part 1, after the allowlist entry. 2026-10-29T10:55:28Z
+The same install-fresh + deploy-migrate database, deploy-migrate replayed once with the entry, as every deploy does (EXECUTE revoked on 40 unreviewed SECURITY DEFINER function(s)).
+has_function_privilege('app_service', 'public.purge_tenant_vault_seals(integer)', 'EXECUTE') = t
+### server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+### tests/db/tenant-purge-artifact-records.dbtest.ts tests/db/tenant-purge-audit.dbtest.ts tests/db/security-definer-functions.dbtest.ts
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+### tests/db/vault-data-room-seal.dbtest.ts (needs a database named platform_ci_vault_fixture_*: a copy of the same database)
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
