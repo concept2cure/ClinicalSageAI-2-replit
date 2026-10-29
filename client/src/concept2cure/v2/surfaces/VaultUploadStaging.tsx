@@ -134,7 +134,8 @@ export function statusText(s: VaultUploadFileStatus | null): string | null {
   const where = s.placement === 'unfiled' || !s.folderLabel
     ? 'Unfiled, needs a folder'
     : `${s.folderLabel}, ${PLACED[s.placement]}`;
-  return `Recorded${s.version ? ` as v${s.version}` : ''} · ${where}`;
+  const recorded = `Recorded${s.version ? ` as v${s.version}` : ''} · ${where}`;
+  return s.readingText ? `${recorded} · Its text is still being read; search finds it once that is done.` : recorded;
 }
 
 /** The sentence the panel's live region says, for the state it is in. */

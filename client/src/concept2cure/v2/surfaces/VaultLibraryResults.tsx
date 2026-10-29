@@ -239,6 +239,16 @@ export interface VaultSearchShape {
   limit: number;
   offset: number;
   results: VaultSearchHit[];
+  /** Versions in scope whose text is still being read, so no search can find them yet (MR-08 Stage 3). */
+  pendingCount?: number;
+}
+
+/** What a search says about versions it cannot see yet; null when there are none. */
+export function pendingSearchNote(pendingCount: number | undefined): string | null {
+  if (!pendingCount || pendingCount < 1) return null;
+  return pendingCount === 1
+    ? '1 document is still being read and is not searched yet.'
+    : `${pendingCount} documents are still being read and are not searched yet.`;
 }
 
 export const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value is VaultSearchShape => {

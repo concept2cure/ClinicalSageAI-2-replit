@@ -152,6 +152,21 @@ describe('the find view filters by metadata on the server', () => {
   });
 });
 
+describe('versions still being read (MR-08 Stage 3)', () => {
+  it('a search says how many documents it cannot see yet, and says nothing when there are none', async () => {
+    onSearch = () => ok({ success: true, data: { query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()], pendingCount: 2 } });
+    const row = await open();
+    choose(row, 'Type', 'Module 3 · quality');
+    expect((await screen.findByTestId('vault-search-pending')).textContent).toBe('2 documents are still being read and are not searched yet.');
+    cleanup();
+    onSearch = () => ok({ success: true, data: { query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()], pendingCount: 0 } });
+    const again = await open();
+    choose(again, 'Type', 'Module 3 · quality');
+    await screen.findByText('Batch analysis report');
+    expect(screen.queryByTestId('vault-search-pending')).toBeNull();
+  });
+});
+
 describe('facet counts in the options', () => {
   const optionText = (row: HTMLElement, label: string) =>
     [...(within(row).getByLabelText(label) as HTMLSelectElement).options].map((o) => o.textContent);

@@ -85,6 +85,7 @@ export interface Queryable {
  * extraction outcome unrecorded. A re-upload (new content hash) resets the
  * comprehension tier: receipts from other bytes prove nothing about these.
  */
+/** Record a version's extraction outcome on its catalog row; resolves to the status it holds afterwards. */
 export async function recordExtractionOutcome(
   db: Queryable,
   args: {
@@ -93,8 +94,8 @@ export async function recordExtractionOutcome(
     outcome: ExtractionOutcome;
     pageCount?: number | null;
   },
-): Promise<void> {
-  await db.query(
+): Promise<string> {
+  const written = await db.query(
     `INSERT INTO vault.document_catalog (
        document_id, content_hash, catalog_status,
        extraction_method, extraction_confidence, extraction_error,
@@ -146,7 +147,11 @@ export async function recordExtractionOutcome(
                       THEN vault.document_catalog.confirmed_at ELSE NULL END,
        correction_reason = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
                            THEN vault.document_catalog.correction_reason ELSE NULL END,
-       updated_at = NOW()`,
+       updated_at = NOW()
+     -- A same-bytes re-upload whose OCR is deferred (MR-08 Stage 3) leaves a version already read as it is.
+     WHERE NOT (EXCLUDED.catalog_status = 'extraction_pending' AND vault.document_catalog.content_hash = EXCLUDED.content_hash
+                AND vault.document_catalog.catalog_status IN ('extracted', 'cataloged'))
+     RETURNING catalog_status`,
     [
       args.documentId,
       args.contentHash,
@@ -159,6 +164,9 @@ export async function recordExtractionOutcome(
       args.pageCount ?? null,
     ],
   );
+  if (written.rows.length) return String(written.rows[0].catalog_status);
+  const kept = await db.query('SELECT catalog_status FROM vault.document_catalog WHERE document_id = $1', [args.documentId]);
+  return String(kept.rows[0]?.catalog_status ?? args.outcome.status);
 }
 
 /** Interactive request-client reads require current-parent admission; actor

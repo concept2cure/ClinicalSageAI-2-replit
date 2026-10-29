@@ -77,15 +77,21 @@ export function computeCoverage(spans: Span[], charCount: number): SpanCoverageR
 // Extraction outcomes
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CatalogStatus = 'extracted' | 'extraction_failed' | 'cataloged';
+/** `extraction_pending`: admitted, its text not yet read (MR-08 Stage 3: OCR is off the request). */
+export type CatalogStatus = 'extracted' | 'extraction_failed' | 'extraction_pending' | 'cataloged';
 
 export interface ExtractionOutcome {
-  status: 'extracted' | 'extraction_failed';
+  status: 'extracted' | 'extraction_failed' | 'extraction_pending';
   method: string;
   confidence: number | null;
   error: string | null;
   charCount: number;
   wordCount: number | null;
+}
+
+/** A version whose text is still to be read: nothing about its content is claimed yet. */
+export function pendingExtractionOutcome(): ExtractionOutcome {
+  return { status: 'extraction_pending', method: 'pending', confidence: null, error: null, charCount: 0, wordCount: null };
 }
 
 /**

@@ -145,7 +145,20 @@ async function readFacets(
   return facets;
 }
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets }> {
+/**
+ * Versions in scope whose text is still being read (MR-08 Stage 3): a search
+ * cannot find them yet, and says so rather than read as complete. A scalar
+ * subquery in the count's select list, over the same organisation ($1) and
+ * permitted programs ($3). Its WHERE is inline, as a select-list subquery's
+ * is, so the statement's own WHERE is still the one that starts a line.
+ */
+function pendingInScopeSql(includeSuperseded: boolean): string {
+  return `(SELECT count(*)::int FROM vault.documents pd JOIN vault.document_catalog pc ON pc.document_id = pd.id WHERE pd.organization_id = $1
+        AND pd.deleted_at IS NULL AND pd.program_id = ANY($3::uuid[]) AND pc.catalog_status = 'extraction_pending'
+        AND ${vaultDataEligibleSql('pd')}${includeSuperseded ? '' : ` AND NOT ${supersededSql('pd')}`})`;
+}
+
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets; pendingCount: number }> {
   p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
@@ -177,7 +190,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   // The count and the page share `where`, each on its own line after FROM.
   // Count and page each carry the tenant predicate on their own text as well as
   // through `where` ($1 is the organisation), so neither depends on the fragment.
-  const counted = await db.query(`SELECT count(*)::int AS total
+  const counted = await db.query(`SELECT count(*)::int AS total, ${pendingInScopeSql(Boolean(p.includeSuperseded))} AS pending
        FROM vault.documents d
       WHERE d.organization_id = $1 AND ${where}`, params);
   const page = [...params, p.limit, p.offset];
@@ -214,6 +227,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
     ...(facets ? { facets } : {}),
     mode: browse ? 'browse' : 'search',
     total: counted.rows[0]?.total ?? 0,
+    pendingCount: Number(counted.rows[0]?.pending ?? 0),
     results: rows.rows.map((r) => ({
       originalFileAvailable: r.original_file_available ?? true,
       disposition: r.disposition ?? null,
