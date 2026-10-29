@@ -40,8 +40,11 @@ import { useEngineering, type PanelScope } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
+import { useReportPanelsContext, type EngineeringPanelsContextProps } from './engineeringPanelsContext';
 
-export interface EngineeringSurfaceProps {
+/* `onPanelsContext` (EngineeringPanelsContextProps) hands the risk register's
+   and the trace's AnA context to the host, which publishes device-engineering's. */
+export interface EngineeringSurfaceProps extends EngineeringPanelsContextProps {
   program: Program | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   /** Open a document in the editor — host wires this to the v2 editor route. */
@@ -110,11 +113,7 @@ function listOf(items: string[], conj: 'or' | 'and'): string {
   return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${conj} ${items[items.length - 1]}`;
 }
 
-export function EngineeringSurface({
-  program,
-  onAskAna,
-  onOpenEditor,
-}: EngineeringSurfaceProps) {
+export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsContext }: EngineeringSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
   const live = useEngineering(program?.id ?? null);
@@ -130,6 +129,9 @@ export function EngineeringSurface({
   };
   const risk = useRiskRegister({ ...scoped, surfaceId: 'device-engineering' });
   const designControls = useDesignControlsTrace(scoped);
+  /* What AnA may see of both panels goes to the host, which publishes
+     device-engineering's context (./engineeringPanelsContext.ts). */
+  useReportPanelsContext(onPanelsContext, program, risk.anaContext, designControls.anaContext);
 
   /* Derived views read through readyRows: they yield [] for every
      non-ready state, and the surrounding DataGate has already told the

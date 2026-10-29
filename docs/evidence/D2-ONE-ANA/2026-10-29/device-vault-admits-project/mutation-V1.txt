@@ -1,0 +1,25 @@
+# V1: the list does not ask admitProject
+# file: server/routes/mdx-vault.ts
+# test: server/routes/__tests__/mdx-vault-admits-project.test.ts
+# mutation (find -> replace):
+-      if (!(await admitProject(res, log, programId, orgId))) return;
+-  
++  
+   ---
+
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses another organization's project with 404, and reads no artifact and no upload 19ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses a project that does not exist with 404, and reads no artifact and no upload 3ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses the organization's own deleted project with 404, and reads no artifact and no upload 3ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+   → expected 200 to be 503 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > reads the caller's own project after the check, both halves by organization and project 5ms
+   → expected { kind: 'read', …(2) } to deeply equal { kind: 'ownership' }
+ ✓ GET /api/mdx/vault?program_id=: the project must be the caller organization's > leaves the organization-wide list, with no project, as it was 3ms
+ ✓ GET /api/mdx/vault?program_id=: the project must be the caller organization's > still refuses a program_id that is not a uuid with 422, before any lookup 3ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+exit=1
+restored byte for byte: yes (sha256 79db068c1567476f)

@@ -24,6 +24,17 @@
  * claimed the column had been "added by the MDX migration".
  * Listing without program_id returns every artifact in the org.
  *
+ * A program_id must be the caller organization's live project before either
+ * half is read (admitProject, server/lib/admit-project.ts, over
+ * programInOrganization): 404 "Project not found" for another organization's,
+ * a missing or a deleted project, 503 when the check cannot run, and nothing
+ * read in either case. Before this, another organization's or a missing project
+ * came back 200 with no rows, and the organization's own deleted project came
+ * back with its files (D2, 2026-10-29,
+ * docs/evidence/D2-ONE-ANA/2026-10-29/device-vault-admits-project/). The
+ * artifact routes below take no program: each checks the artifact is this
+ * organization's.
+ *
  * All endpoints return the canonical { data, meta? } envelope. Tenant-
  * scoped via the caller's organizationId. Audit-logged for reads at the
  * service layer — the global mutation middleware doesn't see GETs.
@@ -36,6 +47,7 @@ import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { pool } from '../db';
 import { vaultDataEligibleSql } from '../services/document-data-disposition/eligibility.js';
+import { admitProject } from '../lib/admit-project';
 import { readAuditEvents } from './mdx-audit';
 
 const router = Router();
@@ -154,6 +166,10 @@ router.get('/vault', async (req: Request, res: Response) => {
   args.push(limit);
 
   try {
+    /* The project must be this organization's live one before anything is
+       read for it (see the header). Without a program_id this admits. */
+    if (!(await admitProject(res, log, programId, orgId))) return;
+
     const { rows } = await pool.query<VaultRow>(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status,
               a.version, a.content_hash, a.created_by_id, a.created_at, a.updated_at,

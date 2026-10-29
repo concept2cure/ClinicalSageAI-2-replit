@@ -1,0 +1,16 @@
+# F2-M2: the host merges the panels' context without checking it is the project in context
+# file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# mutation (find -> replace):
+-  if (!panels || !program || panels.programId !== String(program.id)) return base;
++  if (!panels || !program) return base;
+   ---
+
+ ✓ device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 131ms
+ × device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 131ms
+   → expected [ { …(3) } ] to deeply equal []
+ ✓ device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 117ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+exit=1
+restored byte for byte: yes (sha256 54ff51fca4efd579)
