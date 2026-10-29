@@ -1,0 +1,198 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:11:12.693Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T20:11:12.694Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:11:12.694Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/validation-kit-package.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:11:12.822Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > lists exactly VMP-001, the documents under it and TM-001 26ms
+   → expected [ 'C2C_BLOCKING_CI_GATES', …(29) ] to deeply equal [ 'IQ-001', 'OQ-001', 'OQ-002', …(16) ]
+ × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > offers nothing outside it: no CORTEX document, work order or evidence pack 5ms
+   → expected [ …(11) ] to deeply equal []
+ × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > reports each document's own version and status, as written 6ms
+   → C2C_BLOCKING_CI_GATES: expected { version: null, status: null } to deeply equal undefined
+ × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > makes no promise the package does not keep 4ms
+   → expected 'Draft validation protocols are availa…' not to match /at contract|approved/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > lists exactly VMP-001, the documents under it and TM-001
+AssertionError: expected [ 'C2C_BLOCKING_CI_GATES', …(29) ] to deeply equal [ 'IQ-001', 'OQ-001', 'OQ-002', …(16) ]
+
+- Expected
++ Received
+
+  [
+-   "IQ-001",
+-   "OQ-001",
+-   "OQ-002",
+-   "OQ-003",
+-   "OQ-004",
+-   "OQ-005",
+-   "OQ-006",
+-   "OQ-008",
+-   "RA-001",
+-   "TM-001",
+-   "URS-001",
+-   "URS-002",
+-   "URS-003",
+-   "URS-004",
+-   "URS-005",
+-   "URS-006",
+-   "URS-007",
+-   "VMP-001",
+-   "VSR-001",
++   "C2C_BLOCKING_CI_GATES",
++   "CSRA-CORTEX-001",
++   "IQ-001-INSTALLATION-QUALIFICATION",
++   "IQ-CORTEX-001",
++   "IQ_OQ_EVIDENCE_PACK",
++   "OQ-001-PROJECTS",
++   "OQ-002-VAULT",
++   "OQ-003-AUTHORING",
++   "OQ-004-SUBMISSION-CENTER",
++   "OQ-005-SUBMISSION-READINESS",
++   "OQ-006-QMS",
++   "OQ-008-CMC-MODULE-3",
++   "OQ-CORTEX-001",
++   "PQ-CORTEX-001",
++   "RA-001-RISK-ASSESSMENT",
++   "RA-CORTEX-001",
++   "TM-001-TRACEABILITY-MATRIX",
++   "TM-CORTEX-001-PART11-TRACEABILITY",
++   "URS-001-PROJECTS",
++   "URS-002-VAULT",
++   "URS-003-AUTHORING",
++   "URS-004-SUBMISSION-CENTER",
++   "URS-005-SUBMISSION-READINESS",
++   "URS-006-QMS",
++   "URS-007-CMC-MODULE-3",
++   "VMP-001-VALIDATION-MASTER-PLAN",
++   "VMP-CORTEX-001",
++   "VQ-CORTEX-001",
++   "VSR-001-VALIDATION-SUMMARY-REPORT",
++   "VSR-CORTEX-001",
+  ]
+
+ ❯ server/routes/__tests__/validation-kit-package.test.ts:80:32
+     78|     expect(res.status).toBe(200);
+     79|     const listed = (res.body.artifacts as Array<{ docId: string }>).ma…
+     80|     expect([...listed].sort()).toEqual([...expected.keys()].sort());
+       |                                ^
+     81|     expect(listed[0], 'the master plan first').toBe('VMP-001');
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > offers nothing outside it: no CORTEX document, work order or evidence pack
+AssertionError: expected [ …(11) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "C2C_BLOCKING_CI_GATES C2C_BLOCKING_CI_GATES.md",
++   "IQ_OQ_EVIDENCE_PACK IQ_OQ_EVIDENCE_PACK.md",
++   "VMP-CORTEX-001 VMP-CORTEX-001-VALIDATION_MASTER_PLAN.md",
++   "IQ-CORTEX-001 IQ-CORTEX-001-INSTALLATION_QUALIFICATION.md",
++   "OQ-CORTEX-001 OQ-CORTEX-001-OPERATIONAL_QUALIFICATION.md",
++   "PQ-CORTEX-001 PQ-CORTEX-001-PERFORMANCE_QUALIFICATION.md",
++   "RA-CORTEX-001 RA-CORTEX-001-ISO14971_RISK_ANALYSIS.md",
++   "TM-CORTEX-001-PART11-TRACEABILITY TM-CORTEX-001-PART11-TRACEABILITY.md",
++   "VQ-CORTEX-001 VQ-CORTEX-001-CLOUD_VENDOR_QUALIFICATION.md",
++   "VSR-CORTEX-001 VSR-CORTEX-001-VALIDATION_SUMMARY_REPORT.md",
++   "CSRA-CORTEX-001 CSRA-CORTEX-001-HIPAA_FDA_SECURITY_ASSESSMENT.md",
++ ]
+
+ ❯ server/routes/__tests__/validation-kit-package.test.ts:87:91
+     85|     const res = await request(app()).get('/api/validation-kit');
+     86|     const files = (res.body.artifacts as Array<{ docId: string; file: …
+     87|     expect(files.filter(f => /CORTEX|C2C_BLOCKING_CI_GATES|IQ_OQ_EVIDE…
+       |                                                                                           ^
+     88|     for (const outside of ['VMP-CORTEX-001', 'IQ-CORTEX-001', 'C2C_BLO…
+     89|       const one = await request(app()).get(`/api/validation-kit/${outs…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > reports each document's own version and status, as written
+AssertionError: C2C_BLOCKING_CI_GATES: expected { version: null, status: null } to deeply equal undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "status": null,
+  "version": null,
+}
+
+ ❯ server/routes/__tests__/validation-kit-package.test.ts:98:65
+     96|     const res = await request(app()).get('/api/validation-kit');
+     97|     for (const a of res.body.artifacts as Array<{ docId: string; versi…
+     98|       expect({ version: a.version, status: a.status }, a.docId).toEqua…
+       |                                                                 ^
+     99|       expect(a.status, `${a.docId} records a status`).toBeTruthy();
+    100|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > makes no promise the package does not keep
+AssertionError: expected 'Draft validation protocols are availa…' not to match /at contract|approved/i
+
+- Expected:
+/at contract|approved/i
+
++ Received:
+"Draft validation protocols are available for download. Executed and approved records are provided through QA at contract."
+
+ ❯ server/routes/__tests__/validation-kit-package.test.ts:107:31
+    105|   it('makes no promise the package does not keep', async () => {
+    106|     const res = await request(app()).get('/api/validation-kit');
+    107|     expect(res.body.note).not.toMatch(/at contract|approved/i);
+       |                               ^
+    108|   });
+    109| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  20:11:11
+   Duration  2.51s (transform 1.40s, setup 65ms, import 2.18s, tests 44ms, environment 0ms)
+

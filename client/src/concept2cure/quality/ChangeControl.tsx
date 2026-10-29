@@ -65,6 +65,7 @@ import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
+import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import type { ChangeType, Classification, Relationship } from './changeData';
 
 export interface ChangeControlProps {
@@ -103,6 +104,9 @@ const optionsOf = <K extends string>(labels: Record<K, string>) =>
 const unsignedMovesOf = (c: ChangeControlRow): Exclude<ChangeState, 'approved'>[] =>
   (c.nextStates ?? []).filter((s): s is Exclude<ChangeState, 'approved'> => s !== 'approved');
 
+/** The open project as the change form names it. */
+const projectName = (p: ShellProject | null) => (p?.code && p.title ? `${p.code} · ${p.title}` : p?.title ?? 'The open project');
+
 /** Icon element for a link type (from the shared `I` set). */
 function linkIcon(iconKey: string): React.ReactNode {
   return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
@@ -128,6 +132,10 @@ function ChangeControlSession({
 }: ChangeControlProps) {
   const sum = useChangeSummary();
   const user = useAuthUser(); // display only; the server resolves the signer
+  /* P-60: a change may be filed under the open project, which that project's
+     Engineering screen reads; the server admits it before writing. */
+  const shell = useShellProject();
+  const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
@@ -532,6 +540,8 @@ function ChangeControlSession({
               { key: 'classification', label: 'Classification', type: 'seg', half: true, options: optionsOf(CLASSIFICATION_LABEL) },
               { key: 'description', label: 'Current state → proposed state', type: 'textarea', rows: 3 },
               { key: 'reason', label: 'Reason for the change', type: 'textarea', rows: 3, required: true },
+              ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
+                desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
             ],
           }}
           onCancel={() => setDrawer(null)}
@@ -542,6 +552,7 @@ function ChangeControlSession({
               changeType: (v.changeType || undefined) as ChangeType | undefined,
               classification: (v.classification || undefined) as Classification | undefined,
               targetImplementationDate: v.targetImplementationDate || undefined,
+              programId: v.programId || undefined,
             });
             return `${row.change_number} was raised as a proposed change.`;
           })}

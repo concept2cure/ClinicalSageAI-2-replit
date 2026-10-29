@@ -652,7 +652,7 @@ fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/`, `foldSetup.test.t
 - [x] Set the retention period: the same card; admin-console claims `/api/vault/legal-holds/retention`.
 - [x] List, place and lift legal holds: `LegalHoldsCard` mounted on Settings. Vault does not offer "Place legal hold"; reaching it needs the form to take a preset project and document. Handed on.
 - [x] Ask AnA to summarise the configuration: admin-console's `facts.configuration` and summary sentence, only while Settings shows it, and "Ask AnA to summarise this configuration" in the tab head (`adminConsoleSettings.test.tsx`).
-- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx` `AdminConsole`, unmounted since `af973c5e8` (2026-07-27). Goes to: a card in Settings, if the founder chooses. Not real today; not carried.
+- [x] GAMP 5 validation kit: `ValidationKitCard` mounted on Settings (decision P-67, 2026-10-29), over `GET /api/validation-kit`, which now offers the launch package only, each document with its own recorded status. `AdminConsole` (unmounted since `af973c5e8`, 2026-07-27) is deleted (`docs/evidence/D4/2026-10-29/validation-kit-settings/`).
 
 ### Into protocol development (`protocol-dev`)
 

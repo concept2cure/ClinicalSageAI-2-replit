@@ -5,9 +5,9 @@
  * sit the project's ISO 14971 risk register and its design-controls trace,
  * the same panels the Risk and Design controls screens mount (fold F1 slice
  * B, 2026-10-29: v2/surfaces/RiskRegister.tsx and DesignControlsTrace.tsx).
- * The panels still read by organization (DHF strip, change requests,
- * non-conformances) collapse into a "Situational awareness" accordion the
- * user expands on demand.
+ * The project's design history (its document sections), change requests and
+ * non-conformances collapse into a "Situational awareness" accordion the user
+ * expands on demand (EngineeringDesignHistory.tsx draws the first, P-60).
  *
  * ## Data honesty
  *
@@ -41,6 +41,7 @@ import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
 import { useReportPanelsContext, type EngineeringPanelsContextProps } from './engineeringPanelsContext';
+import { EngineeringDesignHistory } from './EngineeringDesignHistory';
 
 /* `onPanelsContext` (EngineeringPanelsContextProps) hands the risk register's
    and the trace's AnA context to the host, which publishes device-engineering's. */
@@ -63,12 +64,11 @@ interface Blocker {
 
 const SEV_ORDER: Record<Blocker['severity'], number> = { err: 0, warn: 1, low: 2 };
 
-/* Slice 0 (INFORMATION_ARCHITECTURE.md, `device-engineering`): DHF, trace,
-   change requests, non-conformances and documents are read by organisation
-   only (server/routes/mdx-engineering.ts:523-530), so their rows may be
-   another project's. A panel renders only once the route reports it keyed to
-   the project; an unreported scope counts as not keyed. This replaces the
-   "Organization-wide" pill, which still drew those rows. */
+/* Slice 0 (INFORMATION_ARCHITECTURE.md, `device-engineering`): a panel read
+   by organisation may hold another project's rows, so a panel renders only
+   once the route reports it keyed to the project; an unreported scope counts
+   as not keyed. Since P-60 (2026-10-29) the route reads every panel for the
+   project. This replaces the "Organization-wide" pill, which drew those rows. */
 function keyedToProject(scope: PanelScope | undefined): boolean {
   return scope === 'program';
 }
@@ -158,7 +158,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
         list.push({
           kind: 'dhf',
           severity: d.status === 'blocked' ? 'err' : 'warn',
-          ref: `DHF §${d.num}`,
+          ref: `§${d.num}`,
           title: d.label,
           note: d.meta,
           owner: d.owner,
@@ -216,7 +216,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
      section, an undispositioned non-conformance). `recorded`: what "nothing
      recorded yet" names. */
   const blockerSources = [
-    { keyed: dhfKeyed, state: live.dhf, sub: 'DHF', found: 'draft or blocked DHF sections', left: 'DHF sections', hard: true, recorded: 'design history file' },
+    { keyed: dhfKeyed, state: live.dhf, sub: 'design history', found: 'draft or blocked document sections', left: 'document sections', hard: true, recorded: 'design history' },
     { keyed: true, state: live.risks, sub: 'risk', found: 'unverified risks', left: 'risks', hard: false, recorded: 'risk file' },
     { keyed: ecrsKeyed, state: live.ecrs, sub: 'change requests', found: 'open change requests', left: 'change requests', hard: false, recorded: 'change requests' },
     { keyed: issuesKeyed, state: live.issues, sub: 'non-conformance', found: 'non-conformances', left: 'non-conformances', hard: true, recorded: 'non-conformances' },
@@ -357,7 +357,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
               )}
             </div>
             <div className="metric-card">
-              <div className="metric-label">DHF completion</div>
+              <div className="metric-label">Mandatory sections approved</div>
               {dhfKeyed ? (
                 <>
                   <div className="metric-val">
@@ -365,7 +365,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
                     <span className="unit">%</span>
                   </div>
                   <div className="metric-meta">
-                    Required sections validated · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
+                    Across this project&apos;s documents · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
                   </div>
                 </>
               ) : (
@@ -542,45 +542,16 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
           <span className="eng-awareness-chev">{awarenessOpen ? I.down : I.right}</span>
           <h2>Situational awareness</h2>
           <span className="section-sub">
-            DHF strip · change requests · non-conformances
+            Design history · change requests · non-conformances
           </span>
         </button>
 
         {awarenessOpen && (
           <div className="eng-awareness-body">
-            <div className="section-head" style={{ marginTop: 0 }}>
-              <h2 style={{ fontSize: 14 }}>Design history file</h2>
-            </div>
-            {/* Slice 0: rows not shown until keyed to the project (see
-                keyedToProject); the gate still shows loading, failure, empty. */}
-            <DataGate
-              state={live.dhf}
-              label="DHF sections"
-              onRetry={live.refresh}
-              dense
-              emptyHint={dhfKeyed
-                ? 'Device-category sections appear here once the 510(k) section set is created.'
-                : notKeyedEmptyHint(live.scopes.dhf)}
-            >
-              {(rows) => !dhfKeyed ? (
-                <NotKeyedNote panel="dhf" scope={live.scopes.dhf} />
-              ) : (
-                <div className="eng-dhf-strip">
-                  {rows.map((d) => (
-                    <div key={d.id} className="eng-dhf-cell" data-status={d.status} title={d.label}>
-                      <div className="eng-dhf-num mono">§{d.num}</div>
-                      <div className="eng-dhf-label">{d.label}</div>
-                      <div className="eng-dhf-meta">
-                        <span className="mono">{d.ver}</span>
-                        <span className="dot-sep" aria-hidden="true">·</span>
-                        <span>{d.updated}</span>
-                      </div>
-                      <span className={`status-pill ${d.status}`}>{d.status}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </DataGate>
+            {/* The project's own document sections (P-60). */}
+            <EngineeringDesignHistory state={live.dhf} keyed={dhfKeyed} onRetry={live.refresh}
+              notKeyedEmptyHint={notKeyedEmptyHint(live.scopes.dhf)}
+              notKeyed={<NotKeyedNote panel="dhf" scope={live.scopes.dhf} />} />
 
             <div className="section-head">
               <h2 style={{ fontSize: 14 }}>Change requests</h2>

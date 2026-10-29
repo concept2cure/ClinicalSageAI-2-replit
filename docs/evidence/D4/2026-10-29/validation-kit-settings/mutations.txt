@@ -1,0 +1,18 @@
+M1 header table not read (bold form only): RED (2 failed)
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > lists exactly VMP-001, the documents un
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > reports each document's own version and
+M2 every file in the folder offered: RED (3 failed)
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > lists exactly VMP-001, the documents un
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > offers nothing outside it: no CORTEX do
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > reports each document's own version and
+M3 note promises records at contract: RED (1 failed)
+   × server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > makes no promise the package does not k
+M4 status shown as an inferred badge: RED (1 failed)
+   × client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > shows each document's own status, verbatim, and says
+M5 failed read shown as the empty package: RED (2 failed)
+   × client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > shows a failed read as unread, with the status, neve
+   × client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > reads again on Retry 5010ms
+M6 refused download silent: RED (1 failed)
+   × client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > says so when a download is refused 5044ms
+M7 card not mounted on Settings: RED (1 failed)
+   × client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > where it is reached > is one of administration's Settings cards, and nothing else 

@@ -1163,6 +1163,15 @@ there (zero duplication). Why: a regulated customer must validate the system the
 Annex 11 §4), and a vendor validation package is what they ask for first. It must describe the deployed system
 truthfully, or it is worse than none.
 
+*Amended 2026-10-29, same day, on implementation:* "its contents" is the launch package and nothing else:
+VMP-001, the documents that name it as their parent (URS, RA, IQ, OQ, VSR) and TM-001, each with the version and
+status its own header records. The route listed every file in `docs/validation/`, so a customer was also handed
+the CORTEX series (a second validation master plan, for the AI engines VMP-001 §3 puts out of scope), an internal
+CI work order and a generated evidence pack. Those stay in the repository and are not offered as the customer's
+package. The route's note no longer promises "executed and approved records … through QA at contract", which
+nothing provides. One gap is the plan's own, and is its owner's to change: VMP-001 §5 lists URS-001…006 and
+OQ-001…006, while URS-007 and OQ-008 (CMC / Module 3) name VMP-001 as their parent and are offered.
+
 ### P-68 — One subscription entry, one rate-limit source
 
 A billing administrator's account menu has one entry, "Subscription & billing", opening Licensing

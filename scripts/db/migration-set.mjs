@@ -3603,6 +3603,15 @@ export const C2C_MIGRATION_FILES = [
   // when absent). Public with organization_id INTEGER NOT NULL; creates no
   // table; guarded; no DROP.
   'migrations/20261029d_nonconforming_products_program_key.sql',
+  // A change-control record may name its project, by key, and only its own
+  // organization's (P-60, D2 / D6, 2026-10-29): qms_change_controls.program_id
+  // UUID, nullable (existing changes stay the organization's records), a NOT
+  // VALID composite key ON DELETE SET NULL (program_id) and an index for
+  // Engineering's project read. After db/migrations/20260724 (the table) and
+  // 20260926b (regulatory_programs_id_org_uq, created here too when absent).
+  // Public with organization_id INTEGER NOT NULL; creates no table; guarded;
+  // no DROP.
+  'migrations/20261029l_qms_change_controls_program_key.sql',
   // The IVD assessment workbench's store (D2, fold F2, 2026-10-29):
   // ivd_assessments and ivd_generated_documents, which only install-fresh
   // created, so saving and listing failed on every deployed database. Every

@@ -1,0 +1,12 @@
+# M17: the tool no longer offers program_id
+# file: server/services/ana/qms-labeling-analytics-tool-defs.ts
+# command: npx vitest run server/services/ana/__tests__/change-tool-admits-program.test.ts
+# exit: 1
+# original sha256 275240987980e75d68aad5f1740f1708d4aebb40b7fba9cee504618d9aaddb31; restored byte for byte: True
+
+ × server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > offers the model a program_id to name the project 5ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+  "level": "error",
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > offers the model a program_id to name the project

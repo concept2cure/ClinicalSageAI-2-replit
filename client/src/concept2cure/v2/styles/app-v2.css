@@ -3603,7 +3603,6 @@
    carried in an icon and a sentence, not colour alone. */
 .c2c-v2 .reg-doss-gap{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:9px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.55;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
 .c2c-v2 .reg-doss-basis{display:block;margin-top:3px;color:var(--text-400);font-size:11px;}
-.c2c-v2 .ac-val-err{margin:8px 0;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
 
 /* Biostatistics — a persisted document with no recorded statistical type has no
    generator to open. Named in the row rather than left as a silent no-op. */
