@@ -1,0 +1,11 @@
+# The new suite with the export-history and schema-contract suites, after
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+
+# Every test of the Authoring router (81 files), after
+ Test Files  4 failed | 77 passed (81)
+      Tests  13 failed | 1119 passed (1132)
+      3 server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts   (fails identically at HEAD; handed on)
+      1 tests/authoring-program-scope.pglite.test.ts   (fails identically at HEAD; handed on)
+      1 tests/golden-journeys/ind-authoring.journey.test.ts   (fails identically at HEAD; handed on)
+      8 tests/lineage/founder-path-lineage.pglite.test.ts   (fails identically at HEAD; handed on)
