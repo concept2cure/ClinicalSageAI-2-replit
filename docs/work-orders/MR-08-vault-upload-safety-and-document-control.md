@@ -168,7 +168,12 @@ The bounded reader is replaced by one measured inflate before any reader, which 
 - A version is stored under the type its name binds: an `.xpt` sent as octet-stream is stored as `application/x-sas-xport`.
 - A test holds every Vault format to a byte check and a name binding.
 
-Steps 1(b) and 4 to 6 (OCR off the request, the sweep, the pending state) are open.
+**Steps 1(b) and 4 to 6 done 2026-10-29** (`docs/evidence/D1/2026-10-29-ocr-off-request/`):
+- Ingest reads a text layer only, within 20 MiB and 10 s, and records `extraction_pending` otherwise.
+- `server/jobs/vaultProcessingSweep.ts` reads each pending version once. It claims each one by advisory lock, reads it through the verified reader with OCR in a conversion slot, and writes the text, the outcome and a chained audit row, then indexes the passages.
+- The ingest response, the catalog record, AnA's catalog eligibility and search say a version is still being read.
+
+Born-digital files are still read and chunked in the request. Re-proposing a filing after the read is not done. Both are recorded there. Stage 3 is complete apart from that.
 
 1. **Red tests first**, each run on HEAD and captured:
    - (a) a valid SAS V5 `.xpt` to `/api/vault/ingest` returns 400 `FILE_TYPE_NOT_ALLOWED`;

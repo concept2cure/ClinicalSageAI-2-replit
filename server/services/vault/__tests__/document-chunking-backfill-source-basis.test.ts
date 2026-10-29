@@ -54,7 +54,7 @@ beforeEach(() => {
   h.chunkOutcome.mockReset();
   h.chunkOutcome.mockResolvedValue(undefined);
   h.extractionOutcome.mockReset();
-  h.extractionOutcome.mockResolvedValue(undefined);
+  h.extractionOutcome.mockResolvedValue('extracted');
   h.builderInputs.length = 0;
 });
 

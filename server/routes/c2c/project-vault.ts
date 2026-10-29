@@ -1859,6 +1859,7 @@ export default function createProjectVaultRoutes(): Router {
           filters,
           facets: found.facets,
           total: found.total,
+          pendingCount: found.pendingCount,
           limit,
           offset,
           includeSuperseded,

@@ -36,6 +36,7 @@ import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { startTaskDueSweep } from './jobs/taskDueSweep';
+import { startVaultProcessingSweep } from './jobs/vaultProcessingSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -287,6 +288,11 @@ async function startServer() {
     // idempotent via task metadata markers. Self-guards in tests; disable with
     // TASK_DUE_SWEEP_DISABLED=true.
     startTaskDueSweep();
+
+    // Vault: read the text of every version the upload request left pending
+    // (a scanned PDF's OCR is off the request, MR-08 Stage 3). Self-guards in
+    // tests; disable with VAULT_PROCESSING_SWEEP_DISABLED=true.
+    startVaultProcessingSweep();
   });
 }
 

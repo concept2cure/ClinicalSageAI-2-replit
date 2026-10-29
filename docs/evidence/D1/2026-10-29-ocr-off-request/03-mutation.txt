@@ -1,0 +1,64 @@
+# Mutations: each applied alone, tests/db/vault-processing-sweep.dbtest.ts run on real PostgreSQL 16, the source restored
+
+## M1 the request runs OCR again
+ × tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > returns a scanned PDF without running OCR, and records it as still being read 16114ms
+   → expected 10350 to be less than 5000
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it 1155ms
+   → invalid input syntax for type uuid: ""
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > does nothing more on the next run 989ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again 97ms
+   → expected 'd9ec95a3-1e1b-4621-9b5c-bbd8ab587fc6' to be '' // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once 75ms
+   → expected 'extracted' to be 'pending' // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason 945ms
+   → expected 'extracted' to be 'extraction_failed' // Object.is equality
+      Tests  6 failed | 2 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+## M2 no claim: every sweep reads every pending version
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once 1385ms
+   → expected 2 to be 1 // Object.is equality
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M3 the sweep writes no audit row
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it 1049ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > does nothing more on the next run 950ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again 946ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once 1215ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason 901ms
+   → Cannot read properties of undefined (reading 'new_values')
+      Tests  5 failed | 3 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+## M4 a same-bytes re-upload resets a read version to pending
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again 72ms
+   → expected 'pending' to be 'extracted' // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once 1198ms
+   → expected 2 to be 1 // Object.is equality
+      Tests  2 failed | 6 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+## M5 a same-bytes re-upload erases the text read
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > a same-bytes re-upload of a version already read keeps its text, and is not read again 68ms
+   → .toMatch() expects to receive a string, but got object
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M6 search does not count what it cannot see
+ × tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > search says how many versions are not searched yet 83ms
+   → expected +0 to be 1 // Object.is equality
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M7 an unreadable stored file is left pending
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason 1067ms
+   → expected 'extraction_pending' to be 'extraction_failed' // Object.is equality
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
