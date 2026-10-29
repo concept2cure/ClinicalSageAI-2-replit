@@ -1,0 +1,13 @@
+# Item 3: the whole prefix map, before (this slice's findings 1 and 2 applied) and after device-engineering's two claims.
+#  283 gated prefixes before;  283 gated prefixes after.
+
+104c104
+< /api/design-controls	design-controls
+---
+> /api/design-controls	design-controls,device-engineering
+179c179
+< /api/mdx/risk-items	risk
+---
+> /api/mdx/risk-items	device-engineering,risk
+
+# rows changed: 2; each gains device-engineering and loses nothing.

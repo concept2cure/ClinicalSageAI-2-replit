@@ -1,0 +1,44 @@
+# Gated prefixes whose every claimant has no row in available_modules (the packaging migration's ids, plus design-controls and human-factors from 20260823_module_catalog_mdx_registers.sql).
+# canAccessModule answers such a claimant "Module '<id>' does not exist" (license-manager.ts:426), so under MODULE_ENFORCEMENT=enforce the path is refused to every organization that is not a master admin.
+# Measured on the working tree after this slice (the list is the same at HEAD). Column 3: launch if any claimant is a launch or shell surface.
+
+catalog rows (packaging + mdx registers): 83
+gated prefixes whose every claimant has no catalog row: 38 of 283
+/api/ai-actions/execute	ana-command	out-of-scope
+/api/api-keys	setup,admin-console	launch
+/api/audit-trail/ledger	audit-trail	launch
+/api/chat	conversation-thread	launch
+/api/client-portal	client-portal	out-of-scope
+/api/clinical-regulatory-evidence/findings	regulatory-workspace	out-of-scope
+/api/clinical-regulatory-evidence/outcome	regulatory-workspace	out-of-scope
+/api/concept2cure/projects	project-home,conversation-thread	launch
+/api/csr-workflow	regulatory-workspace	out-of-scope
+/api/enablement	training	out-of-scope
+/api/etmf	etmf	out-of-scope
+/api/intelligence	report-engine	out-of-scope
+/api/investigator-brochure	investigator-brochure	out-of-scope
+/api/labeling-smpc	labeling-smpc	out-of-scope
+/api/mdx/admin	admin-console	launch
+/api/mdx/ana/memory	ana-memory	out-of-scope
+/api/mdx/ana/threads	ana-memory	out-of-scope
+/api/mission-control	mission-control	out-of-scope
+/api/module-access-requests	master-licensing,access-requests	launch
+/api/onboarding	onboarding-ingest	launch
+/api/orchestration/continuity	ana-command	out-of-scope
+/api/orchestration/execute	ana-command	out-of-scope
+/api/orchestration/pre-submission-gate	ana-command	out-of-scope
+/api/orchestration/projects/:id/readiness	ana-command	out-of-scope
+/api/orchestration/recommendations	ana-command	out-of-scope
+/api/orchestration/templates	ana-command	out-of-scope
+/api/pdev/programs	pdev-cmc,pdev-nonclinical,pdev-clinical,pdev-regulatory,pdev-ind-assembly,pdev-contradictions,pdev-fda-interactions	out-of-scope
+/api/pdev/registry	pdev-cmc,pdev-nonclinical,pdev-clinical,pdev-regulatory	out-of-scope
+/api/project-sections	regulatory-workspace	out-of-scope
+/api/regulatory-precedent-intelligence	filing-strategy	out-of-scope
+/api/regulatory-workspace	regulatory-workspace	out-of-scope
+/api/report-os/portfolio	ana-command	out-of-scope
+/api/setup	setup,admin-console,onboarding	launch
+/api/tenant-config	admin-console	launch
+/api/tenant-export/attestation	compliance-reports	launch
+/api/tenant-users	admin-console	launch
+/api/validation-kit	setup	launch
+/api/vault/legal-holds/retention	setup	launch

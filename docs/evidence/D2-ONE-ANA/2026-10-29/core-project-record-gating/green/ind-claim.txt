@@ -1,0 +1,10 @@
+# launch-scope-api-gate.test.ts and ind-launch-claim.test.ts with this slice's edits. Trimmed.
+# The two launch-scope-api-gate failures left are /api/csr/jobs, red at HEAD from 7b209818a (see red/ci-launch-scope-api-at-head.txt), not this slice.
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 7ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
++   "out-of-scope /api/csr/jobs ← ectd-compile",
++   "out-of-scope /api/csr/jobs ← ectd-compile",
+      Tests  2 failed | 41 passed (43)
+== ind-launch-claim.test.ts
+      Tests  63 passed (63)
