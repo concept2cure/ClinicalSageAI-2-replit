@@ -162,6 +162,11 @@ export interface CSRSummaryInput {
   primaryEndpointMet?: boolean | null;
   /** Enrolled subjects; null when the study record does not carry it (never 0 for "unknown"). */
   sampleSize: number | null;
+  /**
+   * The planned size the study information gives, when that is all there is.
+   * Shown as planned; never counted as enrolled or exposed.
+   */
+  plannedSampleSize?: number | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -453,8 +458,11 @@ function safetyCounts(csrs: CSRSummaryInput[]): {
 }
 
 /** "n=…" for a study: the recorded size, or an explicit statement that none was recorded. */
-function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize'>): string {
-  return typeof c.sampleSize === 'number' ? String(c.sampleSize) : '[sample size not recorded]';
+function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize' | 'plannedSampleSize'>): string {
+  if (typeof c.sampleSize === 'number') return String(c.sampleSize);
+  return typeof c.plannedSampleSize === 'number'
+    ? `[enrolled not recorded; planned ${c.plannedSampleSize}]`
+    : '[sample size not recorded]';
 }
 
 /** Analysis population cell: ITT if recorded, else enrolled, else said to be missing. */

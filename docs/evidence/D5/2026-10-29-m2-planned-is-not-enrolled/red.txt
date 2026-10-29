@@ -1,0 +1,8 @@
+# m2-planned-is-not-enrolled.test.ts (new) and csr-latest-completed-generation.pglite.test.ts (one expectation corrected), against HEAD 016fb1f12
+ × server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > retains all historical generations and their section records
+ × server/services/__tests__/m2-planned-is-not-enrolled.test.ts > a planned sample size is not an enrolled one > the Clinical Overview says enrolled is not recorded, names the plan, and counts no exposure
+ × server/services/__tests__/m2-planned-is-not-enrolled.test.ts > a planned sample size is not an enrolled one > the Clinical Summary says the same
+ ✓ server/services/__tests__/m2-planned-is-not-enrolled.test.ts > a planned sample size is not an enrolled one > a recorded enrolled size still reads as it did
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)
