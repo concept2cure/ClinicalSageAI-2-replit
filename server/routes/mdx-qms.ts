@@ -136,6 +136,10 @@ import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
+import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
+import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
+import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
+import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -385,9 +389,28 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
     // A row under revision names the signed version still in force beside its
     // draft; each names its last counted periodic review and when it is next due.
     const schedule = await readQmsReviewSchedule(client, orgId, rows as QmsDocumentRow[]);
-    return ok(res, rows.map((row) => scheduledRegisterRow(row, schedule)), { count: rows.length });
+    const rounds = await registerRounds(client, orgId, rows);
+    return ok(res, rows.map((row) => withRound(scheduledRegisterRow(row, schedule), rounds)), { count: rows.length });
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
+
+/**
+ * Each document's latest review route (RR4, §2.12): every member, their
+ * outcome and the naming history, so the register shows the round. A route
+ * read that fails is `review_route_unread` on every row, never "no route":
+ * the register still lists its documents.
+ */
+async function registerRounds(client: ReturnType<typeof qmsClient>, orgId: number, rows: Array<Record<string, any>>): Promise<Map<string, RouteRound> | null> {
+  try {
+    return await readRouteRounds(client, { organizationId: orgId, subjectType: 'qms_document', subjectIds: rows.map((r) => String(r.id)) });
+  } catch (err) {
+    log.warn('qms register review routes could not be read', { err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+function withRound(row: Record<string, any>, rounds: Map<string, RouteRound> | null): Record<string, any> {
+  return rounds === null ? { ...row, review_route: null, review_route_unread: true } : { ...row, review_route: rounds.get(String(row.id)) ?? null };
+}
 
 function qmsAuthoringContext(req: Request, orgId: number, userId: number): CreateContext {
   const email = typeof (req as any).user?.email === 'string' ? (req as any).user.email : null;
@@ -604,8 +627,12 @@ router.patch('/qms/documents/:id', requireEditorAccess, async (req: Request, res
   const id = Number(req.params.id); if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be a positive integer');
   if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'controlledText')) return saveControlledTextResponse(req, res, orgId, id);
   try {
-    return ok(res, await updateControlledQmsDocument(qmsAuthoringContext(req, orgId, userId), id, req.body), { auditTrail: { persisted: true, chained: true } });
-  } catch (err) { return qmsContentRefusal(res, err) ?? serverError(res, log, 'doc-patch', err); }
+    // Sending for review names its route (RR4): its notices go out once the send has committed.
+    const sink: { routeId?: string; notices: TaskEventNotice[] } = { notices: [] };
+    const row = await updateControlledQmsDocument(qmsAuthoringContext(req, orgId, userId), id, req.body, sink);
+    for (const n of sink.notices) notifyTaskEvent(n);
+    return ok(res, row, { auditTrail: { persisted: true, chained: true }, ...(sink.routeId ? { routeId: sink.routeId } : {}) });
+  } catch (err) { return qmsContentRefusal(res, err) ?? qmsRouteRefusal(res, err) ?? serverError(res, log, 'doc-patch', err); }
 });
 
 /* Approval = electronic signature. Body: { password, mfaToken?, meaning:
@@ -704,9 +731,30 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
 
 function signedQmsFailure(res: Response, error: unknown, operation: string, what: 'Document' | 'Change' = 'Document'): Response {
   if (error instanceof QmsApprovalRefusedError) return approvalRefusal(res, error, what);
+  const routed = qmsRouteRefusal(res, error); if (routed) return routed;
   const refusal = qmsContentRefusal(res, error); if (refusal) return refusal;
   if (error instanceof QmsSigningAdmissionRefused) return res.status(error.status).json({ error: error.message, details: { code: error.code } });
   return serverError(res, log, operation, error);
+}
+
+/**
+ * The approval's checks before its transaction: RR4 (B7) first — on a routed
+ * document only its named approver, at their turn, approves, and anyone else
+ * is refused before the credential is asked — then the signer's authority and
+ * credential (verifyApprovalSigner). The refusal is already written when null.
+ */
+async function verifyRoutedApprovalSigner(
+  req: Request, res: Response, actor: { userId: number; orgId: number; id: number }, body: z.infer<typeof approveBody>,
+): Promise<{ secondFactorVerified: boolean } | null> {
+  try {
+    await qmsApprovalPrecheck(qmsClient(req), actor.orgId, actor.userId, actor.id);
+  } catch (err) {
+    if (!qmsRouteRefusal(res, err)) serverError(res, log, 'doc-approve-route', err);
+    return null;
+  }
+  try {
+    return await verifyApprovalSigner(req, res, actor, body);
+  } catch (err) { serverError(res, log, 'doc-approve-verify', err); return null; }
 }
 
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
@@ -721,11 +769,9 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
   if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
   const body = parsed.data;
 
-  let verified: { secondFactorVerified: boolean } | null;
-  try {
-    verified = await verifyApprovalSigner(req, res, { userId, orgId }, body);
-  } catch (err) { return serverError(res, log, 'doc-approve-verify', err); }
+  const verified = await verifyRoutedApprovalSigner(req, res, { userId, orgId, id }, body);
   if (!verified) return res;
+  const notices: TaskEventNotice[] = [];
 
   let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   let commitAttempted = false;
@@ -741,9 +787,11 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
+      route: qmsApprovalRoute({ userId, reason: body.reason, notices }) as never,
     });
     commitAttempted = true;
     await client.query('COMMIT');
+    for (const n of notices) notifyTaskEvent(n);
     // The version now in force is due on the date its approval signed; the
     // previous version's task, if any, ends with it. Best effort, after commit.
     await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
@@ -814,6 +862,7 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
     verified = await verifyApprovalSigner(req, res, { userId, orgId }, body, 'retiring a controlled document');
   } catch (err) { return serverError(res, log, 'doc-retire-verify', err); }
   if (!verified) return res;
+  const notices: TaskEventNotice[] = [];
 
   let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   let commitAttempted = false;
@@ -828,9 +877,12 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
+      // RR4 (§2.9): retiring a document in review withdraws its open route on this transaction.
+      route: qmsRetirementRoute({ userId, reason: body.reason, notices }) as never,
     });
     commitAttempted = true;
     await client.query('COMMIT');
+    for (const n of notices) notifyTaskEvent(n);
     // A retired document has no next review: its open task is withdrawn with it.
     await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
       kind: 'review', closeAs: 'cancelled', due: null });
@@ -1782,5 +1834,8 @@ router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req:
     return ok(res, { id: linkId, deleted: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }
 });
+
+// The review route's acts on a controlled document (RR4): services/qms/qms-review-route.ts.
+mountQmsReviewRoute(router);
 
 export default router;

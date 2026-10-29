@@ -70,9 +70,27 @@ export interface RouteRequest {
   reviewers: number[];
   approvers: number[];
   order: 'parallel' | 'sequential';
-  /** Calendar dates (YYYY-MM-DD), each the end of that day in the sender's time zone. */
-  reviewDueDate: string;
+  /**
+   * Calendar dates (YYYY-MM-DD), each the end of that day in the sender's time
+   * zone. The review date is null only on a route that names no reviewer (a
+   * QMS route may name none, NEW-4).
+   */
+  reviewDueDate: string | null;
   approvalDueDate: string;
+}
+
+/**
+ * The floor a subject's route keeps (NEW-4, §4): a Vault version names at
+ * least one reviewer and one approver; a QMS controlled document names at
+ * least one approver, and reviewers are optional (RR4).
+ */
+export interface RouteRequestRules {
+  reviewersOptional?: boolean;
+}
+
+/** The ledger's domain and surface for a subject's naming history. */
+export function routeLedgerScope(type: RouteSubjectType): { domain: string; surface: string } {
+  return type === 'qms_document' ? { domain: 'qms', surface: 'quality' } : { domain: 'regulatory', surface: 'document-lifecycle' };
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -81,12 +99,12 @@ const positiveIds = (v: unknown): v is number[] =>
 
 const refusal = (status: 400 | 409, code: string, message: string) => new ReviewRouteRefusal(status, code, `${message} Nothing was sent.`);
 
-/** The people a request names, each list of account ids, both non-empty. */
-function namedPeople(r: Record<string, unknown>): { reviewers: number[]; approvers: number[] } {
+/** The people a request names, each list of account ids; approvers non-empty, and reviewers too unless the subject's rules make them optional. */
+function namedPeople(r: Record<string, unknown>, rules: RouteRequestRules): { reviewers: number[]; approvers: number[] } {
   const reviewers = r.reviewers ?? [];
   const approvers = r.approvers ?? [];
   if (!positiveIds(reviewers) || !positiveIds(approvers)) throw refusal(400, 'ROUTE_INVALID', 'Reviewers and approvers are lists of account ids.');
-  if (reviewers.length === 0) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
+  if (reviewers.length === 0 && !rules.reviewersOptional) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
   if (approvers.length === 0) throw refusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver.');
   return { reviewers, approvers };
 }
@@ -104,10 +122,14 @@ function routeOrder(r: Record<string, unknown>, approvers: number[]): 'parallel'
 const isDate = (v: unknown): v is string => typeof v === 'string' && DATE.test(v);
 
 /** The route a request names, or the refusal that says what is wrong with it. Nothing is read. */
-export function parseRouteRequest(raw: unknown): RouteRequest {
+export function parseRouteRequest(raw: unknown, rules: RouteRequestRules = {}): RouteRequest {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const { reviewers, approvers } = namedPeople(r);
+  const { reviewers, approvers } = namedPeople(r, rules);
   const order = routeOrder(r, approvers);
+  if (reviewers.length === 0) {
+    if (!isDate(r.approvalDueDate)) throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give an approval due date.');
+    return { reviewers, approvers, order, reviewDueDate: null, approvalDueDate: r.approvalDueDate };
+  }
   if (!isDate(r.reviewDueDate) || !isDate(r.approvalDueDate)) {
     throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date and an approval due date.');
   }
@@ -123,25 +145,29 @@ export async function senderTimeZone(q: RouteQueryable, senderId: number): Promi
   return known.rows.length ? wanted : 'UTC';
 }
 
-/** End of each day in the sender's notification time zone (UTC when unset or unknown), as instants. */
-async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<{ review: Date; approval: Date; timeZone: string }> {
+/** End of each day in the sender's notification time zone (UTC when unset or unknown), as instants; no review instant on a route with no reviewer. */
+async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<{ review: Date | null; approval: Date; timeZone: string }> {
   const timeZone = await senderTimeZone(q, senderId);
   const { rows } = await q.query(
-    `SELECT ((($1::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') AS review,
+    `SELECT CASE WHEN $1::date IS NULL THEN NULL ELSE ((($1::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') END AS review,
             ((($2::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') AS approval,
             now() AS now`,
     [req.reviewDueDate, req.approvalDueDate, timeZone],
   );
-  const review = new Date(rows[0].review);
+  const review = rows[0].review == null ? null : new Date(rows[0].review);
   const approval = new Date(rows[0].approval);
-  if (review.getTime() <= new Date(rows[0].now).getTime()) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_DUE_IN_PAST', 'The review due date has passed. Nothing was sent.');
+  const first = review ?? approval;
+  if (first.getTime() <= new Date(rows[0].now).getTime()) {
+    throw new ReviewRouteRefusal(400, 'ROUTE_DUE_IN_PAST', `The ${review ? 'review' : 'approval'} due date has passed. Nothing was sent.`);
   }
-  if (approval.getTime() < review.getTime()) {
+  if (review && approval.getTime() < review.getTime()) {
     throw new ReviewRouteRefusal(400, 'ROUTE_DUE_ORDER', 'The approval is due on or after the review. Nothing was sent.');
   }
   return { review, approval, timeZone };
 }
+
+/** A member's step: reviewers are step 1; approvers the step after the last reviewer, step 1 when nobody reviews (§3). */
+const stepOf = (role: 'reviewer' | 'approver', reviewers: number) => (role === 'reviewer' || reviewers === 0 ? 1 : 2);
 
 /** A member's printed name, as a route records it at naming (users.name, else the e-mail's local part). */
 export async function printedNameOf(q: RouteQueryable, organizationId: number, userId: number): Promise<string> {
@@ -173,32 +199,33 @@ async function validateMembers(
   return members;
 }
 
-/** One member row and its task.create row; a reviewer's open step gets a task_assigned notice. */
+/** One member row and its task.create row; a member whose step is open gets a task_assigned notice. */
 async function writeMemberRow(
   tx: RouteTx,
   p: { organizationId: number; senderId: number; reason: string; subject: RouteSubject; routeId: string; member: ValidatedMember;
-    due: { review: Date; approval: Date }; projectId: number | undefined },
+    due: { review: Date | null; approval: Date }; projectId: number | undefined; reviewers: number },
 ): Promise<TaskEventNotice | null> {
   const { member: m, subject, routeId } = p;
   const reviewer = m.role === 'reviewer';
-  const step = reviewer ? 1 : 2;
+  const step = stepOf(m.role, p.reviewers);
+  const open = step === 1;
   const taskId = `ROUTE-${routeId.slice(0, 8)}-${m.userId}`;
   await createTaskInTx(tx, {
     organizationId: p.organizationId,
     actorUserId: p.senderId,
     taskId,
     values: {
-      moduleType: 'Vault',
+      moduleType: subject.type === 'qms_document' ? 'QMS' : 'Vault',
       title: `${reviewer ? 'Review' : 'Approve'}: ${subject.title}`,
       taskType: reviewer ? 'review' : 'approval',
       category: reviewer ? 'review' : 'approval',
       priority: 'medium',
-      status: reviewer ? 'pending' : 'blocked',
+      status: open ? 'pending' : 'blocked',
       assigneeId: m.userId,
       assigneeName: m.printedName,
       assignedBy: p.senderId,
       assignedAt: new Date(),
-      dueDate: reviewer ? p.due.review : p.due.approval,
+      dueDate: reviewer ? p.due.review ?? p.due.approval : p.due.approval,
       projectId: p.projectId,
       sourceEntityType: subject.type,
       sourceEntityId: subject.id,
@@ -210,9 +237,8 @@ async function writeMemberRow(
     reason: p.reason,
     summary: `Named ${m.role} on review route ${routeId}`,
   });
-  return reviewer
-    ? { organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_assigned', title: `Review requested: ${subject.title}`, taskId }
-    : null;
+  if (!open) return null;
+  return { organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_assigned', title: `${reviewer ? 'Review' : 'Approval'} requested: ${subject.title}`, taskId };
 }
 
 /**
@@ -256,7 +282,7 @@ export async function sendReviewRoute(
     : null;
   const notices: TaskEventNotice[] = [];
   for (const m of members) {
-    const notice = await writeMemberRow(tx, { ...p, routeId, member: m, due, projectId: anchor?.id ?? undefined });
+    const notice = await writeMemberRow(tx, { ...p, routeId, member: m, due, projectId: anchor?.id ?? undefined, reviewers: p.request.reviewers.length });
     if (notice) notices.push(notice);
   }
   await recordGovernedAction(q, {
@@ -267,12 +293,11 @@ export async function sendReviewRoute(
     reason: p.reason,
     payload: {
       routeId, order: p.request.order, contentDigest: p.subject.contentDigest,
-      reviewDueAt: due.review.toISOString(), approvalDueAt: due.approval.toISOString(), timeZone: due.timeZone,
+      reviewDueAt: due.review?.toISOString() ?? null, approvalDueAt: due.approval.toISOString(), timeZone: due.timeZone,
       senderName,
-      members: members.map((m) => ({ userId: m.userId, role: m.role, step: m.role === 'reviewer' ? 1 : 2, printedName: m.printedName })),
+      members: members.map((m) => ({ userId: m.userId, role: m.role, step: stepOf(m.role, p.request.reviewers.length), printedName: m.printedName })),
     },
-    domain: 'regulatory',
-    surface: 'document-lifecycle',
+    ...routeLedgerScope(p.subject.type),
   });
   return { routeId, notices, timeZone: due.timeZone };
 }
@@ -386,8 +411,7 @@ export async function closeReviewRoute(
       target,
       reason: p.reason,
       payload: { routeId: route.id, round: route.round, status: p.status, actorName, returnedBy: p.returner?.userId ?? null, cancelled: open.map((m) => m.taskId) },
-      domain: 'regulatory',
-      surface: 'document-lifecycle',
+      ...routeLedgerScope(p.subjectType),
     });
     actId = gov.actionId;
     if (p.returner) {
@@ -553,8 +577,7 @@ export async function reassignMember(
       from: { userId: member.userId, printedName: member.printedName }, to: { userId: to.userId, printedName: to.printedName },
       handedBackActId: member.outcome === 'handed back' ? member.actId : null,
     },
-    domain: 'regulatory',
-    surface: 'document-lifecycle',
+    ...routeLedgerScope(p.subject.type),
   });
   if (member.outcome === 'handed back') {
     await auditTaskActionInTx(q, {
@@ -603,8 +626,7 @@ export async function handBackMember(
     target: routeSubjectTarget(p.subject.type, p.subject.id),
     reason: p.reason,
     payload: { routeId: route.id, taskId: member.taskId, role: member.role, step: member.step, userId: member.userId, printedName, actorName: printedName },
-    domain: 'regulatory',
-    surface: 'document-lifecycle',
+    ...routeLedgerScope(p.subject.type),
   });
   const stamped = await q.query(
     `UPDATE unified_tasks SET route_act_id = $1, status = 'blocked', updated_at = now(), last_modified_by = $2

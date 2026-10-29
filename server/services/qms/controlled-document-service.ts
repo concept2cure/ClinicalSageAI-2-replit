@@ -13,6 +13,9 @@ import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
 import { qmsTrainingSections } from './training-content';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from './document-approval-signature';
 import type { RequestSqlClient } from '../../db/requestDb';
+import { parseRouteRequest } from '../review/review-route';
+import type { TaskEventNotice } from '../tasking/task-side-effects';
+import { QMS_ROUTE_RULES, routeOpenEditRefusal, sendQmsRoute } from './qms-review-route';
 
 type QmsReadContext = Pick<CreateContext, 'tenantId' | 'actor'> & { pool: RequestSqlClient };
 
@@ -138,15 +141,49 @@ function qmsRegisterUpdateArgs(body: { title?: string; docNumber?: string; docTy
     'category' in body, body.category ?? null, 'nextReviewDate' in body, body.nextReviewDate ?? null, body.status ?? null];
 }
 
-/** Registry metadata and review are audited with their canonical editing copy on one transaction. */
-export async function updateControlledQmsDocument(ctx: CreateContext, id: number, raw: unknown): Promise<Record<string, any>> {
-  const parsed = z.object({ title: z.string().trim().min(1).max(300).optional(), docNumber: z.string().trim().min(1).max(60).optional(),
-    docType: controlledQmsCreateSchema.shape.docType.optional(), category: z.string().max(60).nullable().optional(),
-    nextReviewDate: z.string().date().nullable().optional(), status: z.enum(['draft','in_review']).optional(),
-    reason: z.string().trim().min(8).max(2000),
-  }).strict().safeParse(raw);
+/** Where a send's route and its notices are handed back to the caller, which sends the notices after COMMIT (RR4). */
+export interface QmsSendSink { routeId?: string; notices: TaskEventNotice[] }
+
+/** The route written on the send's transaction; its id and notices handed to the caller (RR4). */
+async function sendQmsRouteInto(sink: QmsSendSink | undefined, ...args: Parameters<typeof sendQmsRoute>): Promise<void> {
+  const sent = await sendQmsRoute(...args);
+  if (sink) { sink.routeId = sent.routeId; sink.notices.push(...sent.notices); }
+}
+
+const qmsUpdateSchema = z.object({ title: z.string().trim().min(1).max(300).optional(), docNumber: z.string().trim().min(1).max(60).optional(),
+  docType: controlledQmsCreateSchema.shape.docType.optional(), category: z.string().max(60).nullable().optional(),
+  nextReviewDate: z.string().date().nullable().optional(), status: z.enum(['draft','in_review']).optional(),
+  reason: z.string().trim().min(8).max(2000), route: z.unknown().optional(),
+}).strict();
+
+/** The edit and, for a send, its review route (RR4), each refused before anything is read. */
+function parseQmsUpdate(raw: unknown) {
+  const parsed = qmsUpdateSchema.safeParse(raw);
   if (!parsed.success) throw new QmsContentRefusedError(400, 'QMS_UPDATE_INVALID', 'State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.');
-  const body = parsed.data; const client = await ctx.pool.connect();
+  const { route: rawRoute, ...body } = parsed.data;
+  if (rawRoute !== undefined && body.status !== 'in_review') throw new QmsContentRefusedError(400, 'QMS_UPDATE_INVALID', 'A review route is named when the document is sent for review. Nothing was changed.');
+  return { body, route: rawRoute === undefined ? null : parseRouteRequest(rawRoute, QMS_ROUTE_RULES) };
+}
+
+/** A send's own refusals, once the row is locked: its content, then its route; nothing has been written. */
+async function refuseUnsendable(client: Parameters<typeof captureQmsAuthoringContent>[0], row: Record<string, any>, route: unknown): Promise<void> {
+  if (row.authoring_document_id) await captureQmsAuthoringContent(client, row as never);
+  else if (!qmsTrainingSections(row as never).length) throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save controlled procedure text before sending this draft for review.');
+  // Asked once the document itself could be sent (its seal and its content), and before anything is written.
+  if (!route) throw new QmsContentRefusedError(409, 'REVIEW_ROUTE_REQUIRED', 'Name the QMS approver, and any reviewers, to send this document for review. Nothing was sent.');
+}
+
+/**
+ * Registry metadata and review are audited with their canonical editing copy on one transaction.
+ *
+ * Sending for review names its review route (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md
+ * §2.7, NEW-4): `route` names one QMS approver and zero or more reviewers, and
+ * the route is written on this transaction (services/qms/qms-review-route.ts);
+ * without one the send is refused, REVIEW_ROUTE_REQUIRED, with nothing written.
+ */
+export async function updateControlledQmsDocument(ctx: CreateContext, id: number, raw: unknown, sink?: QmsSendSink): Promise<Record<string, any>> {
+  const { body, route } = parseQmsUpdate(raw);
+  const client = await ctx.pool.connect();
   try {
     await client.query('BEGIN'); await setTenantContextTx(client, ctx.tenantId);
     const current = await client.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [id, ctx.tenantId]);
@@ -155,10 +192,7 @@ export async function updateControlledQmsDocument(ctx: CreateContext, id: number
     if (row.status !== 'draft') throw new QmsContentRefusedError(409, 'QMS_DOCUMENT_CONTROLLED', 'Only a draft can be edited or sent for review. Open a controlled revision before changing this document.');
     // Use the enlisted connection: PGlite and production both observe the same locked scope.
     if (row.authoring_document_id) await requireContentAccess({ ...ctx, pool: client }, row.authoring_document_id, 'edit');
-    if (body.status === 'in_review') {
-      if (row.authoring_document_id) await captureQmsAuthoringContent(client, row);
-      else if (!qmsTrainingSections(row).length) throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save controlled procedure text before sending this draft for review.');
-    }
+    if (body.status === 'in_review') await refuseUnsendable(client, row, route);
     if (row.authoring_document_id && (body.title || body.status === 'in_review')) await client.query(
       `UPDATE authoring_documents SET title = COALESCE($3,title), status = COALESCE($4,status), updated_at = NOW() WHERE id = $1 AND tenant_id = $2`,
       [row.authoring_document_id, ctx.tenantId, body.title ?? null, body.status === 'in_review' ? 'IN_REVIEW' : null]);
@@ -168,6 +202,7 @@ export async function updateControlledQmsDocument(ctx: CreateContext, id: number
       WHERE id = $1 AND organization_id = $2 RETURNING *`, qmsRegisterUpdateArgs(body, id, ctx.tenantId));
     await recordGovernedAction(client, { orgId: ctx.tenantId, userId: Number(ctx.actor.id), command: 'transition', target: `qms-document:${id}`,
       reason: body.reason, payload: { kind: body.status === 'in_review' ? 'send-for-review' : 'update-register', changedFields: Object.keys(body).filter((k) => k !== 'reason') }, domain: 'qms', surface: 'quality' });
+    if (route) await sendQmsRouteInto(sink, client, { row: result.rows[0] as QmsDocumentRow, senderId: Number(ctx.actor.id), reason: body.reason, request: route });
     await client.query('COMMIT'); return result.rows[0];
   } catch (error) { await client.query('ROLLBACK').catch(() => undefined); throw error; }
   finally { client.release(); }
@@ -209,6 +244,9 @@ export async function reviseControlledQmsDocument(ctx: CreateContext, id: number
       || (live?.status === 'draft' && sealedCopy);
     if (!live || live.version !== row.version || live.authoring_document_id !== copy.documentId || !revisableState)
       throw new QmsContentRefusedError(409, 'QMS_INVALID_STATE', 'The controlled document changed, or is a draft whose text is not sealed. Reopen it before revising.');
+    // RR4 (§2.9): a revision of a document on an open review route would leave review under it.
+    const routeOpen = await routeOpenEditRefusal(tx, live as QmsDocumentRow);
+    if (routeOpen) throw new QmsContentRefusedError(409, 'QMS_ROUTE_OPEN', `${routeOpen} Nothing was revised.`);
     // Re-read under the governing lock so a concurrent review edit cannot be copied from an earlier state.
     const latest = await captureQmsAuthoringContent(tx, live, false);
     if (JSON.stringify(latest) !== JSON.stringify(copy)) throw new QmsContentRefusedError(409, 'QMS_CONTENT_CHANGED', 'The saved content changed. Reopen this document before revising.');
@@ -239,6 +277,8 @@ async function reviseLegacyRegistryDocument(ctx: CreateContext, previous: Record
     const row = current.rows[0];
     if (!row || row.authoring_document_id || row.version !== previous.version || !['effective','retired','superseded','in_review'].includes(row.status))
       throw new QmsContentRefusedError(409,'QMS_INVALID_STATE','This registry entry changed or is already a draft. Reopen it before revising.');
+    const routeOpen = await routeOpenEditRefusal(client, row as QmsDocumentRow);
+    if (routeOpen) throw new QmsContentRefusedError(409, 'QMS_ROUTE_OPEN', `${routeOpen} Nothing was revised.`);
     await client.query(`INSERT INTO qms_document_versions (organization_id,document_id,version,record_kind,controlled_document,sections,content_digest,approved_at)
       VALUES ($1,$2,$3,'legacy-registry',$4::jsonb,'[]'::jsonb,$5,$6)`,
       [ctx.tenantId,row.id,row.version,JSON.stringify(row),computeQmsDocumentContentDigest(row as QmsDocumentRow),row.approved_at ?? null]);

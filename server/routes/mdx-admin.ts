@@ -40,6 +40,7 @@ import { INVITE_PASSWORD_HASH_PREFIX } from '../services/password-setup-token';
 import { roleScopesOf } from '../services/tenant/role-scopes';
 import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
 import { idleWindowSecondsOf } from '../../shared/auth/session-policy';
+import { holdsQmsApproval } from '../../shared/qms/qms-approver-policy';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -122,6 +123,8 @@ interface MemberRow {
   mfa_method: string | null; last_login: Date | string | null; permissions: unknown;
   /** The setup link has not been redeemed: the password hash is still the invitation's. */
   invite_pending: boolean | null;
+  /** Set while an administrator has designated the member a QMS approver (RR4, D-Q). */
+  qms_approver_designated_at?: Date | string | null;
 }
 
 /**
@@ -151,7 +154,7 @@ router.get('/admin', async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<MemberRow>(
       `SELECT ou.user_id, u.name, u.email, ou.role, u.status, u.mfa_enabled,
-              u.mfa_method, u.last_login, ou.permissions,
+              u.mfa_method, u.last_login, ou.permissions, ou.qms_approver_designated_at,
               (u.password_hash LIKE $2) AS invite_pending
          FROM organization_users ou
          JOIN users u ON u.id = ou.user_id
@@ -167,6 +170,13 @@ router.get('/admin', async (req: Request, res: Response) => {
        membership that route refuses to change (SELF_ROLE_CHANGE /
        SELF_REMOVAL). The route remains the authority on every change. */
     const callerId = Number((req as any).user?.id ?? (req as any).userId);
+    /* QMS approvers (RR4, decision D-Q): the designated members, or, while the
+       organization has designated none, the members with the Approver role
+       (services/qms/qms-approver-designation.ts holdsQmsApproval). */
+    const qmsPolicy = {
+      standIn: !rows.some((r) => r.qms_approver_designated_at != null),
+      designated: new Set(rows.filter((r) => r.qms_approver_designated_at != null).map((r) => Number(r.user_id))),
+    };
     const members = rows.map((r) => ({
       id: `u-${r.user_id}`,
       userId: Number(r.user_id),
@@ -184,6 +194,8 @@ router.get('/admin', async (req: Request, res: Response) => {
       lastSeen: r.last_login ? new Date(r.last_login).toISOString() : '',
       state: memberStateOf(r),
       programs: [] as string[],
+      qmsApprover: holdsQmsApproval(qmsPolicy, Number(r.user_id), r.role),
+      qmsApproverDesignated: r.qms_approver_designated_at != null,
     }));
 
     // Roles derived from the live membership rows; what each may do is read
@@ -388,6 +400,7 @@ router.get('/admin', async (req: Request, res: Response) => {
 
     return ok(res, {
       organizationId: orgId, kpis, members, roles, grants, apiKeys, audit, settings, sso,
+      qmsApprovers: { standIn: qmsPolicy.standIn },
     }, {
       count: members.length,
       /* Names the facets whose read FAILED, so the surface renders an error for

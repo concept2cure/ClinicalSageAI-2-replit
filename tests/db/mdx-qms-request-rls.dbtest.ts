@@ -72,6 +72,8 @@ beforeAll(async () => {
   [org,otherOrg]=organizations.rows.map(row=>row.id);
   author=await makeActor('author',org,'admin');
   signer=await makeActor('signer',org,'admin');
+  // RR4 (decision D-Q): the signer approves as one of the organization's designated QMS approvers.
+  await owner.query('UPDATE organization_users SET qms_approver_designated_at=now(), qms_approver_designated_by=$3 WHERE organization_id=$1 AND user_id=$2',[org,signer.id,author.id]);
   unshared=await makeActor('unshared',org,'member');
   foreign=await makeActor('foreign',otherOrg,'admin');
   for (const [organizationId,programId,actor] of [[org,PROGRAM,author],[otherOrg,OTHER_PROGRAM,foreign]] as const) {
@@ -171,7 +173,9 @@ describe('QMS through authenticated native request scope',()=>{
   });
 
   it('reviews then approves saved text with real password re-verification and one bound signature',async()=>{
-    const review=await call(author,'patch',`/documents/${documentId}`,{status:'in_review',reason:'Saved controlled text is ready for review'});
+    // RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): sending for review names its route, the designated QMS approver.
+    const review=await call(author,'patch',`/documents/${documentId}`,{status:'in_review',reason:'Saved controlled text is ready for review',
+      route:{reviewers:[],approvers:[signer.id],approvalDueDate:new Date(Date.now()+5*86_400_000).toISOString().slice(0,10)}});
     expect(review.status,JSON.stringify(review.body)).toBe(200);
     const {runWithTenantScope}=await import('../../server/db/tenantStore');
     const {getPool}=await import('../../server/db/runtime');

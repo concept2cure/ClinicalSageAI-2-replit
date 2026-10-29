@@ -233,6 +233,19 @@ const qmsDocumentContentBinding: ContentBinder = async (client, rest, orgId, led
   );
   const row = rows[0];
   if (!row) return ledgerFallback('QMS document not readable at signing time');
+  // RR4 (§2.8): a review of a document in review binds exactly what its
+  // approval will sign — the version content with its authored sections
+  // captured, the one recipe (qmsSignedContent) — so the review digest equals
+  // the approval digest.
+  if (row.status === 'in_review') {
+    const { qmsSignedContent } = await import('../qms/document-approval-signature.js');
+    const { contentDigest } = await qmsSignedContent(client as never, row);
+    return {
+      digest: contentDigest,
+      basis: BINDING_BASIS.QMS_DOCUMENT_VERSION_CONTENT,
+      note: `sha256 over QMS document ${rest} v${String(row.version)}'s controlled content under review (identity, title, type, category, artifact, next review date, and metadata without its approval block, with the authored sections when it is authored in the editor): the content its approval will sign.`,
+    };
+  }
   if (row.status !== 'effective') return ledgerFallback('the QMS document has no version in force at signing time');
   return {
     digest: computeQmsDocumentContentDigest(row),
