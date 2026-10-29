@@ -1,0 +1,6 @@
+# npx tsc -p <scratch tsconfig> extending the repo tsconfig.json, include limited to the repo's .d.ts files and:
+#   server/routes/mdx-engineering.ts, server/routes/__tests__/mdx-engineering.contract.test.ts,
+#   client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx, client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx
+# (their imports are checked transitively).
+error TS lines: 0
+exit 0

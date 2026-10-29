@@ -67,6 +67,14 @@ function runControlTitle(canRun: boolean, unavailableReason?: string): string | 
 export const ORGANIZATION_WIDE_RECORDS = 'Organization-wide records';
 export const COUNTS_NOT_NARROWED = 'Counts are not narrowed to the selected project.';
 
+/** The one rule for when a run's counts are the organization's under a narrower
+ *  scope: computed for the organization, and not itself an account run (an
+ *  account run is already headed as the organization). Read by the scope line
+ *  (Insights.tsx) and the run history row (InsightsRunsPanel.tsx). */
+export function countsAreOrganizationWide(run: { computedScope?: string | null; scopeType?: string | null }): boolean {
+  return run.computedScope === 'organization' && run.scopeType !== 'account';
+}
+
 export function OrganizationCountsNote({ className }: { className: string }) {
   return <>
     <div className={className}>{ORGANIZATION_WIDE_RECORDS}</div>

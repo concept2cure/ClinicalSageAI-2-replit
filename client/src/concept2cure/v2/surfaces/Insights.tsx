@@ -19,7 +19,7 @@ import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { BundlesPanel } from './InsightsBundlesPanel';
 import { useLibraryActions } from './insightsLibraryActions';
-import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote } from './InsightsCatalogPanel';
+import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote, countsAreOrganizationWide } from './InsightsCatalogPanel';
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
@@ -1020,10 +1020,6 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
 /** The run is headed by a project (or program, or submission) while its engine
  *  counted the organization's records: the run's own carried `computedScope`,
  *  never the type id. An account run is already headed as the organization. */
-function countsAreOrganizationWide(report: Pick<RenderedReport, 'computedScope' | 'scopeType'>): boolean {
-  return report.computedScope === 'organization' && report.scopeType !== 'account';
-}
-
 function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;

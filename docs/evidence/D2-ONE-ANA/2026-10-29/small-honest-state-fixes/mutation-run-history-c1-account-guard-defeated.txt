@@ -1,0 +1,6 @@
+# mutation c1-account-guard-defeated: 'if (run.scopeType === 'account')' -> 'if (run.scopeType === 'acount')'
+# file: client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx; test: insightsRunHistoryScopeNote.test.tsx; restored after, sha256sum -c OK
+ × run history row — what an organization-scope run counted > an account run is the organization’s by its own scope: the first line only 73ms
+   → expected 'OrganizationOrganization-wide records…' not to match /not narrowed/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
