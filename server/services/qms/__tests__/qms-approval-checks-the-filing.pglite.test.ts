@@ -38,6 +38,13 @@
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+// RR4: a send names its review route; the route's own writer is proven against PostgreSQL
+// (tests/db/review-route-qms-rr4.dbtest.ts), so here it is a stand-in and this suite keeps to its subject.
+vi.mock('../qms-review-route', async (original) => ({
+  ...(await original<typeof import('../qms-review-route')>()),
+  sendQmsRoute: async () => ({ routeId: 'route-stand-in', notices: [] }),
+}));
+const QMS_ROUTE = { reviewers: [], approvers: [8], approvalDueDate: '2099-01-01' };
 
 const h = vi.hoisted(() => ({ agreement: vi.fn(), persistSignature: vi.fn() }));
 
@@ -140,7 +147,7 @@ async function approvable() {
     reason: `Create controlled procedure ${seq}`,
   });
   await db.query(`UPDATE authoring_sections SET content = '<p>Use verified document numbers.</p>' WHERE doc_id = $1`, [row.authoring_document_id]);
-  await updateControlledQmsDocument(ctx, row.id, { status: 'in_review', reason: `Send procedure ${seq} for review` });
+  await updateControlledQmsDocument(ctx, row.id, { status: 'in_review', reason: `Send procedure ${seq} for review`, route: QMS_ROUTE });
   return row;
 }
 

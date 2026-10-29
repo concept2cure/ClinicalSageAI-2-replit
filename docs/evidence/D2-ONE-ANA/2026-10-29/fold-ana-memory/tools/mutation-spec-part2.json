@@ -1,0 +1,66 @@
+[
+ {
+  "id": "P1",
+  "what": "the alias removed: an old ana-memory link lands nowhere",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  'ana-memory': 'conversation-thread',\n",
+  "new": "",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts"
+ },
+ {
+  "id": "P2",
+  "what": "the retired screen kept as a deferred-inventory row",
+  "file": "shared/constants/deferred-capability-inventory.ts",
+  "old": "  /* ana-memory left this list on 2026-10-29",
+  "new": "  { surfaceId: 'ana-memory', decision: 'converge', canonicalSurfaces: ['conversation-thread'], implementedParts: 'Memory browser over the retained MDX store.', completionNeeded: 'Read and govern the memory actually used by each AnA turn.', description: 'Deferred memory browser.' },\n  /* ana-memory left this list on 2026-10-29",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts shared/constants/__tests__/deferred-capability-inventory.test.ts"
+ },
+ {
+  "id": "P3",
+  "what": "a retired route kept on the router (the atom list)",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "\nexport default router;\n",
+  "new": "\nrouter.get('/ana/memory', (_req: Request, res: Response) => ok(res, []));\n\nexport default router;\n",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts tests/mdx-notifications-clinical-routes.test.ts"
+ },
+ {
+  "id": "P4",
+  "what": "the conversation's claim widened to the whole /api/mdx/ana/memory prefix",
+  "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+  "old": ", '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],",
+  "new": ", '/api/concept2cure/projects', '/api/mdx/ana/memory'],",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts server/middleware/__tests__/launch-scope-api-gate.test.ts"
+ },
+ {
+  "id": "P5",
+  "what": "the conversation's claim removed (production would refuse the panel's read)",
+  "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+  "old": ", '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],",
+  "new": ", '/api/concept2cure/projects'],",
+  "run": "npx vitest run server/middleware/__tests__/launch-scope-api-gate.test.ts"
+ },
+ {
+  "id": "P6",
+  "what": "ana-memory put back in the launch shell",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "  'conversation-thread': 'AnA conversation; the product is chat-first',\n",
+  "new": "  'conversation-thread': 'AnA conversation; the product is chat-first',\n  'ana-memory': 'AnA memory',\n",
+  "run": "npx vitest run server/services/entitlements/__tests__/launch-scope.test.ts client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts"
+ },
+ {
+  "id": "P7",
+  "what": "the conversation stops mounting What AnA remembers",
+  "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+  "old": "      {remembersOpen && (\n        <WhatAnaRemembers projectRef={shellProjectId} ",
+  "new": "      {remembersOpen && false && (\n        <WhatAnaRemembers projectRef={shellProjectId} ",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "P8",
+  "what": "the panel mounted with no project although the turns carry one",
+  "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+  "old": "<WhatAnaRemembers projectRef={shellProjectId} ",
+  "new": "<WhatAnaRemembers projectRef={null} ",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ }
+]

@@ -1,0 +1,350 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/2dce5675-71af-532e-b288-abcf4efad803/scratchpad/head
+
+stderr | tests/db/review-route-qms-rr4.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-qms-rr4.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > until anyone is designated, the Approver role stands in; a reviewer is not a QMS approver 164ms
+   → {"error":"State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.","details":{"code":"QMS_UPDATE_INVALID"}}: expected 400 to be 409 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > is refused, with nothing written, without a reason, to a non-administrator, for oneself, and for a member who cannot sign 109ms
+   → no reason: {}: expected 404 to be 400 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > designates with a reason as a governed, chained ledger row; the stand-in then ends; removal is recorded the same way 15ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > a send without a route is refused, REVIEW_ROUTE_REQUIRED, with nothing written 61ms
+   → {"data":{"id":64,"organization_id":24,"doc_number":"qms-rr4-70d1f9cc-NOROUTE","title":"qms-rr4-70d1f9cc invented procedure NOROUTE","doc_type":"sop","category":null,"version":"1.0","status":"in_review","effective_date":null,"next_review_date":"2027-05-17T00:00:00.000Z","author_id":67,"approver_id":null,"approved_at":null,"superseded_by_id":null,"artifact_id":null,"metadata":{"sections":[{"key":"procedure","body":"Record each NOROUTE correction with its reason.","label":"Procedure"}]},"created_at":"2026-10-29T13:18:25.434Z","updated_at":"2026-10-29T13:18:25.451Z","deleted_at":null,"authoring_document_id":null},"meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 200 to be 409 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > refuses no approver, the author, a contributor, and another organization’s account, each with nothing written 96ms
+   → no approver: expected 'QMS_UPDATE_INVALID' to be 'ROUTE_APPROVER_REQUIRED' // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > with zero reviewers, the one designated approver is asked at once and makes the document effective 18ms
+   → {"error":"State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.","details":{"code":"QMS_UPDATE_INVALID"}}: expected 400 to be 200 // Object.is equality
+ ↓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > a refusal the route decides is given before the credential: no password is checked or counted
+ ↓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > approval is refused until both reviewers have signed; each review closes its task citing esig:<id>
+ ↓ tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7) > the approver approves through the existing approve; the review digest equals the approval digest and the route’s
+ × tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > Return for revision by a named reviewer: in_review → draft, the route returned, others cancelled, the sender told 16ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > the controlled-text save is refused while the route is open, and demotes once it is returned 17ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > a revision is refused while the route is open 16ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > retiring a document in review withdraws its route on the same transaction 27ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a withdrawn route signs nothing until a new one is sent; re-sending names it afresh 15ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a document already in review with no route keeps today’s rule, until someone names reviewers on it 96ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > a reviewer hands back; the sender reassigns to another reviewer, who signs; a non-designated approver is refused 17ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > another organization cannot read or act on the document 14ms
+   → expected 400 to be 200 // Object.is equality
+ × tests/db/review-route-qms-rr4.dbtest.ts > a document authored in the canonical editor (§2.8, §2.9) > its sections are held while the route is open; the review and the approval bind the same authored content 170ms
+   → expected 400 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > two reviewers, then the approver: signing on the route (§2.8, B7)
+AssertionError: {"error":"State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.","details":{"code":"QMS_UPDATE_INVALID"}}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:279:52
+    277|     id = await draft('TWO');
+    278|     const sent = await send(id, ['r1', 'r2'], ['qa']);
+    279|     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+       |                                                    ^
+    280|   });
+    281|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > until anyone is designated, the Approver role stands in; a reviewer is not a QMS approver
+AssertionError: {"error":"State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.","details":{"code":"QMS_UPDATE_INVALID"}}: expected 400 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:167:64
+    165|     const id = await draft('STANDIN');
+    166|     const asReviewer = await send(id, [], ['r1']);
+    167|     expect(asReviewer.status, JSON.stringify(asReviewer.body)).toBe(40…
+       |                                                                ^
+    168|     expect(codeOf(asReviewer)).toBe('MEMBER_NOT_QMS_APPROVER');
+    169|     expect(asReviewer.body.error).toMatch(/until an administrator desi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > is refused, with nothing written, without a reason, to a non-administrator, for oneself, and for a member who cannot sign
+AssertionError: no reason: {}: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:188:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > D-Q: an administrator designates QMS approvers (RR4, §7.8) > designates with a reason as a governed, chained ledger row; the stand-in then ends; removal is recorded the same way
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:197:50
+    195|   it('designates with a reason as a governed, chained ledger row; the …
+    196|     const res = await designate('admin', 'qa', true);
+    197|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    198|     const row = (await owner.query(`SELECT qms_approver_designated_at,…
+    199|       [orgId, actors.qa.id])).rows[0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > a send without a route is refused, REVIEW_ROUTE_REQUIRED, with nothing written
+AssertionError: {"data":{"id":64,"organization_id":24,"doc_number":"qms-rr4-70d1f9cc-NOROUTE","title":"qms-rr4-70d1f9cc invented procedure NOROUTE","doc_type":"sop","category":null,"version":"1.0","status":"in_review","effective_date":null,"next_review_date":"2027-05-17T00:00:00.000Z","author_id":67,"approver_id":null,"approved_at":null,"superseded_by_id":null,"artifact_id":null,"metadata":{"sections":[{"key":"procedure","body":"Record each NOROUTE correction with its reason.","label":"Procedure"}]},"created_at":"2026-10-29T13:18:25.434Z","updated_at":"2026-10-29T13:18:25.451Z","deleted_at":null,"authoring_document_id":null},"meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:229:50
+    227|     const before = await ledgerCount();
+    228|     const res = await qms('author', 'patch', `/documents/${id}`, { sta…
+    229|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    230|     expect(codeOf(res)).toBe('REVIEW_ROUTE_REQUIRED');
+    231|     expect((await doc(id)).status).toBe('draft');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > refuses no approver, the author, a contributor, and another organization’s account, each with nothing written
+AssertionError: no approver: expected 'QMS_UPDATE_INVALID' to be 'ROUTE_APPROVER_REQUIRED' // Object.is equality
+
+Expected: "ROUTE_APPROVER_REQUIRED"
+Received: "QMS_UPDATE_INVALID"
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:248:34
+    246|     for (const [label, res, code] of cases) {
+    247|       expect([400, 409], `${label}: ${JSON.stringify(res.body)}`).toCo…
+    248|       expect(codeOf(res), label).toBe(code);
+       |                                  ^
+    249|     }
+    250|     expect((await doc(id)).status).toBe('draft');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > the route rule on a QMS document (NEW-4, §2.7) > with zero reviewers, the one designated approver is asked at once and makes the document effective
+AssertionError: {"error":"State a reason of at least eight characters. Edit document text in the canonical editor, and change its version through a controlled revision.","details":{"code":"QMS_UPDATE_INVALID"}}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:258:52
+    256|     const id = await draft('ZERO');
+    257|     const sent = await send(id, [], ['qa']);
+    258|     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+       |                                                    ^
+    259|     expect(sent.body.data.status).toBe('in_review');
+    260|     const [m] = await members(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > Return for revision by a named reviewer: in_review → draft, the route returned, others cancelled, the sender told
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:348:59
+    346|   it('Return for revision by a named reviewer: in_review → draft, the …
+    347|     const id = await draft('RET');
+    348|     expect((await send(id, ['r1', 'r2'], ['qa'])).status).toBe(200);
+       |                                                           ^
+    349|     expect((await qms('r1', 'post', `/documents/${id}/return`, {})).bo…
+    350|     const notMine = await qms('r3', 'post', `/documents/${id}/return`,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > the controlled-text save is refused while the route is open, and demotes once it is returned
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:371:49
+    369|   it('the controlled-text save is refused while the route is open, and…
+    370|     const id = await draft('TXT');
+    371|     expect((await send(id, [], ['qa'])).status).toBe(200);
+       |                                                 ^
+    372|     const { computeQmsDocumentContentDigest } = await import('../../se…
+    373|     const save = async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > a revision is refused while the route is open
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:389:49
+    387|   it('a revision is refused while the route is open', async () => {
+    388|     const id = await draft('REVZ');
+    389|     expect((await send(id, [], ['qa'])).status).toBe(200);
+       |                                                 ^
+    390|     const res = await qms('author', 'post', `/documents/${id}/revise`,…
+    391|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > retiring a document in review withdraws its route on the same transaction
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:398:53
+    396|   it('retiring a document in review withdraws its route on the same tr…
+    397|     const id = await draft('RETIRE');
+    398|     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
+       |                                                     ^
+    399|     const res = await qms('qa', 'post', `/documents/${id}/retire`, { p…
+    400|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a withdrawn route signs nothing until a new one is sent; re-sending names it afresh
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:410:53
+    408|   it('a withdrawn route signs nothing until a new one is sent; re-send…
+    409|     const id = await draft('WDN');
+    410|     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
+       |                                                     ^
+    411|     expect(codeOf(await qms('r1', 'post', `/documents/${id}/review-rou…
+    412|     const w = await qms('author', 'post', `/documents/${id}/review-rou…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > withdraw never falls back to the old rule; grandfathering (§2.13) > a document already in review with no route keeps today’s rule, until someone names reviewers on it
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:437:46
+    435|       JSON.stringify({ sections: [{ key: 'procedure', label: 'Procedur…
+    436|     const r = await qms('author', 'post', `/documents/${named}/review-…
+    437|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    438|     expect(codeOf(await approve('admin', named))).toBe('ROUTE_NOT_NAME…
+    439|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > a reviewer hands back; the sender reassigns to another reviewer, who signs; a non-designated approver is refused
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:445:53
+    443|   it('a reviewer hands back; the sender reassigns to another reviewer,…
+    444|     const id = await draft('RSN');
+    445|     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
+       |                                                     ^
+    446|     const back = await qms('r1', 'post', `/documents/${id}/review-rout…
+    447|     expect(back.status, JSON.stringify(back.body)).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > reassign and hand back on a QMS route (RR3’s acts, §2.10) > another organization cannot read or act on the document
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:467:53
+    465|   it('another organization cannot read or act on the document', async …
+    466|     const id = await draft('XT');
+    467|     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
+       |                                                     ^
+    468|     expect((await qms('outsider', 'get', `/documents/${id}/review-rout…
+    469|     expect((await qms('outsider', 'post', `/documents/${id}/review-rou…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  tests/db/review-route-qms-rr4.dbtest.ts > a document authored in the canonical editor (§2.8, §2.9) > its sections are held while the route is open; the review and the approval bind the same authored content
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/db/review-route-qms-rr4.dbtest.ts:482:53
+    480|     const docId = String(created.body.data.authoring_document_id);
+    481|     await owner.query(`UPDATE authoring_sections SET content = '<p>Rec…
+    482|     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
+       |                                                     ^
+    483|     // The named members can open and act on the authored copy: the ro…
+    484|     const grants = (await owner.query(`SELECT principal_id, role FROM …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 3 skipped (18)
+   Start at  13:18:13
+   Duration  12.60s (transform 6.71s, setup 141ms, import 432ms, tests 11.30s, environment 0ms)
+

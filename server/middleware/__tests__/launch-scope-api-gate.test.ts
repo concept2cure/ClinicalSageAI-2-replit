@@ -213,9 +213,10 @@ describe('the real registry, launch scope on', () => {
     ]) {
       expect(await refused(p), p).toBe(false);
     }
-    // AnA memory left the launch scope on 2026-10-08: it listed a store nothing
-    // writes. Its routes are refused with it.
-    expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
+    // AnA memory left the launch scope on 2026-10-08 and folded into the conversation on 2026-10-29 (fold-ana-memory/):
+    // the conversation claims the caller's own profile; the screen's other routes are gone, claimed by nothing.
+    for (const p of ['/api/mdx/ana/memory', '/api/mdx/ana/memory/7/verify', '/api/mdx/ana/threads']) expect(await refused(p), p).toBe(true);
+    expect(await refused('/api/mdx/ana/memory/profile'), '/api/mdx/ana/memory/profile').toBe(false);
   });
 
   /* 2026-10-17 (audit, FILING_SPINE F12 + LX-13): transmit runs on the sequence

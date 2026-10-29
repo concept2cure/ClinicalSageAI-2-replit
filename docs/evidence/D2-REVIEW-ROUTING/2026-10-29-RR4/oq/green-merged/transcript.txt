@@ -1,0 +1,26 @@
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  pass
+  OQ-QMS-03  pass
+  OQ-QMS-04  pass
+  OQ-QMS-04b  pass
+  OQ-QMS-05  pass
+  OQ-QMS-05b  pass
+  OQ-QMS-06a  pass
+  OQ-QMS-06  pass
+  OQ-QMS-06b  pass
+  OQ-QMS-06c  pass
+  OQ-QMS-06d  pass
+  OQ-QMS-07  pass
+  OQ-QMS-08  pass
+  OQ-QMS-09  pass
+  OQ-QMS-10b  pass
+  OQ-QMS-10  pass
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  pass
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 22 pass, 0 fail, 0 deviation, 0 not-executed → docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR4/oq/green-merged/OQ-QMS

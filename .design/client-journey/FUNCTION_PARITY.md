@@ -590,8 +590,16 @@ Admitting RBM, or moving both screens into a project step, is a founder decision
 ### Into the conversation (`conversation-thread`)
 
 #### From `ana-memory`
-- [ ] See how AnA is tuned to me. From `AnaMemory.tsx:107,208-219`. Goes to: a read-only "What AnA remembers" panel in account settings or beside the conversation. Real today.
-- [ ] "Things I got wrong" ledger. From `AnaMemory.tsx:223-232`. Goes to: the same panel, including the project-scoped profile. Real today.
+Folded 2026-10-29 (D2): `ana-memory` is an alias of `conversation-thread`, and
+`AnaMemory.tsx` is deleted. The two real items are "What AnA remembers"
+(`WhatAnaRemembers.tsx`), opened from the conversation's header, with the
+project-scoped profile for the conversation's project. Evidence and the fold
+guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/`,
+`foldAnaMemory.test.ts`.
+
+Not carried, as below. The screen was the only caller of their routes
+(`mdx-ana-memory.ts`: the atom list, verify, supersede, and the thread list,
+read and pin), so those routes were deleted with it.
 - [ ] Organisation memory atoms. From `AnaMemory.tsx:119`. Goes to: held until a writer exists. Not real today.
 - [ ] Filter atoms. From `AnaMemory.tsx:243-252`. Goes to: with the list. Not real today.
 - [ ] Verify an atom. From `AnaMemory.tsx:136-149`. Goes to: with the list. Not real today.

@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/2dce5675-71af-532e-b288-abcf4efad803/scratchpad/head
+
+ × server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck refusal answers with its code and asks for no authority, no password and no transaction 54ms
+   → {"signed":true,"actionId":"action","auditId":"audit","sha256Chain":"chain","signatureId":501,"signedAt":"2026-10-29T00:00:00.000Z","meaning":"REVIEWED"}: expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck that passes is asked before the authority check 12ms
+   → expected [ 'authority', 'credential' ] to deeply equal [ 'precheck', 'authority', …(1) ]
+ × server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > runs after the signature row and before COMMIT, with the row’s id 9ms
+   → expected [ 'signature', 'COMMIT' ] to deeply equal [ 'signature', …(2) ]
+ × server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > a throw rolls back the act and its signature: no COMMIT, the refusal in its own words 7ms
+   → {"signed":true,"actionId":"action","auditId":"audit","sha256Chain":"chain","signatureId":501,"signedAt":"2026-10-29T00:00:00.000Z","meaning":"REVIEWED"}: expected 201 to be 409 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck refusal answers with its code and asks for no authority, no password and no transaction
+AssertionError: {"signed":true,"actionId":"action","auditId":"audit","sha256Chain":"chain","signatureId":501,"signedAt":"2026-10-29T00:00:00.000Z","meaning":"REVIEWED"}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/governed-signed-act-hooks.test.ts:60:50
+     58|     h.precheck.mockRejectedValue(coded('ROUTE_NOT_NAMED'));
+     59|     const res = await request(app()).post('/sign').send(body);
+     60|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+     61|     expect(res.body.error.code).toBe('ROUTE_NOT_NAMED');
+     62|     expect(h.precheck).toHaveBeenCalledWith(client, 7, 42);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act-hooks.test.ts > precheck: refused before authority and the credential (B7) > a precheck that passes is asked before the authority check
+AssertionError: expected [ 'authority', 'credential' ] to deeply equal [ 'precheck', 'authority', …(1) ]
+
+- Expected
++ Received
+
+  [
+-   "precheck",
+    "authority",
+    "credential",
+  ]
+
+ ❯ server/routes/__tests__/governed-signed-act-hooks.test.ts:77:19
+     75|     const res = await request(app()).post('/sign').send(body);
+     76|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+     77|     expect(order).toEqual(['precheck', 'authority', 'credential']);
+       |                   ^
+     78|   });
+     79| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > runs after the signature row and before COMMIT, with the row’s id
+AssertionError: expected [ 'signature', 'COMMIT' ] to deeply equal [ 'signature', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "signature",
+-   "afterSign:501:true",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/governed-signed-act-hooks.test.ts:90:19
+     88|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+     89|     expect(res.body.signatureId).toBe(501);
+     90|     expect(order).toEqual(['signature', 'afterSign:501:true', 'COMMIT'…
+       |                   ^
+     91|     expect(h.afterCommit).toHaveBeenCalledTimes(1);
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act-hooks.test.ts > afterSign: on the signing transaction, citing the signature (B7) > a throw rolls back the act and its signature: no COMMIT, the refusal in its own words
+AssertionError: {"signed":true,"actionId":"action","auditId":"audit","sha256Chain":"chain","signatureId":501,"signedAt":"2026-10-29T00:00:00.000Z","meaning":"REVIEWED"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/governed-signed-act-hooks.test.ts:97:50
+     95|     h.afterSign.mockRejectedValue(coded('ROUTE_SIGNATURE_UNVERIFIED'));
+     96|     const res = await request(app()).post('/sign').send(body);
+     97|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+     98|     expect(res.body.error.code).toBe('ROUTE_SIGNATURE_UNVERIFIED');
+     99|     expect(statements()).toContain('ROLLBACK');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  13:41:45
+   Duration  3.14s (transform 1.18s, setup 113ms, import 2.31s, tests 87ms, environment 0ms)
+

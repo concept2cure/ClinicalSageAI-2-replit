@@ -994,6 +994,12 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      and the audit_events chain's from the console's own route, and AnA reads
      both in its facts. Old links, ⌘K hits and AnA's target land there. */
   'part11-console': 'audit-trail',
+  /* AnA memory folded into the conversation (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). Its two real reads,
+     how AnA is tuned to the person and the "Things I got wrong" ledger, are the
+     conversation's "What AnA remembers" (WhatAnaRemembers.tsx), with the
+     project-scoped notes for the conversation's project. Old links land there. */
+  'ana-memory': 'conversation-thread',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

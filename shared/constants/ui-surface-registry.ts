@@ -1110,22 +1110,11 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE],
     notes: 'Usage, invoices, budgets, alerts. See MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS.',
   },
-  {
-    id: 'ana-memory',
-    label: 'AnA memory',
-    navTier: 'global',
-    layoutMode: 'ana-memory',
-    icon: 'database',
-    group: 'explore',
-    uiKit: null,
-    apiPrefixes: ['/api/mdx/ana/memory', '/api/mdx/ana/threads'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: deferredSurfaceDescription('ana-memory'),
-  },
+  /* No `ana-memory`. AnA memory folded into the conversation (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/): its two real reads are
+     the conversation's "What AnA remembers", which claims the one route it reads
+     ('/api/mdx/ana/memory/profile', ui-surface-registry.ui-v2.ts). The atom list,
+     verify, supersede and thread routes went with the screen. */
 
 
   // ═══ ui-v2 kit reconciliation (2026-07-06) ═════════════════════════════════

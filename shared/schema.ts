@@ -2656,6 +2656,11 @@ export const organizationUsers = pgTable(
     // control stays on `role`. Null = unset.
     persona: text('persona'),
     permissions: json('permissions'),
+    // The QMS approver designation (migrations/20261029f_qms_approver_designation.sql,
+    // decision D-Q of docs/design/REVIEW_ROUTING_2026-10-23.md, RR4): set and
+    // cleared together by server/services/qms/qms-approver-designation.ts only.
+    qmsApproverDesignatedAt: timestamp('qms_approver_designated_at', { withTimezone: true }),
+    qmsApproverDesignatedBy: integer('qms_approver_designated_by'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

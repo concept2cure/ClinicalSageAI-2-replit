@@ -267,14 +267,17 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
     expect(H.audit).toEqual([]);
   });
 
-  it('a manager still routes a draft for review: the twin of transition to=in_review', async () => {
+  it('a manager still reaches the send for review: the twin of transition to=in_review', async () => {
     as('manager');
     H.doc = { ...H.doc, status: 'draft', authoring_document_id: '00000000-0000-4000-8000-000000000011' };
+    // The role is admitted; since RR4 the send itself names its review route (docs/design/REVIEW_ROUTING_2026-10-23.md
+    // §2.7), so a send without one is refused by the service, not the role. The routed send is proven against
+    // PostgreSQL in tests/db/review-route-qms-rr4.dbtest.ts.
     const res = await request(await productionApp()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review', reason: 'Route the saved procedure for independent review' });
-    expect(res.status).toBe(200);
-    expect(H.doc?.status).toBe('in_review');
-    expect(H.audit).toEqual([expect.objectContaining({ command: 'transition', target: 'qms-document:11',
-      payload: expect.objectContaining({ kind: 'send-for-review' }) })]);
+    expect(res.status).toBe(409);
+    expect(res.body.details?.code).toBe('REVIEW_ROUTE_REQUIRED');
+    expect(H.doc?.status).toBe('draft');
+    expect(H.audit).toEqual([]);
   });
 
   it('a viewer still acknowledges training on a procedure: that is their own record, not a governed change', async () => {

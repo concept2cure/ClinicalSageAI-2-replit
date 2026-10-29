@@ -1,6 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+// RR4: a send names its review route; the route's own writer is proven against PostgreSQL
+// (tests/db/review-route-qms-rr4.dbtest.ts), so here it is a stand-in and this suite keeps to its subject.
+vi.mock('../qms-review-route', async (original) => ({
+  ...(await original<typeof import('../qms-review-route')>()),
+  sendQmsRoute: async () => ({ routeId: 'route-stand-in', notices: [] }),
+}));
+const QMS_ROUTE = { reviewers: [], approvers: [8], approvalDueDate: '2099-01-01' };
 
 vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction: async () => ({ actionId: 'action', auditId: 'audit', sha256Chain: 'chain' }) }));
 vi.mock('../../c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }), canonicalIdFor: async () => null, DocumentAliasConflictError: class extends Error {} }));
@@ -105,7 +112,7 @@ describe('real canonical QMS content and immutable signed revisions', () => {
   it('review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy', async () => {
     const row = (await db.query<any>('SELECT * FROM qms_documents ORDER BY id LIMIT 1')).rows[0];
     await db.query(`UPDATE authoring_sections SET content = '<p>Use verified document numbers.</p>' WHERE doc_id=$1 AND code='qms-purpose'`,[row.authoring_document_id]);
-    await updateControlledQmsDocument(ctx,row.id,{status:'in_review',reason:'Saved text ready for review'});
+    await updateControlledQmsDocument(ctx,row.id,{status:'in_review',reason:'Saved text ready for review',route:QMS_ROUTE});
     await expect(db.query(`UPDATE authoring_sections SET content = 'tampered' WHERE doc_id=$1`,[row.authoring_document_id])).rejects.toThrow(/QMS_DOCUMENT_CONTROLLED/);
     await db.exec('BEGIN');
     await expect(approveQmsDocumentSigned({query:(sql,args)=>db.query(sql,args)},

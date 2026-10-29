@@ -165,7 +165,8 @@ describe('the task ends with the version it was for', () => {
       (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId, principalId: String(signer.id),
         role: 'APPROVER', grantedBy: String(author.id), reason: 'Independent approver of v2.0' }));
     const sent = await request(app).patch(`/api/mdx/qms/documents/${id}`).set('Authorization', `Bearer ${author.token}`)
-      .send({ status: 'in_review', nextReviewDate: day(300), reason: 'Saved v2.0 text ready for review' });
+      // RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): sending for review names its route, the QMS approver (here the Approver-role signer, who stands in while the organization has designated none).
+      .send({ status: 'in_review', nextReviewDate: day(300), reason: 'Saved v2.0 text ready for review', route: { reviewers: [], approvers: [signer.id], approvalDueDate: day(5) } });
     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
     // While v2.0 is drafted, v1.0 is in force and its task stands.
     expect((await open(id)).map((t) => t.metadata.version)).toEqual(['1.0']);

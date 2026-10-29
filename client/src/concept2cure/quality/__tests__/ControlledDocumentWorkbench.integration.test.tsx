@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** The Quality host loads and saves through the real canonical TipTap workbench. */
 import * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Editor } from '@tiptap/core';
 const request = vi.hoisted(() => vi.fn());
@@ -28,6 +28,11 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
   prototype.getClientRects ??= () => [];
   prototype.getBoundingClientRect ??= () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
 }
+// The host lazy-loads the real workbench (React.lazy). Its module graph is
+// large, and a cold first import can outlast the first test's 5 s budget, so
+// it is loaded once before the tests; every test still renders through the lazy
+// boundary, and asserts the same thing.
+beforeAll(async () => { await import('../../v2/editor/DocumentWorkbench'); }, 60_000);
 beforeEach(() => {
   content = ''; editable = true; revision = 0; localStorage.clear();
   request.mockReset().mockImplementation(async (method: string, url: string, body?: { content?: string }) => {

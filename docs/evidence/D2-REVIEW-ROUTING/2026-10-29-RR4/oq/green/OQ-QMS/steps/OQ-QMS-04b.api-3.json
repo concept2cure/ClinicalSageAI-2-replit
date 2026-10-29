@@ -1,0 +1,116 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5198/api/mdx/qms/documents/32",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "in_review",
+      "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+      "route": {
+        "reviewers": [],
+        "approvers": [
+          7
+        ],
+        "order": "parallel",
+        "approvalDueDate": "2026-11-03"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 122,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 32,
+        "organization_id": 6,
+        "doc_number": "SOP-OQ-20261029145843",
+        "title": "OQ-006 Document control SOP 20261029145843",
+        "doc_type": "sop",
+        "category": "production",
+        "version": "1.0",
+        "status": "in_review",
+        "effective_date": null,
+        "next_review_date": "2026-11-08T00:00:00.000Z",
+        "author_id": 6,
+        "approver_id": null,
+        "approved_at": null,
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "sections": [
+            {
+              "key": "purpose",
+              "hint": "Why this document exists and what it governs.",
+              "label": "Purpose",
+              "order": 1
+            },
+            {
+              "key": "scope",
+              "hint": "What and who it applies to, with explicit exclusions.",
+              "label": "Scope",
+              "order": 2
+            },
+            {
+              "key": "responsibilities",
+              "hint": "Roles accountable for each step.",
+              "label": "Responsibilities",
+              "order": 3
+            },
+            {
+              "key": "definitions",
+              "hint": "Terms, abbreviations, and acronyms used.",
+              "label": "Definitions",
+              "order": 4
+            },
+            {
+              "key": "procedure",
+              "hint": "The step-by-step controlled process.",
+              "label": "Procedure",
+              "order": 5
+            },
+            {
+              "key": "references",
+              "hint": "Regulations, standards, and linked documents.",
+              "label": "References",
+              "order": 6
+            },
+            {
+              "key": "attachments",
+              "hint": "Forms, templates, and records this document produces.",
+              "label": "Attachments",
+              "order": 7
+            },
+            {
+              "key": "revision_history",
+              "hint": "Version, date, author, and a summary of each change.",
+              "label": "Revision history",
+              "order": 8
+            },
+            {
+              "key": "approval",
+              "hint": "Author, reviewer, and approver signatures.",
+              "label": "Approval",
+              "order": 9
+            }
+          ],
+          "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+          "templateKey": "sop"
+        },
+        "created_at": "2026-10-29T14:58:44.980Z",
+        "updated_at": "2026-10-29T14:58:47.648Z",
+        "deleted_at": null,
+        "authoring_document_id": "1bb380ac-8db0-4712-a2da-2cb7f4193320"
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        },
+        "routeId": "4ec9441e-a1ad-45b5-8fda-5e9ba21c6b16"
+      }
+    }
+  }
+}

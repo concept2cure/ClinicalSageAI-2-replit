@@ -74,7 +74,7 @@ const CONTEXTUAL = {
   'project-home': 'the landing surface for a project, routed to on selection',
   'conversation-thread': 'AnA rail destination, reached by asking a question',
   'ana-command': 'AnA rail surface, on the persistent rail',
-  'ana-memory': 'AnA rail surface, on the persistent rail',
+  // ana-memory folded into conversation-thread on 2026-10-29 (D2); its links land there.
   // part11-console folded into audit-trail on 2026-10-29 (D2); its links land here.
   'audit-trail': 'governance surface, reached from admin, compliance and record views',
   'compliance-reports': 'reporting surface, reached from Reporting & analytics and the audit trail',

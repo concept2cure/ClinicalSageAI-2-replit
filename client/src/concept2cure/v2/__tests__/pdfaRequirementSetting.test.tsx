@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Require PDF/A, in admin Setup (D7, the PDF/A rule decided 2026-10-01;
+ * Require PDF/A, in Admin and access → Settings (D7, the PDF/A rule decided 2026-10-01;
  * evidence docs/evidence/D7/2026-10-01-pdfa-rule/).
  *
  *  - It reads the organisation's stored setting: off unless it is literally true.
@@ -54,7 +54,7 @@ afterEach(() => cleanup());
 
 const row = () => screen.getByTestId('pdfa-requirement-setting');
 
-describe('Require PDF/A in Setup', () => {
+describe('Require PDF/A in Settings', () => {
   it('is off unless the stored value is literally true', async () => {
     stored = 'true';
     render(<PdfARequirementSetting />);

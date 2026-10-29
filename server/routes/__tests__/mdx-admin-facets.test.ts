@@ -97,11 +97,9 @@ describe('GET /api/mdx/admin — real facets', () => {
     const byId = Object.fromEntries(res.body.data.settings.map((s: any) => [s.id, s.value]));
     // What sign-in enforces (routes/auth.ts), not settings.security.mfaEnabled.
     expect(byId['mfa-required']).toBe('Required for every member');
-    expect(byId['session-ttl']).toBe('30 minutes');
     expect(byId['sso']).toBe('Disabled');
     expect(byId['branding']).toBe('Bright Biosciences');
   });
-
   it('builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology', async () => {
     dispatch(baseHandlers);
     const res = await request(app).get('/api/mdx/admin');
@@ -176,6 +174,30 @@ describe('GET /api/mdx/admin — real facets', () => {
   });
 });
 
+describe('GET /api/mdx/admin — the settings Setup folded into', () => {
+  /* Setup folded into Admin and access (D2, 2026-10-29): the Settings tab mounts
+     SessionPolicySetting, which reads and sets the idle window under a reason, so
+     the read-only "Session timeout" row it replaces is no longer served beside it. */
+  it('serves no session-timeout row: the governed session-policy card replaces it', async () => {
+    dispatch(baseHandlers);
+    const res = await request(app).get('/api/mdx/admin');
+    const ids = res.body.data.settings.map((s: { id: string }) => s.id);
+    expect(ids).not.toContain('session-ttl');
+    expect(res.body.data.settings.some((s: { label: string }) => /session timeout/i.test(s.label))).toBe(false);
+  });
+
+  /* Setup's Multi-factor row said where each person enrols an authenticator app
+     (QA 2026-10-08 j9, P-25); the second-factor row says it now. */
+  it('says where each person sets up an authenticator app', async () => {
+    dispatch(baseHandlers);
+    const res = await request(app).get('/api/mdx/admin');
+    const row = res.body.data.settings.find((s: { id: string }) => s.id === 'mfa-required');
+    expect(row.desc).toMatch(/emailed code/);
+    expect(row.desc).toMatch(/Account in the account menu/);
+    expect(row.desc).not.toMatch(/enrolled by each member/);
+  });
+});
+
 describe('session policy follows the enforced sign-in policy', () => {
   it.each([
     [{ sessionTimeout: 120 }, '15 minutes'],
@@ -187,8 +209,8 @@ describe('session policy follows the enforced sign-in policy', () => {
     dispatch({ ...baseHandlers, org: () => ({ rows: [{ name: 'Bright Biosciences', domain: null, settings: { security } }] }) });
     const res = await request(app).get('/api/mdx/admin');
     expect(res.status).toBe(200);
-    const row = res.body.data.settings.find((s: { id: string }) => s.id === 'session-ttl');
-    expect(row?.value).toBe(expected);
+    // The idle window is still served, on the SSO object, as sign-in enforces it.
+    expect(res.body.data.sso.sessionTtl).toBe(expected.replace(/ minutes?$/, 'm'));
   });
 
 });

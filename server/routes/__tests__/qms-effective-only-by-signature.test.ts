@@ -206,11 +206,16 @@ describe('PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a sig
     expect(H.doc?.status).toBe('effective');
   });
 
-  it('still edits a draft and routes it for review', async () => {
+  it('still edits a draft; routing it for review names its review route', async () => {
+    H.doc = docInState('draft');
+    const edited = await request(app()).patch('/api/mdx/qms/documents/11').send({ title: 'Design control inputs', reason: 'Clarify the procedure title' });
+    expect(edited.status).toBe(200);
+    // RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): a send names the QMS approver, and any reviewers.
+    // The routed send is proven against PostgreSQL in tests/db/review-route-qms-rr4.dbtest.ts.
     H.doc = docInState('draft');
     const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review', title: 'Design control', reason: 'Route for independent review' });
-    expect(res.status).toBe(200);
-    expect(H.doc?.status).toBe('in_review');
+    expect(res.status).toBe(409);
+    expect(res.body.details?.code).toBe('REVIEW_ROUTE_REQUIRED');
   });
 
   it('says a missing document is missing, not controlled', async () => {
