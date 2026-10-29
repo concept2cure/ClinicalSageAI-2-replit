@@ -25,6 +25,7 @@ import { readPredecessorIds, supersededSql } from './vault-version-family';
 import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type LegalDocumentContext } from '../../../shared/company-documents';
 import { companyLegalRegistryDocuments, readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
 import { companyLegalCopySourceRefusal } from '../company-documents/company-copy-lineage';
+import { readRouteRounds, type RouteRound } from '../review/review-route-standing';
 
 export interface LifecycleQueryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -236,6 +237,14 @@ export interface VaultVersionLifecycle {
   creatorId: number | null;
   review: SignOffManifestation | null;
   approval: SignOffManifestation | null;
+  /**
+   * The version's latest review route (RR1a, §2.12): its state, every named
+   * member with the printed name at naming, and each verified signature's
+   * printed name, meaning and UTC time, read from this organization's
+   * electronic_signatures rows only. Null when the version has none (a legacy
+   * or carried round). A failed read throws: never "not assigned".
+   */
+  round: RouteRound | null;
 }
 
 interface StoredSignOff {
@@ -324,6 +333,9 @@ export async function readVaultLifecycles(
       ...(carried ? { carriedFrom: 'authoring' as const } : {}),
     };
   };
+  const rounds = await readRouteRounds(q, {
+    organizationId, subjectType: 'canonical_document', subjectIds: rows.map((r) => String(r.canonical_id)),
+  });
   for (const r of rows) {
     out.set(r.vault_id, {
       canonicalId: r.canonical_id,
@@ -331,6 +343,7 @@ export async function readVaultLifecycles(
       creatorId: r.created_by == null ? null : Number(r.created_by),
       review: manifest(r.review_signature),
       approval: manifest(r.approval_signature),
+      round: rounds.get(String(r.canonical_id)) ?? null,
     });
   }
   return out;

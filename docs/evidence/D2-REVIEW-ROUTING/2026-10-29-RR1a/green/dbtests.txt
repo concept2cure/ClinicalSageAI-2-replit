@@ -1,0 +1,573 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T06:03:53.836Z","pid":24051,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T06:03:53.838Z","pid":24051,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T06:03:53.839Z","pid":24051,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T06:04:01.663Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T06:04:02.080Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:02.085Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+{
+  "timestamp": "2026-10-29T06:04:02.944Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "61abf1cd-e5e7-4278-82f4-1fe651eb2633",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-NOREASON",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED) 9079ms
+{"level":40,"time":"2026-10-29T06:04:03.023Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.037Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.039Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+{
+  "timestamp": "2026-10-29T06:04:03.066Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6677662a-a455-40aa-b0fe-318fce2d2de2",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-NOAPPROVER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:03.116Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.130Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.132Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+{
+  "timestamp": "2026-10-29T06:04:03.153Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "16f614af-000c-497b-b4bc-850122f1e6a8",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_NOT_IN_ORGANIZATION",
+    "type": "OTHER",
+    "size": 105,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED) 89ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user 118ms
+{"level":40,"time":"2026-10-29T06:04:03.236Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.251Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.252Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+{
+  "timestamp": "2026-10-29T06:04:03.302Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e7b98233-54e9-40d1-8ca5-ea4be87af067",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_CANNOT_SIGN",
+    "type": "OTHER",
+    "size": 97,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority 129ms
+{"level":40,"time":"2026-10-29T06:04:03.363Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.377Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.378Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+{
+  "timestamp": "2026-10-29T06:04:03.399Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "89ce3bcf-4f54-4b27-ad03-492d0f11d976",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_NO_PROJECT_ACCESS",
+    "type": "OTHER",
+    "size": 103,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:03.475Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.494Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.495Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+{
+  "timestamp": "2026-10-29T06:04:03.517Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e43e0968-b152-4bf5-8dc2-ca92a90f5f83",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_IS_AUTHOR",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project 112ms
+{"level":40,"time":"2026-10-29T06:04:03.581Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.594Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.595Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+{
+  "timestamp": "2026-10-29T06:04:03.616Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c80216b2-d131-45e8-84f5-d56c438dd9ac",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_IS_SENDER",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author) 107ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender 100ms
+{"level":40,"time":"2026-10-29T06:04:03.684Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.700Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.701Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+{
+  "timestamp": "2026-10-29T06:04:03.720Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0c4d74dd-80fe-4a37-a05f-3403c06641fd",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-REFUSE-MEMBER_ALREADY_NAMED",
+    "type": "OTHER",
+    "size": 99,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:03.790Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:03.804Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:03.805Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+{
+  "timestamp": "2026-10-29T06:04:03.824Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b2daa206-3e0a-4a1d-8892-49330823a3b9",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-STAGEROUND",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice 108ms
+ ✓ tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT) 331ms
+{"level":40,"time":"2026-10-29T06:04:04.125Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:04.145Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:04.146Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+{
+  "timestamp": "2026-10-29T06:04:04.188Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "171763c7-6928-4666-8b5b-302cae417ca7",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-FLOW",
+    "type": "OTHER",
+    "size": 76,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete 707ms
+{"level":40,"time":"2026-10-29T06:04:04.829Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:04.842Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:04.843Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+{
+  "timestamp": "2026-10-29T06:04:04.861Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "00bbd6ea-b88f-4f61-a597-787d67d69700",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-BOUND",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one 364ms
+{"level":40,"time":"2026-10-29T06:04:05.189Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:05.199Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:05.199Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+{
+  "timestamp": "2026-10-29T06:04:05.216Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6da469c8-c998-4542-a55e-f27f321e2db9",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-WITHDRAWDONE",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED 438ms
+{"level":40,"time":"2026-10-29T06:04:05.633Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:05.643Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:05.643Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+{
+  "timestamp": "2026-10-29T06:04:05.665Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a6ef6d65-04a5-429b-b0c4-feee07287c50",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-WITHDRAWN",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN) 279ms
+{"level":40,"time":"2026-10-29T06:04:05.916Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:05.928Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:05.929Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+{
+  "timestamp": "2026-10-29T06:04:05.974Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a5637260-ecce-49cb-8459-1ef3dd413694",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-RETURN",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled 273ms
+{"level":40,"time":"2026-10-29T06:04:06.182Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:06.195Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:06.196Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T06:04:06.217Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "68ee2b0a-eb88-4276-a00e-efbbbd3b1dca",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-EXIT-authoring",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one) 191ms
+{"level":40,"time":"2026-10-29T06:04:06.380Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:06.392Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:06.393Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T06:04:06.412Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2a050b35-7bd4-496e-b22c-0a28026240de",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-EXIT-withdrawn",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:06.579Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:06.591Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:06.591Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T06:04:06.613Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ef653de4-ef79-4346-8fbf-96092a677e2f",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-CHECKIN",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one) 190ms
+{"level":40,"time":"2026-10-29T06:04:06.706Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:06.725Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:06.726Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T06:04:06.766Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b457e0b9-404a-44c3-a09b-1e45b4ea84fd",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-CHECKIN",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0" 233ms
+{"level":40,"time":"2026-10-29T06:04:06.798Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:06.811Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:06.812Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+{
+  "timestamp": "2026-10-29T06:04:06.843Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "90e63d81-6f20-4577-acc0-3ae702655376",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-CONCURRENT",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > routeStanding throws on a failed read, never "none" 2ms
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once 234ms
+{"level":40,"time":"2026-10-29T06:04:07.031Z","pid":24051,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:07.044Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:07.045Z","pid":24051,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+{
+  "timestamp": "2026-10-29T06:04:07.068Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c8d6f21b-798b-48bc-b7c0-3cbdd4350fa8",
+    "code": "DBTEST-RR1A-mvt5140c_e96ed6ba-CROSS",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed) 160ms
+{"level":30,"time":"2026-10-29T06:04:08.726Z","pid":24081,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T06:04:08.728Z","pid":24081,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T06:04:08.728Z","pid":24081,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T06:04:11.181Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T06:04:11.538Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:11.545Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-29T06:04:11.745Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ccbce739-e4b6-4e5f-9637-a9ea18d012c2",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-START",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 3024ms
+{"level":40,"time":"2026-10-29T06:04:11.850Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:11.869Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:11.870Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-29T06:04:11.896Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6373fc35-31d5-4183-8184-282025b9eeed",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:11.933Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:11.956Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:11.958Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-29T06:04:11.983Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "88ba4d35-9f66-4c44-a894-f1bb6779fb22",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-POLICY",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 91ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 186ms
+{"level":40,"time":"2026-10-29T06:04:12.124Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:12.139Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:12.140Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T06:04:12.170Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cbb160c8-7ba0-4891-b5f6-f221596c8799",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:12.394Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:12.423Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:12.424Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-29T06:04:12.456Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "72aa19eb-13b9-4fa0-8f87-f5579f990a6f",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 937ms
+{"level":40,"time":"2026-10-29T06:04:13.065Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:13.081Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:13.082Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T06:04:13.108Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a91d45cd-f61e-4dde-a5e1-cbadd050d932",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:13.204Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:13.232Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:13.233Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-29T06:04:13.271Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6c39d52e-f2ac-4d30-afd9-18a573b5fffe",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 278ms
+{"level":40,"time":"2026-10-29T06:04:13.334Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:13.348Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:13.349Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T06:04:13.377Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e5041235-9e50-4887-892b-18bae778e31a",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:04:13.496Z","pid":24081,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:04:13.525Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:04:13.526Z","pid":24081,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-29T06:04:13.554Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "aa2d5106-96e1-477f-8ab6-80038e549b12",
+    "code": "DBTEST-VR13-mvt51ge2_8689f184-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":50,"time":"2026-10-29T06:04:13.665Z","pid":24081,"hostname":"vm","context":{"err":"injected: the superseded audit row could not be written","correlationId":null,"code":null},"msg":"[document-lifecycle] handling the document lifecycle request failed"}
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 354ms
+{"level":30,"time":"2026-10-29T06:04:15.224Z","pid":24102,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T06:04:15.226Z","pid":24102,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T06:04:15.226Z","pid":24102,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/task-link-completion-lock-order.dbtest.ts > a link and a completion over the same two tasks > queue one behind the other — neither is aborted as a deadlock victim 178ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s status 14ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s assignee 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s archive 5ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s blockers 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s due date 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s dependencies 15ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s route columns 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a DELETE of a route row 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT naming a route column 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into task_dependencies naming a route member 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into cross_module_task_links naming a route member 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker) 6ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > the route writer’s own transaction 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task 6ms
+
+ Test Files  4 passed (4)
+      Tests  43 passed (43)
+   Start at  06:03:50
+   Duration  25.54s (transform 7.49s, setup 281ms, import 1.98s, tests 22.12s, environment 1ms)
+

@@ -34,6 +34,13 @@ export interface MyWorkItem {
   overdue: boolean;
   dueSoon: boolean;
   blocked: boolean;
+  /**
+   * A review route member whose step is not open yet: what it waits on
+   * ('review' for an approver, 'step N' for a later reviewer). It is outside
+   * the overdue and due-soon triage, since its assignee cannot act (RR1a,
+   * B11). Null for every other task.
+   */
+  waitingOn: string | null;
   approvalRequired: boolean;
   approvalStatus: string;
   criticalPath: boolean;
@@ -50,6 +57,13 @@ export interface MyWork {
 
 const OPEN_STATUSES = ['pending', 'in-progress', 'review', 'blocked'];
 const DUE_SOON_MS = 48 * 60 * 60 * 1000;
+
+/** What a blocked route member waits on, or null when it is not one. */
+function routeWaitingOn(row: { status: string; reviewRouteId: string | null; reviewRole: string | null; reviewStep: number | null }): string | null {
+  if (row.status !== 'blocked' || !row.reviewRouteId) return null;
+  if (row.reviewRole === 'approver') return 'review';
+  return row.reviewStep && row.reviewStep > 1 ? `step ${row.reviewStep - 1}` : 'an earlier step';
+}
 
 export async function readMyWork(
   db: RequestDb,
@@ -76,7 +90,8 @@ export async function readMyWork(
 
   const soonCutoff = now + DUE_SOON_MS;
   const items: MyWorkItem[] = rows.map(({ task: row, projectName }) => {
-    const dueMs = row.dueDate ? new Date(row.dueDate).getTime() : null;
+    const waitingOn = routeWaitingOn(row);
+    const dueMs = waitingOn ? null : row.dueDate ? new Date(row.dueDate).getTime() : null;
     return {
       taskId: row.taskId,
       title: row.title,
@@ -90,6 +105,7 @@ export async function readMyWork(
       overdue: dueMs != null && dueMs < now,
       dueSoon: dueMs != null && dueMs >= now && dueMs <= soonCutoff,
       blocked: row.status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0),
+      waitingOn,
       approvalRequired: row.approvalRequired ?? false,
       approvalStatus: row.approvalStatus ?? 'not_started',
       criticalPath: row.criticalPath ?? false,

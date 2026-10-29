@@ -117,17 +117,26 @@ export async function startVaultLifecycleRecord(
 }
 
 /**
- * FD4's strict default, asked before any credential: the person who signed this
- * round's review does not also approve it, and a Vault version is approved only
- * while it is the document's current version. (The author and the uploader are
- * refused by the route's separation-of-duties precheck.)
+ * FD4's strict default, asked before any credential: nobody who signed a review
+ * of this content approves it — the round's recorded sign-off, or any review
+ * signature on the record over this content digest from any review route,
+ * a withdrawn one included (RR1a, B9: the stage round, not the route) — and a
+ * Vault version is approved only while it is the document's current version.
+ * (The author and the uploader are refused by the route's separation-of-duties
+ * precheck.)
  */
 export async function vaultApprovalRefusal(
   q: LifecycleQueryable,
   input: ProjectionInput,
   userId: number | null,
 ): Promise<LifecycleOutcome | null> {
-  if (userId !== null && input.reviewSignature?.actor === String(userId)) {
+  const reviewedThisContent = userId !== null && (await q.query(
+    `SELECT 1 FROM electronic_signatures
+      WHERE organization_id = $1 AND signed_target = $2 AND bound_payload_digest = $3
+        AND upper(signature_meaning) = 'REVIEWED' AND signer_id = $4 LIMIT 1`,
+    [input.organizationId, `canonical_document:${input.canonicalId}`, input.contentHash, userId],
+  )).rows.length > 0;
+  if (userId !== null && (input.reviewSignature?.actor === String(userId) || reviewedThisContent)) {
     return {
       status: 403,
       body: {
