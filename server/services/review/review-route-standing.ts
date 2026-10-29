@@ -119,6 +119,34 @@ const MEMBER_SQL = `
 /** The same read, locking the member rows (after the subject's own row lock). */
 const MEMBER_SQL_FOR_UPDATE = `${MEMBER_SQL} FOR UPDATE OF t`;
 
+/** Whether the signature stamped on a member row is that member's, over this route's content, with the role's meaning, and in force (B3). */
+function verifiedSignature(row: Record<string, any>, route: { header: RouteHeader; target: string }, role: RouteRole): boolean {
+  if (row.sig_id == null || row.signed_target !== route.target) return false;
+  if (Number(row.signer_id) !== Number(row.assignee_id)) return false;
+  if (row.bound_payload_digest !== route.header.contentDigest) return false;
+  if (String(row.signature_meaning ?? '').toUpperCase() !== ROUTE_SIGN_MEANING[role]) return false;
+  return !isSignatureWithdrawn(row);
+}
+
+function toMember(row: Record<string, any>, route: { header: RouteHeader; target: string }): RouteMember {
+  const role = row.review_role as RouteRole;
+  const verified = verifiedSignature(row, route, role);
+  return {
+    taskId: String(row.task_id),
+    userId: Number(row.assignee_id),
+    role,
+    step: Number(row.review_step),
+    printedName: row.assignee_name ?? null,
+    outcome: verified ? 'signed' : row.route_act_id ? 'returned' : 'pending',
+    stepOpen: false,
+    dueDate: iso(row.due_date),
+    signature: verified
+      ? { id: Number(row.sig_id), printedName: row.signer_name ?? null, meaning: String(row.signature_meaning), signedAt: iso(row.signed_at)! }
+      : null,
+    actId: row.route_act_id ?? null,
+  };
+}
+
 /** Members of `routes`, each with its verified signature (or none), by route id. */
 async function readMembers(
   q: RouteQueryable,
@@ -132,34 +160,10 @@ async function readMembers(
   const byId = new Map(routes.map((r) => [r.header.id, r]));
   for (const row of rows) {
     const route = byId.get(String(row.route_id));
-    if (!route) continue;
-    const role = row.review_role as RouteRole;
-    const verified =
-      row.sig_id != null &&
-      row.signed_target === route.target &&
-      Number(row.signer_id) === Number(row.assignee_id) &&
-      row.bound_payload_digest === route.header.contentDigest &&
-      String(row.signature_meaning ?? '').toUpperCase() === ROUTE_SIGN_MEANING[role] &&
-      !isSignatureWithdrawn(row);
-    out.get(route.header.id)!.push({
-      taskId: String(row.task_id),
-      userId: Number(row.assignee_id),
-      role,
-      step: Number(row.review_step),
-      printedName: row.assignee_name ?? null,
-      outcome: verified ? 'signed' : row.route_act_id ? 'returned' : 'pending',
-      stepOpen: false,
-      dueDate: iso(row.due_date),
-      signature: verified
-        ? { id: Number(row.sig_id), printedName: row.signer_name ?? null, meaning: String(row.signature_meaning), signedAt: iso(row.signed_at)! }
-        : null,
-      actId: row.route_act_id ?? null,
-    });
+    if (route) out.get(route.header.id)!.push(toMember(row, route));
   }
   for (const members of out.values()) {
-    for (const m of members) {
-      m.stepOpen = members.filter((o) => o.step < m.step).every((o) => o.outcome === 'signed');
-    }
+    for (const m of members) m.stepOpen = members.filter((o) => o.step < m.step).every((o) => o.outcome === 'signed');
   }
   return out;
 }

@@ -41,7 +41,7 @@ import {
   type RouteRequest,
   type RouteTx,
 } from '../services/review/review-route';
-import { routeStanding, type RouteStanding } from '../services/review/review-route-standing';
+import { routeStanding, type RouteMember, type RouteStanding } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
 
 export type Outcome = { responded: true } | { status: number; body: unknown };
@@ -85,6 +85,61 @@ async function leaveReview(tx: CanonicalStoreHandle, deps: RoutedSigningDeps, do
   await persistState(tx, doc.canonicalId, doc.organizationId, result.state, result.auditEvent!);
 }
 
+/** Who may sign now: a named member in this role whose step is open and who has not signed. */
+function memberRefusal(standing: RouteStanding, userId: number, role: 'reviewer' | 'approver'): Outcome | RouteMember {
+  const member = standing.members.find((m) => m.userId === userId && m.role === role);
+  if (!member) return refuse(403, 'ROUTE_NOT_NAMED', `You are not named as ${role} on this document's review route. Nothing was signed.`);
+  if (member.outcome === 'signed') return refuse(409, 'SIGNATURE_ALREADY_RECORDED', 'You have already signed on this route. Nothing was signed.');
+  if (member.stepOpen) return member;
+  return role === 'approver'
+    ? refuse(409, 'REVIEW_INCOMPLETE', 'Every named reviewer signs before the approval. Nothing was signed.')
+    : refuse(409, 'ROUTE_STEP_NOT_OPEN', 'It is not your turn on this route yet. Nothing was signed.');
+}
+
+/** What the record itself refuses for this sign-off, asked before any credential. */
+async function recordRefusal(client: SignatureDbClient, doc: ProjectionInput, meaning: 'reviewed' | 'approved', userId: number): Promise<Outcome | null> {
+  if (meaning === 'reviewed') {
+    const refusal = reviewSignatureRefusal(doc);
+    return refusal ? refuse(409, refusal.code, refusal.message) : null;
+  }
+  const gate = canAdvanceDocument(projectCanonicalDocument(doc).state, 'approved');
+  if (!gate.allowed) return { status: 409, body: { ok: false, from: doc.stage, to: 'approved', blockedBy: gate.blockedBy } };
+  return vaultApprovalRefusal(client, doc, userId);
+}
+
+/** The review is complete: its completing signature becomes review_signature, and the approver's step opens. */
+async function completeReview(
+  tx: CanonicalStoreHandle,
+  { doc, after, signature, userId, notices }: { doc: ProjectionInput; after: RouteStanding; signature: ApprovalSignature; userId: number; notices: TaskEventNotice[] },
+) {
+  // The sign-off every reader of review_signature (and the approval gate) already understands.
+  const event = await recordReviewSignature(tx, doc.canonicalId, doc.organizationId, signature);
+  if (!event) throw new Error(`Canonical document ${doc.canonicalId} disappeared while its review was completed`);
+  notices.push(...await openApproverStep(asTx(tx), { organizationId: doc.organizationId, standing: after, actorUserId: userId, subjectTitle: doc.title }));
+}
+
+/** The last approval: the server advances in_review → approved on this transaction, citing the signature just recorded. */
+async function completeApproval(
+  tx: CanonicalStoreHandle, deps: RoutedSigningDeps,
+  p: { doc: ProjectionInput; after: RouteStanding; signature: ApprovalSignature; userId: number; reason: string },
+) {
+  const { doc, signature, userId } = p;
+  const client = drizzleSignatureClient(tx as never);
+  const current = (await loadProjectionInput(tx, doc.canonicalId, doc.organizationId, { forUpdate: true }))!;
+  const projected = projectCanonicalDocument(current);
+  const ctx = { actor: String(userId), at: signature.signedAt, reason: p.reason, contentHash: current.contentHash };
+  const bindings = deps.bindingsFactory({ organizationId: doc.organizationId, actor: String(userId), client, applySignature: async () => signature });
+  const result = await advanceDocument(projected.state, 'approved', ctx, bindings, projected.document);
+  if (!result.ok) throw new Error(`The approval was signed but in_review → approved was refused: ${(result.blockedBy ?? []).join(', ')}`);
+  const sealed = await persistState(tx, doc.canonicalId, doc.organizationId, result.state, result.auditEvent!);
+  const superseded = await supersedeOnVaultApproval(tx, client, current, bindings, ctx);
+  await closeReviewRoute(asTx(tx), {
+    organizationId: doc.organizationId, standing: p.after, status: 'complete', reason: p.reason, actorUserId: userId,
+    subjectType: 'canonical_document', subjectId: doc.canonicalId, subjectTitle: doc.title,
+  });
+  return { stage: result.state.stage, auditEvent: sealed, superseded };
+}
+
 /**
  * POST /:id/sign on a live route. Runs inside the router's transaction, under
  * the record's row lock, with `standing` read FOR UPDATE.
@@ -99,25 +154,11 @@ export async function routedSignOff(
   const { doc, standing, meaning } = p;
   const userId = resolveUserId(req);
   if (userId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
-  const role = meaning === 'reviewed' ? 'reviewer' : 'approver';
-  const member = standing.members.find((m) => m.userId === userId && m.role === role);
-  if (!member) return refuse(403, 'ROUTE_NOT_NAMED', `You are not named as ${role} on this document's review route. Nothing was signed.`);
-  if (member.outcome === 'signed') return refuse(409, 'SIGNATURE_ALREADY_RECORDED', 'You have already signed on this route. Nothing was signed.');
-  if (!member.stepOpen) {
-    return role === 'approver'
-      ? refuse(409, 'REVIEW_INCOMPLETE', 'Every named reviewer signs before the approval. Nothing was signed.')
-      : refuse(409, 'ROUTE_STEP_NOT_OPEN', 'It is not your turn on this route yet. Nothing was signed.');
-  }
+  const member = memberRefusal(standing, userId, meaning === 'reviewed' ? 'reviewer' : 'approver');
+  if (!('taskId' in member)) return member;
   const client = drizzleSignatureClient(tx as never);
-  if (meaning === 'reviewed') {
-    const refusal = reviewSignatureRefusal(doc);
-    if (refusal) return refuse(409, refusal.code, refusal.message);
-  } else {
-    const gate = canAdvanceDocument(projectCanonicalDocument(doc).state, 'approved');
-    if (!gate.allowed) return { status: 409, body: { ok: false, from: doc.stage, to: 'approved', blockedBy: gate.blockedBy } };
-    const refusal = await vaultApprovalRefusal(client, doc, userId);
-    if (refusal) return refusal;
-  }
+  const refused = await recordRefusal(client, doc, meaning, userId);
+  if (refused) return refused;
   const pre = await deps.signingPrecheck(req, client, doc, meaning === 'reviewed' ? 'REVIEWED' : 'APPROVED');
   if (!('binding' in pre)) return pre;
   const signer = await deps.reverifiedSigner(req, res);
@@ -132,34 +173,14 @@ export async function routedSignOff(
     actorUserId: userId, reason: p.reason, subjectTitle: doc.title,
   }));
   const after = await lockedStanding(tx, doc);
+  const base = { ok: true, signature, routeId: after.route!.id };
   if (meaning === 'reviewed') {
-    if (after.reviewComplete) {
-      // The completing signature is the review sign-off every reader of
-      // review_signature (and the approval gate) already understands.
-      const event = await recordReviewSignature(tx, doc.canonicalId, doc.organizationId, signature);
-      if (!event) throw new Error(`Canonical document ${doc.canonicalId} disappeared while its review was completed`);
-      p.notices.push(...await openApproverStep(asTx(tx), { organizationId: doc.organizationId, standing: after, actorUserId: userId, subjectTitle: doc.title }));
-    }
-    return { status: 200, body: { ok: true, signature, routeId: after.route!.id, reviewComplete: after.reviewComplete, stage: doc.stage } };
+    if (after.reviewComplete) await completeReview(tx, { doc, after, signature, userId, notices: p.notices });
+    return { status: 200, body: { ...base, reviewComplete: after.reviewComplete, stage: doc.stage } };
   }
-  if (!after.approvalComplete) {
-    return { status: 200, body: { ok: true, signature, routeId: after.route!.id, approvalComplete: false, stage: doc.stage } };
-  }
-  // The last approval: the server advances in_review → approved on this
-  // transaction, citing the signature just recorded (no second record).
-  const current = (await loadProjectionInput(tx, doc.canonicalId, doc.organizationId, { forUpdate: true }))!;
-  const projected = projectCanonicalDocument(current);
-  const ctx = { actor: String(userId), at: signature.signedAt, reason: p.reason, contentHash: current.contentHash };
-  const bindings = deps.bindingsFactory({ organizationId: doc.organizationId, actor: String(userId), client, applySignature: async () => signature });
-  const result = await advanceDocument(projected.state, 'approved', ctx, bindings, projected.document);
-  if (!result.ok) throw new Error(`The approval was signed but in_review → approved was refused: ${(result.blockedBy ?? []).join(', ')}`);
-  const sealed = await persistState(tx, doc.canonicalId, doc.organizationId, result.state, result.auditEvent!);
-  const superseded = await supersedeOnVaultApproval(tx, client, current, bindings, ctx);
-  await closeReviewRoute(asTx(tx), {
-    organizationId: doc.organizationId, standing: after, status: 'complete', reason: p.reason, actorUserId: userId,
-    subjectType: 'canonical_document', subjectId: doc.canonicalId, subjectTitle: doc.title,
-  });
-  return { status: 200, body: { ok: true, signature, routeId: after.route!.id, approvalComplete: true, stage: result.state.stage, auditEvent: sealed, superseded } };
+  if (!after.approvalComplete) return { status: 200, body: { ...base, approvalComplete: false, stage: doc.stage } };
+  const approved = await completeApproval(tx, deps, { doc, after, signature, userId, reason: p.reason });
+  return { status: 200, body: { ...base, approvalComplete: true, ...approved } };
 }
 
 /**
@@ -174,6 +195,20 @@ export async function routedSignOff(
  * (migrations/20260925_canonical_documents_append_only.sql). Either way the
  * signatures stay in the trail.
  */
+/** Withdraw is the sender's or an administrator's; return is the sender's or a named member's whose turn it is. */
+async function actRefusal(
+  tx: CanonicalStoreHandle,
+  p: { doc: ProjectionInput; act: 'withdraw' | 'return'; userId: number; senderId: number; returner: RouteMember | null },
+): Promise<Outcome | null> {
+  if (p.userId === p.senderId) return null;
+  if (p.act === 'return') {
+    return p.returner ? null : refuse(403, 'ROUTE_RETURN_NOT_PERMITTED', 'Only the sender, or a named member whose turn it is, returns this document. Nothing was changed.');
+  }
+  return (await isOrgAdmin(queryableFromDrizzle(tx as never), p.doc.organizationId, p.userId))
+    ? null
+    : refuse(403, 'ROUTE_WITHDRAW_NOT_PERMITTED', 'Only the sender or an administrator withdraws a review route. Nothing was changed.');
+}
+
 export async function closeRouteByAct(
   req: Request,
   tx: CanonicalStoreHandle,
@@ -188,14 +223,9 @@ export async function closeRouteByAct(
   const standing = await lockedStanding(tx, doc);
   if (standing.state !== 'live') return refuse(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
   const route = standing.route!;
-  const q = queryableFromDrizzle(tx as never);
   const returner = standing.members.find((m) => m.userId === userId && m.stepOpen && m.outcome === 'pending') ?? null;
-  if (p.act === 'withdraw' && userId !== route.senderId && !(await isOrgAdmin(q, doc.organizationId, userId))) {
-    return refuse(403, 'ROUTE_WITHDRAW_NOT_PERMITTED', 'Only the sender or an administrator withdraws a review route. Nothing was changed.');
-  }
-  if (p.act === 'return' && userId !== route.senderId && !returner) {
-    return refuse(403, 'ROUTE_RETURN_NOT_PERMITTED', 'Only the sender, or a named member whose turn it is, returns this document. Nothing was changed.');
-  }
+  const notPermitted = await actRefusal(tx, { doc, act: p.act, userId, senderId: route.senderId, returner });
+  if (notPermitted) return notPermitted;
   const leaves = p.act === 'return' || Boolean(doc.reviewSignature);
   if (leaves) await leaveReview(tx, deps, doc, userId, reason.reason);
   const closed = await closeReviewRoute(asTx(tx), {

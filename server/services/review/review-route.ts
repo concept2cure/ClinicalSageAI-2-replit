@@ -70,31 +70,37 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const positiveIds = (v: unknown): v is number[] =>
   Array.isArray(v) && v.every((x) => Number.isSafeInteger(x) && (x as number) > 0 && (x as number) <= 2_147_483_647);
 
-/** The route a request names, or the 400 that says what is wrong with it. Nothing is read. */
-export function parseRouteRequest(raw: unknown): RouteRequest {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+const refusal = (status: 400 | 409, code: string, message: string) => new ReviewRouteRefusal(status, code, `${message} Nothing was sent.`);
+
+/** The people a request names, each list of account ids, both non-empty. */
+function namedPeople(r: Record<string, unknown>): { reviewers: number[]; approvers: number[] } {
   const reviewers = r.reviewers ?? [];
   const approvers = r.approvers ?? [];
-  if (!positiveIds(reviewers) || !positiveIds(approvers)) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_INVALID', 'Reviewers and approvers are lists of account ids. Nothing was sent.');
-  }
-  if (reviewers.length === 0) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer. Nothing was sent.');
-  }
-  if (approvers.length === 0) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver. Nothing was sent.');
-  }
+  if (!positiveIds(reviewers) || !positiveIds(approvers)) throw refusal(400, 'ROUTE_INVALID', 'Reviewers and approvers are lists of account ids.');
+  if (reviewers.length === 0) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
+  if (approvers.length === 0) throw refusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver.');
+  return { reviewers, approvers };
+}
+
+/** The order, which RR1a sends parallel with one approver; sequential steps and several approvers arrive with their own refusals and tests (RR2). */
+function routeOrder(r: Record<string, unknown>, approvers: number[]): 'parallel' {
   const order = r.order ?? 'parallel';
-  if (order !== 'parallel' && order !== 'sequential') {
-    throw new ReviewRouteRefusal(400, 'ROUTE_INVALID', 'The review order is "parallel" or "sequential". Nothing was sent.');
-  }
-  // RR1a sends parallel reviewers and one approver; sequential steps and
-  // several approvers arrive with their own refusals and tests (RR2).
+  if (order !== 'parallel' && order !== 'sequential') throw refusal(400, 'ROUTE_INVALID', 'The review order is "parallel" or "sequential".');
   if (order !== 'parallel' || approvers.length > 1) {
-    throw new ReviewRouteRefusal(409, 'ROUTE_SHAPE_NOT_AVAILABLE', 'Reviewers one after another, and more than one approver, are not available yet. Nothing was sent.');
+    throw refusal(409, 'ROUTE_SHAPE_NOT_AVAILABLE', 'Reviewers one after another, and more than one approver, are not available yet.');
   }
-  if (typeof r.reviewDueDate !== 'string' || !DATE.test(r.reviewDueDate) || typeof r.approvalDueDate !== 'string' || !DATE.test(r.approvalDueDate)) {
-    throw new ReviewRouteRefusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date and an approval due date. Nothing was sent.');
+  return order;
+}
+
+const isDate = (v: unknown): v is string => typeof v === 'string' && DATE.test(v);
+
+/** The route a request names, or the refusal that says what is wrong with it. Nothing is read. */
+export function parseRouteRequest(raw: unknown): RouteRequest {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const { reviewers, approvers } = namedPeople(r);
+  const order = routeOrder(r, approvers);
+  if (!isDate(r.reviewDueDate) || !isDate(r.approvalDueDate)) {
+    throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date and an approval due date.');
   }
   return { reviewers, approvers, order, reviewDueDate: r.reviewDueDate, approvalDueDate: r.approvalDueDate };
 }
@@ -132,6 +138,68 @@ async function printedNameOf(q: RouteQueryable, organizationId: number, userId: 
   return String(r?.name || (r?.email ? String(r.email).split('@')[0] : `Account #${userId}`));
 }
 
+/** Every person named, validated in order (reviewers, then approvers), before anything is written. */
+async function validateMembers(
+  q: RouteQueryable,
+  p: { organizationId: number; senderId: number; subject: RouteSubject; request: RouteRequest },
+  target: string,
+): Promise<ValidatedMember[]> {
+  const named = new Set<number>();
+  const members: ValidatedMember[] = [];
+  for (const [role, ids] of [['reviewer', p.request.reviewers], ['approver', p.request.approvers]] as const) {
+    for (const candidateId of ids) {
+      members.push(await validateRouteMember(q, {
+        organizationId: p.organizationId, subjectTarget: target, programId: p.subject.programId, contentDigest: p.subject.contentDigest,
+        role, candidateId, senderId: p.senderId, actorId: p.senderId, named,
+      }));
+      named.add(candidateId);
+    }
+  }
+  return members;
+}
+
+/** One member row and its task.create row; a reviewer's open step gets a task_assigned notice. */
+async function writeMemberRow(
+  tx: RouteTx,
+  p: { organizationId: number; senderId: number; reason: string; subject: RouteSubject; routeId: string; member: ValidatedMember;
+    due: { review: Date; approval: Date }; projectId: number | undefined },
+): Promise<TaskEventNotice | null> {
+  const { member: m, subject, routeId } = p;
+  const reviewer = m.role === 'reviewer';
+  const step = reviewer ? 1 : 2;
+  const taskId = `ROUTE-${routeId.slice(0, 8)}-${m.userId}`;
+  await createTaskInTx(tx, {
+    organizationId: p.organizationId,
+    actorUserId: p.senderId,
+    taskId,
+    values: {
+      moduleType: 'Vault',
+      title: `${reviewer ? 'Review' : 'Approve'}: ${subject.title}`,
+      taskType: reviewer ? 'review' : 'approval',
+      category: reviewer ? 'review' : 'approval',
+      priority: 'medium',
+      status: reviewer ? 'pending' : 'blocked',
+      assigneeId: m.userId,
+      assigneeName: m.printedName,
+      assignedBy: p.senderId,
+      assignedAt: new Date(),
+      dueDate: reviewer ? p.due.review : p.due.approval,
+      projectId: p.projectId,
+      sourceEntityType: subject.type,
+      sourceEntityId: subject.id,
+      progress: 0,
+      completionPercentage: 0,
+    },
+    route: { reviewRouteId: routeId, reviewRole: m.role, reviewStep: step },
+    auditPayload: { routeId, role: m.role, step, assigneeId: m.userId, sourceEntityType: subject.type, sourceEntityId: subject.id },
+    reason: p.reason,
+    summary: `Named ${m.role} on review route ${routeId}`,
+  });
+  return reviewer
+    ? { organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_assigned', title: `Review requested: ${subject.title}`, taskId }
+    : null;
+}
+
 /**
  * Send a route on the caller's transaction, which holds the subject's row lock
  * and has just moved it into review. Validates every person before writing
@@ -152,17 +220,7 @@ export async function sendReviewRoute(
   if (open.rows.length) {
     throw new ReviewRouteRefusal(409, 'ROUTE_ALREADY_OPEN', 'This document already has an open review route. Withdraw it first. Nothing was sent.');
   }
-  const named = new Set<number>();
-  const members: ValidatedMember[] = [];
-  for (const [role, ids] of [['reviewer', p.request.reviewers], ['approver', p.request.approvers]] as const) {
-    for (const candidateId of ids) {
-      members.push(await validateRouteMember(q, {
-        organizationId: p.organizationId, subjectTarget: target, programId: p.subject.programId, contentDigest: p.subject.contentDigest,
-        role, candidateId, senderId: p.senderId, actorId: p.senderId, named,
-      }));
-      named.add(candidateId);
-    }
-  }
+  const members = await validateMembers(q, p, target);
   const due = await dueInstants(q, p.senderId, p.request);
   const senderName = await printedNameOf(q, p.organizationId, p.senderId);
   const prior = await q.query(
@@ -182,40 +240,9 @@ export async function sendReviewRoute(
     ? await readProgramAnchorRow(q, { programId: p.subject.programId, orgId: p.organizationId, context: 'review-route-send' })
     : null;
   const notices: TaskEventNotice[] = [];
-  const assignedAt = new Date();
   for (const m of members) {
-    const reviewer = m.role === 'reviewer';
-    const taskId = `ROUTE-${routeId.slice(0, 8)}-${m.userId}`;
-    await createTaskInTx(tx, {
-      organizationId: p.organizationId,
-      actorUserId: p.senderId,
-      taskId,
-      values: {
-        moduleType: 'Vault',
-        title: `${reviewer ? 'Review' : 'Approve'}: ${p.subject.title}`,
-        taskType: reviewer ? 'review' : 'approval',
-        category: reviewer ? 'review' : 'approval',
-        priority: 'medium',
-        status: reviewer ? 'pending' : 'blocked',
-        assigneeId: m.userId,
-        assigneeName: m.printedName,
-        assignedBy: p.senderId,
-        assignedAt,
-        dueDate: reviewer ? due.review : due.approval,
-        projectId: anchor?.id ?? undefined,
-        sourceEntityType: p.subject.type,
-        sourceEntityId: p.subject.id,
-        progress: 0,
-        completionPercentage: 0,
-      },
-      route: { reviewRouteId: routeId, reviewRole: m.role, reviewStep: reviewer ? 1 : 2 },
-      auditPayload: { routeId, role: m.role, step: reviewer ? 1 : 2, assigneeId: m.userId, sourceEntityType: p.subject.type, sourceEntityId: p.subject.id },
-      reason: p.reason,
-      summary: `Named ${reviewer ? 'reviewer' : 'approver'} on review route ${routeId}`,
-    });
-    if (reviewer) {
-      notices.push({ organizationId: p.organizationId, recipientUserId: m.userId, category: 'task_assigned', title: `Review requested: ${p.subject.title}`, taskId });
-    }
+    const notice = await writeMemberRow(tx, { ...p, routeId, member: m, due, projectId: anchor?.id ?? undefined });
+    if (notice) notices.push(notice);
   }
   await recordGovernedAction(q, {
     orgId: p.organizationId,
