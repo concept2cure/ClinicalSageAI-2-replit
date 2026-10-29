@@ -60,6 +60,7 @@ import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services
    trail read as a deliberate release by a person entitled to make it. */
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { acceptAs2Receipt, recordAs2Receipt } from './mdx-as2-receipt';
+import { downloadSentPackage } from './mdx-sent-package';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -463,10 +464,8 @@ function transmitFailure(res: Response, err: unknown): Response {
   // W5/D7). clientError's statuses stop at 4xx and 502; this is a 503.
   if (err instanceof SentPackageNotArchivedError) {
     log.error('transmit-sent-package-not-archived', { message: err.message });
-    return res.status(503).json({
-      error: 'Nothing was sent: a copy of the package’s exact bytes could not be kept. Try again once storage is available.',
-      details: { code: err.code, transmitted: false },
-    });
+    const error = 'Nothing was sent: a copy of the package’s exact bytes could not be kept. Try again once storage is available.';
+    return res.status(503).json({ error, details: { code: err.code, transmitted: false } });
   }
   if (err instanceof ValidationError) {
     // The guard's own refusal names itself, so a surface does not read it as
@@ -563,6 +562,10 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     return serverError(res, log, 'ack', err);
   }
 });
+
+/* The exact bytes a transmittal sent, kept before the wire: read under the
+   project's access, verified and recorded first (mdx-sent-package.ts, W5/D7). */
+router.get('/gateways/transmittals/:id/sent-package', downloadSentPackage);
 
 /* Agency receipt ingestion verifies facts already issued; it never transmits a submission. */
 router.post('/gateways/transmittals/:id/as2-receipt', requireEditorAccess, acceptAs2Receipt, recordAs2Receipt);
