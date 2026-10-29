@@ -9,7 +9,8 @@
  *
  *   GET    /api/mdx/labeling/:id/translations                  list
  *   POST   /api/mdx/labeling/:id/translations                  add translation
- *   PATCH  /api/mdx/labeling/translations/:transId             update translation
+ *   PATCH  /api/mdx/labeling/translations/:transId             update translation;
+ *                                                              to `approved`, an e-signature
  *
  *   GET    /api/mdx/labeling/:id/symbols                       list symbols
  *   POST   /api/mdx/labeling/:id/symbols                       add symbol
@@ -18,7 +19,7 @@
  *   GET    /api/mdx/labeling/:id/coverage                      translation coverage
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -36,18 +37,14 @@ import { admitProject as admitProjectShared } from '../lib/admit-project';
  * stay open to every member (D3, 2026-10-29).
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
-  if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
-  return Number.isFinite(n) ? n : null;
-}
-function getUserId(req: Request): number | null {
-  const raw = (req as any).user?.id;
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
@@ -263,6 +260,17 @@ router.post('/labeling/:id/translations', requireEditorAccess, async (req: Reque
   const parsed = transCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A translation is added unapproved. Approving it is the signed act on the
+     PATCH below; a create with status `approved` was an approval with no
+     signature and no approver (D5, 2026-10-29). */
+  if (p.status === 'approved') {
+    return clientError(
+      res,
+      428,
+      'Approving a translation is an electronic signature: add it, then approve it with your password, what the signature means and a reason. Nothing was saved.',
+      { code: 'TRANSLATION_APPROVAL_REQUIRES_SIGNATURE' },
+    );
+  }
   try {
     const { rows } = await pool.query(
       `INSERT INTO labeling_translations (
@@ -284,13 +292,117 @@ router.post('/labeling/:id/translations', requireEditorAccess, async (req: Reque
   }
 });
 
-router.patch('/labeling/translations/:transId', requireEditorAccess, async (req: Request, res: Response) => {
+/* ─── Translation approval: an electronic signature ─────────────────────────
+   Approving a translation releases that language's label, and the row then
+   names who approved it and when (approved_by, approved_at), so it is read as
+   a signed record. Until 2026-10-29 the PATCH below stamped both from a
+   session alone. Since 43fb57cc it needed an editor, and nothing more: no
+   re-authentication (21 CFR 11.200), no declared meaning (11.50(a)(3)), no
+   reason, and no electronic_signatures row (11.50, 11.70).
+
+   A PATCH to `approved` now runs the platform's one route-level signing
+   ceremony, signGovernedAct (./governed-signed-act.ts). The RIM label
+   approval uses it the same way on its own route. In order:
+     1. signing authority, before the password;
+     2. the password, and the second factor when one is enrolled;
+     3. on one transaction: the stamp, the `sign` ledger pair and the
+        signature row.
+   Any other status change asks for nothing, as before.
+
+   Not here: separation of duties. labeling_translations records no author.
+   `translator` is a free-text name, and the create stores no user, so there
+   is no one to compare the signer with (D5, 2026-10-29). */
+
+/** The per-signer signing-attempt limit, only for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.status === 'approved' ? signedActAttempts(req, res, next) : next();
+
+/** The approval's own refusals, by code, for signGovernedAct. */
+const TRANSLATION_APPROVAL_CODE_STATUS = {
+  TRANSLATION_NOT_FOUND: 404,
+  TRANSLATION_ALREADY_APPROVED: 409,
+} as const;
+
+function approvalRefused(code: keyof typeof TRANSLATION_APPROVAL_CODE_STATUS, message: string): Error {
+  return Object.assign(new Error(message), { code });
+}
+
+type TranslationApprovalRow = {
+  labeling_document_id: number; language: string; status: string;
+  translation_method: string | null; back_translation_verified: boolean | null;
+};
+
+/** The signed approval of translation `transId`. Answers the request itself. */
+async function approveTranslationSigned(
+  req: Request, res: Response, transId: number, patch: Record<string, unknown>,
+): Promise<void> {
+  /* The signature covers the translation as it stands. A field edited in the
+     same request would be signed before anyone reviewed it. */
+  const edits = Object.keys(patch).filter((k) => k !== 'status' && patch[k] !== undefined);
+  if (edits.length > 0) {
+    res.status(400).json({ error: {
+      code: 'TRANSLATION_APPROVAL_EDITS_FIELDS',
+      message: `An approval signs the translation as it stands. Save the change to ${edits.join(', ')} first, then approve it. Nothing was signed.`,
+    } });
+    return;
+  }
+  const target = `labeling-translation:${transId}`;
+  await signGovernedAct(req, res, {
+    domain: 'labeling',
+    target,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: TRANSLATION_APPROVAL_CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      /* On the signing transaction, under the ceremony's lock on this target
+         (DP-65): a second approval waits here and then reads what the first
+         left. The document must be live and the organization's. */
+      const { rows } = await client.query<TranslationApprovalRow>(
+        `SELECT t.labeling_document_id, t.language, t.status,
+                t.translation_method, t.back_translation_verified
+           FROM labeling_translations t
+           JOIN labeling_documents d
+             ON d.id = t.labeling_document_id AND d.organization_id = t.organization_id
+          WHERE t.id = $1 AND t.organization_id = $2 AND d.deleted_at IS NULL
+          FOR UPDATE OF t`,
+        [transId, orgId],
+      );
+      const current = rows[0];
+      if (!current) throw approvalRefused('TRANSLATION_NOT_FOUND', 'Translation not found. Nothing was signed.');
+      if (current.status === 'approved') {
+        throw approvalRefused('TRANSLATION_ALREADY_APPROVED', 'This translation is already approved. Nothing was signed.');
+      }
+      const updated = await client.query(
+        `UPDATE labeling_translations
+            SET status = 'approved', approved_by = $3, approved_at = NOW(), updated_at = NOW()
+          WHERE id = $1 AND organization_id = $2
+          RETURNING *`,
+        [transId, orgId, userId],
+      );
+      return {
+        target,
+        // What was approved: it goes on the ledger and the signature manifest.
+        payload: {
+          translationId: transId,
+          labelingDocumentId: current.labeling_document_id,
+          language: current.language,
+          previousStatus: current.status,
+          translationMethod: current.translation_method,
+          backTranslationVerified: current.back_translation_verified === true,
+        },
+        body: { data: updated.rows[0] },
+      };
+    },
+  });
+}
+
+router.patch('/labeling/translations/:transId', requireEditorAccess, whenApproving, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const transId = Number(req.params.transId);
   if (!Number.isFinite(transId)) return clientError(res, 422, 'transId must be numeric');
   const parsed = transPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  if (parsed.data.status === 'approved') return approveTranslationSigned(req, res, transId, parsed.data);
   const COL: Record<string, string> = {
     language: 'language', translator: 'translator', translationMethod: 'translation_method',
     backTranslationVerified: 'back_translation_verified', status: 'status',
@@ -301,12 +413,6 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, async (req:
     if (v === undefined) continue;
     const col = COL[k]; if (!col) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
-  }
-  /* Auto-stamp approved_at + approved_by when status flips to approved. */
-  if (parsed.data.status === 'approved') {
-    args.push(getUserId(req));
-    setFrags.push(`approved_by = $${args.length}`);
-    setFrags.push(`approved_at = NOW()`);
   }
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);

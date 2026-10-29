@@ -1,0 +1,21 @@
+# M9: the screen approves with the plain status change again (the Approve control calls advTrans)
+# file: client/src/concept2cure/v2/surfaces/Labeling.tsx  (sha256 before: b0fe30baff1029fa9b8329d2685a207eea690c030e71c467bb9755fe01787c38)
+# mutation:
+#   - onClick={() => setApproving(t)}
+#   + onClick={() => advTrans(t.id)}
+#   - const order = ['pending', 'in_progress', 'review'];
+#   + const order = ['pending', 'in_progress', 'review', 'approved'];
+
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × approving a translation opens the signature dialog > opens the dialog for what is signed, with the approval meanings, and sends nothing yet 249ms
+ × approving a translation opens the signature dialog > closing the dialog sends nothing and leaves the translation in review 176ms
+ × the signed approval > sends the approval and the signature components to the signed route 170ms
+ × the signed approval > shows the translation approved once the server confirms it 172ms
+ × the signed approval > a refusal keeps the dialog open with the server's sentence, and the translation stays in review 171ms
+ × the signed approval > a password the ceremony did not accept (401) is said once, ending "Nothing was signed." 180ms
+ × the signed approval > a dropped connection says the outcome is unconfirmed, not that nothing was signed 194ms
+ × the signed approval > an answer that carries no signature is not shown as approved 164ms
+      Tests  8 failed | 2 passed (10)
+
+# restored: sha256 after = b0fe30baff1029fa9b8329d2685a207eea690c030e71c467bb9755fe01787c38  (MATCH)

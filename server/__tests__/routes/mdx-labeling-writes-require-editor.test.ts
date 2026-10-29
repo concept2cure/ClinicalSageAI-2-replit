@@ -65,7 +65,12 @@ const WRITES: Array<{ method: Method; path: string; body?: Record<string, unknow
   { method: 'post', path: '/api/mdx/labeling', body: { deviceName: 'Infusion pump', docKind: 'ifu' }, ok: 201 },
   { method: 'patch', path: '/api/mdx/labeling/1', body: { status: 'review' }, ok: 200 },
   { method: 'post', path: '/api/mdx/labeling/1/translations', body: { language: 'de' }, ok: 201 },
-  { method: 'patch', path: '/api/mdx/labeling/translations/1', body: { status: 'approved' }, ok: 200 },
+  /* A PATCH to `approved` is an electronic signature since D5 (2026-10-29): it
+     needs a password, a meaning and a reason as well as an editor, and is pinned
+     in mdx-labeling-translation-approval-signature.test.ts, which also checks a
+     viewer's refusal of it. The editor gate here is checked on a status change
+     that is not an approval. */
+  { method: 'patch', path: '/api/mdx/labeling/translations/1', body: { status: 'review' }, ok: 200 },
   { method: 'post', path: '/api/mdx/labeling/1/symbols', body: { symbolCode: '5.1.1', symbolName: 'Manufacturer' }, ok: 201 },
   { method: 'delete', path: '/api/mdx/labeling/symbols/1', ok: 204 },
 ];

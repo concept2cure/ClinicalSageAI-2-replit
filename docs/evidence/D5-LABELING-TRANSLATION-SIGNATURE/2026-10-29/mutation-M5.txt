@@ -1,0 +1,12 @@
+# M5: an approval may also edit the translation (the edits refusal removed)
+# file: server/routes/mdx-labeling.ts  (sha256 before: 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563)
+# mutation:
+#   -   if (edits.length > 0) {
+#   +   if (edits.length < 0) {
+
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × the ceremony refuses, and nothing is approved > an approval that also edits the translation: 400, the signature covers the translation as it stands 10ms
+      Tests  1 failed | 22 passed (23)
+
+# restored: sha256 after = 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563  (MATCH)

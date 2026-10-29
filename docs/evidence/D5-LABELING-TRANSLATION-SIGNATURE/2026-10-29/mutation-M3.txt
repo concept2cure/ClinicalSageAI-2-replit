@@ -1,0 +1,14 @@
+# M3: a translation can be created already approved again (the 428 removed)
+# file: server/routes/mdx-labeling.ts  (sha256 before: 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563)
+# mutation:
+#   -   if (p.status === 'approved') {
+#         return clientError(
+#   +   if (p.status === ('never' as string)) {
+#         return clientError(
+
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × what is not an approval asks for no signature, as before > a new translation cannot be created already approved: 428, and nothing is inserted 9ms
+      Tests  1 failed | 22 passed (23)
+
+# restored: sha256 after = 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563  (MATCH)
