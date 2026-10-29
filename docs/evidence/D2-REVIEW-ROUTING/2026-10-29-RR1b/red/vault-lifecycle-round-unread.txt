@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a failed route read keeps the stage and sign-offs, and marks the reviewers unread 11ms
+   → permission denied for table review_routes
+ × server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a version with no route reads as no route, not as unread 6ms
+   → expected undefined to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a failed route read keeps the stage and sign-offs, and marks the reviewers unread
+Error: permission denied for table review_routes
+ ❯ Object.<anonymous> server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts:25:38
+     23|       if (sql.includes('FROM electronic_signatures')) return { rows: […
+     24|       if (sql.includes('FROM review_routes')) {
+     25|         if (route === 'fails') throw new Error('permission denied for …
+       |                                      ^
+     26|         return { rows: [] };
+     27|       }
+ ❯ readRouteRounds server/services/review/review-route-standing.ts:222:28
+ ❯ readVaultLifecycles server/services/vault/vault-lifecycle.ts:336:24
+ ❯ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts:35:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a version with no route reads as no route, not as unread
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts:46:28
+     44|     const lc = (await readVaultLifecycles(queryable('none'), 3, ['v-1'…
+     45|     expect(lc.round).toBeNull();
+     46|     expect(lc.roundUnread).toBe(false);
+       |                            ^
+     47|   });
+     48| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  07:00:20
+   Duration  1.43s (transform 640ms, setup 143ms, import 896ms, tests 24ms, environment 0ms)
+

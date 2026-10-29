@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-29T06:54:19.706Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T06:54:19.707Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-29T06:54:19.708Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/notification-server-only-category.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-29T06:54:19.965Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > refuses 'ana_turn': the platform alone writes it 46ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > still creates any other category 9ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > refuses 'task_assigned': only the task and route writers send it 6ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > refuses 'task_blocked': only the task and route writers send it 5ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > refuses 'task_completed': only the task and route writers send it 6ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > refuses 'task_update': only the task and route writers send it 5ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > may still be muted: PUT /notification-subscriptions/task_assigned passes the category check 6ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > may still be muted: PUT /notification-subscriptions/task_blocked passes the category check 4ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > may still be muted: PUT /notification-subscriptions/task_completed passes the category check 8ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > may still be muted: PUT /notification-subscriptions/task_update passes the category check 6ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications refuses every task_* category (RR1b, M4) > AnA's fire_notification is not offered them, and refuses each by name 14430ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > a person may still mute 'ana_turn' > PUT /notification-subscriptions/ana_turn passes the category check 9ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > AnA's fire_notification > is not offered 'ana_turn', and refuses it by name 2ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  06:54:16
+   Duration  18.47s (transform 12.58s, setup 128ms, import 288ms, tests 17.61s, environment 0ms)
+

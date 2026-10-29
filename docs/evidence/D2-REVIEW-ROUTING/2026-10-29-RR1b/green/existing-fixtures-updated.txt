@@ -1,0 +1,139 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-29T08:47:14.153Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T08:47:14.155Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-29T08:47:14.156Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-29T08:47:14.885Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row 177ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named 123ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so 62ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here) 73ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's 17ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source 8ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back
+{
+  "timestamp": "2026-10-29T08:47:24.026Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n        old_values, new_values, ip_address, user_agent, reason)\n     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16,$17)\nparams: 0b99af43-b317-4042-82f1-9a9aae695a1f,1,42,regulated_document.authoring,canonical_document,d354fbc9-c0ff-4169-ad7d-177c15cc2682,42,canonical_document:d354fbc9-c0ff-4169-ad7d-177c15cc2682,97d7646589c74e2195c8011c263068ad392fb5c89a90c81cd0126367b7a1d7c6,347c50ada96bf3919659220f94c429791a55b04278adde6a7f97497b49bef853,2026-10-29T08:47:24.019Z,,,{\"from\":\"in_review\",\"to\":\"authoring\",\"version\":1,\"reason\":\"Revise section 2\",\"contentHash\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\"},,,Revise section 2",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one 55ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing 13ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back 56ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back
+{
+  "timestamp": "2026-10-29T08:47:24.132Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:0ccfe65f-ca37-4c3a-b008-c08a567febdd,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,44,Abe Approver,,abe@example.test,password,Thu Oct 29 2026 08:47:24 GMT+0000 (Coordinated Universal Time),false,0714255342f3bb8cb9de76cf81be1d04c34da383eb2bc77ca0783cfd0c1a1271,APPROVED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_53f3320fa4dd4f2ebbf6c46d0b8f5b53\",\"auditId\":\"b8e9fd2f-e557-42a9-a48e-a077e7a1027d\",\"auditSha256Chain\":\"a0d4af6a6652e71bf9450d8be32049c8ce1a8f9e86c1087efd3658d4f1050a71\",\"target\":\"canonical_document:0ccfe65f-ca37-4c3a-b008-c08a567febdd\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"APPROVED\",\"signerId\":44,\"signerName\":\"Abe Approver\",\"signerEmail\":\"abe@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-29T08:47:24.124Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version 9e7b747e-1698-4971-8e22-ac5325b382ff (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"0ccfe65f-ca37-4c3a-b008-c08a567febdd\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 29 2026 08:47:24 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off
+{
+  "timestamp": "2026-10-29T08:47:24.195Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:2982acb9-64cd-4c4a-8564-e537bebf0a90,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,43,Rae Reviewer,,rae@example.test,password,Thu Oct 29 2026 08:47:24 GMT+0000 (Coordinated Universal Time),false,d0fc8051040d7aca38173b38acbb0d264ac32c5c2c2daa58022563e555e6b073,REVIEWED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_014826e0a3e14fd9af863403138c1cda\",\"auditId\":\"318f734e-99b6-494d-985e-d2f77aa72843\",\"auditSha256Chain\":\"6f0b4bd5ad39580652e8d20cb330c36ba173920b5c6d9ec0a07555b9a77e5ab9\",\"target\":\"canonical_document:2982acb9-64cd-4c4a-8564-e537bebf0a90\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"REVIEWED\",\"signerId\":43,\"signerName\":\"Rae Reviewer\",\"signerEmail\":\"rae@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-29T08:47:24.186Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version 34e64fb2-5392-49a4-bf17-5c578951e884 (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"2982acb9-64cd-4c4a-8564-e537bebf0a90\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 29 2026 08:47:24 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back 107ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off 61ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written 51ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it 44ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it 108ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned 16ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate 89ms
+stderr | server/routes/__tests__/notification-record-target.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/notification-record-target.pglite.test.ts
+{
+  "timestamp": "2026-10-29T08:47:26.213Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized unified_task with its record-owned UUID program 126ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized submission with its record-owned UUID program 58ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized ectd_sequence with its record-owned UUID program 59ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized gateway_transmittal with its record-owned UUID program 54ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized protocol_document with its record-owned UUID program 55ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized qms_document with its record-owned UUID program 63ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens an authored section only through its canonical document, section permission and exact section code 60ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact saved report through existing report scope authorization without borrowing metadata program 43ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > unfiled protocol and unbound QMS targets remain explicitly unfiled instead of adopting the open program 58ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > archived, expired, preference-disabled and inactive membership notices cannot resolve destinations 65ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a same-tenant nonrecipient, role audience mismatch and stale privileged claim grant no target access 59ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > notification receipt is no access grant to a foreign/deleted record or a private program 78ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > safe legacy action URL IDs are reread, and a mismatched sequence parent cannot redirect into another submission 71ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 38ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 30ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 26ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 28ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 26ms
+stderr | server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a failed ownership read is retryable and never becomes missing/clean/authorized
+{
+  "timestamp": "2026-10-29T08:47:30.971Z",
+  "level": "error",
+  "message": "[mdx-notifications] notification target lookup unavailable",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a failed ownership read is retryable and never becomes missing/clean/authorized 39ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 saved report owning context > a saved document report preserves the canonical parent program without converting its source to an authoring document 39ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 saved report owning context > a saved submission report preserves the canonical parent program without converting its source to an authoring document 49ms
+
+ Test Files  2 passed (2)
+      Tests  37 passed (37)
+   Start at  08:47:10
+   Duration  20.22s (transform 6.03s, setup 184ms, import 9.83s, tests 9.55s, environment 0ms)
+

@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/review/__tests__/vault-review-queue.test.ts
+{
+  "timestamp": "2026-10-29T07:01:17.538Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T07:01:17.540Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/review/__tests__/vault-review-queue.test.ts
+{
+  "timestamp": "2026-10-29T07:01:17.540Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/review/__tests__/vault-review-queue.test.ts
+[database] Database connection successful
+
+ ✓ server/services/review/__tests__/vault-review-queue.test.ts > Vault versions in review reach the board > lists an in-review version with who may sign it, leaving out its uploader and sender 6ms
+ ✓ server/services/review/__tests__/vault-review-queue.test.ts > Vault versions in review reach the board > is in an eligible signer's queue, and in the sender's requested list 2ms
+ ✓ server/services/review/__tests__/vault-review-queue.test.ts > Vault versions in review reach the board > after the review is signed, waits on the approval, and the reviewer is not offered it 1ms
+ ✓ server/services/review/__tests__/vault-review-queue.test.ts > Vault versions in review reach the board > an unreadable member list is null, never an empty list of signers 1ms
+ × server/services/review/__tests__/vault-review-queue.test.ts > a route that could not be read (RR1b) > is in no one's queue, names no one, and says it is unread 11ms
+   → expected { canonicalId: 'C-1', …(11) } to match object { Object (routeUnread, mine, ...) }
+(10 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/review/__tests__/vault-review-queue.test.ts > a route that could not be read (RR1b) > is in no one's queue, names no one, and says it is unread
+AssertionError: expected { canonicalId: 'C-1', …(11) } to match object { Object (routeUnread, mine, ...) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "eligibleSigners": null,
+-   "mine": false,
+-   "round": null,
+-   "routeUnread": true,
++   "eligibleSigners": [
++     "Ada Admin",
++     "Raj Approver",
++     "QA Onboard 3",
++   ],
++   "mine": true,
+  }
+
+ ❯ server/services/review/__tests__/vault-review-queue.test.ts:84:20
+     82|     }) };
+     83|     const all = await readVaultReviewQueue({ sql, orgId: 1, userId: '3…
+     84|     expect(all[0]).toMatchObject({ routeUnread: true, mine: false, eli…
+       |                    ^
+     85|     const mine = await readVaultReviewQueue({ sql, orgId: 1, userId: '…
+     86|     expect(mine).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  07:01:14
+   Duration  2.74s (transform 1.23s, setup 122ms, import 2.22s, tests 25ms, environment 0ms)
+
