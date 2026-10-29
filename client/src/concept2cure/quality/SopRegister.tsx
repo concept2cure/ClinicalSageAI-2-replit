@@ -59,7 +59,8 @@ import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewL
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { reviseQmsDocument } from './qmsDocuments';
+import { fetchQmsControlledCopy, reviseQmsDocument } from './qmsDocuments';
+import { downloadBlob } from '../v2/download';
 import type { SopTemplate } from './data';
 import { ControlledDocumentHistory } from './ControlledDocumentHistory';
 import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './ControlledDocumentTarget';
@@ -217,6 +218,17 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const admin = ((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin');
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The controlled copy of the version in force (MR-12 Stage 8): issued, recorded and downloaded, or the server's reason. */
+  const downloadControlledCopy = async (d: QmsDoc) => {
+    try {
+      const { blob, filename } = await fetchQmsControlledCopy(d.id);
+      setNotice(downloadBlob(filename, blob)
+        ? { tone: 'ok', text: `A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.` }
+        : { tone: 'err', text: 'The controlled copy was issued but this browser could not save it. Try again from another browser.' });
+    } catch (e) {
+      setNotice({ tone: 'err', text: e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.' });
+    }
+  };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
   const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
@@ -543,6 +555,16 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                         {I.archive} Retire
                       </button>}
                     </>
+                  )}
+                  {(d.status === 'effective' || d.inForce) && (
+                    <button
+                      className="qms-chip ghost"
+                      aria-label={`Download a controlled copy of ${d.docNumber}`}
+                      title="Download the version in force as a controlled copy: its approval signature and CONTROLLED COPY marking on every page. The issue is recorded."
+                      onClick={() => void downloadControlledCopy(d)}
+                    >
+                      {I.download} Controlled copy
+                    </button>
                   )}
                   <button
                     className="qms-chip ghost"

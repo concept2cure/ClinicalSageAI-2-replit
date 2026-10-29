@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { getPool } from '../db';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
-import { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal } from '../services/qms/controlled-document-content';
+import { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal, qmsControlledRenderRefusal } from '../services/qms/controlled-document-content';
 import {
   authoringPrincipalFromRequest,
   isReadOnlyAuthoringPrincipal,
@@ -313,6 +313,11 @@ async function controlledDocumentRefusal(res: Response, input: {
 }): Promise<Response | null> {
   const { tenantId, decision, action, path } = input;
   if (!decision.scope) return null;
+  // A controlled render of a QMS document is Quality's controlled copy (MR-12 Stage 8).
+  if (/^\/docs\/[^/]+\/(?:export|file-to-vault)$/i.test(path)) {
+    const refusal = await qmsControlledRenderRefusal(getPool(), tenantId, decision.scope.docId);
+    return refusal ? res.status(refusal.status).json({ error: { code: refusal.code, message: refusal.error } }) : null;
+  }
   const signing = action === 'approve' || /\/(?:e-sign|sign|freeze)$/i.test(path);
   if (action !== 'edit' && !signing) return null;
   const refusal = signing

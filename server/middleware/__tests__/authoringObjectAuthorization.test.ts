@@ -116,6 +116,23 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(signedNext).not.toHaveBeenCalled();
   });
 
+  /* MR-12 Stage 8: a controlled render of a QMS document is Quality's controlled
+     copy. Authoring's own export would print "no signatures" over an approved
+     SOP (the QMS approval is not in its store) and export a retired one. */
+  it('refuses the controlled export and Vault filing of a QMS-bound document, and keeps its working copy', async () => {
+    installQueryBehavior({ roles: ['OWNER'], qmsStatus: 'effective' });
+    for (const route of ['export', 'file-to-vault']) {
+      const res = response(); const next = vi.fn();
+      await authoringObjectAuthorization(request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: author }), res, next);
+      expect(res.statusCode, route).toBe(409);
+      expect(res.body).toMatchObject({ error: { code: 'QMS_CONTROLLED_COPY_IN_QUALITY' } });
+      expect(next).not.toHaveBeenCalled();
+    }
+    const working = response(); const workingNext = vi.fn();
+    await authoringObjectAuthorization(request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/working-copy`, user: author }), working, workingNext);
+    expect(workingNext).toHaveBeenCalledOnce();
+  });
+
   it('ignores non-authoring API mutations at the shared /api mount', async () => {
     const req = request({ method: 'POST', path: '/projects', body: { name: 'Project' } });
     const res = response();
