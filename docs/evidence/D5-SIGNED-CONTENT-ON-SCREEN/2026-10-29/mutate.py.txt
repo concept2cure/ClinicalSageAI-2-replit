@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""Apply each mutation to product code, run its tests, restore the bytes read before, check sha256.
+
+Usage: python3 -I docs/evidence/D5-SIGNED-CONTENT-ON-SCREEN/2026-10-29/mutate.py <out.txt>
+Run from the repository root.
+"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+
+ROOT = os.getcwd()
+OUT = sys.argv[1]
+TMP = os.path.join(ROOT, 'scratchpad/signed-content-ui/mut-result.json')
+
+SCS = 'client/src/concept2cure/v2/SignedContentState.tsx'
+LS = 'client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx'
+LTA = 'client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx'
+LAB = 'client/src/concept2cure/v2/surfaces/Labeling.tsx'
+RR = 'client/src/concept2cure/v2/surfaces/RiskRegister.tsx'
+SRV = 'server/routes/mdx-labeling.ts'
+
+T_UNIT = 'client/src/concept2cure/v2/__tests__/signedContentState.test.tsx'
+T_LAB = 'client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx'
+T_RISK = 'client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx'
+T_SRV = 'server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts'
+T_SHARED = 'client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx'
+T_ENG = 'client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx'
+CLIENT = [T_UNIT, T_LAB, T_RISK]
+
+M = [
+    ('M1', '"Changed since it was signed" is said as "Signed content unchanged"', SCS,
+     "case 'changed': return 'Changed since it was signed';", "case 'changed': return 'Signed content unchanged';", CLIENT),
+    ('M2', 'A facet this client cannot read is taken as unsigned, not unavailable', SCS,
+     "if (!f || typeof f !== 'object' || typeof f.state !== 'string' || !STATES.has(f.state)) return UNAVAILABLE_FACET;",
+     "if (!f || typeof f !== 'object' || typeof f.state !== 'string' || !STATES.has(f.state)) return { ...UNAVAILABLE_FACET, state: 'unsigned' };", CLIENT),
+    ('M3', 'A failed record read is shown as unsigned', SCS,
+     "      : { reading: false, facet: UNAVAILABLE_FACET, record: null };",
+     "      : { reading: false, facet: { ...UNAVAILABLE_FACET, state: 'unsigned' as const }, record: null };", CLIENT),
+    ('M4', "Another record's answer is taken as this record's state (the id check dropped)", SCS,
+     "!Array.isArray(data) && Number(data.id) === id;", "!Array.isArray(data);", CLIENT),
+    ('M5', 'Colour only: the chip carries its tone and icon but not the words', SCS,
+     "{ICON[f.state]}{signedContentWords(f)}</span>", "{ICON[f.state]}</span>", CLIENT),
+    ('M6', 'Silent when expected: an approved or accepted record with no readable signature shows nothing', SCS,
+     "  return expected || carriesSignature(f);", "  return carriesSignature(f);", CLIENT),
+    ('M7', "A changed signature does not give the server's reason", SCS,
+     "if (f.state === 'changed') return f.reason;", "if (f.state === 'changed') return null;", CLIENT),
+    ('M8', 'A pre-binding signature is said as the generic "could not be verified"', SCS,
+     "f.bindingBasis === PRE_BINDING_BASIS", "f.bindingBasis === 'not-the-basis'", CLIENT),
+    ('M9', "A translation's creator is offered Approve as if it would work", LS,
+     "t.status === 'review' && sigs.signerOf(t.id) === 'author'", "t.status === 'review' && sigs.signerOf(t.id) === 'nobody'", [T_LAB]),
+    ('M10', "'unresolved' (no creator recorded) withholds Approve, though the approval signs it", LS,
+     "t.status === 'review' && sigs.signerOf(t.id) === 'author'",
+     "t.status === 'review' && (sigs.signerOf(t.id) === 'author' || sigs.signerOf(t.id) === 'unresolved')", [T_LAB]),
+    ('M11', 'A signer state not read withholds Approve (unknown taken as "cannot")', LS,
+     "return typeof s === 'string' && SIGNERS.has(s) ? (s as ApprovalSigner) : 'unverified';",
+     "return typeof s === 'string' && SIGNERS.has(s) ? (s as ApprovalSigner) : 'author';", [T_LAB]),
+    ('M12', "The creator's Approve is enabled and opens the dialog", LTA,
+     "disabled aria-describedby={ownNoteId}>", "aria-describedby={ownNoteId} onClick={onApprove}>", [T_LAB]),
+    ('M13', 'Not read again after an approval is signed here', LAB,
+     "                sigs.refresh();\n                fire('Translation ' + approving.language",
+     "                fire('Translation ' + approving.language", [T_LAB]),
+    ('M14', 'Not read again after a translation is added here (its creator is not warned)', LAB,
+     "      sigs.refresh();\n      setTForm(false);", "      setTForm(false);", [T_LAB]),
+    ('M15', "AnA's translation facts carry no signedContent", LS,
+     "        signedContent: signedContentForAna(sigs.translation(String(t.id)), sigs.reading),\n", "", [T_LAB]),
+    ('M16', "AnA's summary does not say the signature states", LS,
+     "summary: ctx.summary + signatureSentence(sigs, o.docStatus, o.trans, own),", "summary: ctx.summary,", [T_LAB]),
+    ('M17', 'AnA is still offered the approval the screen withholds', LS,
+     "availableActions: [...(ctx.availableActions ?? []), ...withheld],", "availableActions: [...(ctx.availableActions ?? [])],", [T_LAB]),
+    ('M18', 'Every selected hazard is read, not only an accepted one', RR,
+     "row.dbId != null && isAccepted(row) && readable", "row.dbId != null && readable", [T_RISK, T_SHARED, T_ENG]),
+    ('M19', "The drawer does not show the acceptance signature", RR,
+     "{r.acceptanceSignature && (", "{false && r.acceptanceSignature && (", [T_RISK]),
+    ('M20', "AnA's selected hazard carries no acceptance signature", RR,
+     "residualAcceptanceSignature: x.signature ? signedContentForAna(x.signature.facet, x.signature.reading) : null,",
+     "residualAcceptanceSignature: null,", [T_RISK]),
+    ('M21', 'The server asks the check about the document, not the translation', SRV,
+     "signerIndependenceOf(`labeling-translation:${String(id)}`, orgId, userId)",
+     "signerIndependenceOf(`labeling-document:${String(id)}`, orgId, userId)", [T_SRV]),
+    ('M22', "A check that throws reads 'independent' (fail open)", SRV,
+     "catch { return 'unverified'; }", "catch { return 'independent'; }", [T_SRV]),
+    ('M23', "A reader with no user id reads 'independent' (fail open)", SRV,
+     "if (userId === null) return 'unverified';", "if (userId === null) return 'independent';", [T_SRV]),
+    ('M24', 'A check that throws fails the whole read', SRV,
+     "try { return await signerIndependenceOf(`labeling-translation:${String(id)}`, orgId, userId); } catch { return 'unverified'; }",
+     "return signerIndependenceOf(`labeling-translation:${String(id)}`, orgId, userId);", [T_SRV]),
+]
+
+
+def sha(path):
+    with open(path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def run(tests):
+    if os.path.exists(TMP):
+        os.remove(TMP)
+    cmd = ['timeout', '400', 'npx', 'vitest', 'run', *tests, '--reporter=json', '--outputFile=' + TMP]
+    subprocess.run(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        with open(TMP) as f:
+            r = json.load(f)
+    except (OSError, ValueError):
+        return None
+    failed = []
+    for file in r.get('testResults', []):
+        name = os.path.relpath(file.get('name', ''), ROOT)
+        assertions = file.get('assertionResults', [])
+        if not assertions and file.get('status') == 'failed':
+            failed.append(f'{name}: the file failed to load')
+        for a in assertions:
+            if a.get('status') == 'failed':
+                failed.append(f"{os.path.basename(name)} > {a.get('fullName') or a.get('title')}")
+    return r.get('numFailedTests', 0), r.get('numTotalTests', 0), failed
+
+
+files = sorted({m[2] for m in M})
+before = {p: sha(p) for p in files}
+lines = [f"# Mutations: each applied to product code as an exact replacement (its old string occurs once), the named tests run",
+         f"# (npx vitest run <tests> --reporter=json), then the file restored from the bytes read before it, and its sha256 checked.",
+         f"# Working tree at {subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()} + this change; {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}.",
+         '# sha256 before:'] + [f'#   {before[p]}  {p}' for p in files] + ['']
+red = 0
+for mid, desc, path, old, new, tests in M:
+    with open(path, 'rb') as f:
+        original = f.read()
+    text = original.decode('utf8')
+    n = text.count(old)
+    if n != 1:
+        lines.append(f'{mid}  NOT APPLIED: the old string occurs {n} times in {path}')
+        continue
+    with open(path, 'wb') as f:
+        f.write(text.replace(old, new, 1).encode('utf8'))
+    try:
+        result = run(tests)
+    finally:
+        with open(path, 'wb') as f:
+            f.write(original)
+    restored = sha(path) == before[path]
+    if result is None:
+        lines.append(f'{mid}  {desc}\n     {path}\n     NO RESULT (the run produced no report); restored: {restored}')
+        continue
+    nf, nt, failed = result
+    red += 1 if nf > 0 or any('failed to load' in x for x in failed) else 0
+    lines.append(f'{mid}  {desc}\n     {path}\n     tests: {", ".join(os.path.basename(t) for t in tests)}\n'
+                 f'     RED {nf} of {nt}; restored and sha256 equal: {restored}')
+    for x in failed[:8]:
+        lines.append(f'       - {x}')
+    if len(failed) > 8:
+        lines.append(f'       - … and {len(failed) - 8} more')
+    lines.append('')
+    print(mid, nf, nt, restored, flush=True)
+
+after = {p: sha(p) for p in files}
+lines += [f'# {red} of {len(M)} mutations turned a test red.', '# sha256 after (each equal to before):']
+lines += [f'#   {after[p]}  {p}  {"equal" if after[p] == before[p] else "DIFFERENT"}' for p in files]
+with open(OUT, 'w') as f:
+    f.write('\n'.join(lines) + '\n')
+print('done', red, len(M))

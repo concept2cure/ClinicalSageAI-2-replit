@@ -28,6 +28,7 @@ import '../styles/project-home-v2.css';
 import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
 import { C2CToast, useToast } from '../toast';
+import { SignedContentLine, signedContentForAna, signedContentWords, useSignedRecord, type SignedRecordRead } from '../SignedContentState';
 
 /* ════ The ISO 14971 risk register ════
 
@@ -324,9 +325,17 @@ const UNREAD_CONTEXT: Partial<Record<ProjectReadStatus, AnaContext>> = {
 
 const WRITE_ACTIONS = ['Add a hazard to the governed risk file', 'Add a control to the selected hazard'];
 
+/* What the summary says of the selected hazard's acceptance signature, as the drawer shows it. */
+function acceptanceSentence(s: SignedRecordRead | null): string {
+  if (!s) return '';
+  return s.reading
+    ? '. Its residual-risk acceptance signature is still being read'
+    : `. Its residual-risk acceptance signature: ${signedContentWords(s.facet)}`;
+}
+
 function riskAnaContext(x: {
   status: ProjectReadStatus; summary: RiskSummary; view: MatrixView; row: RiskRow | undefined;
-  riskState: AssessmentState; canWrite: boolean;
+  riskState: AssessmentState; canWrite: boolean; signature: SignedRecordRead | null;
 }): AnaContext {
   const { summary, view, row } = x;
   const unread = UNREAD_CONTEXT[x.status];
@@ -353,7 +362,8 @@ function riskAnaContext(x: {
       `The overall benefit-risk conclusion is a documented manufacturer decision and is not recorded here. ` +
       `Mean score ${summary.avgInitial} initial, ${summary.avgResidual} residual. ` +
       `Matrix showing ${view} risk` +
-      (row ? `; "${row.id} — ${row.hazard || 'hazard'}" selected` : ''),
+      (row ? `; "${row.id} — ${row.hazard || 'hazard'}" selected` : '') +
+      acceptanceSentence(x.signature),
     facts: {
       totalHazards: summary.total,
       openOrMitigating: summary.open,
@@ -369,6 +379,7 @@ function riskAnaContext(x: {
             id: row.id, hazard: row.hazard, severity: row.sev,
             probability: row.prob, residualProbability: row.probR ?? null,
             status: row.status, residualAcceptability: row.res ?? null,
+            residualAcceptanceSignature: x.signature ? signedContentForAna(x.signature.facet, x.signature.reading) : null,
           }
         : null,
     },
@@ -622,6 +633,8 @@ export interface RiskRegisterState {
   setCtrlForm: (open: boolean) => void;
   accepting: RiskRow | null;
   setAccepting: (r: RiskRow | null) => void;
+  /** The selected accepted hazard's acceptance signature state; null when no accepted hazard is selected. */
+  acceptanceSignature: SignedRecordRead | null;
   writes: ReturnType<typeof riskWrites>;
   toast: ReturnType<typeof useToast>[0];
   authUser: ReturnType<typeof useAuthUser>;
@@ -709,16 +722,24 @@ export function useRiskRegister(opts: RiskRegisterOptions): RiskRegisterState {
     assessmentRan: summary.accepted > 0,
   });
   const residualClear = mayReassure(riskState);
+  const readable = read.status !== 'refused' && read.status !== 'unkeyed' && read.status !== 'idle';
+  /* The selected accepted hazard's residual-risk acceptance: whether its
+     signature still binds the hazard and the controls it accepted, from GET
+     /api/mdx/risk-items/:id `signedContent` (D5, 2026-10-29). Read for an
+     accepted hazard only, the one the drawer shows with a signature. */
+  const signedId = row && row.dbId != null && isAccepted(row) && readable ? row.dbId : null;
+  const signedRead = useSignedRecord(signedId != null ? '/api/mdx/risk-items/' + signedId : null, signedId, [signedId, row?.status]);
+  const acceptanceSignature = signedId != null ? signedRead : null;
   const anaContext = useMemo(
-    () => riskAnaContext({ status: read.status, summary, view, row, riskState, canWrite }),
-    [read.status, summary, view, row, riskState, canWrite],
+    () => riskAnaContext({ status: read.status, summary, view, row, riskState, canWrite, signature: acceptanceSignature }),
+    [read.status, summary, view, row, riskState, canWrite, acceptanceSignature],
   );
   const writes = riskWrites({ programId: opts.programId, row, setRows, setSel, setForm, setCtrlForm, setAccepting, fire });
-  const mayAdd = canWrite && read.status !== 'refused' && read.status !== 'unkeyed' && read.status !== 'idle';
+  const mayAdd = canWrite && readable;
 
   return {
     programId: opts.programId, read, rows, row, sel, setSel, view, setView, summary, riskState, residualClear,
-    canWrite, mayAdd, form, setForm, ctrlForm, setCtrlForm, accepting, setAccepting, writes, toast, authUser, anaContext,
+    canWrite, mayAdd, form, setForm, ctrlForm, setCtrlForm, accepting, setAccepting, acceptanceSignature, writes, toast, authUser, anaContext,
   };
 }
 
@@ -969,6 +990,12 @@ function HazardDrawer({ r, row, onAsk }: { r: RiskRegisterState; row: RiskRow; o
       <div className="dr-eyebrow">{row.id} / hazard<span className={`rd-chip tone-${stTone[row.status] || 'idle'}`} style={{ marginLeft: 8 }}>{enumLabel(EN.status, row.status)}</span></div>
       <div className="dr-title">{row.hazard}</div>
       <HazardChain row={row} />
+      {r.acceptanceSignature && (
+        <div style={{ marginTop: 8 }}>
+          <SignedContentLine facet={r.acceptanceSignature.reading ? null : r.acceptanceSignature.facet} expected
+            reading={r.acceptanceSignature.reading} label="Acceptance signature" testId="risk-acceptance-signature" />
+        </div>
+      )}
 
       <div className="pj-seclbl" style={{ margin: '14px 0 8px' }}>Risk controls <span className="s">/ ISO 14971 section 7</span></div>
       <HazardControls row={row} />

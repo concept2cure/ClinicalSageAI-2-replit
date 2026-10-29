@@ -20,11 +20,11 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 791,
+    "tools": 792,
     "byCategory": {
       "Authoring & rendering": 28,
       "Biostatistics": 12,
-      "Clinical (M5 / M2)": 30,
+      "Clinical (M5 / M2)": 31,
       "Clinical pharmacology": 8,
       "CMC / Quality (M3)": 30,
       "Device / IVD": 24,
@@ -758,7 +758,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: quality_overall_summary, nonclinical_overview, clinical_overview, clinical_summary, drug_substance, drug_product (M4); smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent. Kept by hand: cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); protocol.",
+      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: quality_overall_summary, nonclinical_overview, clinical_overview, clinical_summary, drug_substance, drug_product (M4); smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent. Kept by hand: cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); blank_crf; crf_annotation_worksheet; protocol; us_lifecycle_pre_ind_meeting; us_lifecycle_end_of_phase_2_meeting; us_lifecycle_pre_nda_meeting; us_lifecycle_pre_bla_meeting; us_lifecycle_ind_protocol_amendment; us_lifecycle_ind_information_amendment; us_lifecycle_ind_cmc_amendment; us_lifecycle_ind_response_to_clinical_hold; us_lifecycle_cbe_30; us_lifecycle_cbe_0; us_lifecycle_iss; us_lifecycle_ise; us_lifecycle_us_type_d_meeting; us_lifecycle_us_interact_meeting; us_lifecycle_expanded_access_individual; us_lifecycle_expanded_access_intermediate; us_lifecycle_expanded_access_treatment; us_lifecycle_us_bla_annual_report; us_lifecycle_us_bla_pediatric_annual_report; us_lifecycle_us_bla_pmr_status_report; us_lifecycle_us_bla_distribution_report; us_lifecycle_us_bpdr; us_lifecycle_us_bla_periodic_adverse_experience_report; us_lifecycle_us_bla_pas; us_lifecycle_us_bla_cbe_30; us_lifecycle_us_bla_cbe_0; us_lifecycle_us_cber_master_file; us_lifecycle_us_cber_lot_release; us_lifecycle_us_eua_therapeutic; us_prescribing_information; nonclinical_study_report.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -3562,6 +3562,68 @@
       "derived": true
     },
     {
+      "name": "get_csr_section_evidence",
+      "category": {
+        "id": "clinical",
+        "label": "Clinical (M5 / M2)"
+      },
+      "description": "The engine tables for one ICH E3 section of a clinical study report, read from a retained Submission Center run (its sealed CSR source, re-verified now), bound to an evidence digest, with their limitations. Call it before drafting or reviewing any CSR results section (E3 2 synopsis, 10 study patients, 11 efficacy, 12 safety, 13 discussion and overall conclusions) and write every figure from these cells, citing the table key and digest; never supply a figure yourself. Pass run_id, study_id and section (\"12.2\"). A large table is listed without rows: pass table=<key> and row_offset to read its rows page by page. To check a draft, pass claims (each figure you wrote as {table, row, column, value}, value exactly as written) with the evidence_digest you drafted from: it reports every figure that does not match its cell. An error means the evidence is unavailable: say so, never \"no data\".",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "run_id",
+          "type": "string",
+          "required": true,
+          "description": "The retained Submission Center run id (uuid)."
+        },
+        {
+          "name": "study_id",
+          "type": "string",
+          "required": true,
+          "description": "The study id as recorded in the run's CSR source."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": true,
+          "description": "ICH E3 heading number, e.g. \"10.1\", \"11.4\", \"12.2\"."
+        },
+        {
+          "name": "table",
+          "type": "string",
+          "required": false,
+          "description": "A table key from a previous result, to read its rows."
+        },
+        {
+          "name": "row_offset",
+          "type": "number",
+          "required": false,
+          "description": "First row (0-based) of the table page. Default 0."
+        },
+        {
+          "name": "evidence_digest",
+          "type": "string",
+          "required": false,
+          "description": "With claims: the evidence_digest the draft was written from."
+        },
+        {
+          "name": "claims",
+          "type": "array",
+          "required": false,
+          "description": "Figures in the draft to reconcile, at most 40 per call."
+        }
+      ],
+      "requiredInputs": [
+        "run_id",
+        "study_id",
+        "section"
+      ],
+      "derived": true
+    },
+    {
       "name": "get_csr_template",
       "category": {
         "id": "clinical",
@@ -4269,10 +4331,10 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Search the shared clinical-regulatory evidence spine — comparable study designs, structured result observations, FDA regulatory findings (CRL deficiencies), regulatory outcomes, and governed design lessons — for an indication/phase. Returns provenance-carrying records, honest about coverage. Use when asked what comparable studies did, what FDA objected to, or what evidence exists.",
+      "description": "Search the shared clinical-regulatory evidence spine — comparable studies, FDA findings, outcomes, design lessons, and explicitly public reference documents. The sources catalog identifies full/redacted CSRs, synopses, protocols and regulatory reviews separately. Query filters public source title/product/study metadata. Give source_id to read one to four retained pages after checksum and permitted-use verification. External examples are never the client's study results; extracted text remains unreviewed and training is not approved.",
       "scope": "global",
-      "governed": true,
-      "renderer": "findings-list",
+      "governed": false,
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -4291,19 +4353,43 @@
           "name": "query",
           "type": "string",
           "required": false,
-          "description": "Free-text keywords (endpoint, deficiency, design term)."
+          "description": "Public source title, sponsor, product, study identifier, document class or recorded applicability (for example LMN-201 or NCT05330182; maximum 300 characters)."
         },
         {
           "name": "entity_types",
           "type": "array",
           "required": false,
-          "description": "Which entities to search; default all."
+          "description": "Which entities to search; default all. sources returns catalog metadata; source_id reads retained pages."
         },
         {
           "name": "limit",
           "type": "number",
           "required": false,
-          "description": ""
+          "description": "Whole number from 1 to 100; default 25."
+        },
+        {
+          "name": "source_offset",
+          "type": "number",
+          "required": false,
+          "description": "Public source catalog pagination offset, 0–100000; default 0."
+        },
+        {
+          "name": "source_id",
+          "type": "number",
+          "required": false,
+          "description": "Source id returned by the public source catalog. Reads verified pages instead of running a catalog search."
+        },
+        {
+          "name": "page_start",
+          "type": "number",
+          "required": false,
+          "description": "First PDF page (1-based); default 1. Requires source_id."
+        },
+        {
+          "name": "page_end",
+          "type": "number",
+          "required": false,
+          "description": "Last PDF page inclusive; default page_start, at most four pages. Response is capped at 16000 characters with explicit truncation."
         }
       ],
       "requiredInputs": [],
@@ -8713,6 +8799,12 @@
           "type": "string",
           "required": false,
           "description": "Optional: pharma, biotech, device, ivd, or cro (informational)."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": false,
+          "description": "For document_type csr: the ICH E3 heading (e.g. 11.4.1, 12.2.2) whose writing rules — tense, voice, standard sentences, display model — to return with the CSR writing standard."
         }
       ],
       "requiredInputs": [
@@ -9973,7 +10065,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.",
+      "description": "Compare the labelled figures in a saved section (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other saved sections of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. Name each part by its authoring section_id; the engine reads its saved text. Text in the call is never compared. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context, and every section must be in the submission's project; the call is audited.",
       "scope": "project",
       "governed": false,
       "renderer": "findings-list",
@@ -9995,13 +10087,13 @@
           "name": "left",
           "type": "object",
           "required": true,
-          "description": "The claim under review."
+          "description": "The saved section that makes the claim under review."
         },
         {
           "name": "right",
           "type": "array",
           "required": true,
-          "description": "The sources to check against."
+          "description": "The saved sections to check against."
         }
       ],
       "requiredInputs": [
@@ -28231,7 +28323,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) and ICH Q12 (PLCM). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) (NDA) or 601.12(d) (BLA) and ICH Q12 (PLCM). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28254,6 +28346,12 @@
           "type": "string",
           "required": false,
           "description": "Product modality."
+        },
+        {
+          "name": "biologicLicense",
+          "type": "boolean",
+          "required": false,
+          "description": "True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Absent, a biologic, vaccine or cell/gene therapy modality is taken as licensed."
         },
         {
           "name": "changes",
@@ -35803,6 +35901,12 @@
           "type": "string",
           "required": true,
           "description": ""
+        },
+        {
+          "name": "program_id",
+          "type": "string",
+          "required": false,
+          "description": "The project (regulatory_programs UUID) the nonconformance belongs to, when it concerns one. It is then shown on that project's Engineering screen. Omit for an organization-level record."
         }
       ],
       "requiredInputs": [
