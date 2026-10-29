@@ -30,7 +30,7 @@ beforeAll(async () => {
     CREATE TABLE csr_build_jobs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       study_id text NOT NULL, status text NOT NULL, progress integer NOT NULL,
       sections_to_generate text[], study_info_snapshot jsonb, error jsonb, requested_by integer,
-      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
+      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now(), source_run_id text GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED);
   `);
 });
 beforeEach(async () => { await database.exec('TRUNCATE csr_build_jobs RESTART IDENTITY'); });

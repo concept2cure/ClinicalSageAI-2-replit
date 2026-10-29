@@ -87,7 +87,6 @@
     "migrations/20260620_grant_funding_profiles.sql",
     "migrations/20260621_protocol_development.sql",
     "migrations/20260622_protocol_risks.sql",
-    "migrations/20260628_csr_job_state.sql",
     "migrations/20260629_charter_tables_rebuild.sql",
     "migrations/20260629_orchestrator_awaiting_async_status.sql",
     "migrations/20260629_orchestrator_awaiting_signature_status.sql",
