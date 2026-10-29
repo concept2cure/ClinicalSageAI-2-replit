@@ -328,6 +328,9 @@ describe('with no program open — the one honest dead-end left', () => {
       expect(reasonOf(outcome), id).toMatch(/No project is open/);
       expect(reasonOf(outcome), id).toMatch(/open a project first/i);
     }
-    expect(apiRequest, 'no program, no reads').not.toHaveBeenCalled();
+    // No program, no project-scoped reads: only the eCTD reference's two, which
+    // are not the project's (folded from ectd-publishing, D2 2026-10-29).
+    expect(apiRequest.mock.calls.map((c) => c[1]).sort(), 'no program, no project-scoped reads')
+      .toEqual(['/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions']);
   });
 });

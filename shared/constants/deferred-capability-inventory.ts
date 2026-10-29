@@ -25,9 +25,7 @@ export const DEFERRED_CAPABILITY_INVENTORY: readonly DeferredCapability[] = [
   { surfaceId: 'ectd-coauthor', decision: 'converge', canonicalSurfaces: ['submission-center', 'document-authoring'],
     implementedParts: 'Retained eCTD tree and second-store section editor.', completionNeeded: 'Converge validation/compliance onto the canonical section and authoring records; qualify the full content-to-gate connection.',
     description: 'Deferred second-store eCTD editor; its content-to-validation connection is unfinished. Place filing copies in Submission Center and edit them in Authoring.' },
-  { surfaceId: 'ectd-publishing', decision: 'converge', canonicalSurfaces: ['ectd-compile', 'gateway-transmittals'],
-    implementedParts: 'Publishing reference screen and existing specification/validation services.', completionNeeded: 'Connect a durable qualified publication operation, lifecycle state and exact delivery record; a reference screen is not publication.',
-    description: 'Deferred publishing reference screen; it does not publish a package. Compile and export in the eCTD workspace, then use Gateway transmittals for recorded delivery.' },
+  // ectd-publishing converged (D2, 2026-10-29): its reference is eCTD Compile's eCTD reference panel.
   { surfaceId: 'orchestration', decision: 'converge', canonicalSurfaces: ['dispatch-readiness', 'tasks'],
     implementedParts: 'Persisted orchestration APIs and a retained project-based board.', completionNeeded: 'Resolve canonical program ownership and record identities before exposing board review, scan or advance outcomes.',
     description: 'Deferred orchestration board with unfinished program ownership handoffs. Dispatch readiness and Tasks provide the current filing gate and saved work.' },

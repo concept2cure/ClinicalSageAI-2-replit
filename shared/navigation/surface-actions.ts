@@ -722,34 +722,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── eCTD publishing reference (read-only surface; these switch views) ──
-  {
-    id: 'ectd-publishing.set-version',
-    surfaceId: 'ectd-publishing',
-    label: 'Switch the eCTD version',
-    description:
-      'On the eCTD publishing reference, switch between the v4.0 (HL7 RPS) and v3.2.2 views. View-only — nothing on this surface publishes, transmits, or freezes a sequence.',
-    params: [
-      { name: 'version', required: true, description: 'The spec version to show.', enum: ['v4.0', 'v3.2.2'] },
-    ],
-  },
-  {
-    id: 'ectd-publishing.open-list',
-    surfaceId: 'ectd-publishing',
-    label: 'Open a controlled-vocabulary list',
-    description:
-      'Open one of the v4.0 controlled-vocabulary code lists by its id (e.g. "contextOfUse", "submissionType"). Resolved against the live listing with honest misses; v3.2.2 has no per-list browser and the refusal says so.',
-    params: [
-      { name: 'list', required: true, description: 'The vocabulary list id as shown in the picker.' },
-    ],
-  },
-  {
-    id: 'ectd-publishing.filter-codes',
-    surfaceId: 'ectd-publishing',
-    label: 'Filter the code list',
-    description: 'Filter the open vocabulary list’s codes by text — zero matches is a truthful result.',
-    params: [{ name: 'query', required: true, description: 'Text to filter codes and descriptions by.' }],
-  },
+  /* The eCTD publishing reference's three actions are eCTD Compile's since the
+     reference folded into it (D2, 2026-10-29): see ectd-compile.set-reference-
+     version, .open-code-list and .filter-codes below. */
 
   // ── Submission pyramid ──
   {
@@ -1642,6 +1617,46 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'board or from the run that built the package.',
       },
     ],
+  },
+  /* The eCTD reference on eCTD Compile (folded from ectd-publishing, D2,
+     2026-10-29; EctdCompileReference.tsx). All three move the reference panel
+     only; none changes what the compile assembles, which is eCTD v3.2.2. */
+  {
+    id: 'ectd-compile.set-reference-version',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the eCTD reference version',
+    description:
+      'On eCTD Compile & Export, switch the eCTD reference panel between v3.2.2 and v4.0 (HL7 RPS): the ' +
+      'specifications it is qualified against, the FDA Regional IG OID and the controlled vocabularies. ' +
+      'View-only. It changes nothing the compile assembles, which is v3.2.2, and the detail says so when ' +
+      'v4.0 is shown.',
+    params: [
+      { name: 'version', required: true, description: 'The eCTD version the reference panel shows.', enum: ['v3.2.2', 'v4.0'] },
+    ],
+  },
+  {
+    id: 'ectd-compile.open-code-list',
+    surfaceId: 'ectd-compile',
+    label: 'Open a controlled-vocabulary list',
+    description:
+      'In the eCTD reference panel on eCTD Compile & Export, open one of the v4.0 controlled-vocabulary ' +
+      'code lists by its id (e.g. "contextOfUse", "submissionType"). Resolved against the live listing ' +
+      'with honest misses; held while the listing loads; v3.2.2 has no per-list browser and a listing ' +
+      'that could not be read has no lists, and each refusal says so.',
+    params: [
+      { name: 'list', required: true, description: 'The vocabulary list id as the panel\'s picker lists it.' },
+    ],
+  },
+  {
+    id: 'ectd-compile.filter-codes',
+    surfaceId: 'ectd-compile',
+    label: 'Filter the code list',
+    description:
+      'In the eCTD reference panel on eCTD Compile & Export, filter the open v4.0 code list by text over ' +
+      'codes and descriptions. Zero matches is a truthful result. Without a query it clears the filter.',
+    /* Optional: the resolver refuses an empty required param, so the retired
+       ectd-publishing.filter-codes, which required it, could never be cleared. */
+    params: [{ name: 'query', required: false, description: 'Text to filter codes and descriptions by; omit it to clear the filter.' }],
   },
 ] as const;
 

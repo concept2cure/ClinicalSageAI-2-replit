@@ -1,0 +1,15 @@
+// Verdicts for the reference paths, today and with the two Part 2 claims added to ectd-compile in memory.
+import { UI_SURFACES } from '/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry';
+import { buildPrefixMap, NEVER_GATED } from '/home/user/ClinicalSageAI-2-replit/server/services/entitlements/api-prefix-map';
+import { launchScopeApiVerdict } from '/home/user/ClinicalSageAI-2-replit/server/services/entitlements/launch-scope-api';
+const CLAIMS = ['/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'];
+const withClaims = UI_SURFACES.map((s) => (s.id === 'ectd-compile' ? { ...s, apiPrefixes: [...(s.apiPrefixes ?? []), ...CLAIMS] } : s));
+const today = buildPrefixMap();
+const part2 = buildPrefixMap(withClaims);
+const paths = [
+  '/api/ectd/controlled-vocab', '/api/ectd/controlled-vocab/contextOfUse', '/api/ectd/qualification/spec-versions',
+  // must stay refused
+  '/api/ectd/qualification', '/api/ectd/qualification/x', '/api/ectd/v4', '/api/ectd/v4/validate', '/api/ectd/templates',
+  '/api/ectd/CONTROLLED-VOCAB', '/api/ectd/Qualification/x',
+];
+for (const p of paths) console.log(p.padEnd(44), 'today:', String(launchScopeApiVerdict(p, today, NEVER_GATED)).padEnd(13), 'with claims:', launchScopeApiVerdict(p, part2, NEVER_GATED));

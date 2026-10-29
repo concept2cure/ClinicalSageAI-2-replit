@@ -1008,6 +1008,13 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      letterhead link, onboarding's "Organization setup", the locked-feature
      notice) land on Settings through ALIAS_APPLIES below. */
   setup: 'admin-console',
+  /* The eCTD publishing reference folded into eCTD Compile (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/). Its spec
+     versions sit beside the validation findings, and its version choice,
+     Regional IG OID and controlled vocabularies are the eCTD reference panel
+     (EctdCompileReference.tsx), on screen with or without a project open. Old
+     links, ⌘K hits and AnA's `ectd-publishing` target land there. */
+  'ectd-publishing': 'ectd-compile',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

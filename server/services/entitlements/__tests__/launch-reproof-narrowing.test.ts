@@ -20,7 +20,7 @@ const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs; 75 with /api/mdx/vault again (fold F3)
+const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs; 75 with /api/mdx/vault again (fold F3); 74 since eCTD Compile reads the vocabulary (fold ectd-publishing)
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -63,7 +63,9 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 si
   '/api/corpus/benchmark',
   '/api/corpus/extract',
   '/api/corpus/ingest',
-  '/api/ectd/controlled-vocab',
+  /* /api/ectd/controlled-vocab: served since the ectd-publishing fold (2026-10-29),
+     below. /api/ectd/qualification stays: eCTD Compile claims its one route,
+     /spec-versions, and neither the root nor any other child. */
   '/api/ectd/qualification',
   '/api/ectd/templates',
   '/api/ectd/v4',
@@ -118,6 +120,12 @@ const STILL_SERVED = [
   '/api/concept2cure/reviews/my-queue',
   '/api/ectd/export',
   '/api/ectd/validate',
+  /* Upheld as HIDDEN APP on 2026-10-15 (claimed by ectd-publishing alone); the
+     reference folded into eCTD Compile (D2, 2026-10-29), whose panel reads both
+     (EctdCompileReference.tsx). Claimed exactly, so /api/ectd/v4 and the rest of
+     /api/ectd/qualification stay refused. */
+  '/api/ectd/controlled-vocab',
+  '/api/ectd/qualification/spec-versions',
   '/api/mdx/qms',
   '/api/mdx/qms/changes',
   '/api/mdx/qms/documents',
@@ -154,7 +162,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted and the one a device feature calls) are not served at launch', () => {
+describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted, the one a device feature calls and the one eCTD Compile reads) are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.

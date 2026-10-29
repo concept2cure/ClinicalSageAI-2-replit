@@ -1,0 +1,52 @@
+Green, on the working tree over a254c975a, 2026-10-29T16:33:07Z
+=== The new suite and the retired screen's two suites
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+=== Every suite that mounts eCTD Compile or touches ectd-publishing
+ Test Files  15 passed (15)
+      Tests  135 passed (135)
+=== The shell-wide suites that render surfaces
+ Test Files  15 passed (15)
+      Tests  759 passed (759)
+=== The launch-scope API suites
+ Test Files  3 passed (3)
+      Tests  254 passed (254)
+
+======================== Part 2 ========================
+Green, on the working tree over 70c9e75ad, 2026-10-29T18:10:27Z
+=== The Part 2 suites and their neighbours (fold guard, the reference suite with the action cases, the catalogue contract and reconciliation, launch scope, the narrowing, the inventory, wave 6, AnA on eCTD Compile, the action registry, eCTD Compile, usage billing)
+ Test Files  12 passed (12)
+      Tests  375 passed (375)
+=== Every suite that reads the registry, the views, the aliases, navigation, the actions, tours, launch scope or the catalogue (tools/regression-suites.txt, 315 files)
+      Tests  12 failed | 4464 passed (4476)
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/authoring/module2-sav…': `'export async function readSavedModule…'` asks before it calls [ 'composeFullModule3' ]
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16
+ Test Files  5 failed | 310 passed (315)
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+=== The same 5 files on an export of 70c9e75ad without this change (git archive into the scratchpad, node_modules linked):
+      Tests  12 failed | 39 passed (51)
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run
+ FAIL  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ FAIL  server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/authoring/module2-sav…': `'export async function readSavedModule…'` asks before it calls [ 'composeFullModule3' ]
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16
+ Test Files  5 failed (5)
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+=== An earlier run of the 315 (over e455afe16, before the 20260814j amendment) also failed 2 in moduleCatalogReconciliation.test.ts (fixed by that amendment) and 3 in usageBillingLive.test.tsx under load; usageBillingLive passes alone (10 of 10) and in the group above.
