@@ -1,0 +1,2 @@
+Type check: node_modules/.bin/tsc -p typecheck-tsconfig.json (a scoped tsconfig extending tsconfig.json; the whole-tree check is not run under parallel load).
+exit 0, 0 errors

@@ -36,9 +36,10 @@ export interface MyWorkItem {
   blocked: boolean;
   /**
    * A review route member whose step is not open yet: what it waits on
-   * ('review' for an approver, 'step N' for a later reviewer). It is outside
-   * the overdue and due-soon triage, since its assignee cannot act (RR1a,
-   * B11). Null for every other task.
+   * ('review' for an approver, 'step N' for a later reviewer), or a member who
+   * handed their assignment back ('the sender to reassign it', RR3). It is
+   * outside the overdue and due-soon triage, since its assignee cannot act
+   * (RR1a, B11). Null for every other task.
    */
   waitingOn: string | null;
   /**
@@ -65,8 +66,10 @@ const OPEN_STATUSES = ['pending', 'in-progress', 'review', 'blocked'];
 const DUE_SOON_MS = 48 * 60 * 60 * 1000;
 
 /** What a blocked route member waits on, or null when it is not one. */
-function routeWaitingOn(row: { status: string; reviewRouteId: string | null; reviewRole: string | null; reviewStep: number | null }): string | null {
+function routeWaitingOn(row: { status: string; reviewRouteId: string | null; reviewRole: string | null; reviewStep: number | null; routeActId: string | null }): string | null {
   if (row.status !== 'blocked' || !row.reviewRouteId) return null;
+  // A hand-back is the only act an open route's member carries (a return closes the route).
+  if (row.routeActId) return 'the sender to reassign it';
   if (row.reviewRole === 'approver') return 'review';
   return row.reviewStep && row.reviewStep > 1 ? `step ${row.reviewStep - 1}` : 'an earlier step';
 }
