@@ -1,0 +1,123 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > shows each document's own status, verbatim, and says when a document records none 49ms
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > shows a failed read as unread, with the status, never as an empty package 126ms
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > reads again on Retry 41ms
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > shows the server's own words for an empty package 7ms
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > the validation package card > says so when a download is refused 53ms
+ ✓ client/src/concept2cure/v2/__tests__/validationKitCard.test.tsx > where it is reached > is one of administration's Settings cards, and nothing else renders the package 1ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows the organization’s real name, not an invented default 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows no translation-workspace card: nothing reads organizations.settings.translation 49ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > addresses the org from the token claim, never the stale localStorage id 32ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > writes nothing to the browser-local settings blob it replaced 30ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > sends nothing until something has changed 35ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > refuses to write without a reason, because the route audits one 44ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > PATCHes the profile with the reason and the token’s org id, and writes no settings section 44ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > leaves a refused section dirty, and re-sends only that section 54ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > reports an unreachable server as unreachable, not as a refusal 38ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period 37ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > has no switch for anything enforced elsewhere or per user 40ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 44ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 29ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > does not offer edits it cannot persist when the record fails to load 26ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > reads the period from the server and says when it is the 25-year default 90ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a failed read is an error, never the default presented as this organisation’s period 154ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a member is told who sets the period and is offered no control 41ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a 403 that is not about role is shown in the server’s words, never as “your role cannot” 31ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why 77ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsRetentionPeriod.test.tsx > Settings → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved 65ms
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 200ms
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 1ms
+stdout | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:14:38.622Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T20:14:38.623Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:14:38.623Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/validation-kit-package.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/validation-kit-package.test.ts
+{
+  "timestamp": "2026-10-29T20:14:38.771Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > lists exactly VMP-001, the documents under it and TM-001 25ms
+ ✓ server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > offers nothing outside it: no CORTEX document, work order or evidence pack 14ms
+ ✓ server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > reports each document's own version and status, as written 6ms
+ ✓ server/routes/__tests__/validation-kit-package.test.ts > GET /api/validation-kit offers the launch package > makes no promise the package does not keep 3ms
+stdout | server/routes/__tests__/validation-kit-download-recorded.test.ts
+{
+  "timestamp": "2026-10-29T20:14:40.423Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T20:14:40.424Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/validation-kit-download-recorded.test.ts
+{
+  "timestamp": "2026-10-29T20:14:40.425Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/validation-kit-download-recorded.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/validation-kit-download-recorded.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/validation-kit-download-recorded.test.ts
+{
+  "timestamp": "2026-10-29T20:14:40.467Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > records the exact bytes it delivers, under the caller 26ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > delivers nothing when the record cannot be written 7ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > refuses a caller with no organisation or no user, and records nothing 9ms
+ ✓ server/routes/__tests__/validation-kit-download-recorded.test.ts > GET /api/validation-kit/:docId > a document not in the catalog is 404, and nothing is recorded 3ms
+
+ Test Files  6 passed (6)
+      Tests  38 passed (38)
+   Start at  20:14:31
+   Duration  9.09s (transform 2.84s, setup 313ms, import 5.23s, tests 1.66s, environment 1.15s)
+

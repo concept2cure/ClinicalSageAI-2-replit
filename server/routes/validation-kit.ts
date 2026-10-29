@@ -13,7 +13,20 @@
  * than a fabricated "completed/approved" status. Nothing here is invented;
  * if docs/validation/ is absent at runtime the catalog is honestly empty.
  *
- * Mounted at /api/validation-kit via register-inline-routes.ts (auth-gated).
+ * Mounted at /api/validation-kit via register-inline-routes.ts (auth-gated),
+ * and reached on administration's Settings (decision P-67,
+ * client/src/concept2cure/v2/surfaces/ValidationKitCard.tsx).
+ *
+ * What it offers is the launch package, and only that (P-67, 2026-10-29): the
+ * validation master plan VMP-001, the documents that name it as their parent
+ * (URS, RA, IQ, OQ, VSR) and TM-001, which VMP-001 §5 names as generated from
+ * their records. The route used to list every markdown file in the folder, so
+ * beside the package a customer was handed a second validation master plan
+ * (the CORTEX series, for the AI engines VMP-001 §3 puts out of scope), an
+ * internal CI work order and a generated evidence pack. And the package
+ * records its header as a `| Field | Value |` table, which `field` did not
+ * read, so every one of its documents was listed with no version and no
+ * status. docs/evidence/D4/2026-10-29/validation-kit-settings/.
  *
  * A download is recorded before it is delivered (D5, 2026-10-23): it used to
  * stream the file with no record of who took which version of which
@@ -37,15 +50,17 @@ const VALIDATION_DIR = path.join(process.cwd(), 'docs', 'validation');
 /** Filename prefix → validation artifact type. */
 const TYPE_BY_PREFIX: Record<string, string> = {
   VMP: 'Validation Master Plan',
+  URS: 'User Requirements Specification',
+  RA: 'Risk Assessment',
   IQ: 'Installation Qualification',
   OQ: 'Operational Qualification',
-  PQ: 'Performance Qualification',
-  RA: 'ISO 14971 Risk Analysis',
-  TM: 'Part 11 Traceability Matrix',
-  VQ: 'Cloud Vendor Qualification',
+  TM: 'Traceability Matrix',
   VSR: 'Validation Summary Report',
-  CSRA: 'Security Assessment (HIPAA/FDA)',
 };
+
+/** The package's document ids, in the plan's order (VMP-001 §5). Nothing else is offered. */
+const PACKAGE_ORDER = ['VMP', 'URS', 'RA', 'IQ', 'OQ', 'TM', 'VSR'];
+const PACKAGE_DOCUMENT_ID = /^(VMP|URS|RA|IQ|OQ|TM|VSR)-\d{3}$/;
 
 interface ValidationArtifact {
   docId: string;
@@ -58,13 +73,19 @@ interface ValidationArtifact {
   sizeBytes: number;
 }
 
-/** Pull one `**Label:** value` field out of a markdown header block. */
+/**
+ * One field of a document's header, as written: a `| Label | value |` row of
+ * its header table, or a `**Label:** value` line. Emphasis is dropped, so a
+ * status reads as the document states it ("DRAFT — UNSIGNED").
+ */
 function field(md: string, label: string): string | null {
-  const m = md.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`));
-  return m ? m[1].replace(/\s+$/, '').trim() : null;
+  const m = md.match(new RegExp(`^\\|\\s*${label}\\s*\\|\\s*([^|]+?)\\s*\\|\\s*$`, 'm'))
+    ?? md.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`));
+  const value = m ? m[1].replace(/\*\*/g, '').trim() : '';
+  return value === '' ? null : value;
 }
 
-/** Discover + parse the validation documents. Never throws. */
+/** Discover + parse the package's documents. Never throws. */
 function readCatalog(): ValidationArtifact[] {
   let files: string[];
   try {
@@ -90,13 +111,14 @@ function readCatalog(): ValidationArtifact[] {
       continue;
     }
 
-    const prefix = (file.split('-')[0] || '').toUpperCase();
+    const docId = field(head, 'Document ID');
+    if (!docId || !PACKAGE_DOCUMENT_ID.test(docId)) continue; // not a document of the package
+    const prefix = docId.split('-')[0];
     const titleLine = head.match(/^#\s+(.+)$/m);
-    const docId = field(head, 'Document ID') ?? file.replace(/\.md$/i, '');
     artifacts.push({
       docId,
       file,
-      type: TYPE_BY_PREFIX[prefix] ?? 'Validation Document',
+      type: TYPE_BY_PREFIX[prefix],
       title: titleLine ? titleLine[1].trim() : docId,
       version: field(head, 'Version'),
       status: field(head, 'Status'),
@@ -104,12 +126,11 @@ function readCatalog(): ValidationArtifact[] {
       sizeBytes,
     });
   }
-  // Stable ordering: master plan first, then the qualification protocols.
-  const order = ['VMP', 'IQ', 'OQ', 'PQ', 'RA', 'TM', 'VQ', 'VSR', 'CSRA'];
+  // The plan's order: the master plan, requirements, risk, qualification, trace, summary.
   artifacts.sort(
     (a, b) =>
-      order.indexOf((a.file.split('-')[0] || '').toUpperCase()) -
-      order.indexOf((b.file.split('-')[0] || '').toUpperCase()),
+      PACKAGE_ORDER.indexOf(a.docId.split('-')[0]) - PACKAGE_ORDER.indexOf(b.docId.split('-')[0]) ||
+      a.docId.localeCompare(b.docId),
   );
   return artifacts;
 }
@@ -120,12 +141,12 @@ router.get('/', (_req: Request, res: Response) => {
   res.json({
     artifacts,
     count: artifacts.length,
-    // Honest framing for the UI: draft protocols are downloadable now; executed
-    // and approved records are still provisioned through QA at contract.
+    // Only what the package is. It used to promise "executed and approved
+    // records … through QA at contract", which nothing here provides.
     note:
       artifacts.length > 0
-        ? 'Draft validation protocols are available for download. Executed and approved records are provided through QA at contract.'
-        : 'Validation documents are not available on this deployment. They are provided through QA at contract.',
+        ? "These are the vendor's validation documents as they stand. Each one's status is the one its own header records."
+        : 'Validation documents are not available on this deployment.',
   });
 });
 
