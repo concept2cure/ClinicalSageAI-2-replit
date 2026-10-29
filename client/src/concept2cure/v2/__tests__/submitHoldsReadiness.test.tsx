@@ -40,7 +40,6 @@ vi.mock('@/services/portal/authService', async (importOriginal) => {
 import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { clearNavParams, consumeNavParams } from '../navParams';
-import { STEP_DOORS } from '../projectDoors';
 
 const PID = '5c4d3e2f-1a0b-4c9d-8e7f-6a5b4c3d2e1f';
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
@@ -155,7 +154,7 @@ describe('Submit holds the readiness verdict; it does not send the person to a s
     await settledRow(61);
     await settledRow(62);
     const markets = screen.getByTestId('pj-markets');
-    expect(within(markets).queryByRole('button', { name: STEP_DOORS.readiness })).toBeNull();
+    expect(within(markets).queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
     for (const b of within(markets).getAllByRole('button')) fireEvent.click(b);
     expect(onNav.mock.calls.map((c) => c[0])).not.toContain('dispatch-readiness');
   });
