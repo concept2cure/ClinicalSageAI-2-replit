@@ -10067,19 +10067,26 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   }
   const submissionId = typeof input.submission_id === 'number' ? input.submission_id : NaN;
   const dimension = typeof input.dimension === 'string' ? input.dimension : '';
-  const left = input.left as { ref?: string; text?: string } | undefined;
-  const right = Array.isArray(input.right) ? (input.right as Array<{ ref: string; text: string }>) : [];
+  /* The check compares SAVED sections, read by the engine (slice G4). Text in
+     the call is never compared: until 2026-10-29 it was, so a finding recorded
+     against a submission could describe text that is not in it (Rule 2). */
+  const left = input.left as { section_id?: unknown; text?: unknown } | undefined;
+  const right = Array.isArray(input.right) ? (input.right as Array<{ section_id?: unknown; text?: unknown }>) : [];
   if (!Number.isFinite(submissionId)) return JSON.stringify({ error: 'submission_id (number) is required.' });
   if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
-  if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
-  if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
-  if (right.some((r) => typeof r?.ref !== 'string' || !r.ref || typeof r?.text !== 'string')) {
-    return JSON.stringify({ error: 'each right item needs a ref and a text.' });
+  const isId = (v: unknown): v is string => typeof v === 'string' && v.trim() !== '';
+  if (!left || !isId(left.section_id)) {
+    return JSON.stringify({ error: 'left { section_id } is required: name the saved authoring section that makes the claim. Text in the call is not compared.' });
   }
+  if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array of { section_id }) is required.' });
+  if (right.some((r) => !isId(r?.section_id))) {
+    return JSON.stringify({ error: 'each right item needs a section_id: the saved section to check against. Text in the call is not compared.' });
+  }
+  const suppliedText = typeof left.text === 'string' || right.some((r) => typeof r?.text === 'string');
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
     const { findings, notCompared, auditTrail } = await runConsistencyCheck(
-      { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
+      { submissionId, dimension, left: { sectionId: left.section_id }, right: right.map((r) => ({ sectionId: r.section_id as string })) },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
@@ -10088,8 +10095,9 @@ registerToolHandler('check_consistency', async (input, ctx) => {
       : '';
     return JSON.stringify({
       ok: true, findings, conflicts, notCompared, auditTrail,
-      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value)',
-      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).${unread}`, auditTrail),
+      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value), over the saved text of each section',
+      ...(suppliedText ? { suppliedText: 'ignored' } : {}),
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s). Compared from the saved text of the named sections.${suppliedText ? ' Text supplied in the call was ignored.' : ''}${unread}`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
