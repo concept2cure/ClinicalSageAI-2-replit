@@ -27,7 +27,10 @@ async function productionDependencies(): Promise<CsrScientificReviewDependencies
     import('../audit/chain.js'), import('./authoring-content-digests.js'),
   ]);
   return {
-    loadTables: (q, scope, runId, options) => readSavedClinicalTables(q, scope, runId, options),
+    /* readSavedClinicalTables refuses every source whose sourceApproval is not
+       'canonical-lifecycle' (csr/saved-clinical-tables.ts), and the core checks
+       it again; the object it returns is typed by the wider receipt. */
+    loadTables: (q, scope, runId, options) => readSavedClinicalTables(q, scope, runId, options) as Promise<RetainedScientificRun>,
     snapshotHash: authoringSnapshotHash,
     verifyReviewer: async (q, input, reviewerId, reviewerEmail) => {
       const [{ authorizeAuthoringProgram }, { resolveAuthoringDocumentScope, decideAuthoringPermission },

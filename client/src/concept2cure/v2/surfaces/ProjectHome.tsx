@@ -36,7 +36,8 @@ import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
-import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState } from './ProjectDossier';
+import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
+import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { ProjectSide } from './ProjectSide';
@@ -1353,21 +1354,19 @@ function AuthorWorkspace({
   cmcComposes?: boolean;
 }) {
   const available = useSurfaceAvailable();
-  const docRows = rowsOf(docs) ?? [];
-  /* The newest document of this project in a CTD module (the list is newest
-     first), and how many the module holds. */
-  const docForModule = (module: string | null): { doc: BuiltDocument; count: number; n: number } | null => {
-    const n = ctdModule(module);
-    if (n == null) return null;
-    const inModule = docRows.filter((d) => ctdModule(d.module) === n);
-    return inModule.length ? { doc: inModule[0], count: inModule.length, n } : null;
+  /* The editing copy of the filing a dossier row measures (F3): the document
+     bound to it, by the binding the list carries. Not known until the list is. */
+  const copyFor = (filingId: string): RowCopy => {
+    const rows = rowsOf(docs);
+    if (rows == null) return { kind: 'unread', failed: docs.state === 'error' };
+    return editingCopyOf(rows, filingId, (d) => d.filingDocumentId);
   };
   return (
     <>
         <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
         {/* Module completion, from the same dossier read as the card (F23). */}
-        <ModuleCompletion read={dossier} docForModule={docForModule} onOpen={onOpenDoc} onAsk={onAsk} />
+        <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}

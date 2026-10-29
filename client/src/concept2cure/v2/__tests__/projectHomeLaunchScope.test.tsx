@@ -135,14 +135,14 @@ describe('Project home and the launch scope', () => {
   });
 
   it('a CTD module chip opens the program\'s document in that module, not the locked dossier map', async () => {
-    // Since FILING_SPINE.md F3 the chip opens the project's newest document in
-    // its module, by id (projectHomeDocuments.test.tsx), so it needs one.
+    // Since FILING_SPINE.md F3 the chip opens the editing copy of the filing it
+    // measures, by id (projectHomeDocuments.test.tsx), so it needs one.
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-204', status: 'active' });
       if (url === `/api/c2c/projects/${PID}/dossier`) return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 25, counted: 4, complete: 1 }, markets: [],
         rows: [{ group: 'module', module: '2', agency: null, label: 'Module 2 · Summaries', documentId: 'd', counted: 4, complete: 1, inReview: 0, drafted: 0, figure: { state: 'measured', pct: 25, counted: 4, complete: 1 }, lastUpdated: null }] });
       if (url === `/api/authoring/docs?programId=${PID}`) {
-        return ok({ documents: [{ id: 'doc-2', title: 'Summaries', module: 'M2', status: 'draft', program_id: PID }] });
+        return ok({ documents: [{ id: 'doc-2', title: 'Summaries', module: 'M2', status: 'draft', program_id: PID, c2c_document_id: 'd' }] });
       }
       return ok({});
     });
