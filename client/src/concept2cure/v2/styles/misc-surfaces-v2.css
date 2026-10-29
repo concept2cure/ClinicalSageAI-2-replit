@@ -521,6 +521,9 @@
   .vd-seal-head{ display:flex; gap:10px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
   .vd-seal-reason{ margin-top:4px; color:var(--text-300); }
   .vd-seal-verdict{ margin-top:6px; color:var(--text-100); line-height:1.45; }
+  .vd-seal-archive{ margin-top:6px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .vd-seal-archive .vd-seals-note{ margin:0; }
+  .vd-seal-archive-note{ overflow-wrap:anywhere; }
   .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 
   /* The three-pane cabinet needs more width than a small screen provides.

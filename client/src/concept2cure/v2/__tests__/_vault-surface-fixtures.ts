@@ -98,6 +98,8 @@ export function mockVaultApi(
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return vaultResponse();
+    // The seals card (VR-19) reads its list; an unsealed Vault, not a failed read.
+    if (url === `/api/c2c/project-vault/${PID}/seals` && method === 'GET') return ok({ success: true, data: { seals: [] } });
     if (url === `/api/c2c/project-vault/${PID}/file` && method === 'POST') {
       return onFile
         ? onFile(body)
