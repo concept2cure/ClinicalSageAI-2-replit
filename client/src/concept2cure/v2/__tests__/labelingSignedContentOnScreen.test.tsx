@@ -141,6 +141,15 @@ describe("an approved translation's signature, in words", () => {
     expect(signatureOf(12)?.querySelector('.rd-chip')?.className).toContain('tone-err');
   });
 
+  it('a translation whose source moved on after its approval says "Source changed since it was signed", with the reason (P-64)', async () => {
+    const reason = 'The source it translates changed after it was signed: it was signed against labeling-document:4 at version 2, which is now at version 3.';
+    onDetail[12] = { signedContent: facet('source-changed', { reason }), approvalSigner: { state: 'independent' } };
+    await mount();
+    expect(signatureOf(12)?.getAttribute('data-state')).toBe('source-changed');
+    expect(signatureOf(12)?.querySelector('.rd-chip')?.textContent).toBe('Source changed since it was signed');
+    expect(signatureOf(12)?.textContent).toContain(reason);
+  });
+
   it('an approved translation with no signature says "Not signed"', async () => {
     onDetail[12] = { signedContent: UNSIGNED };
     await mount();

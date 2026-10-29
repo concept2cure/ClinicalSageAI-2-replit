@@ -387,17 +387,26 @@ Before deprecating, confirm whether any tenant has programs in the mission_contr
 ### Into eCTD compile (`ectd-compile`)
 
 #### From `ectd-publishing`
-Re-register its three surface actions under ectd-compile. Amend 20260810's keep-list and heal step in place.
 
-- [ ] Choose the eCTD version. From `PublishingCenter.tsx:149,322-326`. Goes to: a reference panel in EctdCompile, defaulting to the sequence's version. Real today.
-- [ ] FDA Regional IG OID. From `PublishingCenter.tsx:329-333`. Goes to: the same panel. Real today.
-- [ ] The spec versions the package is qualified against. From `PublishingCenter.tsx:338-361`. Goes to: beside the validation findings (`EctdCompileDtdEvidence.tsx`). Real today.
-- [ ] v3.2.2 vocabularies with code counts. From `PublishingCenter.tsx:370-393`. Goes to: the panel. Real today.
-- [ ] Browse a v4.0 code list. From `PublishingCenter.tsx:396-402`. Goes to: the panel. Real today.
-- [ ] Filter codes. From `PublishingCenter.tsx:403-407`. Goes to: the panel. Real today.
-- [ ] Retry a failed read. From `PublishingCenter.tsx:349`. Goes to: the panel, with a retry for the code-list error too. Real today.
-- [ ] AnA context for the reference. From `PublishingCenter.tsx:207-261`. Goes to: EctdCompile's context (`EctdCompile.tsx:1135-1234`). Real today.
-- [ ] AnA target. From `index.ts:233`. Goes to: alias it to ectd-compile. Real today.
+Folded 2026-10-29 (D2): `ectd-publishing` is an alias of `ectd-compile`, and
+`PublishingCenter.tsx` is deleted. Its code moved into `EctdCompileReference.tsx`
+and `EctdCompileDtdEvidence.tsx` (`QualifiedSpecVersions`). Evidence and the fold
+guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/`, `foldEctdPublishing.test.ts`.
+
+- [x] Choose the eCTD version: the eCTD reference panel's version menu, opening at v3.2.2, the version this compile assembles (no sequence records a version; the packager writes the ICH v3.2.2 backbone). v4.0 is marked "Reference only".
+- [x] FDA Regional IG OID: the same panel, under v4.0.
+- [x] The spec versions qualified against: `QualifiedSpecVersions`, beside the validation findings, ahead of the compilation history.
+- [x] v3.2.2 vocabularies with code counts: the panel.
+- [x] Browse a v4.0 code list: the panel. It reads only a list the listing supplied, and opens at `contextOfUse` when listed. A late answer for an earlier pick is dropped.
+- [x] Filter codes: the panel.
+- [x] Retry a failed read: Try again on the spec table, the listing and the code list. A failed listing is an error, never an empty picker.
+- [x] AnA context for the reference: eCTD Compile's summary sentence and `facts.reference`.
+- [x] AnA target: `ectd-publishing` stays and resolves to `ectd-compile` (`DEEP_LINK_ALIASES`).
+- [x] The three surface actions: `ectd-compile.set-reference-version`, `.open-code-list` and `.filter-codes`, registered by eCTD Compile. `filter-codes` takes no query to clear, which the old required param never allowed.
+- [x] 20260810's keep-list and heal step, 20260823's packaging row, and 20260814j's insert (the row's only writer), amended in place (Rule 1). A fresh database never holds the row; a deployed one keeps it, deprecated on every replay, with its tier and subscriptions.
+- [x] The panel's reads claimed exactly by `ectd-compile` (`/api/ectd/controlled-vocab`, `/api/ectd/qualification/spec-versions`); `/api/ectd/v4` stays refused.
+- [x] The reference with no project open (the retired screen was a global target): shown under eCTD Compile's no-project state, reading nothing project-scoped.
+- [ ] The validation documents (`URS-004`, `OQ-004` step OQ-SUBC-14, `VMP-001`) still name the retired screen. Its link now lands on eCTD Compile; revising them is a controlled-document change. Not carried.
 
 #### From `pdev-ind-assembly`
 Retire the PDEV compile path (the route, the UI and the AnA command) together.
@@ -411,14 +420,14 @@ Retire the PDEV compile path (the route, the UI and the AnA command) together.
 ### Into Licensing (`licensing`)
 
 #### From `billing`
-- [ ] Invoice list. From `UsageBilling.tsx:462-528`. Goes to: Licensing, under the plan status (administration). Gate the route to billing admins, state "billing not set up" when there is no customer record, and page through invoices. Real today.
-- [ ] Session usage window. From `UsageBilling.tsx:375-410`. Goes to: stays on 'usage' (the same component), or is embedded in Licensing. Real today.
-- [ ] Weekly limit buckets. From `UsageBilling.tsx:411-458`. Goes to: the same. Real today.
-- [ ] Rate limits by tier. From `UsageBilling.tsx:545-604`. Goes to: Licensing's plan cards, or stays on usage. Real today.
-- [ ] "Learn more" AnA prompt. From `UsageBilling.tsx:417-429`. Goes to: beside the usage card. Real today.
-- [ ] Billing entry in the account menu for every member. From `Shell.tsx:371`. Goes to: point it at Licensing, offered to billing admins only. Real today.
-- [ ] AnA billing.open-tab and invoice facts. From `UsageBilling.tsx:281-335`. Goes to: invoice facts in Licensing's context. Retire billing.open-tab. Real today.
-- [ ] AnA target "Billing". From `index.ts:243`. Goes to: alias it to licensing. Real today.
+- [x] Invoice list. From `UsageBilling.tsx:462-528`. Goes to: Licensing, under the plan status (administration). Gate the route to billing admins, state "billing not set up" when there is no customer record, and page through invoices. Real today. Done: `LicensingInvoices.tsx`; `GET /api/billing/invoices` takes `requireRole(...BILLING_ADMIN_ROLES)` (fold-billing Part 1, `9c2fdec74`).
+- [x] Session usage window. From `UsageBilling.tsx:375-410`. Goes to: stays on 'usage' (the same component), or is embedded in Licensing. Real today. Done: stays on `usage`.
+- [x] Weekly limit buckets. From `UsageBilling.tsx:411-458`. Goes to: the same. Real today. Done: stays on `usage`.
+- [x] Rate limits by tier. From `UsageBilling.tsx:545-604`. Goes to: Licensing's plan cards, or stays on usage. Real today. Done: stays on `usage`, and per P-68 it states the limits the platform enforces, the same for every subscription, from `GET /api/billing/rate-limits` (`UsageRateLimits.tsx`). The per-tier grid it showed was enforced nowhere and is deleted.
+- [x] "Learn more" AnA prompt. From `UsageBilling.tsx:417-429`. Goes to: beside the usage card. Real today. Done: stays beside the weekly-limits card.
+- [x] Billing entry in the account menu for every member. From `Shell.tsx:371`. Goes to: point it at Licensing, offered to billing admins only. Real today. Done: per P-68 a billing administrator has one entry, "Subscription & billing", opening Licensing; every other member keeps Compare subscriptions and Usage & limits.
+- [x] AnA billing.open-tab and invoice facts. From `UsageBilling.tsx:281-335`. Goes to: invoice facts in Licensing's context. Retire billing.open-tab. Real today. Done: `invoiceContext` in Licensing's facts; `billing.open-tab` removed, and `usage.open-tab` offers `usage` and `limits` only.
+- [x] AnA target "Billing". From `index.ts:243`. Goes to: alias it to licensing. Real today. Done: `DEEP_LINK_ALIASES.billing = 'licensing'`; the target is kept (fold-billing Part 2, `foldBilling.test.ts`).
 
 ### Into product development (`pdev`, outside the launch catalogue)
 
@@ -462,7 +471,7 @@ The mounted, uncalled /api/cer backend must be converged onto device-cer or dele
 - [ ] Project knowledge-source app id. From `knowledge-sources.ts:234`. Goes to: accept or translate 'device-cer'. Not real today.
 - [ ] AnA prompt keys. From `module-intelligence.ts:1391-1395`, `lumen-instruction-engine.ts:747`. Goes to: re-keyed to device-cer. Not real today.
 - [ ] 'cer' app gating. From `app-registry.ts:94`. Goes to: moduleId 'device-cer'. Update `app-registry.test.ts:20`. Not real today.
-- [ ] Rate-limit keys for each tier. From `billing-dashboard.ts:536-572`. Goes to: re-keyed or dropped. Not real today.
+- [x] Rate-limit keys for each tier. From `billing-dashboard.ts:536-572`. Goes to: re-keyed or dropped. Not real today. Done: dropped with the unenforced per-tier grid (fold-billing Part 2, P-68).
 
 #### From `ce-marking`
 - [ ] Annex II/III technical documentation. From the catalogue row. Goes to: the existing manifest and assemble routes (`submissions.ts:1576-1600,1688-1760`), reached from an MDR project's Submit step. Not real today.
@@ -1022,7 +1031,7 @@ Historical present functions: segment tabs (`AnaVerbs.tsx:265-276`). Starting a 
 ### ectd-compile
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| ectd-publishing | 9 | 0 | 1 | 8 | 0 | 9 | No |
+| ectd-publishing | 9 | 0 | 1 | 8 | 0 | 9 | Yes (2026-10-29) |
 | pdev-ind-assembly | 11 | 5 | 5 | 0 | 1 | 8 | No |
 
 Present: module readiness (`EctdModuleReadiness.tsx:100-118`). The PDEV figure counts activity state, so show it on the Plan step as plan progress. Diagnosing gaps (`EctdCompile.tsx:1415,1542`). Compiling (`EctdCompile.tsx:1101`). The no-project warning (`:1385-1393`). AnA context (`:1135-1234`).

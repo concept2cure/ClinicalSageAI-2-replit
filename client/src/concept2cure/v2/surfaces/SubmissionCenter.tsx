@@ -49,6 +49,7 @@ import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
+import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -361,15 +362,17 @@ function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
 }
 
 /** Start a follow-up sequence: its number is derived, its type is the author's to state. */
-function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
+function NextSequenceControl({ sub, rows, baseline, type, onType, busy, onStart }: {
   sub: SubRow;
   rows: SeqRow[];
+  /** Sequences declared filed outside the platform: the next number follows them too. */
+  baseline: FiledBaselineView | null;
   type: string;
   onType: (t: string) => void;
   busy: boolean;
   onStart: (sequenceNumber: string) => void;
 }) {
-  const next = nextSequenceNumber(sub, rows);
+  const next = nextAfterFiled(nextSequenceNumber(sub, rows), baseline);
   return (
     <div className="cm-pushbar sc-mt">
       <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
@@ -507,6 +510,7 @@ export function SubmissionCenter({
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
   const signerLabel = authUser?.displayName || authUser?.email || 'the authenticated user';
+  const esignSigner = authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined;
 
   /* ── The open project (ONE_ANA_ONE_CANVAS.md slice 24) ─────────────────────
      With a project open this screen is about that project: it lists the
@@ -619,6 +623,9 @@ export function SubmissionCenter({
   // re-render loop. `seqBump` refetches after a server-confirmed transition so
   // the rendered status always comes from the server, never an optimistic guess.
   const [seqBump, setSeqBump] = React.useState(0);
+  // Sequences filed outside the platform, declared (D7, 2026-10-29): a declaration
+  // removes empty drafts, so the sequence list is re-read with it.
+  const filedRead = useFiledBaseline(sub, seqBump);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const sequenceContext = JSON.stringify([selectorContext, subs.loadedScope, sub?.id, sub?.programId]);
   const seqs = useSubmissionScopedRows<SubmissionCoverageSequence>(seqPath, sequenceContext, seqBump, readSession, isRowsWith<SubmissionCoverageSequence>('id', 'sequenceNumber', 'region'));
@@ -1949,21 +1956,36 @@ export function SubmissionCenter({
               />
             ) : seqs.empty ? (
               <>
-                <EmptyState
-                  icon={I.gitBranch}
-                  title="No sequences yet"
-                  hint="Create the first eCTD sequence (0000) to begin assembling this submission."
-                />
-                <div className="cm-pushbar sc-mt">
-                  <button
-                    type="button"
-                    className="sp-primary sc-btn"
-                    onClick={() => void startSequence(sub, '0000', 'original')}
-                    disabled={creatingSeq}
-                  >
-                    {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
-                  </button>
-                </div>
+                <FiledBaselineSlot read={filedRead} submissionId={sub.id} signer={esignSigner} onDeclared={() => setSeqBump((b) => b + 1)} />
+                {filedRead.baseline ? (
+                  <NextSequenceControl
+                    sub={sub}
+                    rows={seqs.rows}
+                    baseline={filedRead.baseline}
+                    type={nextSeqType}
+                    onType={setNextSeqType}
+                    busy={creatingSeq}
+                    onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                  />
+                ) : numberingKnown(filedRead) ? (
+                  <>
+                    <EmptyState
+                      icon={I.gitBranch}
+                      title="No sequences yet"
+                      hint="Create the first eCTD sequence (0000) to begin assembling this submission."
+                    />
+                    <div className="cm-pushbar sc-mt">
+                      <button
+                        type="button"
+                        className="sp-primary sc-btn"
+                        onClick={() => void startSequence(sub, '0000', 'original')}
+                        disabled={creatingSeq}
+                      >
+                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
+                      </button>
+                    </div>
+                  </>
+                ) : null}
               </>
             ) : (
               <>
@@ -1974,6 +1996,7 @@ export function SubmissionCenter({
                   sets the working sequence for the Builder, Validation, Shadow review
                   and Dispatch workspaces.
                 </div>
+                <FiledBaselineSlot read={filedRead} submissionId={sub.id} signer={esignSigner} onDeclared={() => setSeqBump((b) => b + 1)} />
                 <div className="sp-list">
                   {seqs.rows.map((s) => (
                     <div
@@ -2045,14 +2068,17 @@ export function SubmissionCenter({
                     </div>
                   ))}
                 </div>
-                <NextSequenceControl
-                  sub={sub}
-                  rows={seqs.rows}
-                  type={nextSeqType}
-                  onType={setNextSeqType}
-                  busy={creatingSeq}
-                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
-                />
+                {numberingKnown(filedRead) && (
+                  <NextSequenceControl
+                    sub={sub}
+                    rows={seqs.rows}
+                    baseline={filedRead.baseline}
+                    type={nextSeqType}
+                    onType={setNextSeqType}
+                    busy={creatingSeq}
+                    onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                  />
+                )}
               </>
             )}
           </div>
@@ -2109,7 +2135,7 @@ export function SubmissionCenter({
                   ? ['approval', 'responsibility']
                   : ['release', 'approval', 'responsibility']
           }
-          signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
+          signer={esignSigner}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never
           // asked for it and an enrolled signer could not freeze or dispatch.

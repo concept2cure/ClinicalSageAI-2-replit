@@ -14,8 +14,10 @@
  * endpoint or a tenant with no classified tasks reads as exactly that.
  *
  * `scope` reports tenancy honestly (per the engineering-surface convention):
- * unified_tasks has no program uuid column yet, so without a `projectId`
- * filter the room is organization-wide and the zone labels it accordingly.
+ * with a `projectId` or a `programId` the server first admits that project
+ * (404 when it is not the organization's) and the room is that project's;
+ * with neither it is organization-wide, and the zone labels it accordingly
+ * (P-61 item 5, 2026-10-29).
  */
 
 import { useFetchJson } from './useFetchJson';
@@ -66,7 +68,7 @@ interface ClientReviewPayload {
 export interface UseClientReviewOptions {
   /** Narrow the room to one project (unified_tasks.project_id). */
   projectId?: number | null;
-  /** Echoed through for kit-surface parity; see the route's scope note. */
+  /** Narrow the room to one project (regulatory_programs.id); the server admits it first. */
   programId?: string | null;
   /** Pass false to hold the fetch (renders as idle). Defaults to true —
    *  the room is org-scoped, so it needs no selected program to load. */

@@ -1,0 +1,74 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5202/api/mdx/qms/documents/40/review-route",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "documentId": 40,
+      "status": "effective",
+      "round": {
+        "route": {
+          "id": "66975a7a-44fa-4b79-943a-27fbb732af57",
+          "round": 1,
+          "senderId": 6,
+          "senderName": "OQ Runner",
+          "order": "parallel",
+          "status": "complete",
+          "statusReason": "OQ-006 step 05: SOP approved for validation (signed)",
+          "statusBy": 7,
+          "statusAt": "2026-10-29T18:31:00.446Z",
+          "contentDigest": "d83ddc65ef742ba26c2c86a22aeed4c03d0e7d43a8eb59adddb4148f861465f2",
+          "reviewDueAt": null,
+          "approvalDueAt": "2026-11-03T23:59:59.999Z",
+          "createdAt": "2026-10-29T18:30:48.213Z"
+        },
+        "members": [
+          {
+            "taskId": "ROUTE-66975a7a-7",
+            "userId": 7,
+            "role": "approver",
+            "step": 1,
+            "printedName": "OQ Signer",
+            "outcome": "signed",
+            "stepOpen": true,
+            "dueDate": "2026-11-03T23:59:59.999Z",
+            "signature": {
+              "id": 30,
+              "printedName": "OQ Signer",
+              "meaning": "APPROVED",
+              "signedAt": "2026-10-29T18:31:00.463Z"
+            },
+            "actId": null
+          }
+        ],
+        "reviewComplete": true,
+        "approvalComplete": true,
+        "history": [
+          {
+            "action": "send",
+            "at": "2026-10-29T18:30:48.290Z",
+            "actorId": 6,
+            "actorName": "OQ Runner",
+            "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+            "members": [
+              {
+                "userId": 7,
+                "role": "approver",
+                "printedName": "OQ Signer"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

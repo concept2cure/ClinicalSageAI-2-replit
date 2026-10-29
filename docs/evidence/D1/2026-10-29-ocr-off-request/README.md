@@ -47,6 +47,6 @@ Searches run: `extraction_pending`, `processing sweep`, `vaultProcessing`, `OCR`
 - **The search's pending count is a select-list subquery on the count's own statement.** The search therefore still issues two statements, the count and the page, and they still share one WHERE clause. Two existing tests pin both.
 - **A scoped client is scoped only inside a transaction** (`poolInstrumentation.ts`). The claim is held on a session, the re-read goes through the scoped pool, and every write is in a transaction.
 
-## Not done
+## Not done here
 
-- **Re-proposing a filing once the text is read.** The placement writer (`placeVaultDocument`) files for a person or an agent; a system re-proposal is not one of its shapes. A scanned document is filed by its name and title until a person files it.
+- **Re-proposing a filing once the text is read.** The placement writer (`placeVaultDocument`) files for a person or an agent; a system re-proposal is not one of its shapes. Done the same day, beside it in the placement service: `../2026-10-29-filing-from-read-text/`.

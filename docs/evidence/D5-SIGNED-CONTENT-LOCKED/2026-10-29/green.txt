@@ -1,0 +1,1593 @@
+# Green: npx vitest run <the files below>, 2026-10-29T19:02:00Z, working tree at d140aefa5 + this change.
+# Files:
+#   server/__tests__/routes/signed-content-locked.pglite.test.ts
+#   server/__tests__/routes/risk-acceptance-locked.pglite.test.ts
+#   server/services/part11/__tests__/signed-content-lock.test.ts
+#   server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+#   server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+#   server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+#   server/__tests__/routes/content-digest-binders.pglite.test.ts
+#   server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+#   server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+#   server/routes/__tests__/mdx-risk-program-scope.test.ts
+#   server/routes/__tests__/mdx-risk-recompute.test.ts
+#   server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+#   server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+#   tests/mdx-beta-surfaces-routes.test.ts
+#   tests/mdx-qms-labeling-search-analytics-routes.test.ts
+#   server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+#   server/services/ana/__tests__/tool-record-scope.test.ts
+#   server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+#   server/routes/__tests__/governed-signed-act.request-context.test.ts
+#   server/services/__tests__/signature-content-verification.test.ts
+#   server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+#   server/services/vault/__tests__/vault-seal.service.test.ts
+#   server/routes/__tests__/protocol-signatures.routes.test.ts
+#   server/routes/__tests__/commitment-fulfil-route.test.ts
+#   server/services/part11/__tests__/commitment-fulfilment-binder.test.ts
+#   server/routes/__tests__/labeling-translations-shape.test.ts
+#   server/__tests__/routes/device-project-reads-admit-program.test.ts
+#   server/__tests__/routes/device-project-writes-admit-program.test.ts
+#   server/routes/__tests__/mdx-engineering.contract.test.ts
+#   server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts
+#   server/routes/__tests__/part11-static-tables-removed.test.ts
+#   client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx
+#   client/src/concept2cure/v2/__tests__/signedContentState.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingMapping.test.ts
+#   client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingPiSplShowsWhatWasNotStated.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingPiZeroState.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx
+#   client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+#   client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+#   client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx
+#   client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/riskMapping.test.ts
+#   client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:03.208Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-29T19:02:06.268Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.472Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.496Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.518Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.539Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.556Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.571Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T19:02:07.587Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:08.479Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:08.708Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:02:08.708Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:08.708Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read > an authorship lookup that fails reads 'unverified', never 'independent', and the document is still returned
+[governance/SoD] authorship lookup failed for "labeling-translation:9"; refusing to sign: connection terminated
+[governance/SoD] authorship lookup failed for "labeling-translation:10"; refusing to sign: connection terminated
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:14.987Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol
+{
+  "timestamp": "2026-10-29T19:02:17.724Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:02:17.725Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/signed-content-locked.pglite.test.ts > P-63: AnA's symbol tool is refused the same way > add_labeling_symbol on an approved label: the one refusal, and no symbol
+{
+  "timestamp": "2026-10-29T19:02:17.725Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:02:28.134Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:02:28.135Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:02:28.135Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/risk-acceptance-locked.pglite.test.ts > P-63: AnA's control tool is refused the same way > add_risk_control on an accepted hazard: the one refusal, and no control
+{
+  "timestamp": "2026-10-29T19:02:28.199Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+{
+  "timestamp": "2026-10-29T19:02:30.790Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-29T19:02:34.132Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-10-29T19:02:34.604Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified
+[signing-authority] signer role lookup failed: membership verification interrupted
+
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 9ms
+   → expected "vi.fn()" to be called with arguments: [ 11, 2, { …(2) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 3ms
+   → expected 1st "vi.fn()" call to have been called with [ 11, 2, { …(2) } ]
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T19:02:35.456Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T19:02:35.530Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:02:35.530Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T19:02:35.531Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:06.327Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:06.709Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:06.709Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:06.710Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T19:03:06.782Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.791Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.793Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T19:03:06.809Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.815Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.817Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T19:03:06.829Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.835Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.836Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T19:03:06.847Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.853Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.855Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T19:03:06.874Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.879Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T19:03:06.881Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:07.713Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:07.822Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:07.822Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:07.822Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > answers 503 when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:07.903Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > answers 503 when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:07.923Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > answers 503 when the ownership check cannot run, and inserts nothing
+{
+  "timestamp": "2026-10-29T19:03:07.941Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > answers 503 when the ownership check cannot run, and updates nothing
+{
+  "timestamp": "2026-10-29T19:03:07.954Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+{
+  "timestamp": "2026-10-29T19:03:08.776Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective
+{
+  "timestamp": "2026-10-29T19:03:10.204Z",
+  "level": "warn",
+  "message": "[source-task] The task could not be written; the governed act stands",
+  "context": {
+    "organizationId": 99,
+    "sourceEntityType": "qms_periodic_review",
+    "sourceEntityId": "qms-document:1",
+    "err": "__vite_ssr_import_1__.db.select is not a function"
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant
+{
+  "timestamp": "2026-10-29T19:03:10.215Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Unrecognized payment_status — allowing access, review the Stripe status mapping",
+  "context": {
+    "organizationId": 99,
+    "paymentStatus": "paid"
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity
+{
+  "timestamp": "2026-10-29T19:03:10.251Z",
+  "level": "error",
+  "message": "[mdx-analytics] Analytics data could not be run",
+  "context": {
+    "reason": "Analytics data could not be run: 42P01",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > signing authority that cannot be read: 503, and the password is not asked
+[signing-authority] signer role lookup failed: connection reset
+
+stderr | server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > the signature row cannot be written: the acceptance rolls back with it
+{
+  "timestamp": "2026-10-29T19:03:11.080Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T19:03:11.881Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T19:03:12.086Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:12.086Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T19:03:12.087Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T19:03:12.253Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.issue udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "99"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T19:03:12.254Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T19:03:12.255Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T19:03:12.255Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.issue",
+    "resourceType": "udi_record",
+    "resourceId": "99",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T19:03:12.261Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.submit_gudid udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T19:03:12.262Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T19:03:12.262Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T19:03:12.263Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.submit_gudid",
+    "resourceType": "udi_record",
+    "resourceId": "1",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+{
+  "timestamp": "2026-10-29T19:03:13.069Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > signing authority that cannot be read: 503, and the password is not asked
+[signing-authority] signer role lookup failed: connection reset
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > the signature row cannot be written: the approval rolls back with it
+{
+  "timestamp": "2026-10-29T19:03:13.149Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T19:03:24.547Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T19:03:24.663Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:24.663Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T19:03:24.664Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:25.532Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:25.851Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:25.851Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T19:03:25.851Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:25.919Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:25.933Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:25.947Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:25.958Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+{
+  "timestamp": "2026-10-29T19:03:26.965Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied for table risk_items"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed
+{
+  "timestamp": "2026-10-29T19:03:26.968Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed
+{
+  "timestamp": "2026-10-29T19:03:26.970Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel software failed",
+  "context": {
+    "err": "deadlock detected"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T19:03:26.977Z",
+  "level": "error",
+  "message": "[mdx-engineering] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T19:03:27.735Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T19:03:27.841Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:27.841Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T19:03:27.841Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T19:03:30.376Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T19:03:30.499Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:30.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T19:03:30.500Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:31.413Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:31.415Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:31.415Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-10-29T19:03:32.366Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > refuses them to an organization entitled to none of the three
+{
+  "timestamp": "2026-10-29T19:03:34.257Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/mdx/risk-items",
+    "organizationId": 404,
+    "modules": [
+      "risk",
+      "device-engineering"
+    ],
+    "reasons": [
+      "risk: Module 'risk' requires standard tier or higher (current: free)",
+      "device-engineering: Module 'device-engineering' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-10-29T19:03:34.258Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/mdx/risk-items/7",
+    "organizationId": 404,
+    "modules": [
+      "risk",
+      "device-engineering"
+    ],
+    "reasons": [
+      "risk: Module 'risk' requires standard tier or higher (current: free)",
+      "device-engineering: Module 'device-engineering' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-10-29T19:03:34.258Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/mdx/risk-items/7/controls",
+    "organizationId": 404,
+    "modules": [
+      "risk",
+      "device-engineering"
+    ],
+    "reasons": [
+      "risk: Module 'risk' requires standard tier or higher (current: free)",
+      "device-engineering: Module 'device-engineering' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-10-29T19:03:34.258Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+    "path": "/api/design-controls",
+    "organizationId": 404,
+    "modules": [
+      "device-engineering",
+      "design-controls"
+    ],
+    "reasons": [
+      "device-engineering: Module 'device-engineering' requires standard tier or higher (current: free)",
+      "design-controls: Module 'design-controls' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-29T19:03:35.042Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:35.047Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | Object.warn (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:171:13)
+{
+  "timestamp": "2026-10-29T19:03:35.048Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | testConnection (/home/user/ClinicalSageAI-2-replit/server/db.js:179:13)
+[database] Database connection successful
+
+stderr | new TamperProofAuditLog (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:362:15)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | Object.error (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-29T19:03:35.072Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > refuses absent request context before authority, credentials or transaction writes
+{
+  "timestamp": "2026-10-29T19:03:35.764Z",
+  "level": "error",
+  "message": "[governed-signed-act] opening the signing transaction failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ × server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps authority, signer verification and governed writes on the same pinned client 25ms
+   → expected "vi.fn()" to be called with arguments: [ 42, 7, { query: [Function Mock] } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,6 +2,11 @@
+    42,
+    7,
+    {
+      "query": [Function Mock],
+    },
++   {
++     "organizationStatuses": [
++       "active",
++     ],
++   },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps an authority refusal ahead of credential verification and the domain transaction 3ms
+   → expected "vi.fn()" to be called with arguments: [ 42, 7, { query: [Function Mock] } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,6 +2,11 @@
+    42,
+    7,
+    {
+      "query": [Function Mock],
+    },
++   {
++     "organizationStatuses": [
++       "active",
++     ],
++   },
+  ]
+
+
+Number of calls: 1
+
+stdout | server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+{
+  "timestamp": "2026-10-29T19:03:36.538Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:36.539Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+{
+  "timestamp": "2026-10-29T19:03:36.539Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+{
+  "timestamp": "2026-10-29T19:03:36.601Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T19:03:39.070Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T19:03:39.167Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:39.168Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T19:03:39.168Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > fails closed when membership cannot be verified
+{
+  "timestamp": "2026-10-29T19:03:39.250Z",
+  "level": "error",
+  "message": "[mdx-risk] create-item failed",
+  "context": {
+    "err": "assignee organization membership could not be verified",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/part11-static-tables-removed.test.ts
+{
+  "timestamp": "2026-10-29T19:03:42.815Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T19:03:42.816Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/part11-static-tables-removed.test.ts
+{
+  "timestamp": "2026-10-29T19:03:42.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/part11-static-tables-removed.test.ts
+[database] Database connection successful
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps authority, signer verification and governed writes on the same pinned client
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, 7, { query: [Function Mock] } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,6 +2,11 @@
+    42,
+    7,
+    {
+      "query": [Function Mock],
+    },
++   {
++     "organizationStatuses": [
++       "active",
++     ],
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/governed-signed-act.request-context.test.ts:41:25
+     39|     const res = await request(app()).post('/sign').send(body);
+     40|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+     41|     expect(h.authority).toHaveBeenCalledWith(42, 7, client);
+       |                         ^
+     42|     expect(h.deps).toHaveBeenCalledWith(client);
+     43|     expect(h.run).toHaveBeenCalledWith(client, 7, 42);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps an authority refusal ahead of credential verification and the domain transaction
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, 7, { query: [Function Mock] } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,6 +2,11 @@
+    42,
+    7,
+    {
+      "query": [Function Mock],
+    },
++   {
++     "organizationStatuses": [
++       "active",
++     ],
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/governed-signed-act.request-context.test.ts:61:55
+     59|     h.authority.mockResolvedValue({ status: 403, code: 'ESIGNATURE_NO_…
+     60|     const res = await request(app()).post('/sign').send(body);
+     61|     expect(res.status).toBe(403); expect(h.authority).toHaveBeenCalled…
+       |                                                       ^
+     62|     expect(h.reverify).not.toHaveBeenCalled(); expect(h.query).not.toH…
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written
+AssertionError: expected "vi.fn()" to be called with arguments: [ 11, 2, { …(2) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:448:34
+    446|       message: 'Your role does not permit applying an electronic signa…
+    447|     });
+    448|     expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSig…
+       |                                  ^
+    449|     expect(verifyReauth).not.toHaveBeenCalled();
+    450|     expect(finalizeProtocolTx).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes
+AssertionError: expected 1st "vi.fn()" call to have been called with [ 11, 2, { …(2) } ]
+
+- Expected
++ Received
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:489:34
+    487|     expect(r.status).toBe(403);
+    488|     expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    489|     expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pin…
+       |                                  ^
+    490|     expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pin…
+    491|     expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 50 passed (52)
+      Tests  4 failed | 921 passed (925)
+   Start at  19:02:01
+   Duration  101.35s (transform 11.00s, setup 1.57s, import 33.32s, tests 52.42s, environment 7.65s)
+
+
+# NOTE: the 4 failures above are in governed-signed-act.request-context and protocol-signatures.routes, which this change does not touch.
+# Both fail on a new 'organizationStatuses' argument to the signing-authority check: the offboarding session's uncommitted edits to
+# server/routes/governed-signed-act.ts and server/services/part11/signing-authority-gate.ts, made while this run was prepared (git status:
+#    M server/routes/governed-signed-act.ts
+#    M server/services/part11/signing-authority-gate.ts
+# ). The same 51 files (then without the two added cases) passed, 923 of 923, before those edits:
+#    Test Files  51 passed (51)
+#         Tests  923 passed (923)

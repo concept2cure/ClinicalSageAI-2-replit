@@ -2,8 +2,9 @@
  * The review route on a QMS controlled document, in the register (RR4 of
  * docs/design/REVIEW_ROUTING_2026-10-23.md, §2.7–§2.12; NEW-4 and D-Q).
  *
- *   - QmsRouteForm: Send for review names one QMS approver (required) and any
- *     reviewers (optional), each from a searchable list of the members the
+ *   - QmsRouteForm: Send for review names one or more QMS approvers (RR2: every
+ *     one of them signs) and any reviewers (optional; RR2: at the same time or
+ *     one after another, each step dated, ordered by Earlier and Later), each from a searchable list of the members the
  *     send would admit (GET …/route-candidates, validateRouteMember's own
  *     answers: a QMS approver is a designated one), the due dates (the end of
  *     each day in the sender's time zone, which it names) and the reason.
@@ -13,7 +14,8 @@
  *   - QmsRoutePanel: every named member, one per line, in the Vault round's
  *     words (memberLine, routeHeadline, RouteHistory); and, for the reader,
  *     what the route lets them do: sign the review, approve, return for
- *     revision, hand back, withdraw, reassign, remind. A route that could not
+ *     revision, hand back, withdraw, reassign, remind, and (RR2) add a
+ *     reviewer to the open route. A route that could not
  *     be read says so, never "no reviewers".
  *
  * Nothing here decides who may sign: the route and its verified signatures
@@ -26,14 +28,16 @@ import { I } from '../v2/icons';
 import { useDialog } from '../v2/useDialog';
 import { useLiveData } from '../v2/dataConnect';
 import { DueDateField, PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } from '../v2/editor/reviewFields';
+import { RouteOrderFields } from '../v2/reviewRoute/RouteOrderFields';
+import { AddReviewerSheet } from '../v2/reviewRoute/AddReviewer';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
-import { memberLine, routeHeadline } from '../v2/surfaces/VaultReviewRoute';
-import { RouteHistory } from '../v2/surfaces/VaultRouteReassign';
-import { isRouteCandidates, type RouteCandidatesShape, type RouteCandidateView } from '../v2/surfaces/vaultRouteCandidates';
-import { nameOf, utc } from '../v2/surfaces/vaultRouteText';
+import { mayAddReviewer, memberLine, routeHeadline, waitingApprovers } from '../v2/reviewRoute/routeRound';
+import { RouteHistory } from '../v2/reviewRoute/RouteHistory';
+import { isRouteCandidates, type RouteCandidatesShape, type RouteCandidateView } from '../v2/reviewRoute/routeCandidates';
+import { nameOf, utc } from '../v2/reviewRoute/routeText';
 import {
-  myTurn, postQmsReviewSignature, postQmsRouteAct, qmsRouteFormMissing, reassignQmsMember, remindQmsMember, resendQmsRoute,
+  addQmsReviewer, myTurn, postQmsReviewSignature, postQmsRouteAct, qmsRouteFormMissing, reassignQmsMember, remindQmsMember, resendQmsRoute,
   sendQmsForReview, type QmsRouteAct, type QmsRouteFormInput, type QmsRouteView, type RouteMemberView,
 } from './qmsReviewRoute';
 
@@ -107,7 +111,7 @@ function Sheet({ title, sub, testId, busy, onClose, children, footer }: {
 /** Send for review (or name reviewers on a document already in review): one QMS approver, optional reviewers, dates and a reason. */
 export function QmsRouteForm({ doc, mode, onClose, onSent }: { doc: QmsRouteDoc; mode: 'send' | 'resend'; onClose: () => void; onSent: () => void }) {
   const read = useQmsCandidates(doc.id, 'send');
-  const [f, setF] = useState<QmsRouteFormInput>({ reviewers: [], approver: null, reviewDue: '', approvalDue: '', reason: '' });
+  const [f, setF] = useState<QmsRouteFormInput>({ reviewers: [], approvers: [], order: 'parallel', reviewDue: '', stepDue: [], approvalDue: '', reason: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<QmsRouteFormInput>) => setF((x) => ({ ...x, ...patch }));
@@ -142,25 +146,24 @@ export function QmsRouteForm({ doc, mode, onClose, onSent }: { doc: QmsRouteDoc;
       ) : null}
       {read.data ? <>
         <fieldset className="de-field" data-testid="qms-route-approver">
-          <legend className="de-label">QMS approver<span className="req">*</span></legend>
-          <div className="de-desc">One of this organization's QMS approvers. Their signature makes the document effective.</div>
-          <PeoplePicker name="qms-route-approver" multiple={false} searchLabel="Find the QMS approver" testIdPrefix="qms-approver"
-            options={approverOptions(c, f.reviewers)} selected={f.approver ? [f.approver] : []}
-            onChange={(ids) => set({ approver: ids[0] ?? null })} />
+          <legend className="de-label">QMS approvers<span className="req">*</span></legend>
+          <div className="de-desc">One or more of this organization's QMS approvers. Every one named signs; the last signature makes the document effective.</div>
+          <PeoplePicker name="qms-route-approver" multiple searchLabel="Find a QMS approver" testIdPrefix="qms-approver"
+            options={approverOptions(c, f.reviewers)} selected={f.approvers}
+            onChange={(ids) => set({ approvers: ids })} />
         </fieldset>
         <fieldset className="de-field" data-testid="qms-route-reviewers">
           <legend className="de-label">Reviewers <span className="de-desc">(optional)</span></legend>
           <div className="de-desc">Each reviewer named signs the review before the approval.</div>
           <PeoplePicker name="qms-route-reviewers" multiple searchLabel="Find a reviewer" testIdPrefix="qms-reviewer"
-            options={optionsFor(c, 'reviewer', f.approver ? [f.approver] : [], 'Chosen as the QMS approver.')} selected={f.reviewers}
+            options={optionsFor(c, 'reviewer', f.approvers, 'Chosen as a QMS approver.')} selected={f.reviewers}
             onChange={(ids) => set({ reviewers: ids })} />
         </fieldset>
+        <RouteOrderFields idPrefix="qms" f={f} nameOf={(id) => c.find((x) => String(x.id) === id)?.name ?? `Account #${id}`} set={set} today={today()} />
         <NotOffered candidates={c} />
         <div className="vr-due">
-          {f.reviewers.length > 0 ? <DueDateField id="qms-review-due" label="Reviews due" value={f.reviewDue} onChange={(v) => set({ reviewDue: v })}
-            required min={today()} testId="qms-review-due" /> : null}
           <DueDateField id="qms-approval-due" label="Approval due" value={f.approvalDue} onChange={(v) => set({ approvalDue: v })}
-            required min={f.reviewDue || today()} testId="qms-approval-due" />
+            required min={today()} testId="qms-approval-due" />
         </div>
         <div className="de-desc" data-testid="qms-route-zone">Each date is the end of that day in {read.data.timeZone}, your notification time zone.</div>
         <ReasonField id="qms-route-reason" label="Reason for sending" value={f.reason} onChange={(v) => set({ reason: v })}
@@ -247,7 +250,7 @@ function ReassignDialog({ doc, member, onClose, onDone }: { doc: QmsRouteDoc; me
   );
 }
 
-type Open = { kind: 'act'; act: QmsRouteAct } | { kind: 'reassign'; member: RouteMemberView } | { kind: 'sign' } | { kind: 'resend' } | null;
+type Open = { kind: 'act'; act: QmsRouteAct } | { kind: 'reassign'; member: RouteMemberView } | { kind: 'sign' } | { kind: 'resend' } | { kind: 'add' } | null;
 
 /** What the reader may do on this route, in the order offered. */
 function readerActs(view: QmsRouteView, meId: number | null, admin: boolean) {
@@ -262,6 +265,8 @@ function readerActs(view: QmsRouteView, meId: number | null, admin: boolean) {
     handBack: mine !== null,
     withdraw: live !== null && (sender || admin),
     reassign: live !== null && (sender || admin),
+    // RR2: until an approver has signed (ROUTE_APPROVAL_STARTED).
+    addReviewer: live !== null && (sender || admin) && mayAddReviewer(live),
     remind: sender,
     resend: view.kind === 'withdrawn' || view.kind === 'legacy',
   };
@@ -308,12 +313,18 @@ export function QmsRoutePanel({ doc, view, meId, admin, signer, onClose, onChang
           {can.returnIt ? <button className="de-btn ghost" data-testid="qms-route-return" onClick={() => setOpen({ kind: 'act', act: 'return' })}>Return for revision</button> : null}
           {can.handBack ? <button className="de-btn ghost" data-testid="qms-route-hand-back" onClick={() => setOpen({ kind: 'act', act: 'hand-back' })}>Hand back</button> : null}
           {can.withdraw ? <button className="de-btn ghost" data-testid="qms-route-withdraw" onClick={() => setOpen({ kind: 'act', act: 'withdraw' })}>Withdraw the route</button> : null}
+          {can.addReviewer ? <button className="de-btn ghost" data-testid="qms-route-add-reviewer" onClick={() => setOpen({ kind: 'add' })}>Add a reviewer</button> : null}
           {can.resend ? <button className="de-btn ghost" data-testid="qms-route-resend" onClick={() => setOpen({ kind: 'resend' })}>Name reviewers</button> : null}
         </div>
       </Sheet>
       {open?.kind === 'act' ? <ActDialog act={open.act} doc={doc} onClose={() => setOpen(null)} onDone={done} /> : null}
       {open?.kind === 'reassign' ? <ReassignDialog doc={doc} member={open.member} onClose={() => setOpen(null)} onDone={done} /> : null}
       {open?.kind === 'resend' ? <QmsRouteForm doc={doc} mode="resend" onClose={() => setOpen(null)} onSent={done} /> : null}
+      {open?.kind === 'add' && round ? (
+        <AddReviewerSheet idPrefix="qms-add" testId="qms-route-add" title={label(doc)} candidatesUrl={`/api/mdx/qms/documents/${doc.id}/route-candidates?for=add`}
+          sequential={round.route.order === 'sequential'} waitingApprovers={waitingApprovers(round)} audit="this document's audit trail"
+          post={(body) => addQmsReviewer(doc.id, body)} onClose={() => setOpen(null)} onDone={done} />
+      ) : null}
       {open?.kind === 'sign' ? (
         <EsignModal open action="Sign the review" target={label(doc)} signer={signer}
           targetMeta="Your signature records that you reviewed this version's controlled text as it is now. The approval follows once every reviewer named has signed."

@@ -72,3 +72,33 @@ test and the export-covers-purge contract. The schema-contract suite and typeche
 `vaultFilterQuery` (parsed filters back to query parameters), `server/services/vault/vault-saved-views.ts`, four routes on the Vault
 router (`GET /:id/saved-views`, `POST /saved-views`, `PATCH` and `DELETE /saved-views/:viewId`), and the find view's
 "Saved views" control in `Vault.tsx` (read lazily, honest states, apply, save, rename, share, delete). Tests T5, T6, T7 and T9 cover them.
+
+---
+
+# Release 2, server half: the Vault routes (2026-10-29)
+
+**What changed:**
+
+- `server/services/vault/vault-saved-views.ts` is a new **server module** (not UI). It holds every statement on the store for `surface = 'vault'`.
+  - **Statements:** each names the organisation, the surface and the owner arm literally (T4 holds that), with bound values only (`ci:sql-interpolation` starts the file at 0).
+  - **Authority:** `savedViewAuthority` is the design's §3.3 table, unit-tested.
+  - **Validation:** `validateViewParameters` runs the search's own parsers, so a view can never hold a filter the search refuses. A refusal is the search's own object. `processingStatus` is left to the parser, so its refusal is identical too.
+  - **Listing:** `listSavedViews` re-checks every stored view against the current vocabularies and cabinet. A view that no longer applies says so (`applies: false` with the refusal); its stored values are never rewritten.
+- `vaultFilterQuery` and `VAULT_FILTER_PARAMETER_NAMES` in `vault-document-filter.ts`: parsed filters back to the search's own parameters, so `parse(query(parse(x))) = parse(x)`.
+- **Four routes** on the existing Vault router:
+  - `GET /:id/saved-views` behind project admission;
+  - `POST /saved-views`;
+  - `PATCH` and `DELETE /saved-views/:viewId`, in one transaction: lock the row the reader may see, re-admit its project, check authority, and repeat it in the statement as bound booleans.
+  - A failed read is `500 SAVED_VIEWS_UNAVAILABLE` ("This is not an empty list."), never `views: []`.
+
+**Verified by making it fail:**
+
+| Test | What it proves | Red |
+|---|---|---|
+| T5 `server/routes/c2c/__tests__/project-vault-saved-views.pglite.integration.test.ts` | Through the real router, on the real store, with current roles: a personal view is its owner's alone and not disclosed. An organisation view is listed to members and changed only by its creator; a manager renames or deletes but does not re-parameterise; a viewer saves for themselves only; a demoted creator can still withdraw. A project view is listed and saved only behind its project's admission. Seven filter refusals deep-equal the search's. A project list, an empty view, a stored count and a missing visibility are refused. CTD codes are normalised and only parameters are stored. A view whose folder left the cabinet says `applies: false`. A failed read is an error. | `red-T5.txt`: **17 of 17** fail against trunk's router (no routes). |
+| T6 `server/services/vault/__tests__/vault-saved-views.test.ts` | The round trip; the refusals; the cabinet read only when a folder is asked; the §3.3 authority table, row by row. | `vaultFilterQuery` and `savedViewAuthority` did not exist. |
+| T4 (extended) | The Vault module's every statement carries the organisation, the surface and the owner arm. An INSERT names the organisation in its column list. | — |
+
+**Gates:** these are green: typecheck (`tsc --noEmit`, exit 0), the ESLint warning ratchet, `ci:sql-interpolation`, `ci:server-error-leaks` and `ci:fabricated-identity`. The c2c route and Vault service suites pass: 140 files, 2,361 tests. The schema-contract suite passes: 117 files, 1,656 tests.
+
+**Next:** the find view's "Saved views" control in `Vault.tsx`. It reads lazily, keeps honest states, and offers apply, save, rename, share and delete (T9).

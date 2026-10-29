@@ -40,10 +40,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[] }));
+/* `permissions` as the session carries them (server sessionPermissions): an
+   administrator's include billing:admin, a member's do not (P-68). */
+const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[], permissions: ['governed:write', 'billing:admin'] as string[] }));
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles },
+    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles, permissions: auth.permissions },
     logout: vi.fn(),
   }),
 }));
@@ -215,6 +217,7 @@ afterEach(() => {
   cleanup();
   clearShellProject();
   auth.roles = ['admin', 'user'];
+  auth.permissions = ['governed:write', 'billing:admin'];
 });
 
 /** A client can reach a surface when it is in the release, resolved the way the shell resolves it. */
@@ -521,9 +524,9 @@ async function accountMenu(platformAdmin: boolean) {
 }
 
 describe('A.1 · the subscription is "subscription"; "Plan" is the step', () => {
-  it('the account menu: Subscription & features, Compare subscriptions, Platform licensing', async () => {
+  it('the account menu: Subscription & features, Subscription & billing (P-68), Platform licensing', async () => {
     const { items, onNav } = await accountMenu(true);
-    const want = ['Subscription & features', 'Compare subscriptions', 'Platform licensing'];
+    const want = ['Subscription & features', 'Subscription & billing', 'Platform licensing'];
     expect({
       words: offending(items.map((item) => ['account menu', item] as const)),
       missing: want.filter((name) => !items.includes(name)),
@@ -535,6 +538,7 @@ describe('A.1 · the subscription is "subscription"; "Plan" is the step', () => 
 
   it("a member's menu offers Compare subscriptions", async () => {
     auth.roles = ['user'];
+    auth.permissions = [];
     const { items } = await accountMenu(false);
     expect(offending(items.map((item) => ['account menu (member)', item] as const))).toEqual([]);
     expect(items).toContain('Compare subscriptions');

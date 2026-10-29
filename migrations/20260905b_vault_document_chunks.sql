@@ -33,6 +33,16 @@
 --
 -- Additive and idempotent throughout; a database with no vault schema is
 -- legitimate and this file stays silent there.
+--
+-- ── AMENDED IN PLACE 2026-10-29 (P-66, D6 tenant isolation) ─────────────────
+-- vault.document_chunks now FORCEs row-level security, so the table OWNER is
+-- held to the four policies too: without it a NOSUPERUSER owner (a managed
+-- Postgres's migration role) read every tenant's passages. Set only where it is
+-- not yet set, so a replay takes no lock for it. Nothing else changes. The
+-- tenant purge's Vault door, which deletes chunks as the owner, opens its own
+-- scope for that (migrations/20260926_vault_documents_record_immutability.sql,
+-- amended the same day). Proof: tests/db/vault-isolation-hardening.dbtest.ts;
+-- evidence docs/evidence/D6-ISOLATION-HARDENING/2026-10-29/.
 
 DO $vault_chunks$
 BEGIN
@@ -74,6 +84,10 @@ BEGIN
 
   -- RLS, self-contained (see header): enable + the 070_gcc policy set.
   EXECUTE 'ALTER TABLE vault.document_chunks ENABLE ROW LEVEL SECURITY';
+  -- FORCE (amended 2026-10-29, P-66): the owner is no exception.
+  IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid = 'vault.document_chunks'::regclass) THEN
+    EXECUTE 'ALTER TABLE vault.document_chunks FORCE ROW LEVEL SECURITY';
+  END IF;
   IF EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
               WHERE n.nspname = 'core' AND p.proname = 'can_access_program') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_vault_chunks_select ON vault.document_chunks';

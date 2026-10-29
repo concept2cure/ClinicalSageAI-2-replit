@@ -13,7 +13,7 @@ import request from 'supertest';
 
 const GOOD = 'correct horse battery staple';
 const REASON = 'Re-test after column replacement confirmed a lab error.';
-const H = vi.hoisted(() => ({ log: [] as string[], disposition: null as string | null, standing: 'pending' as string }));
+const H = vi.hoisted(() => ({ log: [] as string[], disposition: null as string | null, standing: 'pending' as string, deviation: 'pending_approval' as string }));
 
 type Rows = { rows: Array<Record<string, unknown>>; rowCount: number };
 const none: Rows = { rows: [], rowCount: 0 };
@@ -31,11 +31,18 @@ const DOMAIN: Array<[RegExp, (p: unknown[]) => Rows]> = [
   [/SELECT disposition FROM qms_nonconforming_products/, () => one({ disposition: H.disposition })],
   [/^\s*UPDATE qms_suppliers/, (p) => {
     if (H.standing === p[2]) return none;
-    H.log.push(`DOMAIN:${String(p[2])}`);
+    H.log.push(`DOMAIN:${String(p[2])}:${String(p[3])}`);
     H.standing = String(p[2]);
     return one({ id: 12, supplier_name: 'Acme Resins', supplier_code: null, approval_status: p[2], next_audit_date: null, reapproval_date: null });
   }],
   [/SELECT approval_status FROM qms_suppliers/, () => one({ approval_status: H.standing })],
+  [/^\s*UPDATE qc_deviations/, (p) => {
+    if (H.deviation !== 'pending_approval') return none;
+    H.log.push(`DOMAIN:closed:${String(p[2])}`);
+    H.deviation = 'closed';
+    return one({ id: 5, deviation_number: 'DEV-2026-001', classification: 'major', status: 'closed', target_closure_date: null });
+  }],
+  [/SELECT status, root_cause, resolution_description[\s\S]*FROM qc_deviations/, () => one({ status: H.deviation, root_cause: 'x', resolution_description: 'y', completed_by: null })],
 ];
 
 const client = {
@@ -92,7 +99,7 @@ function app() {
 }
 const sign = (body: Record<string, unknown>) => request(app()).patch('/api/mdx/qms/nonconforming/4/disposition').send(body);
 
-beforeEach(() => { H.log.length = 0; H.disposition = null; H.standing = 'pending'; client.query.mockClear(); });
+beforeEach(() => { H.log.length = 0; H.disposition = null; H.standing = 'pending'; H.deviation = 'pending_approval'; client.query.mockClear(); });
 
 describe('a nonconformance disposition is a signed act', () => {
   it('commits the disposition with its ledger pair and signature, the reason as its rationale', async () => {
@@ -119,14 +126,15 @@ describe('a nonconformance disposition is a signed act', () => {
   });
 });
 
+const NEXT_YEAR = `${new Date().getUTCFullYear() + 1}-06-30`;
 const approve = (body: Record<string, unknown>) => request(app()).post('/api/mdx/qms/suppliers/12/approval').send(body);
 
 describe("a supplier's approval standing is a signed act", () => {
   it('commits the standing with its ledger pair and signature', async () => {
-    const res = await approve({ approvalStatus: 'approved', reason: 'Qualification audit passed with no findings.', meaning: 'approval', password: GOOD });
+    const res = await approve({ approvalStatus: 'approved', reapprovalDate: NEXT_YEAR, reason: 'Qualification audit passed with no findings.', meaning: 'approval', password: GOOD });
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ data: { approval_status: 'approved' }, signatureId: 314 });
-    expect(H.log).toEqual(['BEGIN', 'DOMAIN:approved', 'LEDGER:sign:qms-supplier:12', 'SIGNATURE:qms-supplier:12', 'COMMIT']);
+    expect(H.log).toEqual(['BEGIN', `DOMAIN:approved:${NEXT_YEAR}`, 'LEDGER:sign:qms-supplier:12', 'SIGNATURE:qms-supplier:12', 'COMMIT']);
   });
 
   it('refuses the standing through the unsigned writes, as pending, or unchanged, and signs nothing', async () => {
@@ -134,9 +142,33 @@ describe("a supplier's approval standing is a signed act", () => {
     expect((await request(app()).patch('/api/mdx/qms/suppliers/12').send({ approvalStatus: 'revoked', nextAuditDate: '2026-12-01' })).status).toBe(422);
     expect((await request(app()).post('/api/mdx/qms/suppliers').send({ supplierName: 'New Co', criticality: 'major', approvalStatus: 'approved' })).status).toBe(422);
     expect((await approve({ approvalStatus: 'pending', reason: 'Back to pending for review.', meaning: 'approval', password: GOOD })).status).toBe(400);
+    // An approval names its next re-approval, after today; a revocation names none.
+    expect((await approve({ approvalStatus: 'approved', reason: 'Qualification audit passed.', meaning: 'approval', password: GOOD })).status).toBe(400);
+    expect((await approve({ approvalStatus: 'approved', reapprovalDate: '2020-01-01', reason: 'Qualification audit passed.', meaning: 'approval', password: GOOD })).status).toBe(400);
+    expect((await approve({ approvalStatus: 'revoked', reapprovalDate: NEXT_YEAR, reason: 'Supplier lost its certification.', meaning: 'approval', password: GOOD })).status).toBe(400);
     H.standing = 'approved';
-    const same = await approve({ approvalStatus: 'approved', reason: 'Approve it again for good measure.', meaning: 'approval', password: GOOD });
+    const same = await approve({ approvalStatus: 'approved', reapprovalDate: NEXT_YEAR, reason: 'Approve it again for good measure.', meaning: 'approval', password: GOOD });
     expect([same.status, same.body.error?.code]).toEqual([409, 'SUPPLIER_STANDING_UNCHANGED']);
     expect(H.log.filter((e) => e.startsWith('DOMAIN') || e.startsWith('SIGNATURE'))).toEqual([]);
   });
 });
+
+const closeDev = (body: Record<string, unknown>) => request(app()).post('/api/mdx/qms/deviations/5/close').send(body);
+
+describe('a deviation is closed by a signed act (P-57)', () => {
+  it('commits the close with its ledger pair and signature, the signer named', async () => {
+    const res = await closeDev({ reason: 'Investigation complete; seal replaced and room requalified.', meaning: 'approval', password: GOOD });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ data: { status: 'closed' }, signatureId: 314 });
+    expect(H.log).toEqual(['BEGIN', 'DOMAIN:closed:7', 'LEDGER:sign:qms-deviation:5', 'SIGNATURE:qms-deviation:5', 'COMMIT']);
+  });
+
+  it('writes nothing without the signature, or before it is pending approval', async () => {
+    expect((await closeDev({ reason: 'Investigation complete.' })).status).toBe(400);
+    H.deviation = 'under_investigation';
+    const early = await closeDev({ reason: 'Investigation complete; seal replaced.', meaning: 'approval', password: GOOD });
+    expect([early.status, early.body.error?.code]).toEqual([409, 'DEVIATION_NOT_READY']);
+    expect(H.log.filter((e) => e.startsWith('DOMAIN') || e.startsWith('SIGNATURE'))).toEqual([]);
+  });
+});
+

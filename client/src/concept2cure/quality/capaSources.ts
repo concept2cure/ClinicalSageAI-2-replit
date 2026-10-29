@@ -17,6 +17,7 @@ import type { CapaRow } from './qmsRecordData';
 
 /** The `sourceRefs` kind each quality record is raised as. One place, used by Raise CAPA and the CAPA column. */
 export const CAPA_SOURCE_KIND = {
+  deviation: 'qc_deviation',
   nonconforming: 'qms_nonconforming_product',
   supplier: 'qms_supplier',
   audit: 'qms_internal_audit',

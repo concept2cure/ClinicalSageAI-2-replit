@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Mutations for the billing fold, Part 1. Each mutation replaces one exact string in one file, runs
+the named suites, expects at least one failure (killed), and restores the file by replacement,
+checked with md5. Usage: mutate.py [ids...]"""
+import hashlib, subprocess, sys, os
+R = '/home/user/ClinicalSageAI-2-replit'
+SRV = ['server/routes/__tests__/billing-invoices-admin-gate.test.ts', 'server/middleware/__tests__/session-permissions.test.ts']
+INV = ['client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx']
+MENU = ['client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx']
+USE = ['client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx']
+BD = 'server/routes/billing-dashboard.ts'
+LI = 'client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx'
+LS = 'client/src/concept2cure/v2/surfaces/LicensingSurface.tsx'
+UB = 'client/src/concept2cure/v2/surfaces/UsageBilling.tsx'
+SH = 'client/src/concept2cure/v2/Shell.tsx'
+FOLD = ['client/src/concept2cure/v2/__tests__/foldBilling.test.ts']
+MENU2 = ['client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx']
+RL = ['server/routes/__tests__/billing-rate-limits-enforced.test.ts']
+URL_ = ['client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx']
+LST = ['server/services/entitlements/__tests__/launch-scope.test.ts']
+M = [
+  ('P1 the billing alias is removed', 'client/src/concept2cure/v2/registryModel.ts',
+   "  billing: 'licensing',\n", "", FOLD),
+  ('P2 billing gets its own view again', 'client/src/concept2cure/v2/surfaceViews.ts',
+   "  usage: { component: UsageBilling },", "  billing: { component: UsageBilling },\n  usage: { component: UsageBilling },", FOLD),
+  ('P3 the usage tab action offers billing again', 'shared/navigation/surface-actions.ts',
+   "enum: ['usage', 'limits'] },", "enum: ['usage', 'billing', 'limits'] },", FOLD),
+  ('P4 billing is a launch shell surface again', 'shared/constants/launch-scope.ts',
+   "  usage: 'account administration',", "  billing: 'account administration',\n  usage: 'account administration',", LST),
+  ('P5 the discoverability gate declares billing again', 'scripts/ci/check-surface-discoverability.mjs',
+   "  usage: 'account administration, not a subscribable capability',", "  billing: 'account administration, not a subscribable capability',\n  usage: 'account administration, not a subscribable capability',", FOLD),
+  ('P6 Stripe returns the customer to the retired id', 'server/routes/billing.ts',
+   "`${baseUrl}/concept2cure/licensing?checkout=canceled`", "`${baseUrl}/concept2cure/billing?checkout=canceled`", FOLD),
+  ('P7 a billing admin keeps two doors to Licensing', SH,
+   "      : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },",
+   "      : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },\n    ...(billingAdmin ? [{ label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' }] : []),", MENU2),
+  ('P8 every member gets Subscription & billing', SH,
+   "    billingAdmin\n      ? { label: 'Subscription & billing'", "    true\n      ? { label: 'Subscription & billing'", MENU2),
+  ('P9 the route falls back to standard again', BD,
+   "    const tier = typeof recorded === 'string' && recorded.trim() ? recorded : null;",
+   "    const tier = typeof recorded === 'string' && recorded.trim() ? recorded : 'standard';", RL),
+  ('P10 the route states the other limiter as the platform\'s', BD,
+   "      limits: limitRows(ENFORCED_RATE_LIMITS as unknown as Record<string, LimitRule>),",
+   "      limits: limitRows(LEGACY_RATE_LIMITS as unknown as Record<string, LimitRule>),", RL),
+  ('P11 a router that mounts the second limiter goes unnamed', BD,
+   "  { file: 'etmf.routes.ts', name: 'eTMF' },\n", "", RL),
+  ('P12 per-user ceiling ignores maxRequestsAuthenticated', BD,
+   "    perSignedInUser: rule.maxRequestsAuthenticated ?? rule.maxRequests,", "    perSignedInUser: rule.maxRequests,", RL),
+  ('P13 the screen accepts a row without numbers', 'client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx',
+   "    [v.windowSeconds, v.perSignedInUser, v.perAddress].every((n) => typeof n === 'number' && Number.isFinite(n)) &&\n", "", URL_),
+  ('P14 an unrecorded tier is shown as standard', 'client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx',
+   "        {d.tierRecorded && d.tier\n", "        {true\n", URL_),
+  ('P15 Try again does not read again', 'client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx',
+   "retry: () => setAttempt((a) => a + 1)", "retry: () => setAttempt((a) => a)", URL_),
+  ('P16 AnA is not told the limits', UB,
+   "        ...rateLimitContext(rateLimits.state),\n", "", URL_),
+  ('P17 usage publishes under billing again', UB,
+   "  usePublishSurfaceContext('usage', anaContext);", "  usePublishSurfaceContext('usage', anaContext);\n  usePublishSurfaceContext('billing', null);", FOLD),
+  ('P18 ID_BASELINE left at the old count', 'scripts/ci/check-ana-surface-context.mjs',
+   "const ID_BASELINE = 106;", "const ID_BASELINE = 107;", ['CMD', 'node', 'scripts/ci/check-ana-surface-context.mjs']),
+]
+
+def md5(p): return hashlib.md5(open(p, 'rb').read()).hexdigest()
+
+def run(ids):
+  out = []
+  for (name, f, old, new, tests) in M:
+    mid = name.split()[0]
+    if ids and mid not in ids: continue
+    p = os.path.join(R, f)
+    src = open(p).read()
+    olds, news = (old, new) if isinstance(old, list) else ([old], [new])
+    if any(src.count(o) != 1 for o in olds):
+      out.append(f'{name}: SKIP (anchor counts {[src.count(o) for o in olds]})'); print(out[-1], flush=True); continue
+    before = md5(p)
+    mutated = src
+    for o, n in zip(olds, news): mutated = mutated.replace(o, n)
+    open(p, 'w').write(mutated)
+    try:
+      cmd = tests[1:] if tests and tests[0] == 'CMD' else ['npx', 'vitest', 'run', *tests]
+      r = subprocess.run(cmd, cwd=R, capture_output=True, text=True, timeout=600)
+      tail = [l for l in r.stdout.splitlines() if 'Tests ' in l] or [f'exit {r.returncode}: ' + ((r.stderr or r.stdout).strip().splitlines() or [''])[-1][:160]]
+      verdict = 'KILLED' if r.returncode != 0 else 'SURVIVED'
+    finally:
+      open(p, 'w').write(src)
+    assert md5(p) == before, f'restore failed for {f}'
+    out.append(f'{name}: {verdict} ({tail[-1].strip() if tail else "no summary"}) [{f} restored, md5 {before}]')
+    print(out[-1], flush=True)
+  return out
+
+if __name__ == '__main__':
+  res = run(set(sys.argv[1:]))
+  killed = sum('KILLED' in l for l in res)
+  print(f'{killed}/{len(res)} killed')

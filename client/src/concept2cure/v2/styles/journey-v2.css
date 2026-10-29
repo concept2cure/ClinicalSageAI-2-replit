@@ -578,6 +578,15 @@
 .c2c-v2 .vr-due{display:flex;flex-wrap:wrap;gap:12px;}
 .c2c-v2 .vr-due .de-field{flex:1 1 160px;margin-bottom:12px;}
 .c2c-v2 .vr-due .c2c-input{width:100%;min-height:44px;}
+/* RR2: reviewers one after another, one per line, each moved by a 44 px
+   Earlier/Later button (not drag, so it works at a phone's width) and dated. */
+.c2c-v2 .vr-steps{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .vr-step{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-md);}
+.c2c-v2 .vr-step-name{flex:1 1 160px;font-weight:500;color:var(--text-200);overflow-wrap:anywhere;}
+.c2c-v2 .vr-step-acts{display:flex;gap:8px;}
+.c2c-v2 .vr-step .de-field{flex:1 1 100%;margin-bottom:0;}
+.c2c-v2 .vr-step .c2c-input{width:100%;min-height:44px;}
+.c2c-v2 .vr-move{min-height:44px;min-width:44px;}
 @media (max-width: 600px){
   .c2c-v2 .de-bd.de-sheet{align-items:flex-end;justify-content:stretch;}
   .c2c-v2 .de-bd.de-sheet .de{width:100%;height:auto;max-height:92vh;border-left:0;border-top:1px solid var(--border);border-radius:16px 16px 0 0;}

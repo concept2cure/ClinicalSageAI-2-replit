@@ -368,7 +368,7 @@
 /* The review route in the register (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md §2.12):
    the round in one line under a document's status, and the route sheet's acts. The sheet
    itself is the shared drawer (journey-v2.css .de-bd / .de-sheet), as the Vault's is. */
-.qms-route-line { display: block; margin-top: 4px; font-size: 11.5px; color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
+.qms-route-line, .qms-signature-line { display: block; margin-top: 4px; font-size: 11.5px; color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
 .qms-route-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .qms-route-acts .de-btn { min-height: 44px; }
 @media (max-width: 600px) {

@@ -72,7 +72,7 @@ Fixed during this review, each shown failing first (evidence under
 | Study register | `clinical_ops.studies` (`server/routes/clinical-operations-routes.ts`), and the device register `clinical_studies` (`mdx-clinical-studies.ts`, AnA `create_clinical_study`) | **Corrected 2026-10-29.** This row first said the register accepts device phases only. That is the *device* register, scoped to device programs by design. The drug study register, `clinical_ops.studies`, already accepts "Phase 2/3". Neither feeds the CSR, which takes its phase from its own source's study information (free text, read as written since `cb14dfc51`). **Gap:** no client form creates a `clinical_ops.studies` row. **Found, handed on:** Clinical Ops (`ClinicalOps.tsx`, outside the launch catalog) prefixes "Phase " and "Ph " to a value that already says "Phase", so "Phase 2/3" reads "Phase Phase 2/3"; `shared/clinical-phase.ts` `phaseLabel` is the fix. |
 | Study design store | the study design store | **Gap:** no NCT number field and no Fast Track designation field. |
 | Filing type "Clinical Study Report" | project creation | **Gap:** a project of this type can never be sequenced. A CSR is filed as an information amendment to the IND. |
-| Sequence numbering | Submission Center | **Fixed in part** (D7, `docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/`): an IND amendment built on this spine declared its own number as its submission-id, opening a regulatory activity of its own. It now names its Original Application (0000), by the rule the package spine already used (`fda-sequence-identity.ts`), and an amendment with no Original Application to name is refused. **Gap:** the first platform sequence is always 0000. LMN-201's IND already has sequences, so the sequences filed elsewhere must be declared (the design's slice 2). |
+| Sequence numbering | Submission Center | **Fixed in part** (D7, `docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/`): an IND amendment built on this spine declared its own number as its submission-id, opening a regulatory activity of its own. It now names its Original Application (0000), by the rule the package spine already used (`fda-sequence-identity.ts`), and an amendment with no Original Application to name is refused. **Fixed** (D7, `docs/evidence/D7/2026-10-29-filed-elsewhere-baseline/`): a US submission declares, as a signed act with the agency's acknowledgment as Vault evidence, the sequences 0000–N filed outside the platform and which opened the Original Application. The next sequence offered is N+1, a number N or lower or a second Original Application is refused, and an amendment names the declared original. **Open:** replace, append and delete against leaves filed elsewhere wait for MR-10 Stage 9's import. |
 
 ### 2. Clinical data inputs
 
@@ -173,7 +173,7 @@ and are not used.
    (`56504daea`, `239bf4214`).
 6. Transmission: ~~archive the package sent, and download it~~: done (D7).
    Open: ingesting the acknowledgments, and a streamed download above 25 MiB.
-   ~~An amendment's submission-id~~: done (D7). Next: declare the sequences
-   filed outside the platform, so LMN-201's amendment numbers after them.
+   ~~An amendment's submission-id~~ and ~~the sequences filed outside the
+   platform~~: done (D7).
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5
    capture, PDF/A, and the 16.x appendices.

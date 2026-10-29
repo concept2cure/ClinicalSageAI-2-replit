@@ -32,6 +32,9 @@ export const GOVERNED_SIGN_MEANINGS = [
   'approval',
   'responsibility',
   'release',
+  // P-51 (2026-10-29): retiring a QMS controlled document — "you withdraw this
+  // document from use". Not a task meaning: a task checkpoint is never a retirement.
+  'retirement',
 ] as const;
 export type GovernedSignMeaning = (typeof GOVERNED_SIGN_MEANINGS)[number];
 

@@ -1,3 +1,11 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
+-- 20260814j no longer inserts ectd-publishing, and 20260810 no longer keeps it
+-- off its deprecation or heals it. Remove its packaging row too, so the
+-- unknown-module guard below still passes on a fresh database that never holds
+-- the row. Replayed databases keep the deprecated row, the tier it was given
+-- ('standard'), its subscriptions and every other module's tier unchanged
+-- (ectd-compile stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
 -- 20260810 no longer upserts artifacts-center or device-vault; its replay
 -- deprecates the existing rows. Remove their packaging references too, so the
@@ -232,7 +240,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('document-authoring', 'standard'),
   ('ectd-coauthor', 'standard'),
   ('ectd-compile', 'standard'),
-  ('ectd-publishing', 'standard'),   -- added 2026-09-22; see the amendment note at the top
   ('global-ri', 'standard'),
   ('haq-manager', 'standard'),
   ('inconsistency', 'standard'),

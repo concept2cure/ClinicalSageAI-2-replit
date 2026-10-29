@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5202/api/mdx/qms/documents/40/revise",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 27,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "State a reason for revision of at least eight characters.",
+      "details": {
+        "code": "QMS_REASON_REQUIRED"
+      }
+    }
+  }
+}

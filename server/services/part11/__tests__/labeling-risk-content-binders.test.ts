@@ -76,7 +76,11 @@ const fallback = (why: string) => ({ digest: null, basis: BINDING_BASIS.GOVERNED
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
 const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-document'](clientOf(w).client, rest, ORG, noFallback);
-const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['labeling-translation'](clientOf(w).client, rest, ORG, noFallback);
+/* The translation recipe is v2 since P-64 (2026-10-29), which also binds the
+   source document. v1 is still derived, by name, for the approvals it signed;
+   this suite pins v1, and signed-content-lock.test.ts pins v2. */
+const bindTranslation = (w: World, rest = '21') =>
+  CONTENT_BINDERS['labeling-translation'](clientOf(w).client, rest, ORG, noFallback, { recipe: 'labeling-translation/v1' });
 const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-item'](clientOf(w).client, rest, ORG, noFallback);
 
 const DOC_WORLD: World = { doc: DOC, symbols: [SYMBOL] };

@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the naming history (RR2, §2.10, §2.12) > says who added a reviewer to the open route, when and why 5ms
+   → {(intermediate value)(intermediate value)(intermediate value)(intermediate value)(intermediate value)}[h.action] is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts > the naming history (RR2, §2.10, §2.12) > says who added a reviewer to the open route, when and why
+TypeError: {(intermediate value)(intermediate value)(intermediate value)(intermediate value)(intermediate value)}[h.action] is not a function
+ ❯ historyLine client/src/concept2cure/v2/reviewRoute/RouteHistory.tsx:23:13
+     21|     withdraw: () => `${who} withdrew the route`,
+     22|     return: () => `${who} returned it for revision`,
+     23|   }[h.action]();
+       |             ^
+     24|   return `${what} · ${utc(h.at)}${h.reason ? ` · ${h.reason}` : ''}`;
+     25| }
+ ❯ client/src/concept2cure/v2/__tests__/reviewRouteRound.test.ts:18:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:37:41
+   Duration  619ms (transform 133ms, setup 128ms, import 55ms, tests 10ms, environment 0ms)
+

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5201/api/c2c/project-vault/b80112f2-5d11-4284-bbe5-a909d26e77e2/documents/32177516-3ced-4f81-9202-eb7a3d5e7ae0/compare?against=ad490827-4821-47d7-86c9-831b16998afa",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 87,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "NOT_SAME_DOCUMENT",
+      "message": "Only versions of the same document can be compared."
+    }
+  }
+}

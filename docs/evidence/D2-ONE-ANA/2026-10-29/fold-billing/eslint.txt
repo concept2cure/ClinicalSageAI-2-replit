@@ -1,0 +1,149 @@
+# ESLint, the 13 changed files: 0 errors. Per-file warnings HEAD -> now (tools/lint-net.sh.txt): no file gained one.
+shared/constants/permissions.ts: HEAD 0 -> now 0
+server/middleware/orgMembership.ts: HEAD 0 -> now 0
+server/routes/billing-dashboard.ts: HEAD 4 -> now 3
+server/routes/__tests__/billing-invoices-admin-gate.test.ts: HEAD 0 -> now 0
+server/middleware/__tests__/session-permissions.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx: HEAD 4 -> now 4
+client/src/concept2cure/v2/surfaces/UsageBilling.tsx: HEAD 3 -> now 2
+client/src/concept2cure/v2/Shell.tsx: HEAD 5 -> now 5
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx: HEAD 0 -> now 0
+NET: HEAD 16 -> now 14 (-2)
+
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/Shell.tsx
+   79:8  warning  Function 'Rail' has too many lines (177). Maximum allowed is 100         max-lines-per-function
+   79:8  warning  Function 'Rail' has a complexity of 28. Maximum allowed is 15            complexity
+  328:1  warning  Function 'AccountMenu' has too many lines (131). Maximum allowed is 100  max-lines-per-function
+  693:1  warning  File has too many lines (771). Maximum allowed is 500                    max-lines
+  716:8  warning  Function 'CmdK' has too many lines (257). Maximum allowed is 100         max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+   78:8   warning  Function 'LicensingSurface' has too many lines (435). Maximum allowed is 100  max-lines-per-function
+   78:8   warning  Function 'LicensingSurface' has a complexity of 19. Maximum allowed is 15     complexity
+  394:37  warning  Arrow function has a complexity of 20. Maximum allowed is 15                  complexity
+  473:38  warning  Arrow function has a complexity of 17. Maximum allowed is 15                  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/UsageBilling.tsx
+  183:8  warning  Function 'UsageBilling' has too many lines (237). Maximum allowed is 100  max-lines-per-function
+  183:8  warning  Function 'UsageBilling' has a complexity of 16. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing-dashboard.ts
+  376:80   warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+  652:1    warning  File has too many lines (769). Maximum allowed is 500               max-lines
+  799:130  warning  Async arrow function has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 14 problems (0 errors, 14 warnings)
+
+
+# ═══ Part 1b ESLint: 0 errors; per-file warnings HEAD -> now, no file gained one ═══
+server/routes/billing.ts: HEAD 1 -> now 1
+server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts: HEAD 0 -> now 0
+server/services/__tests__/billing-free-tier-activation.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx: HEAD 4 -> now 3
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/Onboarding.tsx: HEAD 6 -> now 6
+client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx: HEAD 1 -> now 1
+NET: HEAD 12 -> now 11 (-1)
+
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx
+  56:46  warning  'RequestInit' is not defined  no-undef
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+  104:8   warning  Function 'LicensingSurface' has too many lines (434). Maximum allowed is 100  max-lines-per-function
+  104:8   warning  Function 'LicensingSurface' has a complexity of 21. Maximum allowed is 15     complexity
+  435:37  warning  Arrow function has a complexity of 17. Maximum allowed is 15                  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  308:1   warning  Function 'OnboardingWizard' has too many lines (957). Maximum allowed is 100  max-lines-per-function
+  308:1   warning  Function 'OnboardingWizard' has a complexity of 104. Maximum allowed is 15    complexity
+  447:29  warning  Async arrow function has too many lines (187). Maximum allowed is 100         max-lines-per-function
+  447:29  warning  Async arrow function has a complexity of 39. Maximum allowed is 15            complexity
+  499:9   warning  The value assigned to 'profileSaved' is not used in subsequent statements     no-useless-assignment
+  718:1   warning  File has too many lines (1149). Maximum allowed is 500                        max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing.ts
+  219:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 11 problems (0 errors, 11 warnings)
+
+
+# ═══ Part 2 ESLint: 0 errors; per-file warnings HEAD -> now, no file gained one (net -1) ═══
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx: HEAD 4 -> now 4
+client/src/concept2cure/pdev/App.tsx: HEAD 5 -> now 5
+client/src/concept2cure/v2/Shell.tsx: HEAD 5 -> now 5
+client/src/concept2cure/v2/registryModel.ts: HEAD 1 -> now 1
+client/src/concept2cure/v2/surfaceViews.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/UsageBilling.tsx: HEAD 2 -> now 1
+client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/foldBilling.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/usageRateLimits.test.tsx: HEAD 0 -> now 0
+server/routes/billing-dashboard.ts: HEAD 3 -> now 3
+server/routes/billing.ts: HEAD 1 -> now 1
+server/routes/__tests__/billing-rate-limits-enforced.test.ts: HEAD 0 -> now 0
+server/services/entitlements/__tests__/launch-scope.test.ts: HEAD 0 -> now 0
+shared/constants/launch-scope.ts: HEAD 0 -> now 0
+shared/constants/ui-surface-registry.ts: HEAD 1 -> now 1
+shared/constants/ui-surface-registry.ui-v2.ts: HEAD 1 -> now 1
+shared/navigation/index.ts: HEAD 0 -> now 0
+shared/navigation/surface-actions.ts: HEAD 1 -> now 1
+NET: HEAD 24 -> now 23 (-1)
+
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  212:8   warning  Function 'MdxSurfaceHost' has too many lines (196). Maximum allowed is 100                                                                                                                        max-lines-per-function
+  212:8   warning  Function 'MdxSurfaceHost' has a complexity of 52. Maximum allowed is 15                                                                                                                           complexity
+  214:9   warning  The 'programs' logical expression could make the dependencies of useMemo Hook (at line 229) change on every render. To fix this, wrap the initialization of 'programs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  277:34  warning  Arrow function has a complexity of 16. Maximum allowed is 15                                                                                                                                      complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/pdev/App.tsx
+   85:8   warning  Function 'PdevApp' has too many lines (520). Maximum allowed is 100  max-lines-per-function
+   85:8   warning  Function 'PdevApp' has a complexity of 68. Maximum allowed is 15     complexity
+  238:39  warning  Arrow function has too many lines (166). Maximum allowed is 100      max-lines-per-function
+  238:39  warning  Arrow function has a complexity of 51. Maximum allowed is 15         complexity
+  642:1   warning  File has too many lines (568). Maximum allowed is 500                max-lines
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/Shell.tsx
+   79:8  warning  Function 'Rail' has too many lines (177). Maximum allowed is 100         max-lines-per-function
+   79:8  warning  Function 'Rail' has a complexity of 28. Maximum allowed is 15            complexity
+  328:1  warning  Function 'AccountMenu' has too many lines (132). Maximum allowed is 100  max-lines-per-function
+  694:1  warning  File has too many lines (772). Maximum allowed is 500                    max-lines
+  718:8  warning  Function 'CmdK' has too many lines (257). Maximum allowed is 100         max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/registryModel.ts
+  738:1  warning  File has too many lines (768). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/UsageBilling.tsx
+  163:8  warning  Function 'UsageBilling' has too many lines (175). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing-dashboard.ts
+  377:80   warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+  678:1    warning  File has too many lines (764). Maximum allowed is 500               max-lines
+  820:130  warning  Async arrow function has a complexity of 17. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing.ts
+  222:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ts
+  822:1  warning  File has too many lines (801). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ui-v2.ts
+  601:1  warning  File has too many lines (1222). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/shared/navigation/surface-actions.ts
+  611:1  warning  File has too many lines (1496). Maximum allowed is 500  max-lines
+
+✖ 23 problems (0 errors, 23 warnings)
+

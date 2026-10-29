@@ -238,18 +238,27 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
       fields: [{
         key: 'approvalStatus', label: 'Standing', type: 'select', required: true,
         options: optionsOf(SUPPLIER_STATUS_LABEL).filter((o) => o.value !== 'pending' && o.value !== r.approval_status),
+      }, {
+        key: 'reapprovalDate', label: 'Next re-approval', type: 'date', default: '',
+        desc: 'Required to approve or conditionally approve, after today. A revocation has none.',
+        derive: (v) => (v.approvalStatus === 'revoked' ? '' : null),
       }],
     }),
     sign: (r, v) => {
       const label = v.approvalStatus === 'pending' || v.approvalStatus === r.approval_status ? undefined : SUPPLIER_STATUS_LABEL[v.approvalStatus];
       if (!label) throw new Refused('choose a standing other than the current one.');
+      const revoking = v.approvalStatus === 'revoked';
+      if (!revoking && !(v.reapprovalDate > new Date().toISOString().slice(0, 10))) {
+        throw new Refused('an approval needs its next re-approval date, after today.');
+      }
       return {
         action: 'Sign supplier standing',
         target: r.supplier_code ? `${r.supplier_name} (${r.supplier_code})` : r.supplier_name,
         meta: `You sign ${r.supplier_name} as ${label.toLowerCase()}. Your reason is recorded with the signature.`,
-        rows: [{ label: 'Standing', value: label }, { label: 'Criticality', value: CRITICALITY_LABEL[r.criticality] ?? r.criticality }],
+        rows: [{ label: 'Standing', value: label }, { label: 'Criticality', value: CRITICALITY_LABEL[r.criticality] ?? r.criticality },
+          ...(revoking ? [] : [{ label: 'Next re-approval', value: formatDate(v.reapprovalDate) }])],
         meanings: ['approval', 'responsibility'],
-        post: (input) => signSupplierApproval(r.id, v.approvalStatus, input),
+        post: (input) => signSupplierApproval(r.id, revoking ? { approvalStatus: v.approvalStatus } : { approvalStatus: v.approvalStatus, reapprovalDate: v.reapprovalDate }, input),
         done: `${r.supplier_name} is now ${label.toLowerCase()}.`,
       };
     },

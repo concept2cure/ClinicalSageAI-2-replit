@@ -59,6 +59,10 @@ const PREDICATE_CALLERS: Record<string, { count: number; reason: string }> = {
     count: 1,
     reason: "Judges the reviewer being ASSIGNED, not the caller's signature, and names their role and a missing membership apart.",
   },
+  'server/services/review/review-route-member.ts': {
+    count: 1,
+    reason: "validateRouteMember judges the member being NAMED to a review route (5985619e5, RR4), not the caller's signature: MEMBER_CANNOT_SIGN before the route is sent. Each member's own signature still goes through checkSigningAuthority.",
+  },
   'server/services/vault/vault-signing-posture.ts': {
     count: 1,
     reason: "Lists the members who can sign a Vault version (a picker). Displayed, not enforced; the caller's own posture is checkSigningAuthority.",
