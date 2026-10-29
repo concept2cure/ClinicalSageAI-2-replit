@@ -1,0 +1,2 @@
+npx eslint --no-ignore server/services/tenant/purge-parent-scope.ts server/services/tenant/vault-tenancy.ts server/services/tenant/purge-referrers.ts tests/db/tenant-purge-blocking-keys.dbtest.ts tests/db/child-table-parent-scoped-rls.dbtest.ts tests/db/child-table-parent-scoped-rls.cases.ts tests/db/child-table-parent-scoped-rls.chains.ts
+exit 0: no errors, no warnings
