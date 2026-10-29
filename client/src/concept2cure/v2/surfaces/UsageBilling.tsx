@@ -33,12 +33,18 @@ const USAGE_RATE_LIMITS: Record<string, RateLimit> = {
    a "Buy more" button, an auto-reload switch and a per-category credit card —
    an unmetered number presented as metering. They are gone until something
    actually debits the ledger. Paying and invoices go through Stripe: the
-   portal is "Manage billing" on Compare subscriptions (LicensingSurface), and the
-   invoice list stays below. ── */
+   portal is "Manage billing" on Compare subscriptions (LicensingSurface).
 
-/* ── Live response shapes — aligned to the real /api/billing payloads.
+   ── The invoice list is not here (D2, fold billing into Licensing,
+   2026-10-29). It was this screen's Billing tab, shown to every member under
+   both ids. It moved to Licensing under the plan status (LicensingInvoices.tsx),
+   for billing administrators, which is also who GET /api/billing/invoices now
+   admits. Usage, the weekly caps and the rate card stay here, on 'usage', for
+   every member: they are what a member runs into while working, and Licensing
+   is where a subscription is bought. ── */
+
+/* ── Live response shapes — aligned to the real /api/billing payload.
    GET /usage/limits → UsageLimitsSnapshot (services/usage-windows.ts)
-   GET /invoices     → { invoices: Stripe projection[] } (billing-dashboard.ts)
    Each panel renders REAL persisted data, an honest EMPTY state, or an
    honest ERROR state via useLiveData — never a fabricated stand-in. ── */
 
@@ -61,26 +67,8 @@ interface LiveUsageSnapshot {
   lastUpdated: string | null;
 }
 
-/* Stripe invoice projection (billing-dashboard.ts /invoices). date, status,
-   number, and the PDF/hosted URLs come straight from Stripe and are null on
-   the wire when absent, so they are nullable and rendered null-safe — never
-   fabricated. amount/currency are always present on the projection. */
-interface LiveInvoice {
-  date: string | null;
-  amount: number;
-  status: string | null;
-  number: string | null;
-  hostedUrl: string | null;
-  pdfUrl: string | null;
-  currency: string | null;
-}
-
-interface LiveInvoices {
-  invoices: LiveInvoice[];
-}
-
 /* ── Shape guards — a 200 is not proof of a shape ──
-   All three panels crashed on a response that was merely plausible. A route
+   Every panel crashed on a response that was merely plausible. A route
    answering `{ data: [] }` unwraps to a bare `[]`, and `[]` is TRUTHY: it
    walked past Panel's `!state.data` check, matched nothing the panel then
    read, and `c.autoReload.topupCents` threw mid-render — so the user was told
@@ -100,38 +88,12 @@ interface LiveInvoices {
     error. */
 const isUsageSnapshot: ShapeGuard<LiveUsageSnapshot> = hasKeys<LiveUsageSnapshot>('plan', 'weekly');
 
-/** `{ invoices: [...] }` — presence isn't enough here: the panel maps over
-    `invoices` immediately, so the array itself is the contract. A non-array
-    `invoices` is a shape failure, not "no invoices yet", and saying the org
-    has no billing history when the payload was malformed is the same lie in
-    a quieter voice. */
-const isInvoices: ShapeGuard<LiveInvoices> = (value: unknown): value is LiveInvoices => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const rows = (value as { invoices?: unknown }).invoices;
-  return Array.isArray(rows) && rows.every((r) => r !== null && typeof r === 'object');
-};
-
 /* ── Helpers ── */
 
 function _fmt(n: number): string {
   if (n >= 1000000) return n / 1000000 + 'M';
   if (n >= 1000) return n / 1000 + 'K';
   return String(n);
-}
-
-/** Stripe invoice status → chip tone (paid good, open/past_due attention). */
-const INVOICE_TONE: Record<string, string> = { paid: 'ok', open: 'warn', past_due: 'warn' };
-
-function _cap(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-/** ISO → "Jul 1, 2026" (invoice-date display shape); "—" when absent. */
-function fmtDay(iso: string | null): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /** ISO → "Sun 8:00 AM" (weekly reset display shape); "—" when absent. */
@@ -166,18 +128,6 @@ function fmtAgo(iso: string): string {
   return Math.floor(mins / 60) + ' hr ' + (mins % 60) + ' min ago';
 }
 
-/** Live Stripe amounts carry their real currency — format it honestly. */
-function fmtMoney(amount: number, currency: string | null): string {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: (currency || 'USD').toUpperCase(),
-    }).format(amount);
-  } catch {
-    return '$' + amount.toFixed(2);
-  }
-}
-
 function UsageBar({ pct, tone }: { pct: number; tone?: string }) {
   return (
     <div className="ub-bar">
@@ -193,8 +143,8 @@ function UsageBar({ pct, tone }: { pct: number; tone?: string }) {
 }
 
 /* ── Honest four-state guard (loading → error → empty → real) — the fixture-
-   free render every data panel uses. `isEmpty` lets a wrapped-object payload
-   (e.g. { invoices: [] }) report empty, since the hook only auto-detects
+   free render every data panel uses. `isEmpty` lets an object payload (a
+   snapshot with no session) report empty, since the hook only auto-detects
    empty for null/array payloads. ── */
 function Panel<T>({
   state,
@@ -225,28 +175,21 @@ function Panel<T>({
   return <>{children(state.data)}</>;
 }
 
-/* ── Usage & billing surface ──
-   Shared by both `usage` and `billing` registry IDs (the kit registers
-   both pointing to this component). The `surface.id` prop selects the
-   initial tab. */
+/* ── Usage & limits surface ──
+   Mounted under both `usage` and `billing` registry ids until `billing` is
+   retired as an alias of Licensing; both open on the usage tab, since the
+   invoice list moved to Licensing. */
 
 export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
-  const initTab =
-    surface && surface.id === 'billing' ? 'billing' : 'usage';
-  const [tab, setTab] = useState(initTab);
+  const [tab, setTab] = useState<'usage' | 'limits'>('usage');
 
-  // Two org-scoped GETs behind /api/billing (billing-dashboard.ts), each a
-  // real DB / Stripe read. No fixtures: every panel renders live data, an
-  // honest empty, or an honest error.
+  // One org-scoped GET behind /api/billing (billing-dashboard.ts), a real DB
+  // read. No fixtures: every panel renders live data, an honest empty, or an
+  // honest error.
   const usageState = useLiveData<LiveUsageSnapshot>(
     '/api/billing/usage/limits',
     ['/api/billing/usage/limits'],
     isUsageSnapshot,
-  );
-  const invoicesState = useLiveData<LiveInvoices>(
-    '/api/billing/invoices',
-    ['/api/billing/invoices'],
-    isInvoices,
   );
   const snap = usageState.data;
 
@@ -267,22 +210,26 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
      null, which clears only if it still owns the slot. The literals stay
      literal so the CI gate can still see which ids this file claims.
 
-     `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id.
-
-     Each read fails independently, and each publishes its own state: an
-     invoice list invented from a failed read would be a financial claim about
-     the customer's account. */
+     `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id. */
   const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
 
-  /* AnA can open any of the three on-screen tabs — the same click a person
-     makes. `tab` is local display state independent of which registry id
-     (`usage`/`billing`) is mounted, so the SAME handler body is registered
-     under whichever id currently owns the bus slot, mirroring the publish
-     gating just above/below. View-state only — nothing governed here. */
+  /* AnA can open either on-screen tab — the same click a person makes. `tab`
+     is local display state independent of which registry id (`usage`/
+     `billing`) is mounted, so the SAME handler body is registered under
+     whichever id currently owns the bus slot, mirroring the publish gating
+     just above/below. View-state only — nothing governed here. The billing
+     tab is gone with the invoice list, so asking for it says where the list
+     is instead of opening a tab that does not exist. */
   const openTab: SurfaceActionHandler = (params) => {
     const target = params.tab;
-    if (target !== 'usage' && target !== 'billing' && target !== 'limits') {
-      return { ok: false, reason: `"${target}" is not a usage/billing tab.` };
+    if (target === 'billing') {
+      return {
+        ok: false,
+        reason: `Invoices are on ${getSurfaceMeta('licensing').label}, for billing administrators. This screen shows usage and rate limits.`,
+      };
+    }
+    if (target !== 'usage' && target !== 'limits') {
+      return { ok: false, reason: `"${target}" is not a usage tab.` };
     }
     if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
     setTab(target);
@@ -292,10 +239,9 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
   useSurfaceActionHandlers(activeId === 'billing' ? 'billing' : null, { 'billing.open-tab': openTab });
 
   const anaContext = useMemo(() => {
-    const inv = invoicesState.data;
     return {
       summary:
-        `Usage and billing, "${tab}" tab. ` +
+        `Usage and limits, "${tab}" tab. ` +
         (usageState.loading
           ? 'The usage snapshot is still loading.'
           : usageState.error || !snap
@@ -304,11 +250,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
               (snap.session ? `, session window ${snap.session.pctUsed}% used over ${snap.session.windowHours}h` : '') +
               `, ${(snap.weekly ?? []).length} weekly cap bucket(s).`) +
         ' Usage credits are not metered, so no credit balance is shown. ' +
-        (invoicesState.loading
-          ? 'Invoices are still loading.'
-          : invoicesState.error || !inv
-            ? 'The invoice list could not be read.'
-            : `${inv.invoices.length} invoice(s).`),
+        `Invoices are not on this screen: they are on ${getSurfaceMeta('licensing').label}, for billing administrators.`,
       facts: {
         openTab: tab,
         plan: snap ? { tier: snap.plan, label: snap.planLabel, lastUpdated: snap.lastUpdated } : null,
@@ -316,22 +258,14 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         sessionWindow: snap?.session ?? null,
         weeklyCaps: snap?.weekly ?? null,
         credits: 'not metered — nothing draws down the credit ledger, so no balance is shown',
-        invoices: inv
-          ? inv.invoices.slice(0, 10).map((iv) => ({
-              number: iv.number, date: iv.date, amount: iv.amount,
-              currency: iv.currency, status: iv.status,
-            }))
-          : null,
-        invoicesUnavailable: invoicesState.error ? 'the invoice read failed' : null,
       },
       availableActions: [
-        'Switch between the usage and billing tabs',
+        'Switch between the usage and rate-limits tabs',
         'Read plan usage limits, the session window and the weekly caps',
-        'Open an invoice (hosted page or PDF) from the invoice list',
-        'Compare subscriptions on its own screen',
+        'Compare subscriptions on its own screen, where billing administrators read invoices',
       ],
     };
-  }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data]);
+  }, [tab, usageState.loading, usageState.error, snap]);
   usePublishSurfaceContext('usage', activeId === 'usage' ? anaContext : null);
   usePublishSurfaceContext('billing', activeId === 'billing' ? anaContext : null);
 
@@ -340,11 +274,11 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">
-            Settings {I.dot} Billing
+            Settings {I.dot} Usage
           </div>
-          <h1 className="sp-title">Usage &amp; billing</h1>
+          <h1 className="sp-title">{getSurfaceMeta('usage').label}</h1>
           <p className="sp-state">
-            Plan usage limits, weekly caps, rate limits and invoices.
+            Plan usage limits, weekly caps and rate limits by tier.
           </p>
         </div>
         <button className="sp-primary" onClick={() => nav('licensing')}>
@@ -358,12 +292,6 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           onClick={() => setTab('usage')}
         >
           Usage
-        </button>
-        <button
-          className={'reg-tab' + (tab === 'billing' ? ' on' : '')}
-          onClick={() => setTab('billing')}
-        >
-          Billing
         </button>
         <button
           className={'reg-tab' + (tab === 'limits' ? ' on' : '')}
@@ -457,89 +385,6 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
               </Panel>
             </div>
           </div>
-        </div>
-      )}
-
-      {tab === 'billing' && (
-        <div>
-          <div className="pj-card">
-            <div className="pj-card-h">
-              <span className="t">Invoices</span>
-              <button className="sp-ask" onClick={() => nav('licensing')}>Manage billing</button>
-            </div>
-            <div className="pj-card-b" style={{ padding: 0 }}>
-              <Panel
-                state={invoicesState}
-                errorTitle="Couldn't load invoices"
-                errorHint="Stripe didn't return your invoices. Sign in and retry, or check the billing service is reachable."
-                emptyTitle="No invoices yet"
-                emptyHint="Invoices from Stripe appear here once your organization has billing activity."
-                isEmpty={(d) => d.invoices.length === 0}
-              >
-                {(d) => (
-                  <table className="ub-inv">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {d.invoices.map((v, i) => {
-                        const url = v.hostedUrl || v.pdfUrl || null;
-                        const tone = INVOICE_TONE[(v.status || '').toLowerCase()] || 'idle';
-                        return (
-                          <tr key={i}>
-                            <td>{fmtDay(v.date)}</td>
-                            <td>
-                              {fmtMoney(v.amount, v.currency)}{' '}
-                              <span
-                                className="ub-i"
-                                title={v.number ? 'Invoice ' + v.number : 'Invoice detail'}
-                              >
-                                {I.info || 'i'}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={'rd-chip tone-' + tone}>{v.status ? _cap(v.status) : '—'}</span>
-                            </td>
-                            <td style={{ textAlign: 'right' }}>
-                              {url ? (
-                                <a className="ub-view" href={url} target="_blank" rel="noreferrer">
-                                  View
-                                </a>
-                              ) : (
-                                <span className="ub-row-s">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </Panel>
-            </div>
-          </div>
-          {/* THE REFERRAL CARD IS DELETED, not repaired.
-              It read "Send a colleague a free week. If they subscribe, you both
-              get $10 in usage credits." with a "Copy link" button that had no
-              onClick. The button being dead was the smaller half of the problem.
-
-              There is no referral programme behind it — no invite issuance, no
-              referral code, no attribution of a signup to a referrer, and no
-              path that could credit either account. `POST /credits/adjust` is
-              platform-admin only precisely because ledger credits move
-              money-equivalent value and tenants may not self-issue them, so
-              nothing in the product could honour this even manually.
-
-              A dead button wastes a click. An offer of $10 that the product
-              cannot pay is a commitment made to a customer on behalf of a
-              programme that does not exist, and no copy edit fixes that — only
-              building the programme, or not making the offer. Removed until the
-              former. */}
         </div>
       )}
 

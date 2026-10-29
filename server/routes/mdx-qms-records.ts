@@ -174,15 +174,26 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
    through the one signing ceremony, as approval or responsibility. Its
    re-approval task completes when an approval is signed, and a revoked
    supplier owes no audit or re-approval (services/qms/qms-record-tasks.ts). */
-const supplierApprovalBody = z.object({ approvalStatus: z.enum(SUPPLIER_APPROVAL_DECISIONS) });
+/* An approval names when the supplier is next re-approved, after today (UTC);
+   a revocation names none. */
+const supplierApprovalBody = z.object({
+  approvalStatus: z.enum(SUPPLIER_APPROVAL_DECISIONS),
+  reapprovalDate: z.string().date().optional(),
+}).refine((b) => (b.approvalStatus === 'revoked'
+  ? b.reapprovalDate === undefined
+  : b.reapprovalDate !== undefined && b.reapprovalDate > new Date().toISOString().slice(0, 10)), {
+  message: 'Approving or conditionally approving names the next re-approval date, after today; revoking names none.',
+});
 router.post('/qms/suppliers/:id/approval', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');
-  const parsed = supplierApprovalBody.safeParse({ approvalStatus: req.body?.approvalStatus });
+  const parsed = supplierApprovalBody.safeParse({ approvalStatus: req.body?.approvalStatus, reapprovalDate: req.body?.reapprovalDate || undefined });
   if (!parsed.success) {
-    return clientError(res, 400, `A supplier's standing is set to one of ${SUPPLIER_APPROVAL_DECISIONS.join(', ')}. Nothing was signed.`, parsed.error.flatten().fieldErrors);
+    const custom = parsed.error.issues.find((issue) => issue.code === 'custom')?.message;
+    return clientError(res, 400, `${custom ?? `A supplier's standing is set to one of ${SUPPLIER_APPROVAL_DECISIONS.join(', ')}.`} Nothing was signed.`, parsed.error.flatten().fieldErrors);
   }
   const decision = parsed.data.approvalStatus;
+  const reapprovalDate = parsed.data.reapprovalDate ?? null;
   const target = `qms-supplier:${id}`;
   let row: Record<string, unknown> | null = null;
   await signGovernedAct(req, res, {
@@ -191,8 +202,8 @@ router.post('/qms/suppliers/:id/approval', requireEditorAccess, signedActAttempt
     meanings: DECISION_ACT_MEANINGS,
     codeStatus: SUPPLIER_APPROVAL_CODE_STATUS,
     run: async (client, orgId) => {
-      row = await recordSupplierApproval(client, orgId, id, decision);
-      return { target, payload: { approvalStatus: decision, supplierName: row.supplier_name }, body: { data: row } };
+      row = await recordSupplierApproval(client, orgId, id, decision, reapprovalDate);
+      return { target, payload: { approvalStatus: decision, reapprovalDate, supplierName: row.supplier_name }, body: { data: row } };
     },
     afterCommit: async (_result, orgId, userId) => {
       if (row) await scheduleSupplierTasks(orgId, row as unknown as SupplierTaskSource, decision === 'revoked' ? [] : ['approvalDate'], userId);

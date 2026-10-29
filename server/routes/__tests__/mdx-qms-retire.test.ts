@@ -30,7 +30,7 @@
  *   - outside the tenant            → 404
  *   - a valid signing               → 200: the UPDATE, ONE chained ledger row
  *                                     (command 'retire') and ONE signature bound
- *                                     to the content digest, meaning APPROVED, on
+ *                                     to the content digest, meaning retirement, on
  *                                     one transaction, then COMMIT; the pool is
  *                                     never written to
  *   - the signature write throwing  → ROLLBACK, 500, the caught text not echoed
@@ -110,7 +110,7 @@ const EFFECTIVE = {
 };
 
 const REASON = 'Superseded by SOP-901 rev 4.';
-const VALID_BODY = { password: 'correct horse', meaning: 'APPROVED', reason: REASON };
+const VALID_BODY = { password: 'correct horse', meaning: 'retirement', reason: REASON };
 
 /** The register's editor gate is real here: the role travels on the request as the session middleware sets it. */
 function appAs(role: string, userId = SIGNER) {
@@ -182,7 +182,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the refusals', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(400);
     expect(res.body.details.code).toBe('ESIGNATURE_COMPONENT_MISSING');
     expect(res.body.error).toMatch(/password/);
-    expect(res.body.error).toMatch(/APPROVED/);
+    expect(res.body.error).toMatch(/'retirement'/);
     expect(Object.keys(res.body.details.fieldErrors).sort()).toEqual(['meaning', 'password']);
     expect(H.role).not.toHaveBeenCalled();
     expect(H.compare).not.toHaveBeenCalled();
@@ -209,11 +209,13 @@ describe('POST /api/mdx/qms/documents/:id/retire — the refusals', () => {
     expect(H.txQuery).not.toHaveBeenCalled();
   });
 
-  it('refuses a meaning other than APPROVED', async () => {
-    const res = await retire('member', { ...VALID_BODY, meaning: 'REVIEWED' });
+  it.each(['APPROVED', 'approval', 'REVIEWED'])('refuses the meaning %s: a retirement is signed as a retirement (P-51)', async (meaning) => {
+    const res = await retire('member', { ...VALID_BODY, meaning });
     expect(res.status).toBe(400);
-    expect(res.body.details.fieldErrors.meaning[0]).toMatch(/APPROVED/);
+    expect(res.body.details.fieldErrors.meaning[0]).toMatch(/'retirement'/);
+    expect(H.compare).not.toHaveBeenCalled();
     expect(H.txQuery).not.toHaveBeenCalled();
+    expect(H.persistSignature).not.toHaveBeenCalled();
   });
 
   it('refuses an editor whose org role carries no signing authority with 403, before the password is looked at', async () => {
@@ -276,7 +278,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the refusals', () => {
 });
 
 describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () => {
-  it('signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT', async () => {
+  it('signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning retirement, then COMMIT', async () => {
     const res = await retire('member', VALID_BODY);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.status).toBe('retired');
@@ -293,7 +295,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     expect(H.recordGoverned).toHaveBeenCalledTimes(1);
     const gov = H.recordGoverned.mock.calls[0][1] as Record<string, any>;
     expect(gov).toMatchObject({ command: 'retire', target: 'qms-document:5', reason: REASON, userId: SIGNER, orgId: ORG, domain: 'qms' });
-    expect(gov.payload).toMatchObject({ meaning: 'APPROVED', fromStatus: 'effective', toStatus: 'retired', docNumber: 'SOP-900', version: '1.0' });
+    expect(gov.payload).toMatchObject({ meaning: 'retirement', fromStatus: 'effective', toStatus: 'retired', docNumber: 'SOP-900', version: '1.0' });
 
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
     const [client, sig] = H.persistSignature.mock.calls[0] as [unknown, Record<string, any>];
@@ -301,7 +303,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     expect(sig.target).toBe('qms-document:5');
     expect(sig.signatureType).toBe('qms-document-retirement');
     expect(sig.command).toBe('retire');
-    expect(sig.payload).toEqual({ meaning: 'APPROVED' });
+    expect(sig.payload).toEqual({ meaning: 'retirement' });
     expect(sig.reason).toBe(REASON);
     expect(sig.authenticationMethod).toBe('password');
     expect(sig.secondFactorVerified).toBe(false);
@@ -315,7 +317,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     expect(sig.sha256Chain).toBe('c'.repeat(64));
 
     expect(res.body.meta.signature).toMatchObject({
-      id: 601, meaning: 'APPROVED', boundPayloadDigest: sig.binding.digest,
+      id: 601, meaning: 'retirement', boundPayloadDigest: sig.binding.digest,
       bindingBasis: QMS_DOCUMENT_BINDING_BASIS, actionId: 'act_9', auditId: 'aud-9',
     });
   });

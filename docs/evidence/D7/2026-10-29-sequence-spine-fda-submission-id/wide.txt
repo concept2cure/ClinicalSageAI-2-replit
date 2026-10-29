@@ -1,0 +1,29 @@
+# Wide run with the change: server/services/ectd, submission-service, ind-lifecycle, submission-gateways
+# npx vitest run server/services/ectd server/services/submission-service server/services/ind-lifecycle server/services/submission-gateways --reporter=dot
+ Test Files  10 failed | 260 passed | 2 skipped (272)
+      Tests  67 failed | 3202 passed | 16 skipped (3285)
+# failing files (count of failing tests):
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+
+# The same ten files with the parent's three spine files: the same 67 tests fail, so none is this change's
+ Test Files  10 failed (10)
+      Tests  67 failed | 31 passed | 10 skipped (108)
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts

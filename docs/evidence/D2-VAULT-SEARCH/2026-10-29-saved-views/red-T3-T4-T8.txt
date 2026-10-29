@@ -1,0 +1,27 @@
+ × server/services/tenant/__tests__/tenant-purge-saved-views.pglite.test.ts > a tenant with saved queries and saved views > is purged: its precedent searches, library views and project views go; the other tenant keeps all of its own 6751ms
+   → expected [ 11, 22 ] to deeply equal [ 22 ]
+ × server/services/tenant/__tests__/tenant-purge-saved-views.pglite.test.ts > a tenant with saved queries and saved views > the list names the store before the projects its views are filed under 3044ms
+   → expected -1 to be greater than -1
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > GET /api/saved-precedent-queries — org scoping preserved through requestDb > returns ONLY the acting org rows (org 1 sees A1/A2, never B1) 68ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > GET /api/saved-precedent-queries — org scoping preserved through requestDb > a different tenant (org 2) sees only its own row — no cross-tenant bleed 22ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > GET /api/saved-precedent-queries — org scoping preserved through requestDb > fails closed with 403 when there is no org context (never returns rows unscoped) 9ms
+ × server/routes/__tests__/saved-precedent-queries.rls.test.ts > Vault saved views never reach the precedent routes > GET lists only precedent rows, with exactly the keys it always carried 65ms
+   → expected [ 'A1', 'A2', 'V-mine', …(2) ] to deeply equal [ 'A1', 'A2' ]
+ × server/routes/__tests__/saved-precedent-queries.rls.test.ts > Vault saved views never reach the precedent routes > POST and PATCH return the ten precedent columns, not the Vault ones 69ms
+   → expected [ 'createdAt', 'hits', 'id', …(11) ] to deeply equal [ 'createdAt', 'hits', 'id', …(7) ]
+ × server/routes/__tests__/saved-precedent-queries.rls.test.ts > Vault saved views never reach the precedent routes > PATCH and DELETE of a Vault view are not found, and leave it untouched 52ms
+   → expected 200 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > Defense-in-depth: the 0021 RLS policy filters on the request-scoped connection > as a NON-owner role, RLS_ENFORCE=on filters an UNFILTERED read to the acting tenant 28ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > Defense-in-depth: the 0021 RLS policy filters on the request-scoped connection > FORCE is load-bearing: the table OWNER bypasses RLS with ENABLE only, and is isolated once FORCE is set 13ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > Defense-in-depth: the 0021 RLS policy filters on the request-scoped connection > WITH CHECK blocks writing a row for another tenant 13ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > Migration 0021 keeps the FORCE + tenant predicate that makes owner-bypass impossible > still FORCEs row level security (removing this silently disables RLS for table owners) 4ms
+ ✓ server/routes/__tests__/saved-precedent-queries.rls.test.ts > Migration 0021 keeps the FORCE + tenant predicate that makes owner-bypass impossible > still carries the shadow-bypass and tenant predicates 4ms
+ ✓ server/services/vault/__tests__/saved-view-store-predicates.test.ts > one store, two kinds of row, separated in every statement > only the allowed files name the table 287ms
+ × server/services/vault/__tests__/saved-view-store-predicates.test.ts > one store, two kinds of row, separated in every statement > every precedent statement is predicated on surface = precedent 9ms
+   → expected [ …(4) ] to deeply equal []
+ ✓ server/services/vault/__tests__/saved-view-store-predicates.test.ts > one store, two kinds of row, separated in every statement > every Vault statement carries the organisation, the surface and the owner arm 0ms
+ ✓ server/services/vault/__tests__/saved-view-store-predicates.test.ts > selftest: the checker reports each missing predicate > in the precedent router 1ms
+ ✓ server/services/vault/__tests__/saved-view-store-predicates.test.ts > selftest: the checker reports each missing predicate > in the Vault module 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  6 failed | 12 passed (18)

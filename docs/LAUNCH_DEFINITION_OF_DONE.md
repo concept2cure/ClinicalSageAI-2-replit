@@ -813,6 +813,15 @@ close the gap between what we have and what Veeva offers here"). That direction 
 
 ## Product decisions, 2026-10-25 (founder)
 
+- **Who may change an organisation view (left open above; answered 2026-10-29 by the saved-views design,
+  `docs/design/VAULT_SAVED_VIEWS_2026-10-29.md` §3.3, as the founder's delegated product call).** Any member may
+  save a personal view, viewers included, because a personal view is a search remembered. Publishing to the
+  organisation, sharing a personal view, and changing a shared view's parameters take a writing role and are the
+  creator's. An organisation manager may rename or delete any organisation view. The creator may always withdraw
+  their own (make it personal, or delete it), even after losing a writing role. A view is a preference, not a
+  governed record: no chained audit row, with the creator, last editor and time kept on the row. The day a view
+  drives a governed act it becomes a governed record, audited and versioned.
+
 ### P-47 — A client starts at their projects; features live in the project, not in an app list
 
 Decided by the founder on 2026-10-25, after testing the product as a client and finding they could not tell how
@@ -871,6 +880,302 @@ surface now also claims `/api/capa-mdr/capa`, so Quality reaches CAPA for every 
 vigilance stay with device post-market. The CAPA lifecycle map moves to
 `shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
+
+### P-49 — Training on a controlled SOP is assigned by role and by name, opens at approval, and reaches the people assigned
+
+Decided by the founder, 2026-10-29, answering MR-12's NEW-2 and NEW-3 and the distribution question in
+`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8 item 8 (the recommendations, chosen as offered):
+
+- **Assignment (NEW-2): roles, plus named people.** Each controlled document lists the job roles and any named people
+  who must train on it. The organisation manages its own list of job roles; a role is a job function (QA,
+  Manufacturing, Clinical Operations), not a permission role, so assigning by role never means "everyone with access".
+  Curricula (sets of documents assigned to a role together) can be added later without moving data.
+- **Training before the effective date (NEW-3): yes, once approved.** Between approval and the effective date is the
+  training period. An acknowledgment of an approved version binds that version's digest and release signature, and it
+  counts toward compliance from the moment that version is in force. Nothing counts toward a version that is not yet
+  in force.
+- **Distribution: the people assigned.** When a version is approved, each person it is assigned to (by role or by
+  name) receives a task to read and acknowledge it, due by its effective date. The task uses the existing
+  deadline-task infrastructure; there is no second scheduler. Nobody else is notified.
+- **Compliance counts the assigned people.** The denominator is the distinct people assigned, the numerator their
+  unexpired acknowledgments of the version in force. A document assigned to nobody reads "not assigned", never 0/N.
+
+Not decided here: MR-12 NEW-4 (review quorum and the retirement meaning).
+
+### P-50 — Training: a 14-day grace for late assignment, assignment grants reading the released version, and personal training status is QA's to see
+
+Decided 2026-10-29 under the founder's delegation of that day ("You can make founder decisions"), answering the three
+questions `docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md` §1.4 left open within P-49:
+
+- **Q1, late assignment: 14 days.** Someone assigned after a version is already in force is due 14 days after they are
+  covered (`TRAINING_LATE_ASSIGNMENT_GRACE_DAYS = 14`). A version approved ahead of its effective date keeps P-49's
+  rule: due by the effective date. Due "today" would make every new hire overdue on their first day; Veeva offers
+  "N days after assignment" for the same reason.
+- **Q2, reading what you must train on: yes (the design's D3).** An active person covered by a live assignment may
+  read, through the training reader only, the immutable signed snapshot of that document's version in force and of
+  its pending version. It grants nothing on the editing copy, the editor, the versions route or the project. A task
+  nobody can complete is not distribution.
+- **Q3, who sees each person's training status: the person, administrators and designated QMS approvers.** Every
+  other member sees the coverage counts ("x of y assigned"), not names. Training status is a personnel record; a
+  colleague's lapse is QA's business, not the whole organisation's. The per-person reads (`GET /qms/training`, the
+  expiry list G10, the outstanding-training list) apply this when compliance moves onto assignments (the design's
+  slice 3).
+
+### P-51 to P-57: decided under the founder's delegation of 2026-10-29
+
+The founder delegated, on 2026-10-29: "make founder level decisions based on the best situation for the platform and
+our paying clients and human users … we're not ready for ETMF or CTMS. You could park those completely … We're
+focusing on completing what we have started and perfecting it all." These decide the questions that sessions had
+left open (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8,
+`docs/work-orders/MR-12-qms-controlled-document-control.md` NEW-2 to NEW-4, and
+`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). Training assignment,
+training before the effective date and distribution (MR-12 NEW-2, NEW-3; parity §8 item 8) are P-49, the training
+lane's, and are not decided again here. *(Corrected 2026-10-29: this block first carried its own training entry and
+numbered the deviation decision P-49, then P-50; both numbers were taken by the training lane's P-49 and P-50 as these
+landed, and those govern. The deviation decision is P-57.)* The
+test for each was:
+does it complete something already in the catalog, for the client who pays for it, without widening the catalog?
+None widens it.
+
+### P-51 — Review and approval follow the review-routing decision; retirement has its own meaning (NEW-4)
+
+NEW-4 was decided on 2026-10-29 by the review-routing coordinator, under the founder's delegation of 2026-10-07
+(`docs/design/REVIEW_ROUTING_2026-10-23.md` §4, with D-Q in §7). RR4 is building it. For a QMS controlled document:
+- at least one approver holds the QMS approver designation, and that approver is not the author or a contributor;
+- reviewers are optional; when any are named, all of them sign before the approval;
+- sending for review is a governed act with a reason, not a signature.
+
+That decision stands and is recorded here. *(Corrected 2026-10-29: this entry first read "review is a signed act; the
+same person may review and approve", written before the review-routing decision was found. That decision governs.)*
+
+What NEW-4 left open is retirement's meaning. Retirement is signed with its own meaning, `retirement` ("you withdraw
+this document from use"), not `approval`. Stored retirements keep the meaning they were signed with. This unblocks
+MR-12 Stage 5 step 3. Stage 7's review step is RR4's.
+
+### P-52 — Controlled output: Letter, the FDA PDF specification, a default confidentiality line (MR-09 NEW)
+
+- Page size is US Letter, because the launch boundary is a US IND (P-28).
+- The PDF target is FDA's PDF specification for eCTD: PDF 1.4 to 1.7, fonts embedded, no security settings.
+- The default footer reads "CONFIDENTIAL. Proprietary information of {organisation}. Do not distribute without
+  permission." An organisation may change it.
+- This unblocks CAT1-09 and template formatting (W5).
+
+### P-53 — Parked, with no sessions
+
+- eTMF;
+- CTMS;
+- safety case processing and E2B;
+- EDC;
+- an NDA workflow;
+- re-admitting the Template Library;
+- any widening of P-28's composition boundary.
+
+Safety and EDC are "partner or integrate" when they return, and no partner is approached now. eTMF is not a source
+for `assess_inspection_readiness`, which answers from stated inputs, labelled (2026-10-26 list, row 9).
+(Parity §8 Q9, Q10, Q11.)
+
+### P-54 — Lanes, order and scope corrections
+
+- **Lanes released.**
+  - The Weave-gap lane's items (G2, G3, G6, G15, and G11 and G17 with them) are released to the next free session.
+  - The training-assignment lane is not released: it is active, and landed P-49 on 2026-10-29.
+- **P-39's order stands.** Commitments converge (step 2) before the correspondence family (step 3), so G3's parser
+  waits; zero duplication outranks speed.
+- **Device post-market stays in Projects**, as P-48's correction of 2026-10-29 already reads (Q6).
+- **SSO signing (MR-09 Stage 6) keeps its phase.** It moves to Phase 1 only if a signing customer signs in through SSO
+  alone (Q12).
+- **Support for D9** is the drafted Mon–Fri 08:00–18:00 US Eastern (Q13).
+- **Claims policy confirmed (Q14):** no claim of doing everything Weave does, and §4's claims only with their basis.
+- **The old IND briefing-book assembler goes.** Its replacement is `IndBriefingBookStart.tsx`, starting the US
+  meeting-package templates (5894e1aaa). The server routes and service it called are deleted once a search shows
+  they have no caller.
+
+### P-55 — The Authoring questions of 2026-10-26 are decided as recommended
+
+Rows 1 to 22 of `FOUNDER-DECISIONS-OWED-2026-10-26.md` are decided as each row recommends:
+- a conditional heading may be recorded not applicable, with a reason and the approver's signature;
+- R-1: 2.4 and 2.6 read `nonclinical_studies`, counting `in_reporting` for an IND and never `planned` or `cancelled`.
+  The ingest path converges onto it;
+- 2.6's tabulated summaries are a preparation worksheet;
+- calculators over stated inputs stay, labelled `basis: 'stated'`;
+- no standalone QOS, drug substance or drug product project;
+- folds only after their functions are carried over, and the digital twin is retired;
+- the M2, M4 and M5 QC rules are carried into Submission Readiness as named findings, not a score;
+- and so on through row 22, each as its row recommends.
+
+The guideline hosts in row 14, and §8 Q15's network access, are owner actions in the environment settings, not
+decisions.
+
+### P-56 — No model is approved until the PQ evidence exists
+
+PQ-DRAFT-001 stays unapproved until P-31's items 4 and 6 land:
+- item 4, gold-bank coverage for CMC / Module 3 and Module 2.5 to 2.7, authored from real source text and never
+  invented. It is scheduled as a W3 slice;
+- item 6, a product provider key, which is an owner action.
+
+Then approval is a signature, with P-31 as its reasoning. Until then, production refuses governed drafting and every
+drafting claim says "staging". Approving a model without its evidence would give a paying client a qualification
+their own QA would reject. (Parity §8 Q1.)
+
+### P-57 — Deviations are their own record in Quality
+
+A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
+Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
+out-of-window calibration. The nonconformance register is keyed to a product or material and a lot, so it cannot hold
+one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality app gains a deviation register:
+- classification as minor, major or critical;
+- what happened, where and when, and the procedure departed from;
+- immediate action, investigation and root cause;
+- the impact on product or batch, when there is one;
+- a CAPA raised from it, through the existing `raiseCapaFrom`;
+- closure as a signed decision, through the one signing ceremony.
+
+The store is `qc_deviations`, as `shared/schema/qc-schemas.ts` has defined it since the QC module. No migration had
+ever created it. `migrations/20261029g_qc_deviations.sql` creates it with `client_workspace_id` nullable, because a
+Quality record is the organisation's, and appends it to `C2C_MIGRATION_FILES` before the final sweep pair (Rule 1). It
+is public with `organization_id INTEGER NOT NULL`. *(Corrected on building: this entry first said "a new public table";
+the existing definition is reached instead, under Rule 3.)*
+
+The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage implementations behind them are deleted
+in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
+would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
+nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
+
+### P-58 to P-69: decided under the founder's delegation of 2026-10-29 (regulated clients and longevity)
+
+A second delegation the same day: "make the best decisions based on our highly regulated clients and their needs and
+the longevity of our product for our clients, which are biotech, pharma, medical device, diagnostic, and so forth."
+*(These were first written as P-51 to P-62 in a session working beside the block above, which took P-51 to P-57 as
+both landed; they are renumbered, and the commits that introduced them name the old numbers.)*
+
+### P-58 — A departing tenant's regulated records leave with the tenant, after custody passes to the customer
+
+Decided 2026-10-29 under the founder's delegation of that day ("make the best decisions based on our highly
+regulated clients and their needs and the longevity of our product"). The question came from
+`docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/`: 18 tables are held out of the tenant purge
+(`PURGE_REFERRERS_NOT_ERASED`), so a tenant holding a signature, an audit row or an approval cannot be purged at all.
+
+- **Every held record is exported, then erased with the tenant.** That covers `electronic_signatures`,
+  `document_audit_trail`, `immutable_report_records`, the account and outcome logs and receipts,
+  `evidence_chain_records`, `data_lineage_records`, `governance_boundary_transitions`, `gate_approvals`,
+  `cer_approvals`, the IVDR Part 11 histories, `reg_questions`, `review_routes` and their route tasks. The export
+  carries each chain's integrity verdict and each signature's manifest, so the customer can show an inspector that
+  the copy is whole.
+- **Custody is a signed act.** Before the purge erases a held record, the customer's administrator signs that they
+  have received the export and taken custody of it. Where the organization's retention period has not elapsed for
+  any record, the attestation names those records and the customer accepts the retention obligation.
+- **The platform keeps one offboarding certificate per tenant**: the export manifest's hash, the counts per table,
+  the custody signature and the purge time. No customer content.
+- **A table whose trigger refuses DELETE is erased through a reviewed purge door** (SECURITY DEFINER, platform
+  scope, `pending_deletion`, no active legal hold), as `purge_tenant_vault_seals` is. A session-settable setting is
+  never a door.
+
+Why: retention is the sponsor's and the manufacturer's obligation (21 CFR 312.57 and 312.62, 21 CFR 820.180 and ISO
+13485 §4.2.5, EU GMP Annex 11 §17), and the platform is their processor. A customer can only keep their records for
+years if they leave with a complete, verifiable copy. Records a vendor keeps after the customer has gone cannot be
+inspected by that customer and remain a data-protection liability. Erasing them before custody passes would break
+the customer's retention. So: export, sign for custody, then erase.
+
+### P-59 — The review-route guard admits a role, not a session setting
+
+`unified_tasks_route_rows_guard` (`migrations/20261023_review_routes.sql`) lets any session that sets
+`c2c.review_route_writer = 'on'` past it, and the runtime role can set it (`guc-probe.txt` in the purge evidence). It
+converges on the platform's pattern for append-only guards: a NOLOGIN role that only the route writer's path
+assumes, as `ana_run_events_purger` does (`20261008f_ana_run_events.sql`). The file is amended in place (Rule 1), and
+the tenant purge reaches route rows through a door (P-58), not the setting. Why: a signed review workflow is a
+Part 11 record, and a control any session can switch off is not a control.
+
+### P-60 — Design history and design changes are kept per product
+
+Engineering's change-request panel reads the QMS change-control register (`qms_change_controls`) by a project key.
+`change_requests`, which nothing writes, leaves the panel. The DHF panel reads the project's own document sections
+(`c2c_document_sections`); the organization's one-kit store (`cerv2_510k_sections`) is not shown under a project.
+Why: a device or diagnostics company runs several products, and their design history file and design changes are
+per product (21 CFR 820.30(j), ISO 13485 §7.3.10). Change control has one register (zero duplication).
+
+### P-61 — The device folds' five decisions (`docs/design/DEVICE_FOLDS_2026-10-29.md`)
+
+1. **One device-filing store: `estar_submissions`.** It is on the deploy set and admits the project.
+   `c2c_submission_packages`, whose creator is on no applier, is migrated behind `to_regclass` guards and retired.
+2. **No organization-wide blocker list.** Blockers belong to a filing, from that filing's deterministic readiness
+   (EstarFilingPanel). `device-validation` and its `c2c_blockers` list retire. Its "Pass" for low-severity
+   blockers is not carried: a blocker is closed by fixing it or by a named person's signed waiver.
+3. **Device analytics joins Reporting & analytics at its tier (standard).** Reporting is a central service for
+   every client type (decision of 2026-09-26). It reads accessible projects only.
+4. **Grant continuity, not new grants.** A subscription to a folded module entitles its holder to the fold's target,
+   through one mapping in code that the entitlement resolver reads (`FOLDED_MODULE_SUCCESSORS`). No grant row is
+   written and subscriptions are kept. This covers risk and design-controls into device-engineering, ivd-completeness
+   into device-diagnostics, and every fold already made (device-vault and artifacts-center into vault,
+   part11-console into audit-trail, ana-memory into conversation-thread, setup into admin-console, ectd-publishing
+   into ectd-compile, billing into licensing). Why: a customer who paid for a capability keeps it when its screen
+   moves.
+5. **Device workstream into Projects** shows only figures computed from the project's own records; any strip figure
+   no engine computes is dropped. The Client Review Room admits the project (`admitProject`) before anything is read
+   or shared.
+
+### P-62 — A project's CMC data has one home: the CMC / Module 3 register
+
+The CMC data that `GET` and `PUT /api/concept2cure/projects/:projectId/cmc` keep in project metadata converges on
+the CMC / Module 3 register (`server/api/cmc`). Its one reader (`server/routes/c2c/tasks.ts`) moves onto the
+register, and the routes retire. Why: two CMC answers for one project is a filing risk (zero duplication).
+
+### P-63 — Signed content is not edited in place
+
+An approved or effective label, an approved translation and an accepted hazard refuse edits to the fields their
+signature binds (the content-digest recipes of `84aada8f7`). A change is a new version or a reopening, signed in its
+turn. "Changed since it was signed" stays as the detector for records signed before this rule. Why: a signature must
+stay attached to what was signed (21 CFR 11.10(e) and 11.70), and controlled records change only under change
+control (21 CFR 820.40, ISO 13485 §4.2.4).
+
+### P-64 — A translation's approval binds the source it translates
+
+The translation recipe (`labeling-translation`) moves to v2: it binds the source document's version and content
+digest as well as the translation. Why: a translation is valid only against the text it translates; approving it
+against a later source would be approving the wrong thing. RIM's label approval (`rim-product:`) binds content too
+when RIM reopens (outside the launch catalog under P-37; no session now).
+
+### P-65 — An audit-chain verdict is for those who may review the audit trail
+
+`GET /api/part11/audit-trail/chain-integrity` takes the gate the ledger takes (`requireAuditReader`). Why: audit
+trail review is a role-scoped duty, and both of Audit trail's verdicts should answer to one policy.
+
+### P-66 — Three tenant-isolation hardenings
+
+- An evidence citation may cite only its own organization's document. The Vault citation policy checks both ends
+  (`20260911_vault_evidence_citations.sql`, amended in place, made conditional on `pg_get_constraintdef` and policy
+  text). Until then, one organization can cite another's document, and that document's purge deletes the citing
+  organization's row.
+- The Vault child tables FORCE row-level security, so the table owner is no exception.
+- The public CDI reference (`migrations/20261027_cdi_public_reference_seed.sql`) carries no tenant's study as its
+  "fit" target. Today every tenant can see that a reference was tailored to NCT05330182. A new seed version drops
+  the field (Rule 1: a seed is never corrected in place), and fit is computed for each project when it is read.
+
+### P-67 — The GAMP 5 validation kit is reached in Settings, over the real route
+
+The kit (`server/routes/validation-kit.ts`, with a recorded download) is reached on administration's Settings,
+claiming only what its contents are. The unmounted `AdminConsole`, unmounted since `af973c5e8`, is deleted once the kit is reached
+there (zero duplication). Why: a regulated customer must validate the system they use (21 CFR 11.10(a), EU GMP
+Annex 11 §4), and a vendor validation package is what they ask for first. It must describe the deployed system
+truthfully, or it is worse than none.
+
+### P-68 — One subscription entry, one rate-limit source
+
+A billing administrator's account menu has one entry, "Subscription & billing", opening Licensing
+(INFORMATION_ARCHITECTURE.md §9); every member keeps "Usage & limits". The usage screen reads its rate-limit table
+from `GET /api/billing/rate-limits` instead of a copy in the client.
+
+*Amended 2026-10-29, same day:* that route served a hand-written per-tier grid that nothing enforces, and invented
+"standard" for an organization with no tier. What the product applies is `server/config/platform-limits.ts`, per
+identity and the same for every subscription. So the route returns the limits actually enforced, the usage screen
+shows them as the same for every subscription, and the unenforced grid is deleted. Limits that differ by tier would
+be a new enforcement capability (Rule 2), not a label.
+
+### P-69 — Module enforcement stays off until no gated prefix denies everyone
+
+`MODULE_ENFORCEMENT` is not switched to `enforce` while any gated prefix has only claimants without a catalog row
+(38 of 283 on 2026-10-29, among them `/api/chat`, `/api/setup`, `/api/onboarding` and `/api/tenant-users`). A gate
+that fails on such a prefix comes first; enforcement follows when it is green. Why: turning enforcement on today
+would lock every customer out of AnA's own conversations.
 
 ## How sessions run under this file
 

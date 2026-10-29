@@ -115,7 +115,7 @@ export function deriveMdxReleaseStatus(input: {
 const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = [
   /* Beta-blocking. */
   { name: 'public.regulatory_programs',           role: 'Projects list, every per-project endpoint',   required: true  },
-  { name: 'public.saved_precedent_queries',       role: 'PrecedentSurface saved queries panel',        required: true  },
+  { name: 'public.saved_precedent_queries',       role: 'PrecedentSurface saved queries and Vault saved views', required: true  },
   { name: 'public.audit_logs',                    role: 'ProjectHome activity feed + 21 CFR Part 11', required: true  },
   { name: 'public.q_submissions',                 role: 'PreSubManager list + KPIs',                   required: true  },
   { name: 'public.q_sub_questions',               role: 'PreSubManager detail',                        required: true  },

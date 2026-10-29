@@ -17,11 +17,13 @@
  * differently in two places (the synopsis says 15/305, §11.4 and its table
  * say 16/305). Pure; it reads nothing and decides no approval.
  */
+import { createHash } from 'node:crypto';
 import { verifyCsrDocumentEvidence, type CsrDocumentSectionEvidence } from './csr-document-evidence-gate';
 import type { CsrClaimReceipt, CsrEvidenceFact } from './csr-claim-reconciliation';
 import { buildCsrAuthoringEvidence, type CsrAuthoringEvidence, type RetainedCsrTables } from '../csr/cortex-authoring-context';
 import { parseImportedCsrSectionEvidence, type CsrImportedSectionEvidence } from '../csr/csr-claim-receipts';
 import { findUnclaimedNumbers } from '../csr/unsupplied-statistics';
+import { editedClaimOutcome } from './csr-edited-section';
 
 export interface SavedCsrSection { code: string | null; content: string; text: string; title?: string }
 export type RetainedRunRead = { ok: true; tables: RetainedCsrTables } | { ok: false; code: string };
@@ -36,6 +38,15 @@ export interface SavedCsrEvidenceIssue {
   stated?: string;
   /** Other sections that state the cell's figure. */
   statedIn?: string[];
+  /** false when the issue is reported for review but does not block (a claimed figure an edit removed). */
+  blocking?: boolean;
+}
+/** A section whose text changed after import, re-reconciled against its receipts and the retained run. */
+export interface SavedCsrEditedSection {
+  section: string;
+  state: 'edited after import, re-checked';
+  importedSha256: string;
+  currentSha256: string;
 }
 export interface SavedCsrEvidenceVerdict {
   status: 'not_assessed' | 'blocked' | 'reconciled_pending_human_review';
@@ -44,6 +55,8 @@ export interface SavedCsrEvidenceVerdict {
   checkedClaims: number;
   runs: Array<CsrEvidenceRun & { source: 'verified' | 'unavailable'; code?: string }>;
   issues: SavedCsrEvidenceIssue[];
+  /** Sections edited after import: re-checked by their current text, not blocked on the hash alone. */
+  editedSections: SavedCsrEditedSection[];
   /** Every number a saved section states that no claim carries; blocking in results sections. */
   unclaimedFigures: Array<{ section: string; figure: string; blocking: boolean }>;
   /** Flattened, for critiqueDocument's own claim reconciliation. */
@@ -51,9 +64,9 @@ export interface SavedCsrEvidenceVerdict {
   facts: CsrEvidenceFact[];
 }
 
+const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
 const runKey = (r: CsrEvidenceRun) => `${r.programId.toLowerCase()}:${r.runId.toLowerCase()}`;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
-const numbersOf = (s: string) => [...s.matchAll(/\d+(?:\.\d+)?/g)].map(m => String(Number(m[0])));
 // Ordered-list markers the renderer adds ("1. ") are layout, not figures.
 const figureText = (text: string) => text.replace(/^[ \t]*\d+\.[ \t]/gm, ' ');
 const RATIO = /(\d+)\s*(?:\/|of)\s*(\d+)/g;
@@ -85,13 +98,17 @@ export function csrEvidenceRuns(receipts: Map<string, CsrImportedSectionEvidence
 interface SectionPlan {
   code: string; content: string; text: string; receipts: CsrImportedSectionEvidence | null;
   unclaimed: string[]; results: boolean;
+  /** SHA-256 of the saved content when it differs from the hash the receipts were bound to at import. */
+  editedSha256: string | null;
 }
 
 function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImportedSectionEvidence | undefined): SectionPlan {
   const claimed = receipts?.claims.map(c => c.value) ?? [];
   const info = receipts?.studyInformationNumbers ?? [];
   const unclaimed = findUnclaimedNumbers(figureText(s.text), { claimed, info }).map(n => n.text);
-  return { code: s.code, content: s.content, text: s.text, receipts: receipts ?? null, unclaimed, results: RESULTS.test(s.code) };
+  const current = receipts ? sha(s.content) : null;
+  return { code: s.code, content: s.content, text: s.text, receipts: receipts ?? null, unclaimed, results: RESULTS.test(s.code),
+    editedSha256: current && current !== receipts?.sectionSha256 ? current : null };
 }
 
 const cellId = (code: string, c: { table: string; row: number; column: number }) => `${code}:${c.table}[${c.row}][${c.column}]`;
@@ -136,20 +153,34 @@ function gateEntry(plan: SectionPlan, reads: Map<string, RetainedRunRead>) {
   const claims = sectionClaims(plan.code, r);
   const entry: CsrDocumentSectionEvidence = {
     snapshot: { sectionId: plan.code, savedContent: plan.content, anaRunId: `${r.runId}:${pack?.evidenceDigest ?? 'unavailable'}` },
-    binding: { sectionId: plan.code, sectionSha256: r.sectionSha256, anaRunId: `${r.runId}:${r.evidenceDigest}`, claimIds: claims.map(c => c.claimId) },
+    // An edited section is re-bound to its current text: the claim-by-claim
+    // re-check below (editedClaimOutcome) replaces the hash comparison.
+    binding: { sectionId: plan.code, sectionSha256: plan.editedSha256 ?? r.sectionSha256, anaRunId: `${r.runId}:${r.evidenceDigest}`, claimIds: claims.map(c => c.claimId) },
     claims,
   };
   return { entry, facts: sectionFacts(plan.code, r, pack) };
 }
 
-/** A claimed figure whose numbers the section no longer states (its text changed after drafting). */
+/**
+ * Each claimed figure against the section's current text: still stated, changed
+ * to a figure no cell holds (FIGURE_CHANGED, blocking, naming the cell it was
+ * likely meant to be), or no longer stated (CLAIM_NOT_STATED; reported without
+ * blocking when a writer's edit removed it, blocking otherwise).
+ */
 function unstatedClaims(plan: SectionPlan, facts: Map<string, CsrEvidenceFact>): SavedCsrEvidenceIssue[] {
   if (!plan.receipts) return [];
-  const stated = new Set(numbersOf(figureText(plan.text)));
-  return plan.receipts.claims.flatMap((c, i) => numbersOf(c.value).every(n => stated.has(n)) ? [] : [{
-    section: plan.code, code: 'CLAIM_NOT_STATED', claimId: `${plan.code}#${i}`,
-    cell: { table: c.table, row: c.row, column: c.column, claimed: c.value, current: facts.get(cellId(plan.code, c))?.cellText ?? null },
-  }]);
+  const text = figureText(plan.text);
+  const values = plan.receipts.claims.map(c => c.value);
+  return plan.receipts.claims.flatMap((c, i): SavedCsrEvidenceIssue[] => {
+    const outcome = editedClaimOutcome(text, c, values);
+    if (outcome.state === 'stated') return [];
+    const cell = { table: c.table, row: c.row, column: c.column, claimed: c.value, current: facts.get(cellId(plan.code, c))?.cellText ?? null };
+    const base = { section: plan.code, claimId: `${plan.code}#${i}`, cell };
+    if (outcome.state === 'changed') return [{ ...base, code: 'FIGURE_CHANGED', stated: outcome.stated }];
+    // A figure an edit removed blocks in a results section (§2, §10-13): there a removal cannot be told apart
+    // from a swap to a value another claim carries. Elsewhere it is reported, not blocking (decision 8).
+    return [{ ...base, code: 'CLAIM_NOT_STATED', ...(plan.editedSha256 && !plan.results ? { blocking: false } : {}) }];
+  });
 }
 
 type Ledger = Map<string, { cell: CsrCell; statedIn: Set<string> }>;
@@ -209,19 +240,15 @@ export function assessSavedCsrEvidence(
   receipts: Map<string, CsrImportedSectionEvidence>,
   reads: Map<string, RetainedRunRead>,
 ): SavedCsrEvidenceVerdict {
-  // A section without a code (added in the editor) is still read: its numbers
-  // are listed and take part in the cross-section check, under its title.
-  const plans = sections.map((s, i) => typeof s.code === 'string' && s.code.trim() ? { ...s, code: s.code }
-    : { ...s, code: `(uncoded section ${i + 1}${s.title?.trim() ? `: ${s.title.trim().slice(0, 80)}` : ''})` })
-    .map(s => planSection(s, receipts.get(s.code)));
+  const plans = planSections(sections, receipts);
   const unclaimedFigures = plans.flatMap(p => p.unclaimed.map(figure => ({ section: p.code, figure, blocking: p.results })));
   const runs = csrEvidenceRuns(receipts).map(r => {
     const read = reads.get(runKey(r));
     return read?.ok ? { ...r, source: 'verified' as const } : { ...r, source: 'unavailable' as const, code: read && !read.ok ? read.code : 'CSR_EVIDENCE_NOT_READ' };
   });
   const base = { basis: 'exact_retained_table_cell' as const, runs, unclaimedFigures };
-  if (!receipts.size) return { ...base, status: 'not_assessed', checkedSections: 0, checkedClaims: 0, issues: [], claims: [], facts: [] };
-  const manifest = plans.filter(p => (p.receipts?.claims.length ?? 0) > 0 || (p.results && p.unclaimed.length > 0));
+  if (!receipts.size) return { ...base, status: 'not_assessed', checkedSections: 0, checkedClaims: 0, issues: [], editedSections: [], claims: [], facts: [] };
+  const manifest = plans.filter(inManifest);
   // A section the import carried receipts for that the document no longer holds.
   const present = new Set(plans.map(p => p.code));
   const missing = [...receipts.keys()].filter(code => !present.has(code)).map(code => ({ section: code, code: 'MISSING_SECTION' }));
@@ -238,7 +265,45 @@ export function assessSavedCsrEvidence(
     ...manifest.flatMap(p => unstatedClaims(p, factById)),
     ...crossSectionConflicts(plans, factById),
   ];
-  const blocked = result.status === 'blocked' || issues.length > 0 || unclaimedFigures.some(f => f.blocking);
+  const editedSections = plans.flatMap(p => p.receipts && p.editedSha256 ? [{ section: p.code, state: 'edited after import, re-checked' as const,
+    importedSha256: p.receipts.sectionSha256, currentSha256: p.editedSha256 }] : []);
+  // result.status is not read on its own: every one of its issues is in `issues`.
+  const blocked = issues.some(i => i.blocking !== false) || unclaimedFigures.some(f => f.blocking);
   return { ...base, status: blocked ? 'blocked' : 'reconciled_pending_human_review', checkedSections: result.checkedSections,
-    checkedClaims: result.checkedClaims, issues, claims, facts };
+    checkedClaims: result.checkedClaims, issues, editedSections, claims, facts };
+}
+
+/** The document verdict checks a section that carries claims, or a results section stating a figure. */
+function inManifest(p: SectionPlan): boolean {
+  return (p.receipts?.claims.length ?? 0) > 0 || (p.results && p.unclaimed.length > 0);
+}
+
+/** A section without a code (added in the editor) is still read: its numbers
+ * are listed and take part in the cross-section check, under its title. */
+function planSections(sections: readonly SavedCsrSection[], receipts: Map<string, CsrImportedSectionEvidence>): SectionPlan[] {
+  return sections.map((s, i) => typeof s.code === 'string' && s.code.trim() ? { ...s, code: s.code }
+    : { ...s, code: `(uncoded section ${i + 1}${s.title?.trim() ? `: ${s.title.trim().slice(0, 80)}` : ''})` })
+    .map(s => planSection(s, receipts.get(s.code)));
+}
+
+/** One saved section's input to reviewCsrSectionWithEvidence (medical_writing_review
+ * with a document reference, 2026-10-30), built exactly as the document verdict
+ * builds its manifest entry. `checked` is false when the document verdict leaves the
+ * section out of its manifest: no claims and no figure that must be claimed. */
+export interface SavedCsrSectionEvidenceInput {
+  label: string;
+  checked: boolean;
+  entry: CsrDocumentSectionEvidence;
+  facts: CsrEvidenceFact[];
+}
+export function savedCsrSectionEvidenceInput(
+  sections: readonly SavedCsrSection[],
+  receipts: Map<string, CsrImportedSectionEvidence>,
+  reads: Map<string, RetainedRunRead>,
+  index: number,
+): SavedCsrSectionEvidenceInput {
+  const plan = planSections(sections, receipts)[index];
+  if (!plan) throw new Error('Saved section outside the document');
+  const { entry, facts } = gateEntry(plan, reads);
+  return { label: plan.code, checked: inManifest(plan), entry, facts };
 }

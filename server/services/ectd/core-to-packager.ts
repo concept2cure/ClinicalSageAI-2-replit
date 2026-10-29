@@ -289,6 +289,12 @@ export interface BuildPackagerInputArgs {
   contacts?: FdaApplicantContact[];
   outputDir: string;
   emitUnzipped?: boolean;
+  /**
+   * FDA only: the submission-id this sequence declares, decided by the caller
+   * through the platform's one rule (sequence-spine-fda-identity.ts). Absent,
+   * the packager's default (the sequence's own number) applies.
+   */
+  fdaSubmissionId?: string;
 }
 
 export interface BuildPackagerInputResult {
@@ -360,6 +366,7 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
             ...(args.contacts ? { contacts: args.contacts } : {}),
             submissionType: fdaType.submissionType,
             submissionSubType: fdaType.submissionSubType,
+            ...(args.fdaSubmissionId ? { submissionId: args.fdaSubmissionId } : {}),
           },
         }
       : {}),

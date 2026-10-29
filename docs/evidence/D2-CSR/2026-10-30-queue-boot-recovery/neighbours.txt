@@ -1,0 +1,241 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:02.389Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T16:03:02.391Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:02.391Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 603ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 174ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 66ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 293ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 273ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 472ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 319ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now) 403ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block 754ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only 383ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 94ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 14ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 44ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 29ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > shows and places a revised body as a replace of the study's earlier body, and refuses to withdraw a placement that is not partial (SYNTHETIC) 55ms
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:18.298Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T16:03:18.300Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:18.300Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+[database] Database connection successful
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical
+[SYNTHETIC memory] narratives=1000 section14_3_3_chars=673113 maxSentChars=33934 maxReadChars=29358
+
+ ✓ server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical 2671ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > persists exact partial coverage and resumes only the missing section without changing retained output 105ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 73ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 47ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 42ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 93ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 92ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 63ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 51ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 46ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 24ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 34ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 34ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 34ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 32ms
+stdout | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:32.417Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T16:03:32.419Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T16:03:32.420Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects
+{
+  "timestamp": "2026-10-29T16:03:35.488Z",
+  "level": "error",
+  "message": "[csr-narrative-run] CSR narrative build failed",
+  "context": {
+    "id": 1,
+    "organizationId": 7,
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 493ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome 59ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing 73ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 169ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 20ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 33ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable) 28ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 24ms
+stderr | server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol
+{
+  "timestamp": "2026-10-29T16:03:47.436Z",
+  "level": "error",
+  "message": "[csr-jobs] CSR evidence source check failed",
+  "context": {
+    "err": "pool exhausted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 39ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 16ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 46ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 8ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 24ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 19ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 6ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 19ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a build with no project or program anchor before storing a job 4ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 18ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 25ms
+stdout | server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts
+{
+  "timestamp": "2026-10-29T16:03:53.091Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T16:03:53.092Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts
+{
+  "timestamp": "2026-10-29T16:03:53.093Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > retention sweep
+{
+  "timestamp": "2026-10-29T16:03:53.617Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep scheduled (30 3 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_RETENTION_SWEEP",
+    "schedule": "30 3 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > external intelligence sweep (FDA, EMA, MHRA, TGA, NCBI)
+{
+  "timestamp": "2026-10-29T16:03:53.640Z",
+  "level": "info",
+  "message": "[external-intel-sweep] External intelligence sweep scheduled (0 1 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_EXTERNAL_INTELLIGENCE",
+    "schedule": "0 1 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > audit chain integrity sweep
+{
+  "timestamp": "2026-10-29T16:03:53.665Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > retention sweep 24ms
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > external intelligence sweep (FDA, EMA, MHRA, TGA, NCBI) 22ms
+ ✓ server/jobs/__tests__/nightly-sweeps-once-per-window.test.ts > a nightly tick on any process claims the day before it runs > audit chain integrity sweep 24ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > no due date → never classified 2ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > past due → overdue 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > inside the 48h window → due-soon 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > beyond the window → not yet interesting 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > classifyDue — the sweep’s window logic > an unparseable date never classifies (no fabricated urgency) 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > no lead, or an unreadable one, is the 48 hours 1ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > a lead of 1 to 90 days, as a number or as its digits (the SQL reads the text), is that many days 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > remindWindowMs — the notice a task asks for (QMS periodic review, 2026-10-29) > a task 20 days out is due soon with a 30-day lead, and not without one 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > fresh task: both classes notify 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > due-soon marker suppresses due-soon but NOT the later overdue 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > overdue marker suppresses both classes (no backwards due-soon) 0ms
+ ✓ server/jobs/__tests__/taskDueSweep.test.ts > alreadyNotified — once per class, never re-spammed > unrelated metadata is preserved semantics — only the markers matter 0ms
+
+ Test Files  10 passed (10)
+      Tests  65 passed (65)
+   Start at  16:02:58
+   Duration  55.82s (transform 3.62s, setup 302ms, import 20.08s, tests 33.19s, environment 1ms)
+

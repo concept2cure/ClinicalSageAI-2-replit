@@ -1,0 +1,10 @@
+medical_writing_review free-text outputs, recorded 2026-10-30 from the trunk handler
+(server/services/ana/AnaToolExecutor.ts registerToolHandler('medical_writing_review'),
+unchanged at the time of recording), via getToolHandler(...)(input, {}).
+sha256 of the exact returned string, then its length:
+
+GOLDEN manuscriptHeadings 1373f46c7d7c031f5a380f6ad52110b6376466f8a11a7bc608cb223eace0f426 4986
+GOLDEN csrFreeText 2b5fb09ee780f6f253c0b434da1bb920372e0e542c7ecad3e927f5bfd3ac72ac 7305
+GOLDEN csrPreDraft 2701469ce16bf82230aa2d27a25e64134677335eb6bee54f170c38451457fab3 4876
+GOLDEN unknownType 5693591d3cfbde994cbe5c034305040af8f7b6ded4c95e16cbb645ea67464294 1287
+GOLDEN missingType e1ac334d51e8a138508ca626da67737e431751a6daf11999d01fb32a3d64ebe5 2247

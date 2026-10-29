@@ -1,0 +1,14 @@
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC) 1548ms
+   → csr-body.pdf was not placed: parentLeafId must reference a leaf in this sequence owned by this organization. Nothing was placed.
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC) 686ms
+   → expected CsrAssemblyRunError: csr-body.pdf was not… { …(2) } to match object { …(2) }
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC) 675ms
+   → expected CsrAssemblyRunError: Name each earlier fi… { …(2) } to match object { code: 'CSR_PLACEMENT_REFUSED' }
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC) 556ms
+   → Name each earlier file that stays on file by its leaf id. Nothing was placed.
+ × server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > admits a replace naming the current leaf of an earlier sequence of the same submission 36ms
+   → parentLeafId must reference a leaf in this sequence owned by this organization.
+ ✓ server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > refuses a parent in a later sequence, another submission, another organization, a removed leaf or a withdrawal 33ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > still refuses a parent outside the sequence for a leaf that is not a lifecycle act 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 2 passed (7)

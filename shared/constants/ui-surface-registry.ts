@@ -292,9 +292,10 @@ export const UI_SURFACES: UiSurface[] = [
     // surface, outside the catalog. The launch Vault reads the same stores through
     // /api/c2c/project-vault. Unclaimed 2026-10-22.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
-    // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
-    // Vault retains the preservation API family for its records. Its /retention
-    // sub-path is Setup's, below.
+    // (server/routes/vault-legal-holds.ts). LegalHoldsCard calls them from Admin and access →
+    // Settings (Setup's, until it folded in, D2 2026-10-29), so admin-console claims them too;
+    // Vault retains the preservation API family for its records. Its /retention sub-path is
+    // admin-console's alone.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
@@ -459,32 +460,24 @@ export const UI_SURFACES: UiSurface[] = [
       // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
       // build bound to the run, read its sections, triage them, build narratives. Exactly the
       // jobs router, not the /api/csr builder prefix.
-      '/api/csr/jobs'],
+      '/api/csr/jobs',
+      // The eCTD reference (folded from ectd-publishing, D2 2026-10-29; EctdCompileReference.tsx):
+      // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
+      // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification
+      // stay refused at launch (launch-reproof-narrowing.test.ts).
+      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.',
-    engineering: 'Routes: /api/ectd-compile.',
+    engineering: 'Routes: /api/ectd-compile; the eCTD reference reads /api/ectd/controlled-vocab and /api/ectd/qualification/spec-versions.',
   },
-  {
-    id: 'ectd-publishing',
-    label: 'Publishing center',
-    navTier: 'project',
-    layoutMode: 'submissions',
-    icon: 'gitBranch',
-    group: 'submission',
-    uiKit: 'ectd_coauthor',
-    apiPrefixes: ['/api/ectd'],
-    anaToolFamilies: [],
-    sharedContract: '@shared/types/submission-api',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: deferredSurfaceDescription('ectd-publishing'),
-    engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
-  },
+  // ectd-publishing folded into ectd-compile (D2, 2026-10-29): its spec versions, Regional IG
+  // OID and controlled vocabularies are eCTD Compile's eCTD reference, and `ectd-publishing` is an
+  // alias that opens it (registryModel.ts). Its claim on /api/ectd moved as the two reads the
+  // reference makes; /api/ectd/v4 had no caller (docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/).
   {
     id: 'device-510k',
     label: '510(k) and eSTAR',
@@ -1005,26 +998,12 @@ export const UI_SURFACES: UiSurface[] = [
   },
 
   // ─── Tier: admin ─────────────────────────────────────────────────────────────
-  {
-    id: 'setup',
-    label: 'Admin / setup',
-    navTier: 'admin',
-    layoutMode: 'setup',
-    icon: 'settings',
-    group: 'admin',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
-    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
-    // reads and sets the organisation's retention period. LegalHoldsCard (2026-10-14, D2)
-    // lists, places and lifts holds, using named project and Vault document choices.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/regulatory-programs', '/api/c2c/project-vault'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Org profile, users/roles, MFA policy, SSO/SCIM, module subscriptions, feature flags, API keys.',
-  },
+  // setup folded into admin-console (D2, 2026-10-29): the organisation's name and client
+  // type, the gateway, session, PDF/A, retention and legal-hold cards are on Admin and
+  // access → Settings, and `setup` is an alias that opens that tab (registryModel.ts). Its
+  // claims moved there or were never its own: /api/setup, /api/api-keys and the hold routes
+  // are admin-console's; /api/admin and /api/users are NEVER_GATED; /api/regulatory-programs
+  // and /api/c2c/project-vault stay the Vault's (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/).
   {
     id: 'audit-trail',
     label: 'Audit trail',

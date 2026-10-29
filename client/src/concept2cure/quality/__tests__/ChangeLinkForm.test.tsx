@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * A change links to a record Quality holds: for a CAPA, a nonconformance or a
+ * A change links to a record Quality holds: for a CAPA, a deviation or a
  * supplier, the drawer lists the organisation's own records and the reference
  * is the pick's, shown read-only. A register that could not be read says so,
  * and the typed reference stays available.
@@ -34,11 +34,20 @@ describe('Link a record', () => {
     expect(onSubmit).toHaveBeenCalledWith({ linkType: 'capa', linkedRef: 'CAPA-007', linkedLabel: 'Assay OOS recurrence', relationship: undefined });
   });
 
-  it('says so when the register could not be read, and keeps the typed reference', () => {
-    H.reads['/api/mdx/qms/nonconforming'] = { data: null, loading: false, error: 'HTTP 500' };
+  it('links a deviation chosen from the deviation register (P-57)', () => {
+    H.reads['/api/mdx/qms/deviations'] = { data: { data: [{ id: 5, deviation_number: 'DEV-2026-041', title: 'EM excursion, Grade B room 2' }] }, loading: false, error: null };
     const { d, onSubmit } = open();
     fireEvent.change(within(d).getByLabelText(/Record type/), { target: { value: 'deviation' } });
-    expect(within(d).getByText(/nonconformance register could not be read/)).toBeTruthy();
+    fireEvent.change(within(d).getByLabelText(/Choose the deviation/), { target: { value: 'DEV-2026-041' } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ linkType: 'deviation', linkedRef: 'DEV-2026-041', linkedLabel: 'EM excursion, Grade B room 2' }));
+  });
+
+  it('says so when the register could not be read, and keeps the typed reference', () => {
+    H.reads['/api/mdx/qms/deviations'] = { data: null, loading: false, error: 'HTTP 500' };
+    const { d, onSubmit } = open();
+    fireEvent.change(within(d).getByLabelText(/Record type/), { target: { value: 'deviation' } });
+    expect(within(d).getByText(/deviation register could not be read/)).toBeTruthy();
     fireEvent.change(within(d).getByLabelText(/^Reference/), { target: { value: 'DEV-2026-041' } });
     fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ linkType: 'deviation', linkedRef: 'DEV-2026-041' }));

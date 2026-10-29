@@ -1,0 +1,28 @@
+# Wide server run with the change
+# npx vitest run server/services/ectd server/services/submission-service server/services/ind-lifecycle server/services/submission-gateways server/services/part11 server/services/tenant server/__tests__/routes --reporter=dot
+      1  FAIL  server/__tests__/routes/smoke.test.ts
+      3  FAIL  server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts
+      1  FAIL  server/services/part11/__tests__/one-signing-authority-policy.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+      1  FAIL  server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+ Test Files  14 failed | 327 passed | 2 skipped (343)
+      Tests  73 failed | 4195 passed | 16 skipped (4284)
+
+# Of these:
+# - the ten files of the slice-1 baseline (docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/wide.txt, 67 tests) fail as before;
+# - smoke.test.ts and one-signing-authority-policy.test.ts are static checks of files this change does not touch
+#   (the Projects router source; server/services/review/review-route-member.ts);
+# - ind-filing-flow-pglite.integration (3) and create-sequence-fda-variation (1) were this change's: createSequence read
+#   the declaration through 'pool', which their db mocks do not provide. It now reads through 'db', as the rest of
+#   createSequence does, and the variation suite's db mock answers the read with none. Re-run:
+ Test Files  3 passed (3)
+      Tests  15 passed (15)

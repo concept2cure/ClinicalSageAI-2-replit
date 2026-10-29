@@ -9,9 +9,18 @@
  * for frictionless payment — modeled after Anthropic/Claude's billing UX.
  *
  * Endpoints:
- * POST /checkout          — Create a Stripe Checkout Session (with Link)
- * POST /portal            — Create a Stripe Customer Portal session
- * GET  /status            — Get subscription status for current org
+ * POST /checkout          — Create a Stripe Checkout Session (with Link)       [billing administrators]
+ * POST /portal            — Create a Stripe Customer Portal session            [billing administrators]
+ * POST /dtc-checkout      — Self-service checkout, or activate the free tier   [billing administrators]
+ * GET  /status            — Get subscription status for current org            [any member]
+ *
+ * Who may buy, change or manage the subscription: requireRole(...BILLING_ADMIN_ROLES),
+ * admin and owner, the guard the invoice list takes (billing-dashboard.ts). All three
+ * answered any authenticated member until the billing fold (2026-10-29, Part 1b): a
+ * member could open a Checkout that bills the organisation, activate the free tier,
+ * or open the customer portal, with its payment methods, cancellation and invoice
+ * history. The session's `billing:admin` permission is derived from the same list,
+ * so Licensing and onboarding offer these to exactly the roles admitted here.
  * GET  /pricing           — Get pricing tiers for current org's archetype
  * POST /webhooks/stripe   — Stripe webhook endpoint (no auth required)
  */
@@ -30,7 +39,8 @@ import {
   PRICING,
   DTC_PRICING,
 } from '../services/billing.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { BILLING_ADMIN_ROLES } from '../../shared/constants/permissions.js';
 import { createScopedLogger } from '../utils/logger';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 
@@ -94,7 +104,7 @@ function respondValidationError(res: Response, error: z.ZodError) {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /checkout — Create Stripe Checkout Session with Link
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/checkout', authenticateToken, async (req: Request, res: Response) => {
+router.post('/checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = (req as any).tenantContext?.organizationId
       || (req as any).user?.organizationId;
@@ -141,7 +151,7 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /portal — Create Stripe Customer Portal session
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/portal', authenticateToken, async (req: Request, res: Response) => {
+router.post('/portal', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = (req as any).tenantContext?.organizationId
       || (req as any).user?.organizationId;
@@ -214,7 +224,7 @@ router.get('/pricing', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /dtc-checkout — DTC self-service checkout (like Claude.ai)
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Response) => {
+router.post('/dtc-checkout', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     // SECURITY: a body-supplied organizationId would have let a caller
     // start a DTC checkout that bills another tenant's payment method.

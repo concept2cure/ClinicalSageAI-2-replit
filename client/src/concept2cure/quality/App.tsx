@@ -54,6 +54,7 @@ type QualityTab = 'sop' | 'change' | QmsRecordTab;
 
 const RECORD_ICON: Record<QmsRecordTab, React.ReactNode> = {
   capa: I.target,
+  deviations: I.flag,
   nonconforming: I.alertTriangle,
   suppliers: I.building,
   audits: I.clipboardList,

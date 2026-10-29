@@ -36,6 +36,8 @@ import { runWithTenantScope } from '../db/tenantStore';
 import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES,
   AUDIT_ATTEST_PERMISSION,
   AUDIT_ATTEST_ROLES,
+  BILLING_ADMIN_PERMISSION,
+  BILLING_ADMIN_ROLES,
 } from '../../shared/constants/permissions';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
@@ -540,6 +542,12 @@ export function sessionPermissions(role: string | null | undefined): string[] {
      and got a 403 (coverage review C-24). */
   if (AUDIT_ATTEST_ROLES.includes(String(role ?? ''))) {
     permissions.push(AUDIT_ATTEST_PERMISSION);
+  }
+  /* Reading the organisation's invoices and setting its seats, weekly limits
+     and reload are billing administration: admin and owner, by the same list
+     the billing routes' guard reads (fold billing into Licensing, 2026-10-29). */
+  if (BILLING_ADMIN_ROLES.includes(String(role ?? ''))) {
+    permissions.push(BILLING_ADMIN_PERMISSION);
   }
   return permissions;
 }

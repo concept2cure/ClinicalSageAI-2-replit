@@ -36,6 +36,7 @@ import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { startTaskDueSweep } from './jobs/taskDueSweep';
+import { startCsrQueueRecovery } from './jobs/csrQueueRecovery';
 import { startVaultProcessingSweep } from './jobs/vaultProcessingSweep';
 import { errorHandler } from './src/mw/observability.js';
 
@@ -288,6 +289,11 @@ async function startServer() {
     // idempotent via task metadata markers. Self-guards in tests; disable with
     // TASK_DUE_SWEEP_DISABLED=true.
     startTaskDueSweep();
+
+    // CSR queues: once at boot, resume each build, assembly or narrative run a
+    // restart stopped, as its requester, after re-checking their access.
+    // Disable with CSR_QUEUE_RECOVERY_DISABLED=true. See jobs/csrQueueRecovery.ts.
+    startCsrQueueRecovery();
 
     // Vault: read the text of every version the upload request left pending
     // (a scanned PDF's OCR is off the request, MR-08 Stage 3). Self-guards in

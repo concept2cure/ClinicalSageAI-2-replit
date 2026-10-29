@@ -15,6 +15,7 @@
  *   GET    /api/mdx/qms/training/expiring               periodic refresh due
  *
  *   Suppliers, internal audits and nonconforming products: mdx-qms-records.ts.
+ *   Deviations: mdx-qms-deviations.ts.
  *
  *   GET    /api/mdx/qms/management-reviews              list reviews
  *   POST   /api/mdx/qms/management-reviews              create
@@ -90,6 +91,7 @@ import {
   retireQmsDocumentSigned,
   QmsApprovalRefusedError,
   QMS_DOCUMENT_APPROVAL_MEANING,
+  QMS_DOCUMENT_RETIREMENT_MEANING,
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
@@ -131,6 +133,7 @@ import { readRouteRounds, type RouteRound } from '../services/review/review-rout
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
 import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
+import qmsDeviationsRouter from './mdx-qms-deviations';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -628,15 +631,21 @@ const approveBody = z.object({
    2026-09-24): the approve body without effectiveDate, which a retirement does
    not set. The reason keeps the floor the whole governed surface applies
    (`governedReason`, 8), which 6582e3a3 set for this route on 2026-09-25;
-   approve's own floor of 3 predates that rule and is left as it is here. */
-const retireBody = approveBody.omit({ effectiveDate: true }).extend({ reason: governedReason });
+   approve's own floor of 3 predates that rule and is left as it is here. The
+   meaning is retirement's own (P-51): 'APPROVED' is refused here. */
+const retireBody = approveBody.omit({ effectiveDate: true }).extend({
+  meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
+    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+  }),
+  reason: governedReason,
+});
 
 /** §11.200(a)(1): the first signing presents every component. Names the ones that did not arrive. */
 function esignatureComponentMissing(res: Response, act: 'Approval' | 'Retirement', fieldErrors: Record<string, unknown>): Response {
   return clientError(
     res,
     400,
-    `${act} is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+    `${act} is an electronic signature and requires a password, the signature meaning '${act === 'Retirement' ? QMS_DOCUMENT_RETIREMENT_MEANING : QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
     { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
   );
 }
@@ -948,6 +957,8 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
 
 /* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
 router.use(qmsRecordsRouter);
+/* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
+router.use(qmsDeviationsRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 

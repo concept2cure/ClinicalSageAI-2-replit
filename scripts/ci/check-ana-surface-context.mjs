@@ -107,7 +107,14 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-29 D2: part11-console folds into Audit trail, which publishes as
 // 'audit-trail' with the audit_events chain verdict in its facts. The retired id
 // is an alias, no longer a routable publisher (foldPart11Console.test.ts).
-const ID_BASELINE = 109;
+// 2026-10-29 D2: setup folds into Admin and access, which publishes as
+// 'admin-console' with the Profile card's configuration in its facts while the
+// Settings tab shows it. The retired id is an alias, no longer a routable
+// publisher (foldSetup.test.ts).
+// 2026-10-29 D2: ectd-publishing folds into eCTD Compile, which publishes the
+// eCTD reference as 'ectd-compile' (facts.reference). The retired id is an
+// alias, no longer a routable publisher (foldEctdPublishing.test.ts).
+const ID_BASELINE = 107;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

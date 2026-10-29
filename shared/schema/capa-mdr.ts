@@ -145,6 +145,8 @@ export const CAPA_SOURCES = [
   'inspection_finding',
   'risk_review',
   'trend_signal',
+  // A GMP deviation (P-57; migrations/20261029h_capa_source_deviation.sql).
+  'deviation',
   'other',
 ] as const;
 

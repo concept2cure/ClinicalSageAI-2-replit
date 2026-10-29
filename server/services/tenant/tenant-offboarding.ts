@@ -1221,6 +1221,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'qms_nonconforming_products',
   // Vault seals (VR-19), through their door: they reference the project.
   'vault_data_room_seals',
+  // Saved queries and Vault saved views (P-46): the tenant's own search
+  // parameters. Before regulatory_programs, whose delete would cascade project
+  // views; library views and precedent rows have no cascade and are reached
+  // only here.
+  'saved_precedent_queries',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's
@@ -1361,6 +1366,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      declaration that Module 2 reads. Append-only to the application (UPDATE
      and TRUNCATE refused); DELETE is this purge's. No foreign key, so a leaf. */
   'study_pivotal_declarations',
+  /* submission_filed_baselines (20261029g): signed declarations of the US
+     sequences a submission filed outside the platform. Append-only to the
+     application (UPDATE and TRUNCATE refused); DELETE is this purge's. No
+     foreign key, so a leaf. */
+  'submission_filed_baselines',
   /* citation_chains: which of the tenant's documents cite which. It became
      org-keyed in 15af6bc4 (20260813_knowledge_graph_tenant_keys.sql, amended
      2026-10-12), and ci:purge-coverage then failed every Blank DB run: an

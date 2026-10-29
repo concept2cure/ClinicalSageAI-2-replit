@@ -176,6 +176,7 @@
   "server/services/provenance/artifact-provenance.ts": 3,
   "server/services/qms/change-approval-signature.ts": 1,
   "server/services/qms/changeControl.service.ts": 9,
+  "server/services/qms/deviations.ts": 1,
   "server/services/rbm/rbm-actuator.ts": 6,
   "server/services/reg-change/reg-change-service.ts": 3,
   "server/services/regulatory-precedent-intelligence/advisory-committee-service.ts": 2,

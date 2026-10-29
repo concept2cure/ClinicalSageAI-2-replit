@@ -269,7 +269,6 @@ function lazyOwnedSurface(
 }
 
 const CapabilityIndex = lazySurface(() => import('./intelligence/Intelligence').then((m) => ({ default: m.CapabilityIndex })));
-const Setup = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Setup })));
 const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Apps })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
@@ -309,7 +308,6 @@ const DocJourney = lazySurface(() => import('./surfaces/DocJourney').then((m) =>
 const DocumentAuthoring = lazyOwnedSurface(() => import('./surfaces/DocumentAuthoring').then((m) => ({ default: m.DocumentAuthoring })));
 const EctdCoauthor = lazyOwnedSurface(() => import('./surfaces/EctdCoauthor').then((m) => ({ default: m.EctdCoauthor })));
 const EctdCompile = lazySurface(() => import('./surfaces/EctdCompile').then((m) => ({ default: m.EctdCompile })));
-const PublishingCenter = lazySurface(() => import('./surfaces/PublishingCenter').then((m) => ({ default: m.PublishingCenter })));
 const Etmf = lazySurface(() => import('./surfaces/Etmf').then((m) => ({ default: m.Etmf })));
 const Evidence = lazySurface(() => import('./surfaces/Evidence').then((m) => ({ default: m.Evidence })));
 const HaqManager = lazySurface(() => import('./surfaces/HaqManager').then((m) => ({ default: m.HaqManager })));
@@ -460,7 +458,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // a rail this surface hides. It runs the real assistant now.
   'ectd-coauthor': { component: EctdCoauthor, full: true, ownsConversation: true },
   'ectd-compile': { component: EctdCompile },
-  'ectd-publishing': { component: PublishingCenter },
+  // 'ectd-publishing' folded into eCTD Compile (D2, 2026-10-29): an alias now (registryModel.ts).
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
   'global-ri': { component: GlobalRiBrowser, full: true },
@@ -553,7 +551,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   review: { component: Review },
   risk: { component: Risk },
   'safety-narrative': { component: SafetyNarrative },
-  setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },

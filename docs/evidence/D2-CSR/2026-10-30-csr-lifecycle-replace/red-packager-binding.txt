@@ -1,0 +1,30 @@
+
+ FAIL  server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts > binds a declared replace to the filed leaf its cross-sequence parent was filed as (SYNTHETIC)
+AssertionError: expected [ { sectionCode: 'm5.3.5.1', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "reason": "declared replace: no filed leaf named csr-body-pdf-rendered-leaf-files-501.pdf in this section to supersede (filing it as new would leave the filed version current) — bind it to the filed file, or declare it new",
++     "sectionCode": "m5.3.5.1",
++   },
++ ]
+
+     73|     resolveFile: (leaf) => leaf.documentId === 501 ? { fileName: rende…
+     74|   });
+     75|   expect(result.skipped).toEqual([]);
+       |                          ^
+     76|   const zip = await JSZip.loadAsync(await fs.readFile(result.bundle.pa…
+     77|   const indexXml = (await zip.file('index.xml')?.async('string')) ?? '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:52:52
+   Duration  10.30s (transform 3.62s, setup 94ms, import 6.19s, tests 3.71s, environment 0ms)
+

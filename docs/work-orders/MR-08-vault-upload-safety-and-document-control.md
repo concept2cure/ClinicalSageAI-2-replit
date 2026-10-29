@@ -173,7 +173,13 @@ The bounded reader is replaced by one measured inflate before any reader, which 
 - `server/jobs/vaultProcessingSweep.ts` reads each pending version once. It claims each one by advisory lock, reads it through the verified reader with OCR in a conversion slot, and writes the text, the outcome and a chained audit row, then indexes the passages.
 - The ingest response, the catalog record, AnA's catalog eligibility and search say a version is still being read.
 
-Born-digital files are still read and chunked in the request. Re-proposing a filing after the read is not done. Both are recorded there. Stage 3 is complete apart from that.
+Born-digital files are still read and chunked in the request; that decision is recorded there.
+
+**Step 5's re-proposal done 2026-10-29** (`docs/evidence/D1/2026-10-29-filing-from-read-text/`):
+- The sweep runs the filing classifier over the text it read, in its own transaction, through `proposeFilingFromReadText` in the placement service. It writes `suggested` and a chained `vault.document.file` row naming the classifier.
+- It proposes only for a version that is unfiled, placed by no person, with no person's or agent's filing on record, and not a check-in. A `suggested` placement is left as it is, which is narrower than step 5 allows; the evidence says why.
+
+Stage 3 is complete.
 
 1. **Red tests first**, each run on HEAD and captured:
    - (a) a valid SAS V5 `.xpt` to `/api/vault/ingest` returns 400 `FILE_TYPE_NOT_ALLOWED`;

@@ -38,3 +38,18 @@ The settings facet still served the read-only session-timeout row, and the secon
 
 ## The stale-publication assertion
 Added after the first green to 'publishes no configuration on another tab'. Its red is mutation M9 in mutations.txt: with the tab guard in withConfiguration removed, one context with tab 'members' and the configuration is published between the tab switch and the card's unmount.
+
+# Part 2 — the fold guard, on f83fcce03 (Part 1 committed) before the retirement: 4/4 failed
+
+ × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 5ms
+ × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call 3ms
+ × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 1ms
+ × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'admin-console' // Object.is equality
+AssertionError: /api/vault/legal-holds/retention: expected false to be true // Object.is equality
+AssertionError: expected { component: [Function] } to be undefined
+AssertionError: expected [ 'home', 'apps', …(12) ] to not include 'setup'
+      Tests  4 failed (4)
+
+The launch-scope.test.ts guard ('the folded setup') was written with the retirement; its red is mutation P6 (setup back in LAUNCH_SHELL_SURFACES).

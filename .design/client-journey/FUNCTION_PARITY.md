@@ -387,17 +387,26 @@ Before deprecating, confirm whether any tenant has programs in the mission_contr
 ### Into eCTD compile (`ectd-compile`)
 
 #### From `ectd-publishing`
-Re-register its three surface actions under ectd-compile. Amend 20260810's keep-list and heal step in place.
 
-- [ ] Choose the eCTD version. From `PublishingCenter.tsx:149,322-326`. Goes to: a reference panel in EctdCompile, defaulting to the sequence's version. Real today.
-- [ ] FDA Regional IG OID. From `PublishingCenter.tsx:329-333`. Goes to: the same panel. Real today.
-- [ ] The spec versions the package is qualified against. From `PublishingCenter.tsx:338-361`. Goes to: beside the validation findings (`EctdCompileDtdEvidence.tsx`). Real today.
-- [ ] v3.2.2 vocabularies with code counts. From `PublishingCenter.tsx:370-393`. Goes to: the panel. Real today.
-- [ ] Browse a v4.0 code list. From `PublishingCenter.tsx:396-402`. Goes to: the panel. Real today.
-- [ ] Filter codes. From `PublishingCenter.tsx:403-407`. Goes to: the panel. Real today.
-- [ ] Retry a failed read. From `PublishingCenter.tsx:349`. Goes to: the panel, with a retry for the code-list error too. Real today.
-- [ ] AnA context for the reference. From `PublishingCenter.tsx:207-261`. Goes to: EctdCompile's context (`EctdCompile.tsx:1135-1234`). Real today.
-- [ ] AnA target. From `index.ts:233`. Goes to: alias it to ectd-compile. Real today.
+Folded 2026-10-29 (D2): `ectd-publishing` is an alias of `ectd-compile`, and
+`PublishingCenter.tsx` is deleted. Its code moved into `EctdCompileReference.tsx`
+and `EctdCompileDtdEvidence.tsx` (`QualifiedSpecVersions`). Evidence and the fold
+guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/`, `foldEctdPublishing.test.ts`.
+
+- [x] Choose the eCTD version: the eCTD reference panel's version menu, opening at v3.2.2, the version this compile assembles (no sequence records a version; the packager writes the ICH v3.2.2 backbone). v4.0 is marked "Reference only".
+- [x] FDA Regional IG OID: the same panel, under v4.0.
+- [x] The spec versions qualified against: `QualifiedSpecVersions`, beside the validation findings, ahead of the compilation history.
+- [x] v3.2.2 vocabularies with code counts: the panel.
+- [x] Browse a v4.0 code list: the panel. It reads only a list the listing supplied, and opens at `contextOfUse` when listed. A late answer for an earlier pick is dropped.
+- [x] Filter codes: the panel.
+- [x] Retry a failed read: Try again on the spec table, the listing and the code list. A failed listing is an error, never an empty picker.
+- [x] AnA context for the reference: eCTD Compile's summary sentence and `facts.reference`.
+- [x] AnA target: `ectd-publishing` stays and resolves to `ectd-compile` (`DEEP_LINK_ALIASES`).
+- [x] The three surface actions: `ectd-compile.set-reference-version`, `.open-code-list` and `.filter-codes`, registered by eCTD Compile. `filter-codes` takes no query to clear, which the old required param never allowed.
+- [x] 20260810's keep-list and heal step, 20260823's packaging row, and 20260814j's insert (the row's only writer), amended in place (Rule 1). A fresh database never holds the row; a deployed one keeps it, deprecated on every replay, with its tier and subscriptions.
+- [x] The panel's reads claimed exactly by `ectd-compile` (`/api/ectd/controlled-vocab`, `/api/ectd/qualification/spec-versions`); `/api/ectd/v4` stays refused.
+- [x] The reference with no project open (the retired screen was a global target): shown under eCTD Compile's no-project state, reading nothing project-scoped.
+- [ ] The validation documents (`URS-004`, `OQ-004` step OQ-SUBC-14, `VMP-001`) still name the retired screen. Its link now lands on eCTD Compile; revising them is a controlled-document change. Not carried.
 
 #### From `pdev-ind-assembly`
 Retire the PDEV compile path (the route, the UI and the AnA command) together.
@@ -627,18 +636,23 @@ read and pin), so those routes were deleted with it.
 - [ ] AnA sees the library state. From `TemplateLibrary.tsx:459-515`. Goes to: company-design state in admin-console's context. Real today.
 
 #### From `setup`
-- [ ] Rename the organisation under a reason. From `AdminSurfaces.tsx:435-447`. Goes to: a Profile card in admin-console Settings. Real today.
-- [ ] Choose the client type. From `AdminSurfaces.tsx:472-483`. Goes to: admin-console Settings. Real today.
-- [ ] Open the Identity console. From `AdminSurfaces.tsx:536`. Goes to: a link on the SSO tab. Real today.
-- [ ] Choose the gateway account. From `GatewayAccountsSetting.tsx:100-150`. Goes to: mounted in Settings, and offered at Submit on the first transmit. Real today.
-- [ ] Gateway account status. From `GatewayAccountsSetting.tsx:166-180`. Goes to: with that mount. Real today.
-- [ ] Session timeout and concurrent sessions. From `SessionPolicySetting.tsx:56-98`. Goes to: mounted in Settings, replacing the row that only asks AnA. Real today.
-- [ ] Require PDF/A. From `PdfARequirementSetting.tsx:90-129`. Goes to: mounted in Settings. Real today.
-- [ ] See the retention period. From `RetentionPeriodCard.tsx:193`. Goes to: mounted in Settings. Real today.
-- [ ] Set the retention period. From `RetentionPeriodCard.tsx:130-181`. Goes to: mounted in Settings. Real today.
-- [ ] List, place and lift legal holds. From `LegalHoldsCard.tsx:140-240`. Goes to: mounted in Settings, with "Place legal hold" also in Vault. Real today.
-- [ ] Ask AnA to summarise the configuration. From `AdminSurfaces.tsx:300-376`. Goes to: admin-console's context. Real today.
-- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx:1762-1874`. Goes to: a card in Settings. Not real today.
+
+Folded 2026-10-29 (D2): `setup` is an alias of `admin-console` that opens its
+Settings tab, and Setup is deleted from `AdminSurfaces.tsx`. Evidence and the
+fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/`, `foldSetup.test.ts`.
+
+- [x] Rename the organisation under a reason: `OrganizationProfileCard.tsx` (moved from Setup), the Profile card first on admin-console Settings (`AdminSettings.tsx`). `PATCH /api/organizations/:id/profile` with the reason; a failed read leaves the fields read-only and offers Try again.
+- [x] Choose the client type: the same card, pending until saved under the same reason (`adminSettingsClientTypeGoverned.test.tsx`).
+- [x] Open the Identity console: `IdentityConsoleDoor` on the SSO tab, shown also when the SSO read failed.
+- [x] Choose the gateway account: `GatewayAccountsSetting` mounted on Settings. Not offered at Submit: `TransmitPanel` names the gap but the card lists every gateway and its PUT is owner or administrator only, so it does not fit there. Handed on.
+- [x] Gateway account status: with that mount.
+- [x] Session timeout and concurrent sessions: `SessionPolicySetting` mounted on Settings; `GET /api/mdx/admin` no longer serves the read-only "Session timeout" row it replaces.
+- [x] Require PDF/A: `PdfARequirementSetting` mounted on Settings.
+- [x] See the retention period: `RetentionPeriodCard` mounted on Settings.
+- [x] Set the retention period: the same card; admin-console claims `/api/vault/legal-holds/retention`.
+- [x] List, place and lift legal holds: `LegalHoldsCard` mounted on Settings. Vault does not offer "Place legal hold"; reaching it needs the form to take a preset project and document. Handed on.
+- [x] Ask AnA to summarise the configuration: admin-console's `facts.configuration` and summary sentence, only while Settings shows it, and "Ask AnA to summarise this configuration" in the tab head (`adminConsoleSettings.test.tsx`).
+- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx` `AdminConsole`, unmounted since `af973c5e8` (2026-07-27). Goes to: a card in Settings, if the founder chooses. Not real today; not carried.
 
 ### Into protocol development (`protocol-dev`)
 
@@ -1017,7 +1031,7 @@ Historical present functions: segment tabs (`AnaVerbs.tsx:265-276`). Starting a 
 ### ectd-compile
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| ectd-publishing | 9 | 0 | 1 | 8 | 0 | 9 | No |
+| ectd-publishing | 9 | 0 | 1 | 8 | 0 | 9 | Yes (2026-10-29) |
 | pdev-ind-assembly | 11 | 5 | 5 | 0 | 1 | 8 | No |
 
 Present: module readiness (`EctdModuleReadiness.tsx:100-118`). The PDEV figure counts activity state, so show it on the Plan step as plan progress. Diagnosing gaps (`EctdCompile.tsx:1415,1542`). Compiling (`EctdCompile.tsx:1101`). The no-project warning (`:1385-1393`). AnA context (`:1135-1234`).

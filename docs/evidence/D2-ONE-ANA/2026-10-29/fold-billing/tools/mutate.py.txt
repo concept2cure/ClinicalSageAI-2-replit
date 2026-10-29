@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+"""Mutations for the billing fold, Part 1. Each mutation replaces one exact string in one file, runs
+the named suites, expects at least one failure (killed), and restores the file by replacement,
+checked with md5. Usage: mutate.py [ids...]"""
+import hashlib, subprocess, sys, os
+R = '/home/user/ClinicalSageAI-2-replit'
+SRV = ['server/routes/__tests__/billing-invoices-admin-gate.test.ts', 'server/middleware/__tests__/session-permissions.test.ts']
+INV = ['client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx']
+MENU = ['client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx']
+USE = ['client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx']
+BD = 'server/routes/billing-dashboard.ts'
+LI = 'client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx'
+LS = 'client/src/concept2cure/v2/surfaces/LicensingSurface.tsx'
+UB = 'client/src/concept2cure/v2/surfaces/UsageBilling.tsx'
+SH = 'client/src/concept2cure/v2/Shell.tsx'
+M = [
+  ('S1 invoice route loses the billing-admin guard', BD,
+   "router.get('/invoices', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async",
+   "router.get('/invoices', authenticateToken, async", SRV),
+  ('S2 no customer reads as set up and empty', BD,
+   "return res.json({ billingSetUp: false, invoices: [], hasMore: false, nextCursor: null });",
+   "return res.json({ billingSetUp: true, invoices: [], hasMore: false, nextCursor: null });", SRV),
+  ('S3 cursor is passed to Stripe unvalidated', BD,
+   "if (startingAfter !== undefined && (typeof startingAfter !== 'string' || !STRIPE_INVOICE_ID.test(startingAfter))) {",
+   "if (startingAfter !== undefined && typeof startingAfter !== 'string') {", SRV),
+  ('S4 the next-page cursor is never returned', BD,
+   "nextCursor: stripeInvoices.has_more && last ? last.id : null,",
+   "nextCursor: null,", SRV),
+  ('S5 a seat write keeps its own literal role list', BD,
+   "router.put('/seats', authenticateToken, requireRole(...BILLING_ADMIN_ROLES),",
+   "router.put('/seats', authenticateToken, requireRole('admin', 'owner'),", SRV),
+  ('S6 the session never carries billing:admin', 'server/middleware/orgMembership.ts',
+   "    permissions.push(BILLING_ADMIN_PERMISSION);\n", "", SRV),
+  ('S7 the billing role list widens to managers', 'shared/constants/permissions.ts',
+   "withExtendingRoles(['owner', 'admin']);\nexport const BILLING_ADMIN_PERMISSION",
+   "withExtendingRoles(['owner', 'admin', 'manager']);\nexport const BILLING_ADMIN_PERMISSION", SRV),
+  ('C1 a 403 reads as a failed read', LI,
+   "return state.status === 403 ? { kind: 'refused' } : { kind: 'failed' };",
+   "return { kind: 'failed' };", INV),
+  ('C2 not set up reads as an empty page', LI,
+   "  if (!state.data.billingSetUp) return { kind: 'not-set-up' };\n", "", INV),
+  ('C3 the guard accepts a body without the billingSetUp verdict', LI,
+   "    typeof v.billingSetUp === 'boolean' &&\n", "", INV),
+  ('C4 the list is read whatever the permission', LS,
+   "const invoices = useInvoices(canAdministerBilling(useAuthUser()));",
+   "const invoices = useInvoices((useAuthUser(), true));", INV),
+  ('C5 Older does not move to the next page', LI,
+   "      if (next) setCursors((c) => [...c, next]);", "      if (next) setCursors((c) => c);", INV),
+  ('C6 a page with more claims a total', LI,
+   "    ? `Showing ${span}. Older invoices are on the next page.`",
+   "    ? `Showing ${span} of ${last}. Older invoices are on the next page.`", INV),
+  ('C7 a failed read is reported to AnA as no invoices', LI,
+   "        facts: { invoices: null, invoicesUnavailable: 'the invoice read failed' },",
+   "        facts: { invoices: { billingSetUp: true, rows: [] }, invoicesUnavailable: null },", INV),
+  ('C8 Licensing does not publish the invoice facts', LS,
+   "facts: { ...ctx.facts, ...inv.facts } };", "facts: { ...ctx.facts } };", INV),
+  ('C11 the invoices sit above the plan status (moved, not duplicated)', LS,
+   ["      {statusState.loading ? (\n        <div role=\"status\" className=\"scaf-note\" style={{ marginBottom: 16 }}>",
+    "      ) : null}\n\n      <LicensingInvoices invoices={invoices} />\n"],
+   ["      <LicensingInvoices invoices={invoices} />\n      {statusState.loading ? (\n        <div role=\"status\" className=\"scaf-note\" style={{ marginBottom: 16 }}>",
+    "      ) : null}\n\n"], INV),
+  ('C12 the guard accepts a body without the cursor field', LI,
+   "    (v.nextCursor === null || typeof v.nextCursor === 'string') &&\n", "", INV),
+  ('C9 the invoice card is not mounted', LS,
+   "      ) : null}\n\n      <LicensingInvoices invoices={invoices} />\n",
+   "      ) : null}\n\n", INV),
+  ('C10 Try again does not read again', LI,
+   "    retry: () => setAttempt((a) => a + 1),", "    retry: () => setAttempt((a) => a),", INV),
+  ('M1 Billing opens the retired billing screen', SH,
+   "[{ label: 'Billing', ic: 'creditCard', to: 'licensing' }]",
+   "[{ label: 'Billing', ic: 'creditCard', to: 'billing' }]", MENU),
+  ('M2 Billing is offered to every org admin', SH,
+   "...(billingAdmin ? [{ label: 'Billing'", "...(isOrgAdmin ? [{ label: 'Billing'", MENU),
+  ('M3 Billing is offered to every member', SH,
+   "...(billingAdmin ? [{ label: 'Billing'", "...(true ? [{ label: 'Billing'", MENU),
+  ('U1 usage reads the invoices again', UB,
+   "  const snap = usageState.data;\n",
+   "  const snap = usageState.data;\n  useLiveData<unknown>('/api/billing/invoices', ['/api/billing/invoices']);\n", USE),
+  ('U2 asking for the billing tab is reported as done', UB,
+   "    if (target === 'billing') {\n      return {\n        ok: false,",
+   "    if (target === 'billing') {\n      return {\n        ok: true, detail: 'Opened the billing tab',", USE),
+]
+
+def md5(p): return hashlib.md5(open(p, 'rb').read()).hexdigest()
+
+def run(ids):
+  out = []
+  for (name, f, old, new, tests) in M:
+    mid = name.split()[0]
+    if ids and mid not in ids: continue
+    p = os.path.join(R, f)
+    src = open(p).read()
+    olds, news = (old, new) if isinstance(old, list) else ([old], [new])
+    if any(src.count(o) != 1 for o in olds):
+      out.append(f'{name}: SKIP (anchor counts {[src.count(o) for o in olds]})'); print(out[-1], flush=True); continue
+    before = md5(p)
+    mutated = src
+    for o, n in zip(olds, news): mutated = mutated.replace(o, n)
+    open(p, 'w').write(mutated)
+    try:
+      r = subprocess.run(['npx', 'vitest', 'run', *tests], cwd=R, capture_output=True, text=True, timeout=600)
+      tail = [l for l in r.stdout.splitlines() if 'Tests ' in l]
+      verdict = 'KILLED' if r.returncode != 0 else 'SURVIVED'
+    finally:
+      open(p, 'w').write(src)
+    assert md5(p) == before, f'restore failed for {f}'
+    out.append(f'{name}: {verdict} ({tail[-1].strip() if tail else "no summary"}) [{f} restored, md5 {before}]')
+    print(out[-1], flush=True)
+  return out
+
+if __name__ == '__main__':
+  res = run(set(sys.argv[1:]))
+  killed = sum('KILLED' in l for l in res)
+  print(f'{killed}/{len(res)} killed')

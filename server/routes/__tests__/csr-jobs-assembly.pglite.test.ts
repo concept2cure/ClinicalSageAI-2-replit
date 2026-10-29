@@ -14,7 +14,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ database: null as unknown, start: vi.fn(), getSequence: vi.fn(), upsertLeaf: vi.fn(),
+const h = vi.hoisted(() => ({ database: null as unknown, start: vi.fn(), getSequence: vi.fn(), upsertLeaf: vi.fn(), removeLeaf: vi.fn(),
   // The job's current fingerprint, as the import computes it (workflow-source-import.ts); placement compares the assembly's to it.
   source: vi.fn(async () => ({ fingerprint: 'f'.repeat(64) })) }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
@@ -22,7 +22,7 @@ vi.mock('../../services/csr-builder.js', () => ({ launchCSRBuildAsync: vi.fn() }
 vi.mock('../../services/csr/csr-assembly-run.js', async (original) => ({
   ...(await original<typeof import('../../services/csr/csr-assembly-run.js')>()), startCsrAssembly: h.start,
 }));
-vi.mock('../../services/submission-service/submission-service.js', () => ({ getSequence: h.getSequence, upsertLeaf: h.upsertLeaf }));
+vi.mock('../../services/submission-service/submission-service.js', () => ({ getSequence: h.getSequence, upsertLeaf: h.upsertLeaf, removeLeaf: h.removeLeaf }));
 vi.mock('../../services/authoring/workflow-source-import.js', () => ({ materializeCsrAssemblySource: h.source }));
 vi.mock('../../services/csr/project-scope', async (original) => ({
   ...(await original<typeof import('../../services/csr/project-scope')>()),
@@ -44,7 +44,11 @@ beforeAll(async () => {
   await pg.exec(`CREATE TABLE organizations (id integer PRIMARY KEY); CREATE TABLE projects (id integer PRIMARY KEY);
     CREATE TABLE users (id integer PRIMARY KEY); INSERT INTO organizations VALUES (7); INSERT INTO projects VALUES (11); INSERT INTO users VALUES (5);
     CREATE TABLE submissions (id integer PRIMARY KEY, organization_id integer, program_id uuid, title text, deleted_at timestamptz);
-    INSERT INTO submissions VALUES (3, 7, '${PROGRAM}', 'LMN-201 IND', NULL);`);
+    INSERT INTO submissions VALUES (3, 7, '${PROGRAM}', 'LMN-201 IND', NULL);
+    CREATE TABLE ectd_sequences (id integer PRIMARY KEY, organization_id integer, submission_id integer, sequence_number text, deleted_at timestamptz);
+    CREATE TABLE submission_leaves (id integer PRIMARY KEY, organization_id integer, sequence_id integer, section_code text, title text, lifecycle_op text,
+      study_id text, stf_file_tag text, parent_leaf_id integer, document_table text, document_id integer, deleted_at timestamptz);
+    INSERT INTO ectd_sequences VALUES (80, 7, 3, '0003', NULL), (90, 7, 3, '0004', NULL);`);
   await pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20260628_csr_job_state.sql'), 'utf8'));
   const bound = JSON.stringify({ studyInfo: { protocolNumber: 'SYN-LMN201-B' }, evidenceSource: { programId: PROGRAM, runId: 'run-41', studyId: 'SYN-LMN201-B' } });
   await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by)
@@ -114,4 +118,33 @@ it('refuses to place an assembly whose body cites a table or listing it does not
   expect(drafting.status).toBe(409);
   expect(drafting.body).toMatchObject({ code: 'CSR_PLACEMENT_BUILD_INCOMPLETE', error: expect.stringMatching(/drafting.*Nothing was placed\./) });
   expect(h.upsertLeaf).not.toHaveBeenCalled();
+});
+
+it('shows and places a revised body as a replace of the study\'s earlier body, and refuses to withdraw a placement that is not partial (SYNTHETIC)', async () => {
+  h.upsertLeaf.mockReset().mockResolvedValue({ id: 801 });
+  h.getSequence.mockResolvedValue({ id: 90, submissionId: 3, sequenceNumber: '0004', status: 'draft', dispatchStatus: null });
+  const leaf = { appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1',
+    studyId: 'SYN-LMN201-B', pages: 3, bytes: 10, sha256: 'a'.repeat(64), md5: 'b'.repeat(32), renderedLeafFileId: 2 };
+  const result = JSON.stringify({ status: 'complete', studyId: 'SYN-LMN201-B', leaves: [leaf], missing: [], notApplicable: [], bodyGaps: [], unresolvedReferences: [], placeholderSections: [],
+    jobFingerprint: 'f'.repeat(64), structure: { ok: true, findings: [], bodyOutlineDepth: 4, linksChecked: 1 }, listings: [], stfWarnings: [], pdfa: '' });
+  // Sequence 0003 holds this study's body, as an earlier CSR placement recorded it.
+  await pg.exec(`INSERT INTO submission_leaves VALUES (700, 7, 80, 'm5.3.5.1', 'Earlier body', 'new', 'SYN-LMN201-B', 'study-report', NULL, 'rendered_leaf_files', 9, NULL);`);
+  await pg.query(`INSERT INTO csr_assembly_runs (organization_id, job_id, requested_by, status, progress, result, placement)
+    VALUES (7, 41, 5, 'assembled', 100, $1::jsonb, '{"state":"placed","sequenceId":80,"sequenceNumber":"0003","leaves":[{"appendix":"body","leafId":700,"fileName":"csr-body.pdf"}]}'::jsonb)`, [result]);
+  const revised = await pg.query<{ id: number }>(`INSERT INTO csr_assembly_runs (organization_id, job_id, requested_by, status, progress, result)
+    VALUES (7, 41, 5, 'assembled', 100, $1::jsonb) RETURNING id`, [result]);
+  const id = revised.rows[0].id;
+
+  const preview = await request(app).get(`/api/csr/jobs/41/assembly/${id}/lifecycle?sequenceId=90`);
+  expect(preview.status).toBe(200);
+  expect(preview.body.lifecycle).toMatchObject({ undecided: [], leaves: [{ appendix: 'body', operation: 'replace', parent: { leafId: 700, sequenceNumber: '0003' } }] });
+
+  const placed = await request(app).post(`/api/csr/jobs/41/assembly/${id}/place`).send({ sequenceId: 90, reason: 'Revised CSR for the Part B data cut' });
+  expect(placed.status).toBe(200);
+  expect(h.upsertLeaf).toHaveBeenCalledWith(expect.objectContaining({ lifecycleOp: 'replace', parentLeafId: 700, documentId: 2 }), { organizationId: 7, userId: 5 });
+
+  const withdraw = await request(app).post(`/api/csr/jobs/41/assembly/${id}/withdraw-placement`).send({ reason: 'Withdraw the placed CSR files.' });
+  expect(withdraw.status).toBe(409);
+  expect(withdraw.body).toMatchObject({ code: 'CSR_PLACEMENT_WITHDRAW_NOT_PARTIAL', error: expect.stringMatching(/placed in full in sequence 0004.*Nothing was withdrawn\./) });
+  expect(h.removeLeaf).not.toHaveBeenCalled();
 });

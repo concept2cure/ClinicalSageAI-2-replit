@@ -1,0 +1,31 @@
+# Red: the new suite against the parent's spine (package-from-core.ts, assemble-from-core.ts, core-to-packager.ts at 1c4579feb)
+# npx vitest run server/services/ectd/__tests__/sequence-spine-fda-submission-id.pglite.test.ts --reporter=verbose
+
+ × the FDA submission-id on the Submission Center spine > an IND amendment names the Original Application it continues (0000), not its own number 288ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' to match /<submission-id submissi…/submission-id>
+ ✓ the FDA submission-id on the Submission Center spine > an annual report opens its own activity, and declares its own number 127ms
+ ✓ the FDA submission-id on the Submission Center spine > the original declares its own number 94ms
+ × the FDA submission-id on the Submission Center spine > an amendment in a submission that holds no Original Application sequence is refused, never coded as a new activity 77ms
+   → expected a refusal
+ × the FDA submission-id on the Submission Center spine > an amendment in a submission that holds only an Original Application the agency rejected is refused, never coded as a new activity 116ms
+   → expected a refusal
+ × the FDA submission-id on the Submission Center spine > an amendment in a submission that holds an Original Application only in another region is refused, never coded as a new activity 91ms
+   → expected a refusal
+ × the FDA submission-id on the Submission Center spine > a follow-up typed original, after the Original Application, is refused as a second one 153ms
+   → expected a refusal
+
+# The amendment case: what the unchanged spine wrote into m1/us/us-regional.xml for sequence 0002
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' to match /<submission-id submissi…/submission-id>
+
+- Expected:
+/<submission-id submission-type="fdast1">0000<\/submission-id>/
+
++ Received:
+          <submission-id submission-type=\"fdast1\">0002</submission-id>
+          <sequence-number submission-sub-type=\"fdasst4\">0002</sequence-number>
+ ❯ server/services/ectd/__tests__/sequence-spine-fda-submission-id.pglite.test.ts:79:17
+     79|     expect(xml).toMatch(/<submission-id submission-type="fdast1">0000<…
+     80|     expect(xml).toMatch(/<sequence-number submission-sub-type="fdasst4…
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

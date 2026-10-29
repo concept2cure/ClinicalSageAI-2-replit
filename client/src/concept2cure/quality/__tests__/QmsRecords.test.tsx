@@ -80,6 +80,50 @@ describe('Quality records', () => {
     await waitFor(() => expect(screen.getByText('NC-2026-004: Rework was signed.')).toBeTruthy());
   });
 
+  it('records a deviation\'s investigation along the server lifecycle, and closes it only by a signature (P-57)', async () => {
+    const DEV = {
+      id: 5, deviation_number: 'DEV-2026-001', title: 'EM excursion, Grade B room 2', description: 'Viable count above the action limit.',
+      deviation_type: 'unplanned', classification: 'major', category: 'environmental', detected_date: '2026-10-20T00:00:00Z',
+      location: null, batch_number: null, product_name: null, impact_level: null, investigation_status: 'in_progress',
+      immediate_actions: null, root_cause: null, resolution_description: null, status: 'under_investigation',
+      target_closure_date: null, actual_closure_date: null, qa_approved_by: null,
+    };
+    H.reads['/api/mdx/qms/deviations'] = { data: { data: [DEV] }, loading: false, error: null };
+    H.reads['/api/capa-mdr/capa'] = { data: { rows: [] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ data: { ...DEV, status: 'pending_approval' } }) });
+    const view = render(<QmsRecords tab="deviations" onAsk={vi.fn()} />);
+    expect(screen.getByText('DEV-2026-001')).toBeTruthy();
+    // Only the moves the server allows: from under investigation, to pending approval. No close yet.
+    expect(screen.queryByRole('button', { name: /^Close$/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Investigate/ }));
+    const d = screen.getByRole('dialog');
+    const moves = [...(within(d).getByLabelText(/Move to/) as HTMLSelectElement).options].map((o) => o.value).filter(Boolean);
+    expect(moves).toEqual(['pending_approval']);
+    fireEvent.change(within(d).getByLabelText(/Move to/), { target: { value: 'pending_approval' } });
+    fireEvent.change(within(d).getByLabelText(/Root cause/), { target: { value: 'HEPA seal gap.' } });
+    fireEvent.change(within(d).getByLabelText(/^Resolution/), { target: { value: 'Seal replaced; room requalified.' } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/deviations/5', {
+      status: 'pending_approval', rootCause: 'HEPA seal gap.', resolutionDescription: 'Seal replaced; room requalified.',
+    }));
+
+    // Pending approval: the close is a signature.
+    H.apiRequest.mockReset();
+    H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...DEV, status: 'closed' }, signedAt: '2026-10-29T12:00:00.000Z' }) });
+    H.reads['/api/mdx/qms/deviations'] = { data: { data: [{ ...DEV, status: 'pending_approval', root_cause: 'HEPA seal gap.', resolution_description: 'Seal replaced.' }] }, loading: false, error: null };
+    view.rerender(<QmsRecords tab="deviations" onAsk={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Continue to sign' }));
+    const signing = await screen.findByRole('dialog', { name: 'Close deviation' });
+    expect(signing.getAttribute('data-meanings')).toBe('approval,responsibility');
+    expect(H.apiRequest).not.toHaveBeenCalled();
+    fireEvent.click(within(signing).getByRole('button', { name: 'stub-sign' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/deviations/5/close', {
+      password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
+    }));
+    await waitFor(() => expect(screen.getByText('DEV-2026-001 was closed.')).toBeTruthy());
+  });
+
   it('shows a failed supplier read as a failure, not an empty register', () => {
     H.reads['/api/mdx/qms/suppliers'] = { data: null, loading: false, error: 'HTTP 500' };
     render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
@@ -125,13 +169,18 @@ describe('Quality records', () => {
     fireEvent.click(screen.getByRole('button', { name: /Approval/ }));
     const drawer = screen.getByRole('dialog');
     fireEvent.change(within(drawer).getByLabelText(/^Standing/), { target: { value: 'approved' } });
+    // An approval names its next re-approval; without it nothing goes on to the signature.
     fireEvent.click(within(drawer).getByRole('button', { name: 'Continue to sign' }));
+    await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/an approval needs its next re-approval date/)).toBeTruthy());
+    const nextYear = `${new Date().getUTCFullYear() + 1}-06-30`;
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/^Next re-approval/), { target: { value: nextYear } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Continue to sign' }));
     const signing = await screen.findByRole('dialog', { name: 'Sign supplier standing' });
     expect(H.apiRequest).not.toHaveBeenCalled();
 
     fireEvent.click(within(signing).getByRole('button', { name: 'stub-sign' }));
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/suppliers/9/approval', {
-      approvalStatus: 'approved', password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
+      approvalStatus: 'approved', reapprovalDate: nextYear, password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
     }));
     await waitFor(() => expect(screen.getByText('Acme Biologics is now approved.')).toBeTruthy());
   });

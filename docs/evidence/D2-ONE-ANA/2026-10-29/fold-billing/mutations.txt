@@ -1,0 +1,49 @@
+# fold-billing Part 1 — MUTATIONS: 24/24 killed (first run 21/22, C3 survived; test tightened; C3, C11, C12 re-run 3/3)
+# Each replaces one exact string (C11: two, a move), runs the named suites, and restores the file by replacement, checked with md5.
+# tools/mutate.py.txt is the script.
+
+## Run 1
+S1 invoice route loses the billing-admin guard: KILLED (Tests  8 failed | 63 passed (71)) [server/routes/billing-dashboard.ts restored, md5 cde065df663ea94cca97c54687719ac9]
+S2 no customer reads as set up and empty: KILLED (Tests  1 failed | 70 passed (71)) [server/routes/billing-dashboard.ts restored, md5 cde065df663ea94cca97c54687719ac9]
+S3 cursor is passed to Stripe unvalidated: KILLED (Tests  5 failed | 66 passed (71)) [server/routes/billing-dashboard.ts restored, md5 cde065df663ea94cca97c54687719ac9]
+S4 the next-page cursor is never returned: KILLED (Tests  1 failed | 70 passed (71)) [server/routes/billing-dashboard.ts restored, md5 cde065df663ea94cca97c54687719ac9]
+S5 a seat write keeps its own literal role list: KILLED (Tests  1 failed | 70 passed (71)) [server/routes/billing-dashboard.ts restored, md5 cde065df663ea94cca97c54687719ac9]
+S6 the session never carries billing:admin: KILLED (Tests  4 failed | 67 passed (71)) [server/middleware/orgMembership.ts restored, md5 d16a0937f5ea4159c09bb41ca9cf9afe]
+S7 the billing role list widens to managers: KILLED (Tests  5 failed | 66 passed (71)) [shared/constants/permissions.ts restored, md5 45dc872c85cf7edc84083324a455d8ea]
+C1 a 403 reads as a failed read: KILLED (Tests  1 failed | 15 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C2 not set up reads as an empty page: KILLED (Tests  2 failed | 14 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C3 the guard accepts a body without the billingSetUp verdict: SURVIVED (Tests  16 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C4 the list is read whatever the permission: KILLED (Tests  2 failed | 14 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 89bbdfb80ccf6922e6eeba297625f2ee]
+C5 Older does not move to the next page: KILLED (Tests  1 failed | 15 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C6 a page with more claims a total: KILLED (Tests  1 failed | 15 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C7 a failed read is reported to AnA as no invoices: KILLED (Tests  1 failed | 15 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C8 Licensing does not publish the invoice facts: KILLED (Tests  4 failed | 12 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 89bbdfb80ccf6922e6eeba297625f2ee]
+C9 the invoices sit above the plan status: KILLED (Tests  16 failed (16)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 89bbdfb80ccf6922e6eeba297625f2ee]
+C10 Try again does not read again: KILLED (Tests  1 failed | 15 passed (16)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+M1 Billing opens the retired billing screen: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/Shell.tsx restored, md5 cc3d6f0688673c5a272b7a7729740572]
+M2 Billing is offered to every org admin: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/Shell.tsx restored, md5 cc3d6f0688673c5a272b7a7729740572]
+M3 Billing is offered to every member: KILLED (Tests  2 failed | 1 passed (3)) [client/src/concept2cure/v2/Shell.tsx restored, md5 cc3d6f0688673c5a272b7a7729740572]
+U1 usage reads the invoices again: KILLED (Tests  3 failed | 7 passed (10)) [client/src/concept2cure/v2/surfaces/UsageBilling.tsx restored, md5 2b2dc6fde068d6a982da9a37a351845a]
+U2 asking for the billing tab is reported as done: KILLED (Tests  1 failed | 9 passed (10)) [client/src/concept2cure/v2/surfaces/UsageBilling.tsx restored, md5 2b2dc6fde068d6a982da9a37a351845a]
+21/22 killed
+
+## Run 2 (after tightening the guard cases; C11 is a true move above the status, not a duplicate)
+C3 the guard accepts a body without the billingSetUp verdict: KILLED (Tests  1 failed | 16 passed (17)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+C11 the invoices sit above the plan status (moved, not duplicated): KILLED (Tests  1 failed | 16 passed (17)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 89bbdfb80ccf6922e6eeba297625f2ee]
+C12 the guard accepts a body without the cursor field: KILLED (Tests  1 failed | 16 passed (17)) [client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx restored, md5 507bf0a1c2842ca20ddb2fa0834d7188]
+3/3 killed
+
+# ═══ Part 1b — MUTATIONS: 12/12 killed (tools/mutate-1b.py.txt) ═══
+B1 /checkout loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B2 /dtc-checkout loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B3 /portal loses the billing-admin guard: KILLED (Tests  8 failed | 27 passed (35)) [server/routes/billing.ts restored, md5 cb291ba354dabbfecdc951844d1cddfa]
+B4 Manage billing is offered to every member: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B5 a member is offered checkout on the plan cards: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B6 a member loses Ask AnA about Enterprise: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B7 AnA is told a member may buy: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B8 AnA is offered checkout for a member: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B9 a member is not told who chooses the subscription: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/surfaces/LicensingSurface.tsx restored, md5 8ee63dec9e4a3ec61eee92cc7ad11904]
+B10 onboarding sends checkout without the permission: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+B11 onboarding reports a 403 as a missing link: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+B12 onboarding points to the retired Usage & Billing: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
+12/12 killed
