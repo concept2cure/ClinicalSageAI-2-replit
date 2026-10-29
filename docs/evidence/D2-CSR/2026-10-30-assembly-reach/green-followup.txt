@@ -1,0 +1,311 @@
+$ npx vitest run <32 files: the assembly suites (run, packaged, route, assembly, -source, -review, -scale, csrAssemblyControl), leaf-file-name, six leaf-source-resolver*, rendered-leaf-files, lifecycle-*, package-sequence-lifecycle, submission-leaf-source-evidence, vault-version-lifecycle-binding, csr-builder-*, csr-job-runner*, csrBuildProgress>
+(adversarial verifier, 2026-10-30; csr-assembly-packaged re-run alone after its typing fix: 2 passed)
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 616ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 194ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 59ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 442ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 391ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 465ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 622ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now) 440ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block 689ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only 434ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC) 1807ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC) 812ms
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap under a fixed ceiling 12854ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 662ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 438ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 882ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 411ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 104ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 96ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 390ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 19ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 390ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 383ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 337ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 346ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 792ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as 195ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as 132ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor 109ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version 63ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing 128ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing 93ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed 106ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it 70ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one 72ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor 106ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse 80ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval 70ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an upload nobody reviewed is not finalized 10ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at authoring is not finalized 19ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at in_review is not finalized 10ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at approved is finalized 20ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at placed is finalized 10ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at packaged is finalized 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at submitted is finalized 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version a later one superseded is not finalized for a new assembly 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approval for different bytes is not an approval of these 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > names the leaf by its file, so the refusal says which document 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > transmit, freeze and dispatch refuse it, naming the document and why 10ms
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf 339ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > keeps a registered Vault original outside the admitted destination undetermined and refuses an observed scope change after admission 160ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > verifies the canonical section body pin and carries its actual source key, never the filing code 81ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a drafted source with long pinned words is not finalized content 35ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a review source with long pinned words is not finalized content 22ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an empty structured outline stays undetermined rather than becoming content from its title 21ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a retained placeholder with its own valid pin is known non-substantive 25ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > applies each placement pin independently for two leaves naming the same source 21ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an accessible sibling cannot authorize its body for this submission 20ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unassigned private actor is refused before source parent or body reads 16ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a failed body query is unavailable, never a success with missing sources 26ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > late body alteration and actor revocation refuse already assembled evidence 40ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound unified_documents source never causes a body read or a resolved claim 19ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound rendered_leaf_files source never causes a body read or a resolved claim 19ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a source executor or reconstructed admission cannot substitute for the actual request 24ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > retained copy proof reads its exact historical seal, not a changed current draft 41ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a moved Vault parent refuses before a second provider fetch 33ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization null before reading labels or retained bytes 24ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization 8 before reading labels or retained bytes 24ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a transfer to a different still-accessible unique project anchor refuses before repeated bytes 36ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > duplicate Vault pointers fetch bytes once while each retained placement keeps its own pin verdict 71ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a retained provider mutation during the read refuses its old matching byte proof 39ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 261ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 121ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 88ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 84ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 65ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 63ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 12ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent 10ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal 331ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts 113ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed 111ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so 29ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 176ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 128ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft AND the locked one as unfinalized 101ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization 3ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 97ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 14ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 38ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 31ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path) 63ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted) 18ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved 15ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once) 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time 24ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless 62ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null 20ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents 12ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 48ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 17ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 20ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked 15ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 6ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 711ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 453ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 371ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 77ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 29ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 414ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 38ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 132ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 214ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 49ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 118ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 467ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 58ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 65ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 267ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 52ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 20ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 105ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 82ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 35ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a placement a stopped worker left as interrupted, not as being placed, and offers to place it again into that sequence (2026-10-30) 41ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > marks a drafted section that keeps a data placeholder as blocking placement 12ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 33ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 8ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 8ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 15ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 7ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 6ms
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content ("") 8ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content (" \n\t ") 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > preserves valid partial outputs and counts only requested rows through an explicit resume 7ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > repairs a retained blank row only on explicit resume while preserving valid saved text 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "999" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "13" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > redrafts saved placeholder target text on resume and keeps the placeholder refusal 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > does not let unrelated retained placeholder rows block an otherwise covered explicit subset 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > preserves the existing full-build meaning of an empty retained selection 16ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > drafts a duplicate supported subset only once 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > resets stale progress before retrying targets when retained rows are unrelated or blank 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > rejects an altered retained hash without overwriting the source section 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > does not turn a cancelled job into failed when a late AI call rejects 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > cannot complete or continue a job cancelled during an AI call 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > does not relabel completed CSR work as failed when dependent continuation is unavailable 4ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects the documented placeholder tokens 2ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects a general bracketed placeholder even outside the known token list 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for clean prose with no bracketed content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for empty/undefined/null content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > does not flag a bare numeric-only bracket (e.g. a citation marker) 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with residual placeholders "needs_data", not "drafted" 15ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with fully-resolved content "drafted" 7ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > does not mark a results section drafted from statistics nobody supplied 17ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with no content "empty" (unchanged behavior) 16ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > drafts a selected nested section without drafting its parent 8ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > drafts a selected bare parent through its children, never itself 6ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > refuses a manual heading by name before billing 2ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > does not call a nonexistent section complete 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > rejects duplicate targets before billing 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > rejects an explicit empty selection before billing 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > does not mark a partly invalid section selection complete 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > does NOT report complete/100 when generated sections still carry data placeholders 25ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports complete/100 when generated sections have no residual placeholders 6ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports partial progress (0 < progress < 100) when only some targeted sections are data-complete 5ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > reads a well-formed history oldest-first 10ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > DROPS an entry it cannot fully read, rather than reconstructing a partial prior state 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > is empty for a package that has filed nothing, or whose metadata is unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > is the fold of every sequence, not the last one: a later filing supersedes, an untouched leaf survives, and each carries the sequence that HOLDS it 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawn leaf drops out — it is no longer on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawal filed WITHOUT the document's key still takes the keyed document off file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > carries the pre-normalization digest into the prior state, and treats a malformed one as unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > folds in sequence order however the history is ordered 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > 0000 is an original: every leaf is new, and no prior state is consulted 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a leaf on file but absent from this assembly stays on file — absence is not withdrawal 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence number already transmitted, for 0000 and for a follow-up alike 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up that does not say what it is filing — only 0000 is an original by definition 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > accepts what the region accepts, and names its terms when it asks for one 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a region with no vocabulary takes the operator at their word — the list is not invented 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > WITHDRAWS a named document, pointing the delete at the sequence that holds it 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawal names the identity of the document it withdraws, so the filed history records which one left 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a sequence that ONLY withdraws is a filing 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a withdrawal of something that is not on file, and one that contradicts what is being filed 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawn document leaves the prior state, so re-filing it later is NEW 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > follows a document through a change of FILE NAME, because the name is not its identity 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a renamed section whose CONTENT is unchanged still files nothing 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a history filed BEFORE leaf keys existed still matches on the path — the fallback is not optional 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > moving a document to a DIFFERENT CTD section is not a replace across sections — and the copy left on file is named 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > a new cover letter files as NEW, never as a replace of the one on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > the letter on file, unchanged, is not filed again as this sequence's letter 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > without the predicate (every region but FDA) a letter is diffed like any document 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a document filed at TWO sections on purpose is not a move 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > names an empty-section placeholder still on file from before placeholders stopped being filed 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the reader skips a rejected entry; an entry with no state, or "transmitted", is on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > a "rejected" state that carries no recorded evidence does not un-file anything 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the rejected number is reused, diffed against the sequence before it, and the one after it is out of order 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a leaf absent from prior as new 3ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a changed leaf (different checksum) as replace by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > honors appendOnChange to emit append instead of replace 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > omits an unchanged leaf (same checksum) by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > surfaces unchanged as a no-op append when includeUnchanged is set 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a prior leaf the new sequence does not mention is unchanged, NOT withdrawn 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a DECLARED withdrawal is a delete carrying the prior leaf's identity and checksum 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > refuses to withdraw a leaf that was never filed 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf) 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a keyed leaf still matches an UNKEYED prior leaf by path — a history filed before keys existed is not re-filed whole 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > two DIFFERENTLY keyed leaves at one path are two documents — never a replace of one by the other 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > counts unchanged by what was MATCHED: a replaced leaf is not also reported as still on file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > compares like with like: the desired md5 against the prior's PRE-normalization digest when it was recorded 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > handles a mixed sequence: new + replace + delete + unchanged together 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > throws on ambiguous duplicate identity in the desired set 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a new leaf carries NO modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a replace names the prior leaf by its backbone and ID, prefixed to the prior sequence 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > an append of a Module 1 leaf names the regional backbone, from the sequence root 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a delete names the withdrawn prior leaf the same way 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > traverses to the sequence that last published the leaf, over the caller prefix 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > with no prefix and no sequence, names the backbone in the same root 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > never names a leaf by its file path: a prior leaf with only an href gets no modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > refuses to name a malformed ID or a backbone outside the sequence 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > omits modified-file (rather than guessing) when the prior leaf is not identified at all 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §12.6 is drafted against the E3 record, not "per ICH E3 guidelines" 9ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §2, the synopsis, is briefed with E3 §2 itself — E3 numbers no synopsis children 3ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSectionWithProvenance (job runner) > §12.2.1, a heading the old outline did not have, is briefed with its own E3 record 2ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §12.6 is drafted against the E3 record, not "per ICH E3 guidelines" 4ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §2, the synopsis, is briefed with E3 §2 itself — E3 numbers no synopsis children 3ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > draftCSRSection → generateSectionWithAI (on-demand route) > §12.2.1, a heading the old outline did not have, is briefed with its own E3 record 3ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > is the resolver's answer for an E3 heading — one source, not a second rendering 1ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > has no parent fallback: the deleted §2.x and §8.x children resolve to nothing 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > every section the builder drafts resolves to its own E3 brief 4ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > e3RequirementsFor > a number E3 does not have at any level resolves to null 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > a number that is not a drafting target > §99 is refused before any model call 2ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > a number that is not a drafting target > §12 is refused before any model call 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > a number that is not a drafting target > §3 is refused before any model call 0ms
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts > a number that is not a drafting target > §16.2.7 is refused before any model call 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > carries every ICH_E3_GUIDANCE heading, in report order, and nothing else 7ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > uses E3's titles and nests each heading under its E3 parent 10ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > has no builder-invented synopsis or objectives children 4ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > records the E3 drafting mode on every heading 6ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > marks §1–§13 required 25ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > no longer exports the duplicate outline or a second section-number list 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a full build drafts every narrative heading that carries content, and no manual heading 6ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a selected heading drafts its narrative subtree 11ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §3 by name 2ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14.3.1 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §15 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16.2.7 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["99"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["2.1"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["5","5"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection [] 0ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > stores the bytes under the caller organization and returns the leaf source 6ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > deletes the stored object when the row insert fails, so no unreachable bytes remain 2ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > refuses a zero-length render rather than recording an empty document 1ms
+ ✓ server/services/__tests__/csr-builder-lazy-client.test.ts > reads canonical CSR outline metadata without initializing the provider client 9ms
+ ✓ server/services/__tests__/csr-builder-lazy-client.test.ts > initializes on first actual drafting and keeps every concurrent call on the governed gateway envelope 14ms
+ ✓ server/services/__tests__/csr-builder-lazy-client.test.ts > keeps a provider refusal as an explicit template source instead of claiming AI output 10ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > does not reserve or consume quota for a foreign project in either launch path 9ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > refuses conflicting tenant, actor or malformed target before billing 1ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > keeps the source key whole and gives the label way so the name fits 64 characters 4ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > a short label and key are unchanged in substance 1ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > never emits an uppercase letter, a space, or a trailing dash before the key 1ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > renderedLeafPackageName (2026-10-30, CSR assembly follow-up) > is the name the materializer stages a rendered_leaf_files row under 1ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > returns a non-empty, well-formed ICH E3 section tree 6ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > has unique top-level section numbers 1ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > covers the ICH E3 backbone (efficacy, safety, study population, references/appendices) 1ms
+ ✓ server/services/__tests__/csr-builder-structure.test.ts > getICHE3Structure > is deterministic (same structure each call) 7ms
+ Test Files  32 passed (32)
+      Tests  306 passed (306)

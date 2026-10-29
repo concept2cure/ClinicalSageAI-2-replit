@@ -11,10 +11,13 @@
  *                                          — record one section review decision
  *                                            (submit | approve | send_back), as the
  *                                            signed-in reviewer (csr-section-review.ts)
- *   POST   /api/csr/jobs/:jobId/narratives — compose the build's patient safety
- *                                            narratives from its bound run's ADaM
- *                                            data (§14.3.3, §12.3.2; slice 7)
- *   GET    /api/csr/jobs/:jobId/narratives — the per-subject narrative QC list
+ *   /api/csr/jobs/:jobId/narratives…      — queue the build's patient safety narratives
+ *                                            from its bound run's ADaM data (§14.3.3,
+ *                                            §12.3.2; slice 7), its progress and the
+ *                                            per-subject QC list (csr-jobs-narratives.ts)
+ *   /api/csr/jobs/:jobId/assembly…        — assemble the build's eCTD leaves off the
+ *                                            request thread and place them in a sequence
+ *                                            (csr-jobs-assembly.ts)
  *
  * Tenant scoping rules:
  *   - organizationId MUST be resolved from req.tenantContext / req.user.
@@ -55,6 +58,8 @@ import {
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { csrAssemblyRouter } from './csr-jobs-assembly';
+import { csrNarrativeRouter } from './csr-jobs-narratives';
 
 const log = createScopedLogger('csr-jobs');
 
@@ -464,63 +469,10 @@ router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: 
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Patient safety narratives (CSR slice 7, csr/csr-narrative-store.ts)
-// ─────────────────────────────────────────────────────────────────────────────
+// Patient safety narratives (CSR slice 7), queued off the request thread since 2026-10-30: csr-jobs-narratives.ts.
+router.use(csrNarrativeRouter({ resolveOrganizationId, resolveUserId, parseJobIdParam, requireWriteAccess: requireCsrJobWriteAccess }));
 
-type NarrativeOutcome = import('../services/csr/csr-narrative-job.js').NarrativeJobResult;
-function narrativeOutcomeStatus(result: NarrativeOutcome): { status: number; code?: string } {
-  if (result.status === 'failed') return { status: 409, code: 'CSR_NARRATIVE_INTEGRITY_FAILED' };
-  if (result.status === 'stopped') return { status: 409, code: 'CSR_NARRATIVE_BUILD_NOT_RUNNABLE' };
-  return { status: 200 };
-}
-
-/**
- * Compose every narrative the E3 §12.3.2 rule selects, as the signed-in user,
- * from the approved ADaM bundle of the run the build is bound to. No prose
- * model is passed: the high-risk drafting model has not passed PQ-DRAFT-001
- * (ADR-0015 §3), so narratives are the engine's fact-only template prose.
- */
-router.post('/:jobId/narratives', async (req: Request, res: Response) => {
-  const jobId = parseJobIdParam(req.params.jobId);
-  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
-  const organizationId = resolveOrganizationId(req);
-  const userId = resolveUserId(req);
-  if (organizationId == null || userId == null) return res.status(401).json({ error: 'A signed-in user is required' });
-  try {
-    if (!await requireCsrJobWriteAccess(organizationId, jobId, userId)) return res.status(404).json({ error: 'Job not found' });
-    const [{ buildCsrNarratives }, { requestPgClient, requestConnectable }] = await Promise.all([
-      import('../services/csr/csr-narrative-store.js'), import('../db/requestDb.js'),
-    ]);
-    const result = await buildCsrNarratives({ q: queryableFromDrizzle(requireDb()), sql: requestPgClient(req), connectable: requestConnectable(req) },
-      { organizationId, jobId, userId });
-    const outcome = narrativeOutcomeStatus(result);
-    return res.status(outcome.status).json({ ...result, ...(outcome.code ? { code: outcome.code, error: 'The narratives were not landed; see the QC list.' } : {}) });
-  } catch (err) {
-    const [{ CsrNarrativeBuildError }, { CsrSourceInputError }] = await Promise.all([
-      import('../services/csr/csr-narrative-store.js'), import('../services/csr/source-access.js'),
-    ]);
-    if (err instanceof CsrSourceInputError) return res.status(err.status).json({ error: err.message, code: err.code, ...(err.issues ? { issues: err.issues } : {}) });
-    if (err instanceof CsrNarrativeBuildError || err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to compose CSR narratives', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
-    return res.status(500).json({ error: 'The narratives were not composed' });
-  }
-});
-
-router.get('/:jobId/narratives', async (req: Request, res: Response) => {
-  const jobId = parseJobIdParam(req.params.jobId);
-  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
-  const organizationId = resolveOrganizationId(req);
-  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
-  try {
-    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
-    const { readCsrNarrativeQc } = await import('../services/csr/csr-narrative-store.js');
-    return res.json({ subjects: await readCsrNarrativeQc(queryableFromDrizzle(requireDb()), organizationId, jobId) });
-  } catch (err) {
-    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to read CSR narrative QC', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
-    return res.status(500).json({ error: 'Failed to read the narrative QC list' });
-  }
-});
+// CSR assembly, its progress and its placement into a sequence (2026-10-30): csr-jobs-assembly.ts.
+router.use(csrAssemblyRouter({ resolveOrganizationId, resolveUserId, parseJobIdParam, requireWriteAccess: requireCsrJobWriteAccess }));
 
 export default router;

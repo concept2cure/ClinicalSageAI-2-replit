@@ -104,13 +104,15 @@ async function drawAbbreviations(pass: Pass, input: BodyInput): Promise<Rendered
 }
 
 function drawTables(pass: Pass, heading: string, tfls: readonly PlannedTfl[], heads: ReadonlySet<string>): void {
-  if (heading === '14') pass.writer.lines(tfls.length ? `The tables of Section 14 are filed as a separate document, ${CSR_TABLES_FILE}, in this study’s folder.` : 'Not supplied. The retained run holds no engine table, so no Section 14 document is filed.', tfls.length ? {} : { font: 'Helvetica-Oblique' });
+  // The §14 document's name as it ships (csr-assembly.ts leafTargets), so the text and every link name the file the package holds.
+  const tablesFile = (tfls.length && pass.index.leafTargets.get(tfls[0].number)?.fileName) || CSR_TABLES_FILE;
+  if (heading === '14') pass.writer.lines(tfls.length ? `The tables of Section 14 are filed as a separate document, ${tablesFile}, in this study’s folder.` : 'Not supplied. The retained run holds no engine table, so no Section 14 document is filed.', tfls.length ? {} : { font: 'Helvetica-Oblique' });
   for (const t of tfls) {
     const parts = t.number.split('.');
     let parent = '';
     for (let n = parts.length - 1; n >= 1 && !parent; n--) if (heads.has(parts.slice(0, n).join('.'))) parent = parts.slice(0, n).join('.');
     if (parent !== heading) continue;
-    pass.writer.paragraph([{ text: `Table ${t.number}`, link: { kind: 'external', fileName: CSR_TABLES_FILE, destination: t.destination } }, { text: ` ${t.table.title}` }], { indent: 12 });
+    pass.writer.paragraph([{ text: `Table ${t.number}`, link: { kind: 'external', fileName: tablesFile, destination: t.destination } }, { text: ` ${t.table.title}` }], { indent: 12 });
   }
 }
 

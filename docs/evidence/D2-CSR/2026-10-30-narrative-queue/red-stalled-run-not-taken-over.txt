@@ -1,0 +1,8 @@
+# Red: enqueueNarrativeRun without the takeover of a stalled run (its UPDATE ... AND false).
+ × server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 191ms
+   → The narratives of this build are already being composed. Their progress is shown below.
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome 42ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing 61ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts:84:19
+      Tests  1 failed | 2 passed (3)

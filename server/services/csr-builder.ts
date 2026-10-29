@@ -18,6 +18,7 @@ import { acceptEvidenceBoundDraft, acceptModelDraft } from './csr/unsupplied-sta
 import { CSR_EVIDENCE_DRAFTING_RULES, splitCsrClaims, type CsrAuthoringEvidence } from './csr/cortex-authoring-context.js';
 import { buildCsrClaimReceipts } from './csr/csr-claim-receipts.js';
 import { resolveCsrBuildContext } from './csr/project-scope';
+import { hasUnresolvedPlaceholders } from './csr/csr-placeholders.js';
 
 // Load the canonical gateway client only when an async drafting operation
 // needs it. A top-level await propagates into the Authoring source/export
@@ -67,29 +68,10 @@ export interface CSRSection {
 // PLACEHOLDER / DATA-COMPLETENESS DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Matches an unresolved data placeholder left in drafted CSR content, e.g.
- * [DATA TO BE INSERTED], [N], [value], [result], [reasons], [list], [X],
- * [statistical method to be specified], [favorable/unfavorable]. Both the AI
- * system prompt (buildSectionSystemPrompt) and the template fallback
- * (generateSectionTemplate) are instructed to use exactly this bracketed
- * convention for any real study number/finding that isn't available yet —
- * so ANY surviving `[...]` span containing a letter means the section still
- * needs real data, regardless of how much surrounding prose looks finished.
- *
- * Deliberately broad on purpose (fail closed per repo working agreement): a
- * false positive costs a section an extra "needs_data" glance from a
- * reviewer; a false negative would let a CSR section that's still full of
- * [DATA TO BE INSERTED] report as filing-ready, which is the bug this gate
- * exists to close. Legitimate regulatory prose does not use square brackets.
- */
-const PLACEHOLDER_PATTERN = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
-
-/** True if `content` still contains at least one unresolved data placeholder. */
-export function hasUnresolvedPlaceholders(content: string | null | undefined): boolean {
-  if (!content) return false;
-  return PLACEHOLDER_PATTERN.test(content);
-}
+// The rule lives in csr/csr-placeholders.ts (pure, so the CSR assembler's
+// placement gate can apply it without loading this module); re-exported here
+// for every existing importer. Moved verbatim 2026-10-30.
+export { hasUnresolvedPlaceholders };
 
 /**
  * Derive a section's status from its drafted content. Non-empty content that
