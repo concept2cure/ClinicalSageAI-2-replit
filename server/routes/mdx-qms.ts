@@ -714,6 +714,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   if (err.code === 'INVALID_AUTHORSHIP') return clientError(res, 409, err.message, { code: 'QMS_INVALID_AUTHORSHIP' });
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
+  if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
 
