@@ -15078,18 +15078,25 @@ registerToolHandler('log_nonconforming_product', async (input, ctx) => {
   }
   try {
     const { getPool } = await import('../../db.js');
+    /* The project it is filed under (D2 / D6, 2026-10-29; 20261029d), which the
+       project's Engineering screen reads. The registry wrapper has already
+       refused a program_id that is not this organization's
+       (foreignProgramRefusal, tool-record-scope.ts), and the program key holds
+       the row to the same rule. */
+    const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
+      ? input.program_id : null;
     const { rows } = await getPool().query(
       `INSERT INTO qms_nonconforming_products (
          organization_id, nc_number, device_name, lot_or_serial, source, description,
-         detected_by, disposition
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending')
+         detected_by, disposition, program_id
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8)
        RETURNING id, nc_number, source, disposition`,
       [
         ctx.organizationId, ncNumber,
         typeof input.device_name === 'string' ? input.device_name : null,
         typeof input.lot_or_serial === 'string' ? input.lot_or_serial : null,
         typeof input.source === 'string' ? input.source : null,
-        description, ctx.userId ?? null,
+        description, ctx.userId ?? null, programId,
       ],
     );
     return JSON.stringify({

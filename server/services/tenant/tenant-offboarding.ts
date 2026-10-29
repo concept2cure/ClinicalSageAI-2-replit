@@ -1182,6 +1182,21 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      so nothing erased it: a purged tenant kept every run here. Before
      regulatory_programs and cdisc_prm_studies, the two it references. */
   'stats_computation_runs',
+  /* The ISO 14971 risk file and the nonconformance log (D6, 2026-10-29), BEFORE
+     regulatory_programs. risk_items.program_id REFERENCES regulatory_programs(id)
+     with NO ACTION (migrations/20260507_mdx_beta_surfaces.sql), and since
+     20261029c risk_items_program_same_org_fk is NO ACTION on that lineage too,
+     so until this entry the purge of any tenant with one hazard filed under a
+     project failed at regulatory_programs with 23503 and rolled back
+     (tenant-purge-device-records.pglite.test.ts). Controls before the hazard
+     they control: risk_controls.risk_item_id cascades today, but the list must
+     not depend on that, and new_risk_item_id has no delete action.
+     qms_nonconforming_products names its project by an ON DELETE SET NULL
+     (program_id) key (20261029d), so it never blocked; it is the tenant's
+     content and nothing else reaches it. */
+  'risk_controls',
+  'risk_items',
+  'qms_nonconforming_products',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

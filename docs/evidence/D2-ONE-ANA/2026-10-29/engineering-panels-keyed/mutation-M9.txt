@@ -1,0 +1,14 @@
+# M9: the tool definition stops offering program_id
+# mutation: server/services/ana/qms-labeling-analytics-tool-defs.ts: 243 chars replaced by 0 chars
+# test: server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts
+# exit=1  Tests  1 failed | 3 passed (4)
+# restored byte for byte: True (sha256 7918c883af8b77b90efab428965de48bb942c9bc33765bc9395704f0b42cacb9)
+
+## replaced
+      program_id:    { type: 'string', description: "The project (regulatory_programs UUID) the nonconformance belongs to, when it concerns one. It is then shown on that project's Engineering screen. Omit for an organization-level record." },
+
+## with
+
+
+## failing tests
+× server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > offers the model a program_id to name the project 5ms

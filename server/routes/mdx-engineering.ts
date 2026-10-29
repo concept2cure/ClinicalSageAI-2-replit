@@ -15,24 +15,49 @@
  *
  * ## Scope honesty
  *
- * The five panels do not all have the same tenancy granularity, because
- * the underlying tables do not:
+ * The panels do not all have the same tenancy granularity, because the
+ * underlying tables do not:
  *
- *   risks   risk_items            org + program   → program-scoped
- *   trace   c2c_design_controls   org + program   → program-scoped
- *   dhf     cerv2_510k_sections   org only        → organization-scoped
- *   ecrs    change_requests       org only        → organization-scoped
- *   issues  qms_nonconforming_…   org only        → organization-scoped
+ *   risks      risk_items                 org + program   → program-scoped
+ *   trace      c2c_design_controls        org + program   → program-scoped
+ *   issues     qms_nonconforming_products org + program   → program-scoped
+ *   documents  concept2cure_artifacts     org + project bridge, plus
+ *              software_lifecycle_items   org + program   → program-scoped
+ *   dhf        cerv2_510k_sections        org only        → organization-scoped
+ *   ecrs       change_requests            org only        → organization-scoped
  *
  * Rather than quietly presenting org-wide rows as though they belonged
  * to the selected program, every panel reports its own `scope` in
- * `meta.scopes`. The surface labels anything organization-scoped so the
- * user knows what they are reading. Narrowing the remaining three to
- * program granularity needs a `program_id` column on each table and is
- * tracked separately — but mislabelling them is not acceptable in the
- * meantime. The trace was narrowed on 2026-10-29 (D2, fold F1 slice A):
- * c2c_design_controls.program_id comes from
- * migrations/20261029c_design_controls_and_risk_items_program_keys.sql.
+ * `meta.scopes`, and the surface does not draw a panel reported
+ * organization-scoped (EngineeringSurface.tsx keyedToProject).
+ *
+ * Narrowed on 2026-10-29 (D2):
+ *   - the trace (fold F1 slice A): c2c_design_controls.program_id from
+ *     migrations/20261029c_design_controls_and_risk_items_program_keys.sql;
+ *   - non-conformances: qms_nonconforming_products.program_id from
+ *     migrations/20261029d_nonconforming_products_program_key.sql, stamped by
+ *     POST /api/mdx/qms/nonconforming and AnA log_nonconforming_product;
+ *   - documents: no column. An artifact names its legacy project
+ *     (concept2cure_artifacts.project_id → projects.id), and the project is
+ *     anchored to the program by projects.regulatory_program_id, the bridge
+ *     the device Vault reads (server/routes/mdx-vault.ts).
+ *   Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/engineering-panels-keyed/.
+ *
+ * Still the organization's, and why neither is narrowed by a key:
+ *   - dhf: cerv2_510k_sections holds ONE device kit per organization. Its
+ *     unique key is (organization_id, section_key)
+ *     (migrations/20260506_kit_section_draft_provenance.sql), and every writer
+ *     (the cerv2-sections routes, write_kit_section, the AnA-RI
+ *     section.update command) addresses a section by organization and key or
+ *     id. A program column would let one project hold each section and no
+ *     other project ever hold its own. Per-project sections are a change to
+ *     the kit store and its writers, not to this read.
+ *   - ecrs: nothing writes change_requests. No route, service, AnA tool, seed
+ *     or migration inserts a row; shared/schema.ts declares it and
+ *     migrations/0000_sweet_joseph.sql creates it. A key no writer stamps
+ *     would make an always-empty panel read as "this project has no change
+ *     requests" while change controls are recorded in qms_change_controls
+ *     (server/services/qms/changeControl.service.ts).
  *
  * Every panel degrades independently: a missing table (42P01, pre-
  * migration tenants) yields an empty array for that panel, never a 500
@@ -295,7 +320,8 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       };
     });
 
-    /* ── DHF sections — organization-scoped ──────────────────────────── */
+    /* ── DHF sections — organization-scoped (see the header: the kit store
+          holds one kit per organization) ──────────────────────────────── */
     const dhfRows = await panel<{
       id: number;
       section_number: string;
@@ -337,7 +363,8 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       };
     });
 
-    /* ── Engineering change requests — organization-scoped ───────────── */
+    /* ── Engineering change requests — organization-scoped (see the
+          header: nothing writes change_requests) ──────────────────────── */
     const ecrRows = await panel<{
       id: string;
       entity_type: string;
@@ -369,7 +396,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       linked: e.entity_type,
     }));
 
-    /* ── Non-conformances — organization-scoped ──────────────────────── */
+    /* ── Non-conformances — program-scoped ───────────────────────────────
+       The project's own records only, after the admitProject check above
+       (D2, 2026-10-29). A record with no project is the organization's,
+       which the Quality register lists; another project's is that project's.
+       Neither is read here. On a database without
+       qms_nonconforming_products.program_id (20261029d not applied) the read
+       fails and the panel is named in meta.unavailable, never shown as empty. */
     const ncRows = await panel<{
       id: number;
       nc_number: string;
@@ -382,10 +415,10 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       'issues',
       `SELECT id, nc_number, description, disposition, capa_linked, detected_at, device_name
          FROM qms_nonconforming_products
-        WHERE organization_id = $1
+        WHERE organization_id = $1 AND program_id = $2
         ORDER BY detected_at DESC NULLS LAST
         LIMIT 50`,
-      [orgId],
+      [orgId, programId],
       unavailable,
     );
 
@@ -405,8 +438,16 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
           Sourced from the governed artifact table (Module 3/4 design and
           manufacturing content) plus IEC 62304 software deliverables, so
           the document list is the tenant's real work product rather than
-          a static catalogue. Organization-scoped: concept2cure_artifacts
-          has no program column. ─────────────────────────────────────── */
+          a static catalogue. Program-scoped (D2, 2026-10-29): an artifact
+          is this project's when its legacy project is this organization's
+          and is anchored to the program, the bridge the device Vault reads
+          (server/routes/mdx-vault.ts). EXISTS rather than a JOIN, so the
+          bridge can neither duplicate nor drop an artifact, and the
+          organization is repeated on `projects` so a legacy anchor naming
+          this program from another organization's project pulls nothing in.
+          An artifact whose project is unanchored is shown under no project.
+          On a database without projects.regulatory_program_id the read
+          fails and `documents` is named in meta.unavailable. ───────────── */
     const artifactRows = await panel<{
       id: number;
       title: string;
@@ -417,14 +458,18 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       updated_at: Date | null;
     }>(
       'documents',
-      `SELECT id, title, ctd_section, type, status, version, updated_at
-         FROM concept2cure_artifacts
-        WHERE organization_id = $1
-          AND (ctd_section ILIKE '3%' OR ctd_section ILIKE '4%' OR type ILIKE '%design%')
-          AND status != 'archived'
-        ORDER BY updated_at DESC NULLS LAST
+      `SELECT a.id, a.title, a.ctd_section, a.type, a.status, a.version, a.updated_at
+         FROM concept2cure_artifacts a
+        WHERE a.organization_id = $1
+          AND EXISTS (SELECT 1 FROM projects p
+                       WHERE p.id = a.project_id
+                         AND p.organization_id = a.organization_id
+                         AND p.regulatory_program_id = $2::uuid)
+          AND (a.ctd_section ILIKE '3%' OR a.ctd_section ILIKE '4%' OR a.type ILIKE '%design%')
+          AND a.status != 'archived'
+        ORDER BY a.updated_at DESC NULLS LAST
         LIMIT 50`,
-      [orgId],
+      [orgId, programId],
       unavailable,
     );
 
@@ -532,13 +577,15 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
     if (unavailable.some((n) => SUMMARY_INPUTS.includes(n))) unavailable.push('summary');
     if (unavailable.includes('software')) unavailable.push('documents');
 
+    /* dhf and ecrs stay the organization's, for the reasons in the header;
+       the surface keeps hiding both. */
     const scopes: Record<string, Scope> = {
       risks: 'program',
       trace: 'program',
       dhf: 'organization',
       ecrs: 'organization',
-      issues: 'organization',
-      documents: 'organization',
+      issues: 'program',
+      documents: 'program',
     };
 
     return ok(

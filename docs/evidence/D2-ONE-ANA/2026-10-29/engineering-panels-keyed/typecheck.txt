@@ -1,0 +1,9 @@
+Type check.
+
+The whole-tree typecheck was not run (it is killed for memory under parallel load).
+The changed and new files were checked with everything they import, under the repo compiler options:
+a scratch tsconfig that extends tsconfig.json, lists them and the files that declare the Express Request
+augmentations, and adds the ambient declarations (typecheck-tsconfig.json, repo path written as <repo>).
+
+NODE_OPTIONS=--max-old-space-size=9000 npx tsc -p tsconfig.eng.json
+0 errors; exit 0

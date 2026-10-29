@@ -1,0 +1,14 @@
+# M17: the file is taken off the applier (schema test)
+# mutation: scripts/db/migration-set.mjs: 65 chars replaced by 0 chars
+# test: tests/schema-contract/nonconforming-products-program-key.pglite.test.ts
+# exit=1  Tests  1 failed | 6 passed (7)
+# restored byte for byte: True (sha256 7789b21fbb60cc901f0dfed491ddd277fec79fcff1a48613aadfe27ee28c9e5c)
+
+## replaced
+  'migrations/20261029d_nonconforming_products_program_key.sql',
+
+## with
+
+
+## failing tests
+× tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > 20261029d on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps 4ms

@@ -1,0 +1,20 @@
+# npx eslint --no-ignore <changed and new files>; exit 0, 0 errors
+# AnaToolExecutor.ts and shared/schema.ts were linted separately: 0 errors, 98 warnings, none in an edited range
+
+/home/user/ClinicalSageAI-2-replit/scripts/db/migration-set.mjs
+  3734:1   warning  File has too many lines (583). Maximum allowed is 500                               max-lines
+  3734:8   warning  Async function 'applyMigrationFiles' has a complexity of 23. Maximum allowed is 15  complexity
+  3833:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                              max-depth
+  3843:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                              max-depth
+
+/home/user/ClinicalSageAI-2-replit/server/routes/mdx-engineering.ts
+  173:75  warning  Async arrow function has too many lines (324). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/routes/mdx-qms.ts
+  726:1  warning  File has too many lines (1330). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/tenant/tenant-offboarding.ts
+  795:1  warning  File has too many lines (782). Maximum allowed is 500  max-lines
+
+✖ 7 problems (0 errors, 7 warnings)
+
