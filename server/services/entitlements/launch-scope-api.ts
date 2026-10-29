@@ -100,10 +100,6 @@ export const LAUNCH_INFRASTRUCTURE_API: Readonly<Record<string, string>> = {
  * `ci:launch-scope-api` fails if a launch screen ever calls one.
  */
 export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
-  '/api/mdx/qms/suppliers': "HIDDEN APP: the full device QMS's supplier management (21 CFR 820); the launch QMS app is controlled documents only",
-  '/api/mdx/qms/internal-audits': "HIDDEN APP: the full device QMS's internal audits",
-  '/api/mdx/qms/nonconforming': "HIDDEN APP: the full device QMS's nonconforming product control",
-  '/api/mdx/qms/management-reviews': "HIDDEN APP: the full device QMS's management reviews",
   '/api/mdx/qms/readiness': "DEAD: the deleted MDX device shell's quality-readiness panel (consumer removed in 4aa204390)",
   '/api/regulatory/tasks/dashboard': 'DEAD: a legacy cross-module progress dashboard; nothing calls it, and it is not Submission Readiness',
   '/api/regulatory/tasks/sync': "DEAD: a legacy cross-module task importer, its device branch reading the device app's tables",

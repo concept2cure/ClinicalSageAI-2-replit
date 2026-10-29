@@ -6,10 +6,11 @@
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { ChangeState, ChangeType, Classification, LinkType, Relationship } from './changeData';
 
-/** POST to a QMS route and return the envelope's `data`. `apiRequest` throws
- *  every refusal but a 401, which it returns; that is a session refusal here. */
-async function qmsPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
-  const res = await apiRequest('POST', `/api/mdx/qms/${path}`, body);
+/** Write to a QMS route and return the envelope's `data`. `apiRequest` throws
+ *  every refusal but a 401, which it returns; that is a session refusal here.
+ *  The quality records (qmsRecordData.ts) write through this too. */
+export async function qmsWrite<T>(method: 'POST' | 'PATCH', path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await apiRequest(method, `/api/mdx/qms/${path}`, body);
   const parsed = (await res.json().catch(() => null)) as { data?: T } | null;
   if (res.status === 401) {
     throw new Error((serverMessage(parsed) ?? 'Your session could not be verified. Sign in again.') + ' Nothing was changed.');
@@ -19,6 +20,8 @@ async function qmsPost<T>(path: string, body: Record<string, unknown>): Promise<
   }
   return parsed.data;
 }
+
+const qmsPost = <T>(path: string, body: Record<string, unknown>): Promise<T> => qmsWrite<T>('POST', path, body);
 
 // Controlled document creation/revision use qmsDocuments.ts and its bound
 // authoring-copy response contract. This module owns change-control writes.
