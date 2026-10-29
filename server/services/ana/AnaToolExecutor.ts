@@ -24,6 +24,7 @@ import { SchedulePreservationConflict } from '../projects/schedule-of-events/pre
 import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { critiqueSavedDocument } from './saved-document-critique';
+import { reviewSavedSectionWriting } from './saved-section-writing-review';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 import { registeredToolTier } from './governed-tool-gate.js';
@@ -3929,7 +3930,7 @@ registerToolHandler('build_abbreviation_list', async (input) => {
 });
 
 // Medical Writing Review — standards-conformance QC of a draft (or pre-draft).
-registerToolHandler('medical_writing_review', async (input) => {
+registerToolHandler('medical_writing_review', async (input, ctx) => {
   const documentType = typeof input.document_type === 'string' ? input.document_type : '';
   if (!documentType.trim()) {
     return JSON.stringify({
@@ -3937,6 +3938,8 @@ registerToolHandler('medical_writing_review', async (input) => {
       catalog: listMedicalWritingCatalog(),
     });
   }
+  // 2026-10-30: a saved Authoring section reference runs the CSR section evidence check.
+  if (input.document_id !== undefined || input.section !== undefined) return reviewSavedSectionWriting(input, ctx);
   const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
   const review = reviewMedicalWriting(documentType, draftText);
   return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });

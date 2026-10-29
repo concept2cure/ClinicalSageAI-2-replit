@@ -1151,7 +1151,10 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
     'review checklist and up to three focused client clarification prompts. Read project sources ' +
     'and prior answers first; ask only unresolved material questions outside the formal document. ' +
     'Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; ' +
-    'this deterministic tool does not read or verify source evidence.',
+    'with draft_text this deterministic tool does not read or verify source evidence. ' +
+    'For a saved CSR in Authoring, pass document_id and section instead of draft_text: the saved section is reviewed and ' +
+    'its figures are checked against the retained-run cells its import receipts name (csrSectionEvidence: the exact cell, ' +
+    'claim or figure that failed). That is transcription agreement only, never scientific review or approval.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1162,6 +1165,14 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
       draft_text: {
         type: 'string',
         description: 'Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness.',
+      },
+      document_id: {
+        type: 'string',
+        description: 'Optional saved Authoring document id (UUID) of a CSR in the open project. Use with section and without draft_text.',
+      },
+      section: {
+        type: 'string',
+        description: 'With document_id: the saved section\'s E3 number (e.g. 11.4) or its section id.',
       },
     },
     required: ['document_type'],
