@@ -5,6 +5,14 @@
 --
 -- This migration implements self-evolution: learning experiences, distilled insights,
 -- expertise tracking, prompt evolution, and drift detection - all privacy-preserving.
+--
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): federated_admin is no longer created. It was
+-- cortex.federated_learning_state's one policy and admitted every read and write
+-- to any session that set app.is_admin, a custom setting any role can set. With
+-- no policy the table admits only its owner. No server code reads or writes it.
+-- Databases installed before today get the same change from
+-- migrations/20261029j_no_session_rls_bypass.sql (deploy set).
 
 BEGIN;
 
@@ -597,10 +605,9 @@ DROP POLICY IF EXISTS drift_read ON cortex.drift_detection;
 CREATE POLICY drift_read ON cortex.drift_detection
     FOR SELECT USING (TRUE);
 
--- Federated learning: restricted
+-- Federated learning: restricted. No policy (P-70, see the header): only the
+-- table owner reads or writes it.
 DROP POLICY IF EXISTS federated_admin ON cortex.federated_learning_state;
-CREATE POLICY federated_admin ON cortex.federated_learning_state
-    FOR ALL USING (current_setting('app.is_admin', true)::BOOLEAN = TRUE);
 
 -- ============================================================================
 -- SECTION 10: CORE FUNCTIONS

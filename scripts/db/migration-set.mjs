@@ -3684,6 +3684,20 @@ export const C2C_MIGRATION_FILES = [
   // three; every statement guarded; no DROP; no seed. Pinned by
   // tests/schema-contract/qms-training-assignments-replay.pglite.test.ts.
   'migrations/20261029g_qms_job_roles_and_training_assignments.sql',
+  // No session setting lifts row-level security (P-70, D6, 2026-10-29;
+  // docs/evidence/D6-NO-SESSION-RLS-BYPASS/2026-10-29/). On a database installed
+  // before today: re-creates identity.can_access_org / can_write_org /
+  // can_access_program / can_write_program from their stored definitions without
+  // the app.bypass_rls block (CREATE OR REPLACE keeps signature, owner, grants,
+  // SECURITY DEFINER and search_path), drops federated_admin and
+  // guidance_docs_admin and alters workspace_analytics_policy (app.is_admin),
+  // each only while its stored text reads the setting. Their creators (053, 069,
+  // 072, 077 gcc) run on install-fresh only and are amended in place; the DROP
+  // is replay-safe because nothing on any applier creates either policy now.
+  // Then fails the deploy if any policy or function still reads either setting,
+  // so it follows the four db/migrations files above that amend their own
+  // policies. Creates no table.
+  'migrations/20261029j_no_session_rls_bypass.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

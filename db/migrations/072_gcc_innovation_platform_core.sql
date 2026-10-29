@@ -24,6 +24,16 @@
 -- feature_not_supported and runs as its caller. Databases installed before
 -- this amendment get the same replacement from
 -- migrations/20261015g_innovation_readiness_score_refuses.sql (deploy set).
+--
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): no policy here reads app.is_admin. Any role can set a custom
+-- setting, so guidance_docs_admin (every write on innovation.guidance_documents
+-- when the setting was 'true', and nothing else) let the runtime role write
+-- guidance from inside its own connection, and workspace_analytics_policy let it
+-- read every user's sessions. guidance_docs_admin is no longer created (its
+-- DROP IF EXISTS stays); workspace_analytics_policy keeps its own-rows arm. No
+-- server code reads or writes either table. Databases installed before today get
+-- the same change from migrations/20261029j_no_session_rls_bypass.sql (deploy set).
 
 BEGIN;
 
@@ -1191,9 +1201,10 @@ DROP POLICY IF EXISTS guidance_docs_select ON innovation.guidance_documents;
 CREATE POLICY guidance_docs_select ON innovation.guidance_documents
   FOR SELECT USING (TRUE);
 
+-- No write policy (P-70, 2026-10-29; see the header): guidance_docs_admin
+-- granted every write to any session that set app.is_admin, which any role can.
+-- Only the table owner writes guidance documents.
 DROP POLICY IF EXISTS guidance_docs_admin ON innovation.guidance_documents;
-CREATE POLICY guidance_docs_admin ON innovation.guidance_documents
-  FOR ALL USING (current_setting('app.is_admin', true) = 'true');
 
 -- Program-scoped tables RLS
 DROP POLICY IF EXISTS delta_scans_policy ON innovation.delta_radar_scans;
@@ -1314,7 +1325,6 @@ DROP POLICY IF EXISTS workspace_analytics_policy ON innovation.workspace_analyti
 CREATE POLICY workspace_analytics_policy ON innovation.workspace_analytics
   FOR SELECT USING (
     user_id::text = current_setting('app.current_user_id', true)
-    OR current_setting('app.is_admin', true) = 'true'
   );
 
 -- Template learning policies

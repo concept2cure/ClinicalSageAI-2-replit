@@ -1,0 +1,11 @@
+# ESLint (npx eslint --no-ignore <file>), problems per file: the base tree vs the finished tree. No file gains one; no errors.
+## base
+1 scripts/ci/check-session-scoped-rls-bypass.mjs
+18 scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+7 server/services/innovation/submission-readiness-twin-service.ts
+## finished
+1 scripts/ci/check-session-scoped-rls-bypass.mjs
+18 scripts/ci/check-session-scoped-rls-bypass.selftest.mjs
+1 scripts/db/program-same-org-preflight.d.mts
+7 server/services/innovation/submission-readiness-twin-service.ts
+(files with no finding are not listed by ESLint; program-same-org-preflight.d.mts's one line is ESLint's 'File ignored because no matching configuration' notice, which ci:pushed-lint-warnings drops with --no-warn-ignored)

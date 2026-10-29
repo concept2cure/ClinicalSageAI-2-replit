@@ -17,6 +17,12 @@
 --   - Migration is idempotent (IF NOT EXISTS).
 --   - RLS enforced via program_id (matches existing evidence tables).
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): contradiction_scans_rls no longer admits a session that sets
+-- app.bypass_rls, a custom setting any role can set. The policy is created only
+-- when absent, so step 3 also removes the term from a stored policy that still
+-- reads it (ALTER POLICY, only then; a replay changes nothing). No DROP.
+-- =============================================================================
 
 -- ============================================================================
 -- Phase 5.3.A — Contradiction Scanner
@@ -71,9 +77,20 @@ DO $$ BEGIN
     CREATE POLICY contradiction_scans_rls ON evidence.contradiction_scans
         USING (
             program_id::text = current_setting('app.current_program_id', TRUE)
-            OR current_setting('app.bypass_rls', TRUE) = 'true'
         );
 EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- A database created before 2026-10-29 holds it with the app.bypass_rls term
+-- (P-70, see the header): remove it, only where the stored expression reads it.
+DO $$ BEGIN
+    IF to_regclass('evidence.contradiction_scans') IS NOT NULL AND EXISTS (
+        SELECT 1 FROM pg_policy
+         WHERE polrelid = to_regclass('evidence.contradiction_scans') AND polname = 'contradiction_scans_rls'
+           AND coalesce(pg_get_expr(polqual, polrelid), '') LIKE '%app.bypass_rls%') THEN
+        ALTER POLICY contradiction_scans_rls ON evidence.contradiction_scans
+            USING (program_id::text = current_setting('app.current_program_id', TRUE));
+    END IF;
 END $$;
 
 -- ============================================================================
