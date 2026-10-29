@@ -22,7 +22,7 @@ function read(sectionTracking: unknown = measured()): DossierState {
   } } };
 }
 function mount(r: DossierState) {
-  return render(<ModuleCompletion read={r} docForModule={() => null} onOpen={vi.fn()} />);
+  return render(<ModuleCompletion read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
 }
 const panel = () => screen.getByRole('region', { name: 'Section tracking' });
 

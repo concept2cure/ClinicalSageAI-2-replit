@@ -1,0 +1,22 @@
+# Green
+
+## The changed and new suites
+ Test Files  5 passed (5)
+      Tests  53 passed (53)
+
+## Every Project home, dossier, outline and filing-path client suite (37 files)
+ Test Files  3 failed | 34 passed (37)
+      Tests  7 failed | 350 passed (357)
+      4 client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+      1 client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx
+      2 client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx
+The same 7 fail with these changes stashed, at 8b58354a: 3 files failed, 7 tests (projectHomeTeamResponsibilities, projectHomeIdentityFacts, filingPathNoDeadEnds).
+
+## ESLint per file, head -> now
+ProjectDossier.tsx 0->0, ProjectHome.tsx 6->6, CanvasDocumentList.tsx 0->0, FilingMarkets.tsx 0->0, startOutlineSection.ts 0->0, projectHomeDocuments.test.tsx 0->0; editingCopy.ts and editingCopy.test.tsx new, 0.
+
+## Four more suites that render ModuleCompletion (found by the typecheck, re-pointed to copyFor)
+dossierMapProgramScope, microWireups, projectArtifactReadiness, projectSectionTracking: 44/44.
+
+## Typecheck
+ci:typecheck:no-regression: 0 errors, once 142c133d cleared trunk's 10 (not this change's).

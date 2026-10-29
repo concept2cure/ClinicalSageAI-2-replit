@@ -32,7 +32,7 @@ beforeEach(() => apiRequest.mockReset());
 const PROGRAM = '6191805f-e83d-4327-af00-aa2c6f4d43b0';
 function DossierProjection() {
   const read = useProjectDossier(PROGRAM);
-  return <ModuleCompletion read={read} docForModule={() => null} onOpen={vi.fn()} />;
+  return <ModuleCompletion read={read} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />;
 }
 
 describe('Author — preserved per-section artifact readiness binding', () => {

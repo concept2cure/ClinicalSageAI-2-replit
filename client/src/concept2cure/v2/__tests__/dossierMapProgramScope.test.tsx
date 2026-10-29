@@ -24,7 +24,7 @@ function payload(modules: unknown[]) {
 }
 function Author() {
   const read = useProjectDossier(PROGRAM);
-  return <ModuleCompletion read={read} docForModule={() => null} onOpen={vi.fn()} />;
+  return <ModuleCompletion read={read} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />;
 }
 beforeEach(() => apiRequest.mockReset());
 afterEach(cleanup);

@@ -29,6 +29,11 @@ import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenan
 import { writeChainedAuditRow } from '../services/auditService';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
+import {
+  assertSignerIsNotAuthor,
+  SeparationOfDutiesAuthorUnresolvedError,
+  SeparationOfDutiesError,
+} from '../services/governance/separation-of-duties.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -4747,6 +4752,41 @@ async function sealRefusedForFiling(
   return refusal !== null;
 }
 
+/**
+ * The seal refusal, then separation of duties (21 CFR 11.10(g)) for every
+ * meaning but AUTHOR: an author of this document may not approve it, or sign
+ * a workflow step that can seal it. Both routes checked the org role, the
+ * document grant and the password, and never authorship, while the creator is
+ * granted `approve` — so an author could approve their own CSR (Part 11 audit
+ * of the CSR path, 2026-10-29). The one check the governed ceremony asks
+ * (separation-of-duties.ts), before re-authentication, so a refused signer
+ * spends no second factor and nothing is signed. A failed lookup refuses (503)
+ * in the canonical sentence; its cause stays in the log.
+ */
+async function signingRefused(
+  client: Queryable, req: Request, res: Response,
+  { docId, tenantId, meaning }: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await sealRefusedForFiling(client, res, docId, tenantId)) return true;
+  if (meaning === 'AUTHOR') return false;
+  try {
+    await assertSignerIsNotAuthor(`authoring-document:${String(docId)}`, tenantId, Number(getActorId(req)),
+      { command: 'sign', meaning: meaning.toLowerCase(), client });
+    return false;
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError || err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+      res.status(err instanceof SeparationOfDutiesError ? 403 : 409).json({ error: err.message, code: err.code });
+    } else {
+      console.error('[authoring] separation of duties unverified:', err instanceof Error ? err.message : err);
+      res.status(503).json({
+        error: 'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+        code: 'SEPARATION_OF_DUTIES_UNVERIFIED',
+      });
+    }
+    return true;
+  }
+}
+
 async function lockedSigningContent(client: Queryable, req: Request, docId: string, tenantId: number) {
   const document = await client.query(
     "SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2 FOR UPDATE",
@@ -5119,7 +5159,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
          Before `reverifyAuthoringSigner`, so a refusal spends no
          re-authentication code; before the status flip, the snapshot and the
          signature row, so a refused approval seals nothing. */
-      if (meaning === 'APPROVER' && await sealRefusedForFiling(client, res, docId, tenantId)) return;
+      if (meaning === 'APPROVER' && await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -7221,7 +7261,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          around it. If evidence later shows reviewers blocked by a divergence
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
-      if (await sealRefusedForFiling(client, res, docId, tenantId)) return;
+      if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;

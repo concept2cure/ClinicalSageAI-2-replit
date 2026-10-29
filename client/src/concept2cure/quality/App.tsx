@@ -2,9 +2,11 @@
  * QualityApp — Quality domain shell.
  *
  * A tabbed shell (topbar + tab bar + scrollable page) over the quality
- * surfaces: the SOP register (controlled documents, periodic review, training)
- * and Change control (the change-control log, lifecycle flowchart, and the
- * links to deviations, CAPAs and validation records). Mirrors the host-
+ * surfaces: the SOP register (controlled documents, periodic review, training),
+ * Change control (the change-control log, lifecycle flowchart, and the links
+ * to deviations, CAPAs and validation records), and the quality records
+ * (QmsRecords.tsx: CAPA, nonconformances, suppliers, internal audits, management
+ * reviews; decision P-48). Mirrors the host-
  * integration contract of the other domain shells: AnA prompts hand off to the
  * host conversation surface via `onAskAna`; rail cross-links route through
  * `onNavigate`.
@@ -21,6 +23,8 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
+import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
+import type { QmsRecordTab } from './qmsRecordData';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -39,23 +43,29 @@ export interface QualityAppProps {
   onAskAna?: (text: string) => void;
   /** Host navigation for the canonical workbench and project links. */
   onNavigate?: (target: string) => void;
-  /** Which surface to open first ('sop' | 'change'). */
+  /** Which surface to open first. */
   initialTab?: QualityTab;
   qmsDocumentId?: string;
   qmsTargetRequest?: number;
 }
 
-type QualityTab = 'sop' | 'change';
+type QualityTab = 'sop' | 'change' | QmsRecordTab;
+
+const RECORD_ICON: Record<QmsRecordTab, React.ReactNode> = {
+  capa: I.target,
+  nonconforming: I.alertTriangle,
+  suppliers: I.building,
+  audits: I.clipboardList,
+  reviews: I.users,
+};
 
 const TABS: { id: QualityTab; label: string; icon: React.ReactNode }[] = [
   { id: 'sop', label: 'SOP register', icon: I.template },
   { id: 'change', label: 'Change control', icon: I.gitBranch },
+  ...QMS_RECORD_TABS.map((t) => ({ ...t, icon: RECORD_ICON[t.id] })),
 ];
 
-const HERE: Record<QualityTab, string> = {
-  sop: 'SOP register',
-  change: 'Change control',
-};
+const HERE = Object.fromEntries(TABS.map((t) => [t.id, t.label])) as Record<QualityTab, string>;
 
 const ASK_STARTER: Record<QualityTab, string> = {
   sop:
@@ -64,6 +74,7 @@ const ASK_STARTER: Record<QualityTab, string> = {
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
     'and which linked deviations or CAPAs are still open.',
+  ...QMS_RECORD_ASK,
 };
 
 export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsTargetRequest }: QualityAppProps) {
@@ -122,7 +133,8 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
   useSurfaceActionHandlers('quality', {
     'quality.open-tab': (params) => {
       if (editingDocument) return { ok: false, reason: 'Return to the Quality register before switching tabs.' };
-      const target: QualityTab = params.tab === 'change' ? 'change' : 'sop';
+      const target = TABS.find((t) => t.id === params.tab)?.id;
+      if (!target) return { ok: false, reason: `No Quality tab named "${params.tab}".` };
       if (tab === target) return { ok: true, detail: `Already on ${HERE[target]}` };
       setTab(target);
       return { ok: true, detail: `Opened ${HERE[target]}` };
@@ -266,7 +278,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         changeCount: changes.length,
       },
       availableActions: [
-        'Switch between the SOP register and change control tabs',
+        'Switch between the SOP register, change control, CAPA, nonconformances, suppliers, internal audits and management reviews tabs',
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
@@ -319,7 +331,9 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
 
       <div className="qms-page">
         <div className="qms-page-inner">
-          {tab === 'sop' ? (
+          {tab !== 'sop' && tab !== 'change' ? (
+            <QmsRecords tab={tab} onAsk={onAsk} />
+          ) : tab === 'sop' ? (
             <SopRegister onAsk={onAsk} onNavigate={onNavigate} filter={sopFilter} onFilterChange={setSopFilter}
               onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsTargetRequest={qmsTargetRequest} />
           ) : (
