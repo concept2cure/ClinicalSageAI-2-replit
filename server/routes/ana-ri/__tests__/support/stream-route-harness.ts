@@ -119,6 +119,11 @@ function freshState() {
     /** Called inside each handle.wake (a wait's tick): lets a test land a stop mid-wait. */
     onWake: null as null | (() => void),
     approvalDecisionsRecorded: 0,
+    /**
+     * What recordApprovalDecision answers: false when its predicate matched no
+     * waiting approval (the window's deny on an approval its person claimed).
+     */
+    approvalDecisionLands: true as boolean,
     /** What readApprovalDecision returns once the gate is open: a person's answer, or null (none yet). */
     approvalDecision: null as null | { decided: 'approved' | 'denied'; error?: string; result?: unknown },
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
@@ -370,7 +375,7 @@ function runControl(real: { readMoveId: unknown }) {
     },
     recordApprovalDecision: async () => {
       state.approvalDecisionsRecorded++;
-      return true;
+      return state.approvalDecisionLands;
     },
     readApprovalDecision: async () => state.approvalDecision,
     approvalClaimed: async () => state.approvalClaimed,

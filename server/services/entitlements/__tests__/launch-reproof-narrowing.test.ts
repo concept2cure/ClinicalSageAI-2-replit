@@ -20,7 +20,7 @@ const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [
+const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -67,11 +67,7 @@ const NOT_SERVED_AT_LAUNCH = [
   '/api/ectd/qualification',
   '/api/ectd/templates',
   '/api/ectd/v4',
-  '/api/mdx/qms/internal-audits',
-  '/api/mdx/qms/management-reviews',
-  '/api/mdx/qms/nonconforming',
   '/api/mdx/qms/readiness',
-  '/api/mdx/qms/suppliers',
   '/api/mdx/vault',
   '/api/project-sections',
   '/api/project-sections/dependencies',
@@ -122,6 +118,12 @@ const STILL_SERVED = [
   '/api/mdx/qms/documents',
   '/api/mdx/qms/templates',
   '/api/mdx/qms/training',
+  /* Upheld as HIDDEN APP on 2026-10-15; admitted to the QMS app by decision P-48
+     (2026-10-29), and called by the Quality records (quality/QmsRecords.tsx). */
+  '/api/mdx/qms/internal-audits',
+  '/api/mdx/qms/management-reviews',
+  '/api/mdx/qms/nonconforming',
+  '/api/mdx/qms/suppliers',
   '/api/realtime-collab/locks',
   '/api/realtime-collab/rooms',
   '/api/regulatory/tasks',
@@ -143,7 +145,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the 79 sub-namespaces the re-proof upheld are not served at launch', () => {
+describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.

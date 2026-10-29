@@ -1,0 +1,9 @@
+# r-d7-folded-line-silent-on-not-run: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx  -t folded line
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the folded line says it did not run, never "failed", and its row says why 206ms
+   → expected '2 steps completed' to contain '2 steps completed · 1 did not run'
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the folded line says it did not run, never "failed", and its row says why
+AssertionError: expected '2 steps completed' to contain '2 steps completed · 1 did not run'

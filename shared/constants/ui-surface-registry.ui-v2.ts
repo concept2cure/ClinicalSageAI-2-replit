@@ -683,7 +683,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'quality-cmc',
     icon: 'shieldCheck',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx/qms'],
+    // '/api/capa-mdr/capa': the CAPA register (decision P-48). The rest of
+    // /api/capa-mdr (complaints, MDR, vigilance) stays device post-market's.
+    apiPrefixes: ['/api/mdx/qms', '/api/capa-mdr/capa'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

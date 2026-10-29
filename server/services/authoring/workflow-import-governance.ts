@@ -258,6 +258,11 @@ async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernan
     const { assertCsrScientificRelease } = await import('./csr-scientific-review.js');
     await assertCsrScientificRelease(q, input);
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'CSR_EVIDENCE_IDENTITY_UNAVAILABLE') {
+      // Not "no receipt": what the document is could not be read at all.
+      throw new WorkflowImportGovernanceError(503, error.code,
+        'Whether this document is a clinical study report could not be checked, so nothing was signed or released. Try again; if it persists, contact an administrator.');
+    }
     if (error && typeof error === 'object' && 'code' in error &&
         typeof error.code === 'string' && error.code.startsWith('CSR_')) {
       throw new WorkflowImportGovernanceError(sourceVerificationStatus(error), error.code,
@@ -267,22 +272,15 @@ async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernan
   }
 }
 
-/** Every gate must pass; the order only decides which refusal is reported.
- * Workflow model-qualification and adoption are reported before the CSR
- * scientific-review receipt: replacing unqualified machine text changes the
- * snapshot, which invalidates any scientific receipt bound to it, so asking for
- * that receipt first would send the reviewer through work that must be redone.
- * The CSR gate still runs for native (non-imported) CSR documents. */
 export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
-  const state = await inspectedWorkflow(q, input);
-  if (state) {
-    if (state.knownMachineRemains) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
-      'Stored machine-generated text remains in this copy without retained qualified generation evidence. Review and source identity do not establish model qualification. Replace the affected text through the governed human editing path before release.');
-    if (!await hasCurrentAdoption(q, input, state.origin.fingerprint, state.contentHash)) {
-      refusal('WORKFLOW_HUMAN_ADOPTION_REQUIRED', 'Release needs an assigned reviewer’s approved review and explicit REVIEWER electronic signature adopting this exact full document. Earlier reviews and imported signatures do not cover this copy.');
-    }
-  }
   await requireCsrScientificRelease(q, input);
+  const state = await inspectedWorkflow(q, input);
+  if (!state) return;
+  if (state.knownMachineRemains) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
+    'Stored machine-generated text remains in this copy without retained qualified generation evidence. Review and source identity do not establish model qualification. Replace the affected text through the governed human editing path before release.');
+  if (!await hasCurrentAdoption(q, input, state.origin.fingerprint, state.contentHash)) {
+    refusal('WORKFLOW_HUMAN_ADOPTION_REQUIRED', 'Release needs an assigned reviewer’s approved review and explicit REVIEWER electronic signature adopting this exact full document. Earlier reviews and imported signatures do not cover this copy.');
+  }
 }
 
 /** An uncontrolled review copy may retain uncertain/unqualified source prose,

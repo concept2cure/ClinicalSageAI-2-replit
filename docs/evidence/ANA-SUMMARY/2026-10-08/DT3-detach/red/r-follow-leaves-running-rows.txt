@@ -1,9 +1,9 @@
 # r-follow-leaves-running-rows: exit 1 (non-zero = red)
 # tests: client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts  -t no step "running"
- × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end 42ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end 46ms
    → expected [ { name: 'search_vault', …(6) } ] to deeply equal []
  Test Files  1 failed (1)
-      Tests  1 failed | 12 skipped (13)
+      Tests  1 failed | 13 skipped (14)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > what a following page says, honestly (DT3 review) > an in-place follow leaves no step "running": not while it follows, not after an unsealed end
 AssertionError: expected [ { name: 'search_vault', …(6) } ] to deeply equal []

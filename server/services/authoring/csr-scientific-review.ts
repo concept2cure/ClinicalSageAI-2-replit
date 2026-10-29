@@ -9,6 +9,7 @@ import {
   prepareScientificReviewReceipt, scientificTablesSha256,
   type RetainedScientificRun, type ScientificReviewReceipt,
 } from './csr-scientific-review-core.js';
+import { labelledCsr } from '../../../shared/authoring/csr-scientific-review.js';
 
 export interface CsrScientificReviewContext {
   tenantId: number; actorId: string; document: Record<string, unknown>;
@@ -71,12 +72,17 @@ function scope(input: CsrScientificReviewContext) {
   }
   return { organizationId: input.tenantId, programId, userId };
 }
-const labelledCsr = (value: unknown) => typeof value === 'string' && /(?:^|[^a-z0-9])(?:csr|clinical[ _-]+study[ _-]+report)(?:$|[^a-z0-9])/i.test(value);
+
+/** What the requirement is decided from: the stored document row and its id.
+ * Never the framed snapshot, so a document that is not a CSR is not framed. */
+type CsrScientificIdentity = Pick<CsrScientificReviewContext, 'tenantId' | 'document'> & {
+  snapshot: Pick<AuthoringSavedSnapshot, 'id'>;
+};
 
 /** Stored identity wins over a caller's document-type selection. A retained
  * CSR origin or earlier scientific receipt keeps the requirement after rename.
  * Unknown native templates still require separate inventory qualification. */
-export async function requiresCsrScientificReview(q: Queryable, input: CsrScientificReviewContext): Promise<boolean> {
+export async function requiresCsrScientificReview(q: Queryable, input: CsrScientificIdentity): Promise<boolean> {
   const doc = input.document;
   if ([doc.module, doc.product_code, doc.title, doc.template_id].some(labelledCsr)) return true;
   const p = object(doc.provenance) ? doc.provenance : {};
@@ -145,6 +151,12 @@ export async function prepareCsrScientificApproval(q: Queryable, input: CsrScien
 export async function requireCurrentCsrScientificApproval(q: Queryable, input: CsrScientificReviewContext,
   dependencies?: CsrScientificReviewDependencies): Promise<ScientificReviewReceipt | null> {
   if (!await requiresCsrScientificReview(q, input)) return null;
+  return currentCsrScientificApproval(q, input, dependencies);
+}
+
+/** The receipt check itself, for a document already known to be a CSR. */
+async function currentCsrScientificApproval(q: Queryable, input: CsrScientificReviewContext,
+  dependencies?: CsrScientificReviewDependencies): Promise<ScientificReviewReceipt> {
   const deps = dependencies ?? await productionDependencies();
   const resolved = scope(input);
   if (deps.snapshotHash(input.snapshot) !== input.snapshotHash) {
@@ -196,6 +208,12 @@ export async function requireCurrentCsrScientificApproval(q: Queryable, input: C
 
 /** Adapter for the existing freeze/sign/export boundary. The caller already
  * holds the parent document and source reservations; this does not re-auth.
+ *
+ * Every release of every Authoring document passes here, so what the document
+ * is comes first, from its stored row and id. Only a CSR is framed as the
+ * full-visible snapshot. Until 2026-10-29 the snapshot was framed first, and a
+ * row it refuses made the release of a document that is not a CSR answer 500
+ * (csr-scientific-release-order.test.ts).
  */
 export async function assertCsrScientificRelease(q: Queryable, input: {
   organizationId: number;
@@ -203,9 +221,10 @@ export async function assertCsrScientificRelease(q: Queryable, input: {
   sections: ReadonlyArray<{ id: string; code: string; content: string | null; title?: unknown }>;
   actor?: { id: string; email?: string | null };
 }): Promise<void> {
+  const identity = { tenantId: input.organizationId, document: { ...input.doc }, snapshot: { id: input.doc.id } };
+  if (!await requiresCsrScientificReview(q, identity)) return;
   const { fullVisibleAuthoringSnapshot, authoringSnapshotHash } = await import('./authoring-content-digests.js');
   const snapshot = fullVisibleAuthoringSnapshot({ doc: input.doc, sections: input.sections });
-  const current = { tenantId: input.organizationId, actorId: input.actor?.id ?? '',
-    document: { ...input.doc }, snapshot, snapshotHash: authoringSnapshotHash(snapshot) };
-  await requireCurrentCsrScientificApproval(q, current);
+  await currentCsrScientificApproval(q, { ...identity, actorId: input.actor?.id ?? '',
+    snapshot, snapshotHash: authoringSnapshotHash(snapshot) });
 }

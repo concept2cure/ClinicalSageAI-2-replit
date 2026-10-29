@@ -1,0 +1,9 @@
+# r-d7-summary-not-run-read-as-failed: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx  -t Summary
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the Summary's step row is not run, with the line 12ms
+   → expected { kind: 'step', key: 's-s2', …(8) } to match object { status: 'not_run', …(1) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the Summary's step row is not run, with the line
+AssertionError: expected { kind: 'step', key: 's-s2', …(8) } to match object { status: 'not_run', …(1) }

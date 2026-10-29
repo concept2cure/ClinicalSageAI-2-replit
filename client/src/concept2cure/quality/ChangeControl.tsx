@@ -35,6 +35,7 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
+import { Kpi } from './Kpi';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
   STATE_LABEL,
@@ -93,17 +94,6 @@ const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
    resolves to 0px and the row's last columns are clipped away. */
 const ROW_MIN = registerRowMinWidth(GRID);
 
-function Kpi({
-  label, val, sub, tone,
-}: { label: string; val: string; sub: string; tone?: 'ok' | 'warn' | 'err' }) {
-  return (
-    <div className="qms-kpi" data-tone={tone === 'ok' ? '' : tone || ''}>
-      <div className="lbl">{label}</div>
-      <div className="val">{val}</div>
-      <div className="sub">{sub}</div>
-    </div>
-  );
-}
 
 const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 const optionsOf = <K extends string>(labels: Record<K, string>) =>

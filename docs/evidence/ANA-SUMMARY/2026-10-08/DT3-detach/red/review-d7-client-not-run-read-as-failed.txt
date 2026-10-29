@@ -1,0 +1,24 @@
+# pre-fix red, 2026-10-29 on 8b58354af: D-7 on the client — a screen step refused after the page closed is shown as failed (acceptance G screen 03: '3 steps completed · 1 failed')
+# tests: anaScreenGoneStep.test.tsx; useAnaChat-detach.test.ts -t 'did not run'
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > a reopened conversation reads it as not run, with its line 9ms
+   → expected [ 'success', 'error', 'success' ] to deeply equal [ 'success', 'not_run', 'success' ]
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the folded line says it did not run, never "failed", and its row says why 201ms
+   → expected '3 steps completed · 1 failed' to contain '2 steps completed · 1 did not run'
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the Summary's step row is not run, with the line 4ms
+   → expected { kind: 'step', key: 's-s2', …(8) } to match object { status: 'not_run', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > a reopened conversation reads it as not run, with its line
+AssertionError: expected [ 'success', 'error', 'success' ] to deeply equal [ 'success', 'not_run', 'success' ]
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the folded line says it did not run, never "failed", and its row says why
+AssertionError: expected '3 steps completed · 1 failed' to contain '2 steps completed · 1 did not run'
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > the Summary's step row is not run, with the line
+AssertionError: expected { kind: 'step', key: 's-s2', …(8) } to match object { status: 'not_run', …(1) }
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > a step the server says did not run is not run on this page, never failed 40ms
+   → expected [ { name: 'act_on_screen', …(8) } ] to deeply equal [ ObjectContaining{…} ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-detach.test.ts > a turn that asked to drive (D-7, decided 2026-10-22) > a step the server says did not run is not run on this page, never failed
+AssertionError: expected [ { name: 'act_on_screen', …(8) } ] to deeply equal [ ObjectContaining{…} ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)

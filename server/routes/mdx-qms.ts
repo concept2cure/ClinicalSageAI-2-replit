@@ -131,6 +131,7 @@ import {
   type QmsReviewSchedule,
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 
 const router = Router();
@@ -333,6 +334,13 @@ router.get('/qms/readiness', async (req: Request, res: Response) => {
   }
 });
 
+/** A next review date as the task store takes it (YYYY-MM-DD); null when there is none or it is unreadable. */
+function reviewDay(value: unknown): string | null {
+  if (value == null || value === '') return null;
+  const text = value instanceof Date ? (Number.isFinite(value.getTime()) ? value.toISOString() : '') : String(value);
+  return /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : null;
+}
+
 /** Register metadata is org-visible; authored prose remains behind canonical object permissions. */
 function qmsRegisterRow(row: Record<string, any>): Record<string, any> {
   const metadata = { ...(row.metadata ?? {}) }; delete metadata.authoringContent;
@@ -512,14 +520,28 @@ router.post('/qms/documents/:id/periodic-review', signedActAttempts, async (req:
       parsed.error.flatten().fieldErrors);
   }
   const target = `qms-document:${id}`;
+  let recorded: Awaited<ReturnType<typeof recordQmsPeriodicReview>> | null = null;
   await signGovernedAct(req, res, {
     domain: 'qms',
     target,
     meanings: REVIEW_ACT_MEANINGS,
     codeStatus: QMS_PERIODIC_REVIEW_CODE_STATUS,
     run: async (client, orgId) => {
-      const act = await recordQmsPeriodicReview(client, orgId, id, parsed.data);
+      recorded = await recordQmsPeriodicReview(client, orgId, id, parsed.data);
+      const { act } = recorded;
       return { target, payload: act as unknown as Record<string, unknown>, body: { data: act } };
+    },
+    // The owner's task moves on: the next review, or a revision to make
+    // (services/qms/periodic-review-task.ts). Best effort, after the commit.
+    afterCommit: async (_result, orgId, userId) => {
+      if (!recorded) return;
+      const { act, document } = recorded;
+      await schedulePeriodicReviewTask({
+        organizationId: orgId, document, createdById: userId, closeAs: 'completed',
+        ...(act.outcome === 'current'
+          ? { kind: 'review', due: act.nextReviewDate }
+          : { kind: 'revise', due: act.previousNextReviewDate }),
+      });
     },
   });
 });
@@ -719,6 +741,10 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     });
     commitAttempted = true;
     await client.query('COMMIT');
+    // The version now in force is due on the date its approval signed; the
+    // previous version's task, if any, ends with it. Best effort, after commit.
+    await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
+      kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
@@ -802,6 +828,9 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
     });
     commitAttempted = true;
     await client.query('COMMIT');
+    // A retired document has no next review: its open task is withdrawn with it.
+    await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
+      kind: 'review', closeAs: 'cancelled', due: null });
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,

@@ -1,0 +1,9 @@
+$ node scripts/ci/csr-scientific-review/run.mjs
+# tests 40
+# pass 40
+# fail 0
+
+$ node --test scripts/ci/csr-scientific-review/scientific-review.test.mjs
+# tests 40
+# pass 40
+# fail 0

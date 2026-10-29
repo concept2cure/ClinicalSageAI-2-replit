@@ -76,8 +76,13 @@ export interface AnaChatAction {
 export interface AnaToolCall {
   name: string;
   label: string;
-  /** Unconfirmed means the turn closed without a result for this call, not a failure verdict. */
-  status: 'running' | 'success' | 'error' | 'unconfirmed';
+  /**
+   * Unconfirmed means the turn closed without a result for this call, not a
+   * failure verdict. Not run means the server never dispatched it — a screen
+   * action refused once a Live Drive turn's page closed (D-7), or a step the
+   * turn stopped before — and is neither completed nor failed.
+   */
+  status: 'running' | 'success' | 'error' | 'unconfirmed' | 'not_run';
   /**
    * The server's id for this call (the model's tool_use id). A step runs its
    * calls concurrently, and several can be the SAME tool, so the name alone

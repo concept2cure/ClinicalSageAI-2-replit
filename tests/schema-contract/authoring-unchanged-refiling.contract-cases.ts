@@ -314,7 +314,12 @@ function registerWorkflowCases({ q, boundAndSaved, rewriteFiling, getPool, patch
         changeReason: 'Restore only the retained saved regulatory source.',
       });
       expect(result.status, JSON.stringify(result.body)).toBe(409);
-      expect(result.body.code).toBe(generated ? 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED' : 'WORKFLOW_HUMAN_ADOPTION_REQUIRED');
+      /* The source is a CSR, so its scientific review is met first, generated
+         or not (csr-scientific-review.ts, 07857e3e3). The model-qualification
+         and adoption holds behind it are held on a protocol import in
+         workflow-import-governance.pglite.test.ts. The refusal and the
+         untouched filing below are what this case is about. */
+      expect(result.body.code, String(generated)).toBe('CSR_SCIENTIFIC_REVIEW_REQUIRED');
       expect(await filingText(ids.filingId)).toBe('Divergent filing words.');
       expect(await q(`SELECT * FROM document_span_lineage WHERE document_id=$1 ORDER BY id`, [ids.sectionId])).toEqual(spans);
       expect((await q(`SELECT * FROM authoring_sections WHERE id=$1`, [ids.sectionId]))[0]).toEqual(section);

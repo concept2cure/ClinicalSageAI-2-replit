@@ -1,0 +1,16 @@
+## 1. The IVDR pack download records best-effort again (emitAuditEvent)
+ × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/ivdr-binder-routes.ts': `'router.get(\'/packs/:packId/download\…'` recor
+ × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > server/routes/ivdr-binder-routes.ts records through its own recorder, which it still call
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 35 passed (37)
+
+## 2. The RTM export lets its record fail (allowDegradedMode: true)
+ × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/rtm-export.ts': `'router.get(\'/programs/:programId/rtm…'` records befor
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 36 passed (37)
+
+## 3. The Report OS package route, registered by name, sets its own attachment header
+ × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/report-os.ts': `'router.post(\'/bundles/:bundleId/expo…'` records before
+ × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/report-os.ts': `'router.get(\'/bundles\', async (req: …'` records before
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 36 passed (38)

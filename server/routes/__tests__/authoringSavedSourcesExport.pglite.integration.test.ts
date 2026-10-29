@@ -114,8 +114,10 @@ async function sealed(f: DispositionFixture, provenance?: unknown) {
     sources: [{ documentId: f.vault, programId: f.program, contentHash: SOURCE_HASH,
       span: { start: 0, end: ORIGINAL_TEXT.length, totalChars: ORIGINAL_TEXT.length } }],
   }] };
+  // Not a CSR: a CSR's export also needs its scientific-review receipt
+  // (csr-scientific-review.ts), held by csr-scientific-release-order.test.ts.
   await f.pg.query(`INSERT INTO authoring_documents (id,tenant_id,status,title,module,client_program_id,provenance)
-    VALUES ($1,$2,'APPROVED','Source-linked CSR','M5',$3,$4)`, [docId, f.org, f.program, JSON.stringify(stored)]);
+    VALUES ($1,$2,'APPROVED','Source-linked clinical overview','M2',$3,$4)`, [docId, f.org, f.program, JSON.stringify(stored)]);
   await f.pg.query(`INSERT INTO authoring_sections (id,doc_id,tenant_id,code,title,content,order_index)
     VALUES ($1,$2,$3,'12','Efficacy',$4,1)`, [randomUUID(), docId, f.org, SECTION_CONTENT]);
   await f.pg.query(`INSERT INTO authoring_signatures

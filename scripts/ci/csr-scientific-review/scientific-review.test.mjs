@@ -1,12 +1,14 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
-import { buildCsrReviewModules } from './build.mjs';
-// The real server/services/authoring modules, transpiled; a build failure fails this file.
-const build = buildCsrReviewModules();
-test.after(build.cleanup);
-const root = build.dir;
+import { buildCandidate } from './build.mjs';
+// run.mjs passes the build it made; `npm run test:ci-scripts` reaches this file
+// through its glob, and the suite then builds the repository's own files itself.
+// Either way no production service is substituted.
+const built = process.env.CSR_REVIEW_TEST_BUILD ? null : buildCandidate();
+if (built) after(built.cleanup);
+const root = process.env.CSR_REVIEW_TEST_BUILD ?? built.dir;
 const core = await import(pathToFileURL(join(root, 'csr-scientific-review-core.js')));
 const service = await import(pathToFileURL(join(root, 'csr-scientific-review.js')));
 const uid = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
