@@ -1,0 +1,5 @@
+# eslint client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+# HEAD (via --stdin --stdin-filename):
+exit 0 (0 problems)
+# working tree:
+exit 0 (0 problems)

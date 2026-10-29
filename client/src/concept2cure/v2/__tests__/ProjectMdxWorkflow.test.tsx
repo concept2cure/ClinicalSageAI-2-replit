@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from '../surfaces/ProjectMdxWorkflow';
+import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '@shared/constants/mdx-project-features';
 
 const project: MdxWorkflowProject = {
   id: '11111111-1111-4111-8111-111111111111', name: 'Client device',
@@ -148,5 +149,77 @@ describe('project MDX workflow — doors and headings', () => {
   it('heads a filing with no recorded route by its kind, in words a client reads', () => {
     expect(mdxProjectPlan({ ...project, program_type: 'HDE', regulatory_path: 'hde' })!.title).toBe('What this device filing needs');
     expect(mdxProjectPlan({ ...project, product_type: 'ivd', program_type: 'HDE', regulatory_path: 'hde' })!.title).toBe('What this diagnostic filing needs');
+  });
+});
+
+/* Device features inside the project (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/device-features-in-project/). The founder made 21 MDX surfaces features of the
+   client's project (MDX_PROJECT_FEATURE_SURFACE_IDS, 62a8d5e7). Plan's device workflow opens eight of them. Each of
+   the other thirteen has no door from inside the project, for the reason given below. Nine fold into a place the
+   project already reaches, and one is the old device home (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section
+   5 and convergences 3, 7, 8, 11, 12). The map places the last four in the project, but their screens do not read
+   the open project yet. A door to one of those waits until its read takes the project. When that lands, move the id
+   to REACHED_FROM_PLAN in the same change. */
+const REACHED_FROM_PLAN = [
+  'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
+  'device-clinical-studies', 'device-software', 'device-engineering', 'device-postmarket',
+];
+const NO_PROJECT_DOOR: Record<string, string> = {
+  /* (a) Placed in the project by the map; its screen does not read the open project yet. */
+  'device-presub': 'slice 12 places it on Plan, but usePresubList reads /api/q-sub with no program_id and MdxSurfaceHost marks it an organization-wide view',
+  'device-udi': 'slice 20 points registration-udi here, but UdiSurface calls useUdi() with no program and MdxSurfaceHost marks it an organization-wide view',
+  labeling: 'slice 20 points the labeling package here, but no caller passes Labeling the open project, so it reads no record',
+  'human-factors': 'slice 19 maps human-factors-usability here, but GET /api/human-factors returns the organization\'s first file (hf_engineering_files has no program column)',
+  /* (b) Folds into a place the project already reaches; a door would keep a duplicate. */
+  'design-controls': 'folds into device-engineering, which Plan already opens',
+  risk: 'folds into device-engineering, which Plan already opens',
+  'ivd-completeness': 'folds into device-diagnostics, which Plan already opens for an IVDR filing',
+  'device-tasks': 'folds into Tasks',
+  'device-vault': 'folds into Vault',
+  'device-analytics': 'folds into Reporting & analytics',
+  'device-validation': 'folds into Submission Center',
+  'device-submission': 'folds into Submission Center',
+  /* (c) The old device home. */
+  'device-workstream': 'the old device portfolio, which folds into Projects (A2.10)',
+};
+
+/** Every recorded fact that picks the device plan: each route the plan compiles (and two it does not), each device
+ *  product type, and each added filing that opens another feature. */
+const ROUTES = [
+  { program_type: '510K', regulatory_path: '510k' }, { program_type: 'DE_NOVO', regulatory_path: 'de_novo' },
+  { program_type: 'PMA', regulatory_path: 'pma' }, { program_type: 'MDR', regulatory_path: null },
+  { program_type: 'IVDR', regulatory_path: null }, { program_type: 'HDE', regulatory_path: 'hde' },
+];
+const PRODUCTS = ['device', 'samd', 'ivd', 'cdx'];
+const ADDED_FILINGS = [[], ['MDR'], ['IVDR']];
+
+let opened: Set<string> | null = null;
+/** Every surface a door on the device workflow opens, with every feature available. */
+function surfacesPlanOpens(): Set<string> {
+  if (opened) return opened;
+  const found = new Set<string>();
+  for (const route of ROUTES) for (const product_type of PRODUCTS) for (const otherFilings of ADDED_FILINGS) {
+    const onNav = vi.fn();
+    const view = render(<ProjectMdxWorkflow {...props()} project={{ ...project, ...route, product_type }}
+      otherFilings={otherFilings} onNav={onNav} />);
+    view.container.querySelectorAll<HTMLButtonElement>('.pj-mdx-actions button').forEach(button => fireEvent.click(button));
+    for (const [id] of onNav.mock.calls) found.add(String(id));
+    view.unmount();
+  }
+  opened = found;
+  return found;
+}
+
+describe('device features inside the project', () => {
+  it('places each of the 21 project features once: opened from Plan, or listed with why it has no door', () => {
+    expect([...REACHED_FROM_PLAN, ...Object.keys(NO_PROJECT_DOOR)].sort()).toEqual([...MDX_PROJECT_FEATURE_SURFACE_IDS].sort());
+  });
+
+  it('opens exactly those eight features from a device project\'s Plan, over every recorded route and product type', () => {
+    expect([...surfacesPlanOpens()].sort()).toEqual([...REACHED_FROM_PLAN].sort());
+  });
+
+  it.each(Object.entries(NO_PROJECT_DOOR))('offers no door to %s from inside the project', (id, why) => {
+    expect(surfacesPlanOpens().has(id), `${id}: ${why}`).toBe(false);
   });
 });
