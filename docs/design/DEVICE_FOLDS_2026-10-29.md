@@ -201,7 +201,7 @@ The product files of the folds don't overlap. The checklist edits do (launch-sco
 
 ## Founder decisions
 
-**Decided 2026-10-29 as P-54** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): one store, `estar_submissions`; no organization-wide blocker list; device analytics at Insights' tier; grant continuity through `FOLDED_MODULE_SUCCESSORS`, no new grants; only engine-computed workstream figures, and the Client Review Room admits the project. The questions as they were asked:
+**Decided 2026-10-29 as P-61** (`docs/LAUNCH_DEFINITION_OF_DONE.md`; first numbered P-54): one store, `estar_submissions`; no organization-wide blocker list; device analytics at Insights' tier; grant continuity through `FOLDED_MODULE_SUCCESSORS`, no new grants; only engine-computed workstream figures, and the Client Review Room admits the project. The questions as they were asked:
 
 1. One device-filing store (`FUNCTION_PARITY.md:173`). The evidence favours `estar_submissions`: it is on the deploy set, and the package store's creator is not.
 2. Whether to keep an organization-wide blocker list over `c2c_blockers`.

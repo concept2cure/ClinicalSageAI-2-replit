@@ -73,41 +73,80 @@ export interface QmsTrainingExpiry {
   docNumber: string;
   title: string;
   documentVersion: string;
-  /** When the member's training on this release lapses: the latest expiry among their current receipts. */
+  /** When the member's training on this release lapses, or lapsed: the latest expiry among their receipts. */
   expiresAt: string;
   daysLeft: number;
+  /** True when it has lapsed: the member has no current receipt, and their last one on this release expired. */
+  lapsed: boolean;
+}
+
+type Release = Awaited<ReturnType<typeof readCurrentReceipts>>['releases'][number];
+
+/**
+ * The expired receipts on the documents in force, each verified as it stood the
+ * moment before it expired: the same receipt rule as coverage, at the receipt's
+ * own time. Read only for expiry; coverage counts a lapsed member as not trained.
+ */
+async function readLapsedReceipts(client: TrainingSqlClient, organizationId: number, documentIds: number[], now: Date) {
+  if (documentIds.length === 0) return [];
+  const { rows } = await client.query(
+    `SELECT t.* FROM qms_training_records t
+      WHERE t.organization_id = $1 AND t.document_id = ANY($2::int[])
+        AND t.acknowledgment_method = 'attestation' AND t.trainer_id IS NULL AND t.quiz_score IS NULL
+        AND t.expires_at IS NOT NULL AND t.expires_at <= $3::timestamptz`,
+    [organizationId, documentIds, now.toISOString()],
+  );
+  return rows.map(row => verifiedTrainingReceipt(row, new Date(new Date(row.expires_at as string | Date).getTime() - 1)))
+    .filter(row => row !== null);
+}
+
+/** The latest expiry per member among these receipts; null when one never expires. */
+function latestExpiry(receipts: QmsTrainingAcknowledgement[]): Map<number, string | null> {
+  const lapse = new Map<number, string | null>();
+  for (const r of receipts) {
+    const was = lapse.get(r.userId);
+    if (was === null) continue;
+    lapse.set(r.userId, r.expiresAt == null ? null : (was === undefined || r.expiresAt > was ? r.expiresAt : was));
+  }
+  return lapse;
+}
+
+/** A release's lapsing members (current, inside the window) and lapsed members (no current receipt). */
+function releaseExpiry(release: Release, lapsedReceipts: QmsTrainingAcknowledgement[], members: Set<number>, now: Date, horizon: number) {
+  const { document, context, matching } = release;
+  const current = latestExpiry(matching);
+  const ofRelease = lapsedReceipts.filter(r => members.has(r.userId) && !current.has(r.userId) && context.eligible &&
+    r.documentId === document.id && r.documentVersion === document.version && r.contentDigest === context.contentDigest);
+  const rows: Array<Omit<QmsTrainingExpiry, 'userName'>> = [];
+  const push = (userId: number, expiresAt: string, lapsed: boolean) => rows.push({
+    userId, documentId: Number(document.id), docNumber: String(document.doc_number),
+    title: String(document.title), documentVersion: String(document.version), expiresAt,
+    daysLeft: Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / DAY_MS), lapsed,
+  });
+  for (const [userId, expiresAt] of current) {
+    if (expiresAt !== null && new Date(expiresAt).getTime() <= horizon) push(userId, expiresAt, false);
+  }
+  for (const [userId, expiresAt] of latestExpiry(ofRelease)) if (expiresAt !== null) push(userId, expiresAt, true);
+  return rows;
 }
 
 /**
- * Each active member whose training on a release in force lapses within
- * `withinDays`: who must train again, on what, and by when (G10). A member is
- * current until the latest expiry among their current receipts, so a renewal
- * replaces the receipt it renews, and a receipt with no expiry means no lapse.
- * A member already lapsed has no current receipt; coverage counts them as not
- * trained, and they are not listed here.
+ * Each active member whose training on a release in force has lapsed, or lapses
+ * within `withinDays`: who must train again, on what, and by when (G10). A member
+ * is current until the latest expiry among their current receipts, so a renewal
+ * replaces the receipt it renews, and a receipt with no expiry means no lapse. A
+ * member has lapsed when they hold no current receipt and their last receipt on
+ * the exact release in force, verified while it ran, has expired. Training on a
+ * superseded version is not a lapse: it is training not yet done on the new one,
+ * which coverage counts.
  */
 export async function readQmsTrainingExpiring(
   client: TrainingSqlClient, organizationId: number, withinDays: number, now = new Date(),
 ): Promise<QmsTrainingExpiry[]> {
-  const { releases } = await readCurrentReceipts(client, organizationId, now);
+  const { members, releases } = await readCurrentReceipts(client, organizationId, now);
+  const lapsedReceipts = await readLapsedReceipts(client, organizationId, releases.map(r => Number(r.document.id)), now);
   const horizon = now.getTime() + withinDays * DAY_MS;
-  const out: Array<Omit<QmsTrainingExpiry, 'userName'>> = [];
-  for (const { document, matching } of releases) {
-    const lapse = new Map<number, string | null>();
-    for (const r of matching) {
-      const was = lapse.get(r.userId);
-      if (was === null) continue;
-      lapse.set(r.userId, r.expiresAt == null ? null : (was === undefined || r.expiresAt > was ? r.expiresAt : was));
-    }
-    for (const [userId, expiresAt] of lapse) {
-      if (expiresAt === null || new Date(expiresAt).getTime() > horizon) continue;
-      out.push({
-        userId, documentId: Number(document.id), docNumber: String(document.doc_number),
-        title: String(document.title), documentVersion: String(document.version), expiresAt,
-        daysLeft: Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / DAY_MS),
-      });
-    }
-  }
+  const out = releases.flatMap(release => releaseExpiry(release, lapsedReceipts, members, now, horizon));
   if (out.length === 0) return [];
   // Names only for the people listed, and only as this organization's members
   // (every one is, from the roster above); coverage reads no name.

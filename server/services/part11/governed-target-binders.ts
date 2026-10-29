@@ -21,6 +21,11 @@ import {
 import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-responses/response-logic.js';
 import { COMMITMENT_FULFILMENT_DIGEST_RECIPE, commitmentFulfilmentDigest } from '../ha-interactions/ha-logic.js';
 import { readCommitmentFulfilmentContent } from '../ha-interactions/fulfilment-record.js';
+import {
+  FILED_BASELINE_DIGEST_RECIPE,
+  filedBaselineDigest,
+  readFiledBaselineById,
+} from '../submission-service/filed-sequence-baseline-content.js';
 
 /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
 export type ContentBinder = (
@@ -274,6 +279,28 @@ const vaultDataRoomSealBinding: ContentBinder = async (client, rest, orgId, ledg
   };
 };
 
+/**
+ * submission-filed-baseline:<uuid>: a declaration, written on this client a
+ * moment ago, that a submission's US sequences 0000–N were filed outside the
+ * platform (D7, 2026-10-29). The signature binds what the declarer attests:
+ * the sequences, the one that opened the Original Application, and the
+ * evidence's bytes. A declaration not readable here has nothing to bind, and
+ * the act, which declares this basis, is refused.
+ */
+const filedSequenceBaselineBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rest)) return ledgerFallback('malformed filed-baseline pointer');
+  const baseline = await readFiledBaselineById(client, orgId, rest);
+  if (!baseline) return ledgerFallback('the declaration is not readable at signing time');
+  return {
+    digest: filedBaselineDigest(baseline),
+    basis: BINDING_BASIS.FILED_SEQUENCE_BASELINE_CONTENT,
+    note: `sha256 (recipe ${FILED_BASELINE_DIGEST_RECIPE}) over submission ${baseline.submissionId}'s declaration that its ` +
+      `${baseline.region} sequences 0000–${baseline.lastFiledSequence} were filed outside the platform, sequence ` +
+      `${baseline.originalSequence} opening the Original Application, on the evidence of Vault document ` +
+      `${baseline.evidenceVaultDocumentId} at sha256 ${baseline.evidenceSha256}. No reason, declarer or time is bound.`,
+  };
+};
+
 /* ─── Device labeling and risk (D5, 2026-10-29) ───────────────────────────────
    docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/README.md names every
    field each recipe takes and every field it leaves out, and why. All three
@@ -466,6 +493,7 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'regulatory-commitment': commitmentFulfilmentBinding,
   'qms-document': qmsDocumentContentBinding,
   'vault-data-room-seal': vaultDataRoomSealBinding,
+  'submission-filed-baseline': filedSequenceBaselineBinding,
   'labeling-document': labelingDocumentBinding,
   'labeling-translation': labelingTranslationBinding,
   'risk-item': riskResidualAcceptanceBinding,

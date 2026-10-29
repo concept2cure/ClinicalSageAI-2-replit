@@ -125,13 +125,18 @@ describe('Quality records', () => {
     fireEvent.click(screen.getByRole('button', { name: /Approval/ }));
     const drawer = screen.getByRole('dialog');
     fireEvent.change(within(drawer).getByLabelText(/^Standing/), { target: { value: 'approved' } });
+    // An approval names its next re-approval; without it nothing goes on to the signature.
     fireEvent.click(within(drawer).getByRole('button', { name: 'Continue to sign' }));
+    await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/an approval needs its next re-approval date/)).toBeTruthy());
+    const nextYear = `${new Date().getUTCFullYear() + 1}-06-30`;
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/^Next re-approval/), { target: { value: nextYear } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Continue to sign' }));
     const signing = await screen.findByRole('dialog', { name: 'Sign supplier standing' });
     expect(H.apiRequest).not.toHaveBeenCalled();
 
     fireEvent.click(within(signing).getByRole('button', { name: 'stub-sign' }));
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/suppliers/9/approval', {
-      approvalStatus: 'approved', password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
+      approvalStatus: 'approved', reapprovalDate: nextYear, password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
     }));
     await waitFor(() => expect(screen.getByText('Acme Biologics is now approved.')).toBeTruthy());
   });

@@ -103,10 +103,10 @@ const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Rel
 /** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
 export function signSupplierApproval(
   id: number,
-  approvalStatus: string,
+  decision: { approvalStatus: string; reapprovalDate?: string },
   input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
 ): Promise<EsigSignedManifest> {
-  return sendSignedAct('POST', `/api/mdx/qms/suppliers/${id}/approval`, { approvalStatus }, input, UNCONFIRMED_APPROVAL);
+  return sendSignedAct('POST', `/api/mdx/qms/suppliers/${id}/approval`, decision, input, UNCONFIRMED_APPROVAL);
 }
 const UNCONFIRMED_APPROVAL = "The server did not confirm the supplier's standing. Reload the register and check the supplier before you sign again.";
 

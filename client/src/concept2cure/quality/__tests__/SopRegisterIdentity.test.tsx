@@ -24,7 +24,7 @@ function payload(path: string, organizationId: string) {
   if (path === '/api/mdx/qms/training/compliance') return { data: [{ id, doc_number: docNumber, title,
     document_version: '1.0', eligible: true, unavailable_reason: null, current: old ? 1 : 0, of: old ? 1 : 2, last_cycle: null }] };
   if (path === '/api/mdx/qms/training/expiring') return { data: [{ userId: old ? 30 : 31, userName: old ? 'Previous tenant member' : 'Current tenant member',
-    documentId: id, docNumber, title, documentVersion: '1.0', expiresAt: '2026-11-20T00:00:00.000Z', daysLeft: 10 }] };
+    documentId: id, docNumber, title, documentVersion: '1.0', expiresAt: '2026-11-20T00:00:00.000Z', daysLeft: 10, lapsed: false }] };
   return { data: [] };
 }
 type Pending = { path: string; organizationId: string; signal?: { aborted: boolean }; resolve: (value: ReturnType<typeof json>) => void };

@@ -11,7 +11,8 @@ const h = vi.hoisted(() => ({ insert: vi.fn(), primaryRegion: 'fda' }));
 vi.mock('../../../db', () => {
   const chain = { values: () => chain, returning: async () => { h.insert(); return [{ id: 9, type: 'variation' }]; } };
   const select = () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 1, organizationId: 7, primaryRegion: h.primaryRegion }] }) }) });
-  return { db: { insert: () => chain, select }, pool: {} };
+  // execute: the declaration of sequences filed elsewhere, read by createSequence (D7, 2026-10-29): none here.
+  return { db: { insert: () => chain, select, execute: async () => ({ rows: [] }) }, pool: {} };
 });
 vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ ok: true })) }));
 
