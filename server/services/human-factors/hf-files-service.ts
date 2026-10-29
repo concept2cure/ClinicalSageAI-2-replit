@@ -48,6 +48,10 @@ export class HfFileValidationError extends Error {
 export interface HfEngineeringFileRow {
   id: string;
   organization_id: number;
+  /** The project (regulatory_programs.id) the file belongs to. NULL for a file
+   *  recorded without one: the organization's unscoped file, which no project
+   *  read returns (migrations/20261029_hf_engineering_files_program_key.sql). */
+  program_id: string | null;
   device: string;
   framework: string;
   present: Record<string, boolean>;
@@ -62,10 +66,19 @@ export interface CreateHfFileInput {
   /** Element→boolean presence map; normalized to the canonical HF_ELEMENT_KEYS. */
   present?: unknown;
   createdBy?: number | null;
+  /** The project the file is recorded for. The caller has already established
+   *  that the organization owns it (programInOrganization); the database's
+   *  same-organization key refuses any other. Absent: an unscoped file. */
+  programId?: string | null;
+}
+
+/** Narrows a list to one project's files. Absent: every file of the organization. */
+export interface ListHfFilesOptions {
+  programId?: string | null;
 }
 
 const SELECT_COLS =
-  'id, organization_id, device, framework, present, created_by, created_at, updated_at';
+  'id, organization_id, program_id, device, framework, present, created_by, created_at, updated_at';
 
 /**
  * Normalize the element presence map to exactly the canonical keys as booleans.
@@ -98,21 +111,31 @@ export async function createHfFile(
   const present = normalizePresent(input.present);
 
   const { rows } = await pool.query<HfEngineeringFileRow>(
-    `INSERT INTO hf_engineering_files (organization_id, device, framework, present, created_by)
-     VALUES ($1,$2,$3,$4::jsonb,$5)
+    `INSERT INTO hf_engineering_files (organization_id, device, framework, present, created_by, program_id)
+     VALUES ($1,$2,$3,$4::jsonb,$5,$6)
      RETURNING ${SELECT_COLS}`,
-    [orgId, input.device, framework, JSON.stringify(present), input.createdBy ?? null],
+    [orgId, input.device, framework, JSON.stringify(present), input.createdBy ?? null, input.programId ?? null],
   );
   return rows[0];
 }
 
-/** List the org's HFE/UE files, newest first (soft-deleted excluded). */
-export async function listHfFiles(orgId: number): Promise<HfEngineeringFileRow[]> {
+/**
+ * List the org's HFE/UE files, newest first (soft-deleted excluded). With a
+ * `programId`, only that project's files: a file recorded without a project
+ * (program_id NULL) never matches, so it is never shown as a project's. The
+ * project is a bind parameter, never SQL text (ci:sql-interpolation); the
+ * caller has already checked it is a project id the organization owns.
+ */
+export async function listHfFiles(
+  orgId: number,
+  options: ListHfFilesOptions = {},
+): Promise<HfEngineeringFileRow[]> {
   const { rows } = await pool.query<HfEngineeringFileRow>(
     `SELECT ${SELECT_COLS} FROM hf_engineering_files
       WHERE organization_id = $1 AND deleted_at IS NULL
+        AND ($2::uuid IS NULL OR program_id = $2::uuid)
       ORDER BY created_at DESC, id`,
-    [orgId],
+    [orgId, options.programId ?? null],
   );
   return rows;
 }

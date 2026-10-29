@@ -3535,6 +3535,14 @@ export const C2C_MIGRATION_FILES = [
   // triggers, re-created at once. After unified_tasks, task_dependencies and
   // cross_module_task_links (base schema). Drops nothing the set creates.
   'migrations/20261023_review_routes.sql',
+  // An HFE/UE file names its project, by key (D2, 2026-10-29): hf_engineering_files
+  // .program_id UUID, nullable (existing files stay the organization's unscoped
+  // files), held to the file's organization by a NOT VALID composite key (ON
+  // DELETE SET NULL (program_id)), with an index for the project read. After
+  // db/migrations/20260801_hf_files_store.sql (the table) and 20260926b
+  // (regulatory_programs_id_org_uq, created here too when absent). Public with
+  // organization_id INTEGER NOT NULL; creates no table; guarded; no DROP.
+  'migrations/20261029_hf_engineering_files_program_key.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

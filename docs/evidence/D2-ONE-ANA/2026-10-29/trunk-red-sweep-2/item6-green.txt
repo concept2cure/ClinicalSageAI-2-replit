@@ -1,0 +1,12 @@
+# item 6 green
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > offers Build in editor on the selected real Vault upload beside the actual document 574ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false) 1055ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true) 1172ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > preserves current source selection and dirty text on Stay, then adopts only after an explicit guarded leave 1694ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas 671ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited 617ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > holds the current canvas when its rail project differs from the current shell project 329ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes 604ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity 900ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

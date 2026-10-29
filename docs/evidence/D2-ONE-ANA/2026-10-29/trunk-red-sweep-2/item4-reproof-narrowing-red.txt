@@ -1,0 +1,27 @@
+# item 4 related, red at head (not fixed): server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts
+      Tests  24 failed | 179 passed (203)
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/mdx/vault
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/approval-bottlenecks
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/automation
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/blockers
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/command-center
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/digests
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/due-soon
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/hotspots
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/policies
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/sections
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/unified-work
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > in any letter case: Express routes ignore it, so the verdict does too > /api/submission-ops/workload
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/mdx/vault
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/approval-bottlenecks
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/automation
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/blockers
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/command-center
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/digests
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/due-soon
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/hotspots
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/policies
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/sections
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/unified-work
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch > /api/submission-ops/workload
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯

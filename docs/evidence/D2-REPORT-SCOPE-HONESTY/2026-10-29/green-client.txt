@@ -1,0 +1,11 @@
+# With the fix. npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > states the catalog card’s note beside "Run report" 115ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > says nothing of the kind on a tile whose engine computes the project 60ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s 60ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body 304ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a run whose engine computed the project carries no organization note 73ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > an organization (account) run is already headed as the organization and adds nothing 31ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope 24ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
