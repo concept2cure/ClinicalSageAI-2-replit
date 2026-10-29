@@ -37,6 +37,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-ex
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -60,6 +61,8 @@ describe('BP-W0-6 — authoring export, Word branch', () => {
 
   it('returns 200 and a real .docx whose XML carries the section content', async () => {
     mockQuery.mockImplementation(async (sql: unknown) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       const s = String(sql);
       if (s.includes('FROM authoring_documents')) {
         return {
@@ -70,7 +73,7 @@ describe('BP-W0-6 — authoring export, Word branch', () => {
           // §11.50 signature manifest appended — would present whatever signatures
           // exist as certifying a final record that does not exist. Exporting an
           // approved document is what this route is for.
-          rows: [{ id: 'D1', title: 'Tox Summary', module: 'M2', status: 'approved', created_at: new Date() }],
+          rows: [{ id: DOC_ID, title: 'Tox Summary', module: 'M2', status: 'approved', created_at: new Date() }],
         };
       }
       if (s.includes('FROM authoring_sections')) {
@@ -83,7 +86,7 @@ describe('BP-W0-6 — authoring export, Word branch', () => {
     });
 
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/export')
+      .post(`/api/authoring/docs/${DOC_ID}/export`)
       .set('Authorization', await bearer())
       .send({ format: 'docx' })
       .buffer(true)

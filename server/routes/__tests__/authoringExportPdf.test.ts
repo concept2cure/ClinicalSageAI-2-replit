@@ -21,6 +21,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-ex
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 import { AuthoringPdfRenderingError } from '../../services/authoring/authoring-export';
 
 async function bearer(): Promise<string> {
@@ -40,13 +41,15 @@ function makeApp(deliveryError?: Error) {
 }
 
 async function download(deliveryError?: Error) {
-  return request(makeApp(deliveryError)).post('/api/authoring/docs/D1/export')
+  return request(makeApp(deliveryError)).post(`/api/authoring/docs/${DOC_ID}/export`)
     .set('Authorization', await bearer()).send({ format: 'pdf' });
 }
 
 function storedRows(sql: unknown, args: unknown[] = []) {
   const text = String(sql);
-  if (text.includes('FROM authoring_documents')) return { rowCount: 1, rows: [{ id: 'D1', title: 'Tox Summary', module: 'M2', status: 'approved', created_at: new Date() }] };
+  const governance = releaseGovernanceRead(text);
+  if (governance) return governance;
+  if (text.includes('FROM authoring_documents')) return { rowCount: 1, rows: [{ id: DOC_ID, title: 'Tox Summary', module: 'M2', status: 'approved', created_at: new Date() }] };
   if (text.includes('FROM authoring_sections')) return { rowCount: 1, rows: [{ code: '2.6.6', title: 'General', content: 'A <critical> finding & more' }] };
   if (text.includes('INSERT INTO authoring_audit_trail')) h.auditWrites++;
   if (text.includes('INSERT INTO authoring_export_history')) {
@@ -63,7 +66,7 @@ beforeEach(() => {
 
 describe('authoring controlled PDF export', () => {
   it('delivers strict-converter PDF bytes and records their exact hash, never a plain-text fallback', async () => {
-    const res = await request(makeApp()).post('/api/authoring/docs/D1/export')
+    const res = await request(makeApp()).post(`/api/authoring/docs/${DOC_ID}/export`)
       .set('Authorization', await bearer()).send({ format: 'pdf' }).buffer(true)
       .parse((response, cb) => { const chunks: Buffer[] = []; response.on('data', c => chunks.push(c)); response.on('end', () => cb(null, Buffer.concat(chunks))); });
     expect(res.status).toBe(200);

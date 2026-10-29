@@ -155,7 +155,7 @@ const AUTHOR_SIGNER = { email: AUTHOR.email, name: AUTHOR.name };
 
 describe('FD5 (c): a sealed Authoring approval carries to its Vault copy', () => {
   it('reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file', async () => {
-    const { docId, ids: [reviewId, approvalId], digest } = await signedDocument('CSR carried', 'APPROVED', [REVIEW, APPROVE]);
+    const { docId, ids: [reviewId, approvalId], digest } = await signedDocument('Clinical overview carried', 'APPROVED', [REVIEW, APPROVE]);
     const res = await fileIt(docId);
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const { vaultDocumentId, sha256, approval } = res.body.data;
