@@ -83,6 +83,8 @@ export interface FamilyVersion {
   current: boolean;
   /** 'verified' when it names a predecessor the rules admit; 'unverified' when it names one they refuse. */
   link: 'none' | 'verified' | 'unverified';
+  /** The earlier version whose bytes this one restores (MR-08 Stage 5), or null. */
+  restoredFrom: { versionId: string; version: string | null } | null;
 }
 
 export interface FamilyQueryable {
@@ -124,7 +126,7 @@ export async function readVersionFamily(
        ),
        members AS (SELECT id FROM back UNION SELECT id FROM fwd)
      SELECT d.id::text AS id, d.version, d.content_hash, d.file_size, d.file_name, d.created_at, d.created_by,
-            COALESCE(u.name, u.email) AS uploader,
+            d.restored_from_id::text AS restored_from_id, COALESCE(u.name, u.email) AS uploader,
             NOT ${supersededSql('d')} AS current,
             CASE
               WHEN d.supersedes_id IS NULL THEN 'none'
@@ -138,6 +140,7 @@ export async function readVersionFamily(
     [p.documentId, p.programId, p.organizationId],
   );
   if (rows.length === 0) return null;
+  const versionOf = new Map(rows.map((r) => [r.id as string, (r.version ?? null) as string | null]));
   return rows.map((r) => ({
     id: r.id,
     version: r.version ?? null,
@@ -149,6 +152,7 @@ export async function readVersionFamily(
     createdAt: new Date(r.created_at).toISOString(),
     current: Boolean(r.current),
     link: r.link,
+    restoredFrom: r.restored_from_id ? { versionId: r.restored_from_id, version: versionOf.get(r.restored_from_id) ?? null } : null,
   }));
 }
 
