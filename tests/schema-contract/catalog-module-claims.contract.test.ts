@@ -401,3 +401,66 @@ describe('Retired Part 11 console', () => {
     expect((await subs()).rows).toEqual(before.rows);
   });
 });
+
+/* The eCTD publishing reference folded into eCTD Compile (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/). Its row was written
+   only by migrations/20260814j (ON CONFLICT DO NOTHING), which runs before
+   20260810 in the deploy set; 20260810 kept it off step 1's deprecation and healed
+   earlier ones (step 1b); 20260823 gave it a tier. All three were amended in place
+   (CLAUDE.md Rule 1): no insert, off the keep-list, no heal step, no packaging
+   row. A fresh database never holds the row; a deployed one keeps it, its
+   recorded tier and its subscriptions, deprecated on every replay, and nothing
+   clears the flag. */
+describe('Retired eCTD publishing reference', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'migrations/20260814j_catalog_missing_product_surfaces.sql',
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    expect(CATALOG_MIGRATIONS.indexOf(WRITERS[0])).toBeLessThan(CATALOG_MIGRATIONS.indexOf(WRITERS[1]));
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        expect(await meta(fresh, 'ectd-publishing'), `replay ${replay}`).toEqual([]);
+        const compile = await meta(fresh, 'ectd-compile');
+        expect(compile[0].metadata.deprecated ?? false).toBe(false);
+        expect(compile[0].metadata.tiers).toEqual(['standard']);
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291033, 'Historical subscriber ectd-publishing', 'historical-ectd-publishing');`);
+    // As a deployed database holds it today: healed by the old step 1b, tiered by the old packaging row.
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('ectd-publishing', 'Publishing centre', '', 'Submissions', '{"legacyMarker":"kept","tiers":["standard"]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291033, 'ectd-publishing', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT ectd_publishing_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291033');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      expect(await meta(pg, 'ectd-publishing'), `replay ${replay}`).toEqual([
+        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'] } },
+      ]);
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});

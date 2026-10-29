@@ -193,7 +193,7 @@ describe('a member', () => {
     h.user = { permissions: ['governed:write'] };
     serve({});
     mount();
-    expect(await screen.findByText(/Invoices are shown to billing administrators/)).toBeTruthy();
+    expect(await screen.findByText(/Invoices and subscription changes are for billing administrators/)).toBeTruthy();
     await waitFor(() => expect(h.apiRequest).toHaveBeenCalledWith('GET', '/api/billing/status'));
     expect(invoiceCalls()).toHaveLength(0);
     expect(screen.queryByText("Couldn't load invoices")).toBeNull();
@@ -242,7 +242,7 @@ describe('what AnA reads on Licensing', () => {
     h.user = { permissions: [] };
     serve({});
     mount();
-    await screen.findByText(/Invoices are shown to billing administrators/);
+    await screen.findByText(/Invoices and subscription changes are for billing administrators/);
     await waitFor(() => expect(facts().invoicesUnavailable).toMatch(/not a billing administrator/));
     expect(facts().invoices).toBeNull();
   });

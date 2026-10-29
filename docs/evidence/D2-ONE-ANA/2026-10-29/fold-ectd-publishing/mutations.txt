@@ -1,0 +1,176 @@
+Mutations of the Part 1 product code, over a254c975a, 2026-10-29
+Runner: tools/mutate.py.txt over tools/mutation-spec-part1.json; each against client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx with --bail=1
+
+M1  RED  eCTD Compile opens the panel at v4.0, not the version it assembles
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > opens at v3.2.2, the version this compile assembles, with its specifications and coded-attribute lists
+M2  RED  the reference cards are not rendered on the compile surface
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > opens at v3.2.2, the version this compile assembles, with its specifications and coded-attribute lists
+M3  RED  the reference cards are not rendered with no project open
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 12 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > with no project open > the reference is still there, and nothing project-scoped is read
+M4  RED  a 200 in the wrong shape is accepted as data
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 9 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a body in the wrong shape is a failed read, not a crashed surface
+M5  RED  a failed listing falls through to the vocabulary tables (an empty list over a failed read)
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 6 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed reference read is an error with Try again, never an empty list, and Try again reads again
+M6  RED  the listing error loses Try again
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 6 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed reference read is an error with Try again, never an empty list, and Try again reads again
+M7  RED  the code-list error loses Try again
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 8 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed code-list read has its own Try again, which reads that list again
+M8  RED  the spec table error loses Try again
+    client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx
+    Tests  1 failed | 7 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > the spec table has its own Try again
+M9  RED  the browser reads the old default id whatever the listing supplied
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 5 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > reads only a code list the listing supplied
+M10  RED  the browser opens at the listing's first list, not the CTD sections
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 3 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > shows the Regional IG OID, the v4.0 specifications, and browses and filters a code list
+M11  RED  an older code-list answer paints over a later pick
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 4 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > a slower answer for an earlier pick never paints over the list now picked
+M12  RED  the filter is ignored
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 3 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > shows the Regional IG OID, the v4.0 specifications, and browses and filters a code list
+M13  RED  an empty register renders an empty table, not its answer
+    client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx
+    Tests  1 failed | 11 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > an empty answer says it is what the service returned, not a failed read
+M14  RED  the panel no longer says v4.0 is reference only
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 3 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > shows the Regional IG OID, the v4.0 specifications, and browses and filters a code list
+M15  RED  AnA is given the spec versions after a failed read
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 14 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > a failed read reaches AnA as a failed read, with no counts
+M16  RED  AnA's facts on eCTD Compile carry no reference
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 13 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > names the version, the specifications and the lists it shows
+M17  RED  AnA's summary on eCTD Compile omits the reference
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 13 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > names the version, the specifications and the lists it shows
+M18  RED  AnA's context is not recomputed when the reference changes
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 13 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > names the version, the specifications and the lists it shows
+M19  RED  the code-list read starts before the listing has answered
+    client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+    Tests  1 failed | 6 passed (16)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed reference read is an error with Try again, never an empty list, and Try again reads again
+
+19 of 19 red. Restored files hash-identical: True
+  66bd3143cf5b4be4  client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+  0ad01ef3878ab909  client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx
+  fff7bb23e29784b5  client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+
+======================== Part 2 ========================
+Mutations of the Part 2 change, over 70c9e75ad, 2026-10-29T18:10:27Z
+Runner: tools/mutate.py.txt over tools/mutation-spec-part2.json; a suite with --bail=1, or a gate command
+
+P2-M1  RED  the alias is gone: an old link or AnA's target lands nowhere
+    client/src/concept2cure/v2/registryModel.ts
+    Tests  1 failed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > resolves ectd-publishing to eCTD Compile from a link, an in-app move and AnA's target, with or without a project open
+P2-M2  RED  eCTD Compile does not claim the reference reads (production refuses them)
+    shared/constants/ui-surface-registry.ts
+    Tests  1 failed | 161 passed (205)
+    caught by: FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/controlled-vocab
+P2-M2g  RED  the same, against the gate
+    shared/constants/ui-surface-registry.ts
+    npm run --silent ci:launch-scope-api exit 1
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+P2-M3  RED  the claim is widened to the retired screen's whole /api/ectd
+    shared/constants/ui-surface-registry.ts
+    Tests  1 failed | 42 passed (205)
+    caught by: FAIL  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > the sub-namespaces the re-proof upheld (79, less the four P-48 admitted, the one a device feature calls and the one eCTD Compile reads) are not served at launch > /api/ectd/qualification
+P2-M4  RED  ectd-publishing is put back on 20260810's keep-list
+    db/migrations/20260810_reconcile_module_catalog.sql
+    Tests  1 failed | 20 passed (21)
+    caught by: FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+P2-M5  RED  the heal step is put back
+    db/migrations/20260810_reconcile_module_catalog.sql
+    Tests  1 failed | 20 passed (21)
+    caught by: FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+P2-M6  RED  the packaging row is put back
+    db/migrations/20260823_module_catalog_commercial_packaging.sql
+    Tests  1 failed | 5 passed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > no catalogue writer keeps it: not inserted by 20260814j, off 20260810's keep-list and heal step, off 20260823's packaging
+P2-M7  RED  eCTD Compile does not register the reference handlers
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 15 passed (20)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > switches the reference version, and the menu a person reads really moved; the detail says what the compile builds
+P2-M8  RED  a held open-code-list is never released when the listing lands
+    client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+    Tests  1 failed | 16 passed (20)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > opens a code list by its id, held while the listing loads, then the browser shows it
+P2-M9  RED  set-reference-version is left on the retired surface id
+    shared/navigation/surface-actions.ts
+    Tests  1 failed | 2 passed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > the three view-only actions are eCTD Compile's, registered by its handler map, and none is left on the retired id
+P2-M10  RED  filter-codes requires a query again, so AnA cannot clear the filter
+    shared/navigation/surface-actions.ts
+    Tests  1 failed | 18 passed (20)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > filters the open code list by text, and clears it
+P2-M11  RED  the retired id keeps a view of its own
+    client/src/concept2cure/v2/surfaceViews.ts
+    Tests  1 failed | 3 passed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > keeps no screen of its own: no view, no registry entry for ⌘K, no inventory row, no component, no suites
+P2-M12  RED  ectd-publishing is put back in the Submission Center launch app
+    shared/constants/launch-scope.ts
+    Tests  1 failed | 18 passed (41)
+    caught by: FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+P2-M12f  RED  the same, against the fold guard
+    shared/constants/launch-scope.ts
+    Tests  1 failed | 4 passed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > is in no launch scope list and no rail, and no tour stops on it
+P2-M13  RED  ID_BASELINE left at 108
+    scripts/ci/check-ana-surface-context.mjs
+    npm run --silent ci:ana-surface-context exit 1
+    the id the router actually mounts, or — if the surface genuinely needs no context —
+    declare its ID in NO_CONTEXT_NEEDED with a reason.
+P2-M14  RED  the deferred-inventory row is put back
+    shared/constants/deferred-capability-inventory.ts
+    Tests  1 failed | 3 passed (6)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > keeps no screen of its own: no view, no registry entry for ⌘K, no inventory row, no component, no suites
+P2-M15  RED  20260814j inserts the row again (a fresh database gets a catalogue row for a retired screen)
+    migrations/20260814j_catalog_missing_product_surfaces.sql
+    Tests  1 failed | 19 passed (21)
+    caught by: FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered
+P2-M15r  RED  the same, against the catalogue reconciliation
+    migrations/20260814j_catalog_missing_product_surfaces.sql
+    Tests  1 failed | 2 passed (9)
+    caught by: FAIL  client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts > Apps catalog ↔ shell taxonomy > seeds no catalog row for something a user cannot actually open
+
+18 of 18 red. Restored files hash-identical: True
+  bdbb309b338a6e21  client/src/concept2cure/v2/registryModel.ts
+  699d3a110a74609d  client/src/concept2cure/v2/surfaceViews.ts
+  07ccaa8d29107c2e  client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+  4b234f9e145c602c  db/migrations/20260810_reconcile_module_catalog.sql
+  894f52abd543c7d9  db/migrations/20260823_module_catalog_commercial_packaging.sql
+  d92998d74ab2adc1  migrations/20260814j_catalog_missing_product_surfaces.sql
+  1b709e6ce9a737a4  scripts/ci/check-ana-surface-context.mjs
+  7134ae7b9b3a410c  shared/constants/deferred-capability-inventory.ts
+  0a4a776c647ace28  shared/constants/launch-scope.ts
+  e75648835603f1b0  shared/constants/ui-surface-registry.ts
+  2016db883f10326a  shared/navigation/surface-actions.ts

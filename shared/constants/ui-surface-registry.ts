@@ -460,32 +460,24 @@ export const UI_SURFACES: UiSurface[] = [
       // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
       // build bound to the run, read its sections, triage them, build narratives. Exactly the
       // jobs router, not the /api/csr builder prefix.
-      '/api/csr/jobs'],
+      '/api/csr/jobs',
+      // The eCTD reference (folded from ectd-publishing, D2 2026-10-29; EctdCompileReference.tsx):
+      // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
+      // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification
+      // stay refused at launch (launch-reproof-narrowing.test.ts).
+      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.',
-    engineering: 'Routes: /api/ectd-compile.',
+    engineering: 'Routes: /api/ectd-compile; the eCTD reference reads /api/ectd/controlled-vocab and /api/ectd/qualification/spec-versions.',
   },
-  {
-    id: 'ectd-publishing',
-    label: 'Publishing center',
-    navTier: 'project',
-    layoutMode: 'submissions',
-    icon: 'gitBranch',
-    group: 'submission',
-    uiKit: 'ectd_coauthor',
-    apiPrefixes: ['/api/ectd'],
-    anaToolFamilies: [],
-    sharedContract: '@shared/types/submission-api',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: deferredSurfaceDescription('ectd-publishing'),
-    engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
-  },
+  // ectd-publishing folded into ectd-compile (D2, 2026-10-29): its spec versions, Regional IG
+  // OID and controlled vocabularies are eCTD Compile's eCTD reference, and `ectd-publishing` is an
+  // alias that opens it (registryModel.ts). Its claim on /api/ectd moved as the two reads the
+  // reference makes; /api/ectd/v4 had no caller (docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/).
   {
     id: 'device-510k',
     label: '510(k) and eSTAR',

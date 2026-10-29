@@ -39,3 +39,38 @@ NET: HEAD 16 -> now 14 (-2)
 
 ✖ 14 problems (0 errors, 14 warnings)
 
+
+# ═══ Part 1b ESLint: 0 errors; per-file warnings HEAD -> now, no file gained one ═══
+server/routes/billing.ts: HEAD 1 -> now 1
+server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts: HEAD 0 -> now 0
+server/services/__tests__/billing-free-tier-activation.test.ts: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx: HEAD 4 -> now 3
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/surfaces/Onboarding.tsx: HEAD 6 -> now 6
+client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx: HEAD 0 -> now 0
+client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx: HEAD 1 -> now 1
+NET: HEAD 12 -> now 11 (-1)
+
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx
+  56:46  warning  'RequestInit' is not defined  no-undef
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+  104:8   warning  Function 'LicensingSurface' has too many lines (434). Maximum allowed is 100  max-lines-per-function
+  104:8   warning  Function 'LicensingSurface' has a complexity of 21. Maximum allowed is 15     complexity
+  435:37  warning  Arrow function has a complexity of 17. Maximum allowed is 15                  complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  308:1   warning  Function 'OnboardingWizard' has too many lines (957). Maximum allowed is 100  max-lines-per-function
+  308:1   warning  Function 'OnboardingWizard' has a complexity of 104. Maximum allowed is 15    complexity
+  447:29  warning  Async arrow function has too many lines (187). Maximum allowed is 100         max-lines-per-function
+  447:29  warning  Async arrow function has a complexity of 39. Maximum allowed is 15            complexity
+  499:9   warning  The value assigned to 'profileSaved' is not used in subsequent statements     no-useless-assignment
+  718:1   warning  File has too many lines (1149). Maximum allowed is 500                        max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/routes/billing.ts
+  219:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 11 problems (0 errors, 11 warnings)
+

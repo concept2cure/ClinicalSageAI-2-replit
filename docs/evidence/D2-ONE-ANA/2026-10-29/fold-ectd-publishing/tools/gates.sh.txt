@@ -1,0 +1,12 @@
+#!/bin/sh
+# Usage: gates.sh <out> gate...   Runs each npm script, records its tail and exit code.
+cd /home/user/ClinicalSageAI-2-replit
+out="$1"; shift
+echo "Gates on the working tree over $(git rev-parse --short HEAD), $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$out"
+for g in "$@"; do
+  echo "=== npm run $g" >> "$out"
+  timeout 900 npm run --silent "$g" > /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/ectd-publishing-fold/gate-p2.log 2>&1
+  code=$?
+  sed 's/\x1b\[[0-9;]*m//g' /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/ectd-publishing-fold/gate-p2.log | tail -14 >> "$out"
+  echo "=== exit $code ($g)" >> "$out"
+done

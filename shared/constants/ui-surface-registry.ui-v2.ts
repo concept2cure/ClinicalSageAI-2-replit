@@ -1133,7 +1133,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes:
-      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile and ectd-publishing own that.',
+      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile owns that.',
   },
   {
     id: 'pdev-contradictions',

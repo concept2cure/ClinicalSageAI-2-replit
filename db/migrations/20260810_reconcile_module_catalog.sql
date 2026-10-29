@@ -1,3 +1,17 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
+-- The eCTD publishing reference (ectd-publishing) is folded into eCTD Compile:
+-- its spec versions sit beside the validation findings, and its version choice,
+-- FDA Regional IG OID and controlled vocabularies are eCTD Compile's eCTD
+-- reference panel (EctdCompileReference.tsx). It left the launch catalogue on
+-- 2026-10-08, so the reason step 1 kept it (the 2026-09-22 note below: "a launch
+-- module") no longer holds. Removed: the id from step 1's keep-list, and step 1b,
+-- the heal step that cleared step 1's deprecation for this one row. 20260814j,
+-- the row's only writer, no longer inserts it, so a fresh database never holds
+-- it; on a deployed database step 1 deprecates the existing row on every replay
+-- and nothing clears the flag. The row, its metadata (its recorded tier
+-- included), module_subscriptions FKs and every tenant record stay; no DELETE,
+-- no appended DROP. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold of part11-console into Audit trail (CLAUDE.md Rule 1).
 -- The Part 11 console (part11-console) is folded into Audit trail, which states
 -- both audit chains' verdicts (audit_logs from the ledger, audit_events from
@@ -300,7 +314,6 @@ UPDATE available_modules
    'doc-journey',
    'document-authoring',
    'ectd-coauthor',
-   'ectd-publishing',   -- added 2026-09-22: a launch module; see the amendment note at the top
    'ectd-compile',
    'evidence-search',
    'gateway-transmittals',
@@ -349,15 +362,8 @@ UPDATE available_modules
    'vault'
  );
 
--- 1b) Undo step 1's earlier retirements of rows that are live app surfaces added
--- by LATER migrations (added 2026-09-22 — see the amendment note at the top).
--- Idempotent: touches the row only while the flag is present. It clears only
--- the flag, never the row's name, path or policy, which stay with 20260814j.
-UPDATE available_modules
-   SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,
-       updated_at = now()
- WHERE module_id IN ('ectd-publishing')
-   AND COALESCE(metadata::jsonb, '{}'::jsonb) ? 'deprecated';
+-- 1b) Removed 2026-10-29 (the ectd-publishing fold; see the note at the top). It
+-- cleared step 1's deprecation for ectd-publishing alone, the one row it named.
 
 -- 2) Upsert one row per real app, keyed by the surface id.
 INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES

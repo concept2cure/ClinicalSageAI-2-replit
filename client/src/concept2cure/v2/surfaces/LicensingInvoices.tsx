@@ -326,15 +326,11 @@ function InvoiceBody({ invoices }: { invoices: Invoices }) {
   }
 }
 
-/** The invoice card, under the plan status. A member is told who sees it. */
+/** The invoice card, under the plan status. Not rendered for a member:
+    Licensing tells a member once who reads invoices and changes the
+    subscription (Part 1b), rather than in two notes. */
 export function LicensingInvoices({ invoices }: { invoices: Invoices }) {
-  if (invoices.view.kind === 'not-offered') {
-    return (
-      <p className="scaf-note" style={{ margin: '0 0 16px' }}>
-        Invoices are shown to billing administrators: your organization&rsquo;s admins and owners.
-      </p>
-    );
-  }
+  if (invoices.view.kind === 'not-offered') return null;
   return (
     <div className="pj-card" style={{ marginBottom: 16 }}>
       <div className="pj-card-h">
