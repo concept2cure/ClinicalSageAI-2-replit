@@ -1,0 +1,461 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts > Builder study metadata reaches the existing FDA package > retains the 1789 refusal for an untagged study placed through the real route 65ms
+ × server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts > Builder study metadata reaches the existing FDA package > persists explicit tags through the real route and emits the exact study STF 33ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > POSITIVE CONTROL: a well-formed grouped container reports only its heading children 4ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> AFTER the grouped headings — the exact case the positional regex missed 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > sees a stray flat <leaf> BEFORE the headings too (the one case the old regex did catch) 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > a self-closing <leaf/> and a <leaf>…</leaf> pair are both direct children 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is absent — an unreadable backbone is never a clean one 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS when the container is never closed 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > THROWS on a non-string / empty document and on an unidentified container 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > directChildrenOf — the reader fails closed, and sees past the first child > an EMPTY container is readable, and the emptiness is caught by the non-vacuity assertions, not hidden 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA is NOT conformant by region alone: with no build report it says so 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA requires a current regional DTD result as well as its clean structural report 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > FDA with reported gaps is not conformant, and the gaps are the stated reason: the first four, then a count 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > EMA / PMDA / Health Canada are NOT conformant: own root element, but Module 1 is flat — with the gap stated 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > classifyRegionalBackbone > the eight widened regions are EMA-structure placeholders, never conformant 1ms
+ × server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > fda: EVERY Module 1 leaf sits under a published heading element — and the status names what the builder cannot stand behind 31ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > ema: NOT conformant — eu-regional.xml really does file EVERY Module 1 leaf flat under <m1-eu> 12ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > pmda: NOT conformant — jp-regional.xml files every Module 1 leaf flat under <m1-jp> 8ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > uk: placeholderOf=ema, and uk-regional.xml carries an <eu-regional> root 7ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a placeholder is ALWAYS surfaced (failing check + warning), even when not enforced 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a flat-Module-1 backbone is ALWAYS surfaced with its specific gap 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > FAILS CLOSED: blocks a production transmit of a placeholder OR a flat backbone when enforcement is on 1ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > does not block staging even when enforced (report-only there) 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a conformant region passes cleanly 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a malformed placeholderOf on a stored status cannot crash the gate 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > a required production flag refuses absent historical evidence 0ms
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > the env flag is true only for the literal "true" 0ms
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > NO region claims conformance for this fixture, and FDA — the one grouped builder — names its gaps
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg: the ROOT ELEMENT in the bytes is the one the conformance report records
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > fda groups its Module 1 — NO <leaf> is a direct child of its Module 1 container, wherever in the container it sits
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ema claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > pmda claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ca claims an own-root/flat gap — the bytes must show its OWN root and a <leaf> directly under the container
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > uk claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > ch claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > au claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > cn claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > br claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > in claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > kr claims to be a placeholder — the bytes must carry the OTHER region's root element
+ ↓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree > sg claims to be a placeholder — the bytes must carry the OTHER region's root element
+ × server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — canonical conformant packaging > produces a real <ectd:ectd> tree (not flat <ectd:index>), regional M1, and root index-md5 23ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — canonical conformant packaging > places deep sub-section granularity under its nearest ICH heading (does not reject normal content) 8ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > refuses a follow-up sequence whose leaves carry no operation, rather than filing them all as new 6ms
+ × server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > carries a supplied operation and modified-file into the backbone 6ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > files a WITHDRAWAL with no bytes: a backbone delete, no file in the zip, no line in the md5 manifest 5ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > REFUSES a leaf that carries no bytes and is not a withdrawal 3ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a dotted study id and states the one-dot rule it applied 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 11ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 0ms
+ × server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 22ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 10ms
+   → expected [Function] to throw error matching /1735/ but got 'The original PDF has no readable cata…'
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-29T04:54:55.389Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T04:54:55.390Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-29T04:54:55.391Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789 3ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > says nothing about 4.3, 5.2, 5.3.6 and 5.4, which need no STF, nor about M1-M3 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file 9ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF) 6ms
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package 16ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it 6ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > normalizeCtdCode (syntax only) > accepts code-shaped values, with or without a leading m 2ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > normalizeCtdCode (syntax only) > canonicalises alpha segments to ICH uppercase so one heading is one code 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > normalizeCtdCode (syntax only) > rejects non-code values 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > accepts real terminal headings and published Module 1 headings 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > REJECTS bare modules (they nest under container elements / an undefined <m1>) 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > REJECTS code-shaped but non-existent headings 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > FDA Module 1 is judged by the PUBLISHED heading table, not the module digit 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > every FDA heading the keyword inference can emit is itself a published leaf heading 2ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > a key that names only a CONTAINER (generic labeling, annual report) is not guessed into a child heading 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > isPlaceableCtdCode — only terminal ICH headings are placeable > other regions file 1.* flat under their Module 1 container, so a dotted code is structurally placeable there 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > placement is region-aware > FDA-numbered keyword headings are NOT offered for an EMA / PMDA package (EU 1.0 is the cover letter, not 1.2) 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > placement is region-aware > an artifact's explicit Module 1 code is honoured per region 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > moduleForSectionKey ordering (cross-check only) > an explicit module declaration beats every keyword 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > moduleForSectionKey ordering (cross-check only) > clinical pharmacology / human PK are Module 5; nonclinical stays Module 4 1ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > uses the artifact's own declared placement first 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > two artifacts in one section with different codes resolve INDEPENDENTLY (never merged) 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > flags a DISAGREEMENT when an artifact is filed in a different module than its section names 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > a declared but UNPLACEABLE code is rejected and named, falling through to the section 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > uses a CTD-coded section key when the artifact declares nothing 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > uses an unambiguous Module 1 heading from the key (never bare "1") 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > a keyword-only section with no declared code is UNPLACED — a bare module is never guessed 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > a key that names ANOTHER module is never filed under a Module 1 heading by its words (m5-labeling ≠ 1.14) 0ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > 'form' inside a CMC key is not an FDA form (dosage-form-description is Module 3 content) 4ms
+ ✓ server/services/ectd/__tests__/section-to-ctd.test.ts > resolveArtifactPlacement — per ARTIFACT, honest, placeable-only > a bare-module declaration is unplaceable and reported 0ms
+ × server/services/ectd/__tests__/section-to-ctd.test.ts > every code this resolver EMITS is placed at a real terminal heading by the packager > artifact-declared + section-key + module-1-heading placements never land in a bare container 20ms
+   → The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/regional-backbone-readiness.test.ts > every region: the claim and the bytes agree
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ packageFor server/services/ectd/__tests__/regional-backbone-readiness.test.ts:57:18
+ ❯ server/services/ectd/__tests__/regional-backbone-readiness.test.ts:444:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'form1571.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts > Builder study metadata reaches the existing FDA package > persists explicit tags through the real route and emits the exact study STF
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ Module.packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts:88:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'report.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — canonical conformant packaging > produces a real <ectd:ectd> tree (not flat <ectd:index>), regional M1, and root index-md5
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ server/services/ectd/__tests__/package-leaf-bytes.test.ts:22:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'drug-substance.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — canonical conformant packaging > places deep sub-section granularity under its nearest ICH heading (does not reject normal content)
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ server/services/ectd/__tests__/package-leaf-bytes.test.ts:73:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'controls.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > carries a supplied operation and modified-file into the backbone
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ server/services/ectd/__tests__/package-leaf-bytes.test.ts:113:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'drug-substance.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > files a WITHDRAWAL with no bytes: a backbone delete, no file in the zip, no line in the md5 manifest
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ server/services/ectd/__tests__/package-leaf-bytes.test.ts:143:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'drug-substance.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > fda: EVERY Module 1 leaf sits under a published heading element — and the status names what the builder cannot stand behind
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ packageFor server/services/ectd/__tests__/regional-backbone-readiness.test.ts:57:18
+ ❯ server/services/ectd/__tests__/regional-backbone-readiness.test.ts:241:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'form1571.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > ema: NOT conformant — eu-regional.xml really does file EVERY Module 1 leaf flat under <m1-eu>
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ packageFor server/services/ectd/__tests__/regional-backbone-readiness.test.ts:57:18
+ ❯ server/services/ectd/__tests__/regional-backbone-readiness.test.ts:286:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'form1571.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > pmda: NOT conformant — jp-regional.xml files every Module 1 leaf flat under <m1-jp>
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ packageFor server/services/ectd/__tests__/regional-backbone-readiness.test.ts:57:18
+ ❯ server/services/ectd/__tests__/regional-backbone-readiness.test.ts:295:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'form1571.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/ectd/__tests__/regional-backbone-readiness.test.ts > the packager stamps the status on the bundle, and the bytes bear the claim out > uk: placeholderOf=ema, and uk-regional.xml carries an <eu-regional> root
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ packageFor server/services/ectd/__tests__/regional-backbone-readiness.test.ts:57:18
+ ❯ server/services/ectd/__tests__/regional-backbone-readiness.test.ts:303:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'form1571.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/ectd/__tests__/section-to-ctd.test.ts > every code this resolver EMITS is placed at a real terminal heading by the packager > artifact-declared + section-key + module-1-heading placements never land in a bare container
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ packageLeafBytes server/services/ectd/package-leaf-bytes.ts:195:12
+ ❯ server/services/ectd/__tests__/section-to-ctd.test.ts:185:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'leaf-0.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:157:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'cover.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:167:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'cover.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml
+ValidationError: The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged.
+ ❯ refuse server/services/ectd/original-pdf-preservation.ts:12:9
+     10|
+     11| function refuse(message: string, fileName: string, ruleId = 'ORIGINAL-…
+     12|   throw new ValidationError(`${message} Nothing was packaged. Original…
+       |         ^
+     13|     [{ ruleId, severity: 'error', filePath: fileName }]);
+     14| }
+ ❯ prepareOriginalPdf server/services/ectd/original-pdf-preservation.ts:65:26
+ ❯ finalizeLeafBytes server/services/submission-gateways/regional-packager.ts:273:28
+ ❯ packageEctdSubmission server/services/submission-gateways/regional-packager.ts:1164:7
+ ❯ server/services/ectd/__tests__/stf-generator.test.ts:207:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { findings: [ { ruleId: 'ORIGINAL-PDF-SIGNATURE-UNVERIFIABLE', severity: 'error', filePath: 'cover.pdf' } ], errorClass: 'validation' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list
+AssertionError: expected [Function] to throw error matching /1735/ but got 'The original PDF has no readable cata…'
+
+- Expected:
+/1735/
+
++ Received:
+"The original PDF has no readable catalog and page tree. Original PDF bytes must remain unchanged. Inspect the original signature structure or provide a reviewed replacement PDF before packaging. Nothing was packaged. Original legal and signed PDFs must remain unchanged."
+
+ ❯ server/services/ectd/__tests__/stf-generator.test.ts:262:7
+    260|           environment: 'staging', leaves, skipPdfaConversion: true,
+    261|         }),
+    262|       ).rejects.toThrow(/1735/);
+       |       ^
+    263|     } finally {
+    264|       await fs.rm(work, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  6 failed (6)
+      Tests  14 failed | 80 passed | 25 skipped (119)
+   Start at  04:54:39
+   Duration  17.05s (transform 5.90s, setup 189ms, import 11.61s, tests 3.85s, environment 1ms)
+

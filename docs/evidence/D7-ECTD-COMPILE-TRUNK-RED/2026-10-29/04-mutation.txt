@@ -1,0 +1,6 @@
+## Mutation 1: no tenant row (lifecycle-from-core.test.ts, the INSERT INTO organizations removed)
+## Expect: assembly refuses, LEGAL_REQUIREMENTS_UNVERIFIED (the legal read is live and fails closed)
+   → Company legal requirement configuration could not be verified for this tenant.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'LEGAL_REQUIREMENTS_UNVERIFIED' }
+      Tests  1 failed (1)
