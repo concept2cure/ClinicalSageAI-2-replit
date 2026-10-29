@@ -29,7 +29,7 @@ beforeAll(() => {
 type Efficacy = { endpointType: string; armId: string; comparatorArmId?: string } & Record<string, unknown>;
 /** The synthetic source with a recorded Bayesian result on the active arm's primary endpoint. */
 function withPosterior(extra: Record<string, unknown>) {
-  const source = structuredClone(synthetic) as { studyData: { efficacy: Efficacy[] } };
+  const source = JSON.parse(JSON.stringify(synthetic)) as { studyData: { efficacy: Efficacy[] } };
   const active = source.studyData.efficacy.find(r => r.endpointType === 'primary' && r.comparatorArmId)
     ?? source.studyData.efficacy.find(r => r.endpointType === 'primary')!;
   Object.assign(active, extra);

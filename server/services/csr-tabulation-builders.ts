@@ -297,6 +297,22 @@ const interval = (i: { lower: number; upper: number; level: string }) => `${i.lo
 /** Three places, as p-values are; never rounded up to certainty or down to impossibility. */
 const probability = (p: number) => (p > 0.999 && p < 1 ? '>0.999' : p > 0 && p < 0.001 ? '<0.001' : p.toFixed(3));
 
+function efficacyRow(endpoint: string, r: EfficacyResult, armIdToName: Map<string, string>, bayesian: boolean): string[] {
+  return [
+    endpoint,
+    armIdToName.get(r.armId) || r.armId,
+    r.display,
+    r.ci ? interval(r.ci) : '—',
+    r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
+    ...(bayesian ? [
+      r.credibleInterval ? interval(r.credibleInterval) : '—',
+      r.posteriorProbability ? probability(r.posteriorProbability.value) : '—',
+      r.posteriorProbability ? r.posteriorProbability.hypothesis : '—',
+    ] : []),
+    r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
+  ];
+}
+
 export function buildEfficacyTable(
   study: StudyData,
   type: 'primary' | 'secondary'
@@ -317,21 +333,7 @@ export function buildEfficacyTable(
   const bayesian = results.some(r => r.credibleInterval || r.posteriorProbability);
   const rows: string[][] = [];
   for (const [endpoint, armResults] of byEndpoint) {
-    for (const r of armResults) {
-      rows.push([
-        endpoint,
-        armIdToName.get(r.armId) || r.armId,
-        r.display,
-        r.ci ? interval(r.ci) : '—',
-        r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
-        ...(bayesian ? [
-          r.credibleInterval ? interval(r.credibleInterval) : '—',
-          r.posteriorProbability ? probability(r.posteriorProbability.value) : '—',
-          r.posteriorProbability ? r.posteriorProbability.hypothesis : '—',
-        ] : []),
-        r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
-      ]);
-    }
+    for (const r of armResults) rows.push(efficacyRow(endpoint, r, armIdToName, bayesian));
   }
 
   const headers = ['Endpoint', 'Arm', 'Result', 'CI', 'p-value',
