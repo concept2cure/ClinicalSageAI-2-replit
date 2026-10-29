@@ -1,0 +1,18 @@
+Plain npx eslint <file>, one file at a time, 2026-10-29T08:35:48Z. Head counts: the same command before any change in this slice; for AnaToolExecutor.ts, HEAD's file through --stdin.
+
+server/routes/mdx-labeling.ts: 0 problem(s)
+server/routes/mdx-labeling-approvals.ts: 0 problem(s)
+server/services/governance/separation-of-duties.ts: 0 problem(s)
+server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts: 0 problem(s)
+server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts: 0 problem(s)
+server/services/ana/__tests__/labeling-tools-record-creator.test.ts: 0 problem(s)
+client/src/concept2cure/v2/surfaces/Labeling.tsx: 2 problem(s)
+      161:8  warning  Function 'Labeling' has too many lines (415). Maximum allowed is 100  max-lines-per-function
+      161:8  warning  Function 'Labeling' has a complexity of 50. Maximum allowed is 15     complexity
+client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx: 0 problem(s)
+client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx: 0 problem(s)
+client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx: 0 problem(s)
+
+server/services/ana/AnaToolExecutor.ts: 96 warnings now, 96 at HEAD; by rule identical: complexity 89, max-depth 1, max-lines 1, max-lines-per-function 3, max-params 1, no-useless-escape 1.
+
+At head: mdx-labeling.ts 0, separation-of-duties.ts 0, LabelingTranslationApproval.tsx 0, Labeling.tsx 2 (max-lines-per-function and complexity on Labeling: 419 lines, 47). mdx-labeling-approvals.ts and the three new tests are new files.

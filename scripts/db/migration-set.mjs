@@ -3552,6 +3552,13 @@ export const C2C_MIGRATION_FILES = [
   // (regulatory_programs_id_org_uq, created here too when absent). Public with
   // organization_id INTEGER NOT NULL; creates no table; guarded; no DROP.
   'migrations/20261029_hf_engineering_files_program_key.sql',
+  // Labeling approvals record their approver, and labeling records their
+  // creator (D5, 2026-10-29): labeling_documents.approved_by / approved_at /
+  // created_by and labeling_translations.created_by, each INTEGER → users(id)
+  // or TIMESTAMPTZ, nullable, added only when pg_attribute shows it absent.
+  // After 20260511_qms_and_labeling.sql (both tables). Public with
+  // organization_id INTEGER NOT NULL; creates no table; no DROP, no backfill.
+  'migrations/20261029b_labeling_approval_stamps_and_creators.sql',
 
   // A design input names its project, by key, and a design input or a risk item
   // names only its own organization's project (D2, fold F1 slice A, 2026-10-29):
