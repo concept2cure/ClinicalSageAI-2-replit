@@ -1,0 +1,25 @@
+# the same 11 cases fail on trunk without this change, and with it (identical sets)
+## trunk
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+ × server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld
+ × server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a REVIEWER signature still covers only the snapshot in force, and approves nothing
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a freeze records frozen_at on the document it freezes
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a second approval of an already approved document covers the approved snapshot that exists
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > binds the approval signature to the snapshot the approval writes
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > records approved_at and frozen_at on the document it approves
+ × server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+ × server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+## with this change
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+ × server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld
+ × server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a REVIEWER signature still covers only the snapshot in force, and approves nothing
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a freeze records frozen_at on the document it freezes
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a second approval of an already approved document covers the approved snapshot that exists
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > binds the approval signature to the snapshot the approval writes
+ × server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > records approved_at and frozen_at on the document it approves
+ × server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+ × server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash

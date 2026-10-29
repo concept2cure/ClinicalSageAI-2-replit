@@ -1,0 +1,36 @@
+# this change: the new test and the two PGlite suites whose author approved their own document
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo 153ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo 61ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards 163ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded 128ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why 75ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row 171ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR) 74ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve" 53ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved 132ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > the signature a diverged filing refuses, and the way back > a signature over a diverged filing is refused whole, and the recovery it names works 166ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not 162ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a completed signed workflow refuses status changes and permits only a new review signature over unchanged content 133ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were 88ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 54ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing 52ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH cannot rewrite a signed filing section (text is authored only, step 5) 87ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing 53ms
+ ✓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states 31ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the creator is refused, nothing is signed or approved, and no re-authentication is spent 35ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a contributor to a section is an author too 6ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an independent approver approves as before 7ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a document with no recorded author cannot be shown independent: 409, nothing signed 4ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an authorship lookup that fails is 503, in the canonical sentence, not the driver text 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the author signing as AUTHOR is not a separation-of-duties case 4ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign, which can seal at the last workflow step, is refused to an author too > the creator signing as REVIEWER is refused, and nothing is signed 4ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked: 403, in its own words, and nothing moves 152ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > submitted: 403, in its own words, and nothing moves 89ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > locked by locked_at alone: 403, in its own words, and nothing moves 81ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an editor save into a locked or submitted filing is refused > a draft filing still takes the save (the rule is not a blanket refusal) 51ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > an approval signature over a locked filing approves none of its sections > the signature stands on the editing copy; the filing does not move, and the reply says why 91ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > 409 DOCUMENT_LOCKED, with the sentence, and the status does not move 31ms
+ ✓ server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts > the filing PATCH refuses a locked document through the same rule > the seal refusal beside it releases its connection once 26ms
+ Test Files  3 passed (3)
+      Tests  32 passed (32)

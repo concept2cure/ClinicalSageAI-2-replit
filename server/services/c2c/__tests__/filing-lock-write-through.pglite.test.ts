@@ -25,7 +25,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import {
-  FILING_JWT_SECRET, PASSWORD, T, makeFiling as makeFilingIn, signToken, startFilingApp, type FilingApp,
+  FILING_JWT_SECRET, PASSWORD, T, makeFiling as makeFilingIn, signApproverToken, signToken, startFilingApp, type FilingApp,
 } from './_filing-write-harness';
 
 process.env.JWT_SECRET = FILING_JWT_SECRET;
@@ -73,12 +73,15 @@ function countingReleases(pool: { connect: () => Promise<{ query: unknown; relea
 
 let filing: FilingApp;
 let token = '';
-const as = (r: request.Test) => r.set('Authorization', `Bearer ${token}`);
+let approverToken = '';
+const as = (r: request.Test, t = token) => r.set('Authorization', `Bearer ${t}`);
 const q = <R = any>(sql: string, params?: unknown[]) => filing.q<R>(sql, params);
 
 beforeAll(async () => {
   filing = await startFilingApp((built) => { h.db = built.db; h.pool = countingReleases(built.pool as never); });
   token = await signToken({});
+  // The approval comes from a member who drafted nothing (separation of duties).
+  approverToken = await signApproverToken({});
 }, T);
 afterAll(async () => { await filing?.jdb.close(); });
 
@@ -129,7 +132,7 @@ describe('an approval signature over a locked filing approves none of its sectio
     expect((await save(f.sectionIds['2.5'], 'Clinical overview text.')).status).toBe(200);
     await q(`UPDATE c2c_documents SET status = 'locked', locked_at = now() WHERE id = $1`, [f.doc]);
 
-    const res = await as(request(filing.app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
+    const res = await as(request(filing.app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`), approverToken).send({
       meaning: 'APPROVER', intent: 'I approve this filing for submission.', password: PASSWORD,
     });
 
