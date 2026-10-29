@@ -872,6 +872,127 @@ vigilance stay with device post-market. The CAPA lifecycle map moves to
 `shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
 
+### P-49 to P-56: decided under the founder's delegation of 2026-10-29
+
+The founder delegated, on 2026-10-29: "make founder level decisions based on the best situation for the platform and
+our paying clients and human users … we're not ready for ETMF or CTMS. You could park those completely … We're
+focusing on completing what we have started and perfecting it all." These decide the questions that sessions had
+left open (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8,
+`docs/work-orders/MR-12-qms-controlled-document-control.md` NEW-2 to NEW-4, and
+`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). The test for each was:
+does it complete something already in the catalog, for the client who pays for it, without widening the catalog?
+None widens it.
+
+### P-49 — Deviations are their own record in Quality
+
+A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
+Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
+out-of-window calibration. The nonconformance register is keyed to a product or material and a lot, so it cannot hold
+one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality app gains a deviation register:
+- classification as minor, major or critical;
+- what happened, where and when, and the procedure departed from;
+- immediate action, investigation and root cause;
+- the impact on product or batch, when there is one;
+- a CAPA raised from it, through the existing `raiseCapaFrom`;
+- closure as a signed decision, through the one signing ceremony.
+
+The store is a new public table with `organization_id INTEGER NOT NULL`, appended to `C2C_MIGRATION_FILES` before
+the final sweep pair (Rule 1). The `/api/qc/deviations` stub (`server/routes/qc.routes.ts`), which has no store and
+answers 501, is deleted in the same change. Its OOS stub stays, because OOS is not a deviation. The nonconformance tab
+stops being described as deviations. (Parity §8 Q5; slice G16.)
+
+### P-50 — Training is assigned per document, may be done before the effective date, and is distributed as tasks
+
+- **Assignment (NEW-2).**
+  - A controlled document names who must train on it: named members, organisation roles, or both, as MR-12 Stage 4
+    designs.
+  - A document with no assignment counts every active member, and says "Everyone (no assignment)". An obligation
+    nobody was assigned must not drop out of view; over-including is the safe direction.
+  - Curricula and job-function roles wait until after D10. For a five-to-fifty-person biotech, a person-or-role list
+    per document is the whole need.
+- **Before the effective date (NEW-3).** Yes. Once a version is approved, its assigned people may acknowledge it
+  before its effective date. That window is the point of an effective date. The acknowledgment binds the approved
+  version's content digest, as today.
+- **Distribution.** When a version is approved, each assigned person gets one task in the one task store, due on the
+  effective date, or on approval if it is already effective. The task completes when they acknowledge, and is
+  cancelled when the version is superseded or retired (`services/tasking/source-task.ts`). This is the distribution
+  of an effective SOP; no separate distribution list is kept.
+
+### P-51 — Review is a signed act; one independent reviewer and one approver; retirement has its own meaning (NEW-4)
+
+- "Send for review" stays a status move. The review itself is a signed act, with meaning `review`, by a person other
+  than the author.
+- Approval is a signature by a person other than the author.
+- In a small team the same person may review and approve. A per-organisation quorum waits until after D10.
+- Retirement is signed with its own meaning, `retirement` ("you withdraw this document from use"). Stored
+  retirements keep the meaning they were signed with.
+- This unblocks MR-12 Stages 5 and 7.
+
+### P-52 — Controlled output: Letter, the FDA PDF specification, a default confidentiality line (MR-09 NEW)
+
+- Page size is US Letter, because the launch boundary is a US IND (P-28).
+- The PDF target is FDA's PDF specification for eCTD: PDF 1.4 to 1.7, fonts embedded, no security settings.
+- The default footer reads "CONFIDENTIAL. Proprietary information of {organisation}. Do not distribute without
+  permission." An organisation may change it.
+- This unblocks CAT1-09 and template formatting (W5).
+
+### P-53 — Parked, with no sessions
+
+- eTMF;
+- CTMS;
+- safety case processing and E2B;
+- EDC;
+- an NDA workflow;
+- re-admitting the Template Library;
+- any widening of P-28's composition boundary.
+
+Safety and EDC are "partner or integrate" when they return, and no partner is approached now. eTMF is not a source
+for `assess_inspection_readiness`, which answers from stated inputs, labelled (2026-10-26 list, row 9).
+(Parity §8 Q9, Q10, Q11.)
+
+### P-54 — Lanes, order and scope corrections
+
+- **Lanes released.**
+  - The Weave-gap lane's items (G2, G3, G6, G15, and G11 and G17 with them) are released to the next free session.
+  - The training-assignment lane, claimed 2026-10-23 and idle, is released to the Quality lane, which carries P-50.
+- **P-39's order stands.** Commitments converge (step 2) before the correspondence family (step 3), so G3's parser
+  waits; zero duplication outranks speed.
+- **Device post-market stays in Projects**, as P-48's correction of 2026-10-29 already reads (Q6).
+- **SSO signing (MR-09 Stage 6) keeps its phase.** It moves to Phase 1 only if a signing customer signs in through SSO
+  alone (Q12).
+- **Support for D9** is the drafted Mon–Fri 08:00–18:00 US Eastern (Q13).
+- **Claims policy confirmed (Q14):** no claim of doing everything Weave does, and §4's claims only with their basis.
+- **The old IND briefing-book assembler goes.** Its replacement is `IndBriefingBookStart.tsx`, starting the US
+  meeting-package templates (5894e1aaa). The server routes and service it called are deleted once a search shows
+  they have no caller.
+
+### P-55 — The Authoring questions of 2026-10-26 are decided as recommended
+
+Rows 1 to 22 of `FOUNDER-DECISIONS-OWED-2026-10-26.md` are decided as each row recommends:
+- a conditional heading may be recorded not applicable, with a reason and the approver's signature;
+- R-1: 2.4 and 2.6 read `nonclinical_studies`, counting `in_reporting` for an IND and never `planned` or `cancelled`.
+  The ingest path converges onto it;
+- 2.6's tabulated summaries are a preparation worksheet;
+- calculators over stated inputs stay, labelled `basis: 'stated'`;
+- no standalone QOS, drug substance or drug product project;
+- folds only after their functions are carried over, and the digital twin is retired;
+- the M2, M4 and M5 QC rules are carried into Submission Readiness as named findings, not a score;
+- and so on through row 22, each as its row recommends.
+
+The guideline hosts in row 14, and §8 Q15's network access, are owner actions in the environment settings, not
+decisions.
+
+### P-56 — No model is approved until the PQ evidence exists
+
+PQ-DRAFT-001 stays unapproved until P-31's items 4 and 6 land:
+- item 4, gold-bank coverage for CMC / Module 3 and Module 2.5 to 2.7, authored from real source text and never
+  invented. It is scheduled as a W3 slice;
+- item 6, a product provider key, which is an owner action.
+
+Then approval is a signature, with P-31 as its reasoning. Until then, production refuses governed drafting and every
+drafting claim says "staging". Approving a model without its evidence would give a paying client a qualification
+their own QA would reject. (Parity §8 Q1.)
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

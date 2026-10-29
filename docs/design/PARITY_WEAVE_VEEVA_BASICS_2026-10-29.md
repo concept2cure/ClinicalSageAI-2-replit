@@ -866,6 +866,8 @@ Until PQ passes, every drafting improvement above can be tested only in staging,
 
 ## 8. Open questions for the founder
 
+**Decided 2026-10-29 under the founder's delegation:** P-49 to P-56 in `docs/LAUNCH_DEFINITION_OF_DONE.md`. Q1 is P-56; Q2 is P-55; Q3, Q4, Q6, Q12, Q13 and Q14 are P-54; Q5 is P-49; Q7 is P-52; Q8 is P-50 and P-51; Q9, Q10 and Q11 are P-53. Q15 is an owner action.
+
 1. **PQ.** Will you approve the Opus 5.5 PQ protocol and supply the product provider key? All 16 approved-model entries are `pending` (`approved-models.ts`). Until one passes, production refuses governed drafting, and no claim of parity with Weave on AI drafting holds there.
 2. **R-1 and AutoIND.** Which store links nonclinical studies to a project? R-1's records (`FOUNDER-DECISIONS-OWED-2026-10-26.md` row "2 (R-1)"; `docs/evidence/RULE2/2026-10-26-model-figures-audit/design.md`) recommend `nonclinical_studies`. The ingest path and the orchestrator's loader use `ctd_nonclinical_studies`. And may `/api/preclinical` ingest and review be admitted under Authoring, with both flags on (WEAVE_GAP decision 1)?
 3. **The Weave-gap lane.** It is claimed by `…01E8btkB8mcLirW4rNvsMNxK` and waiting on you (`docs/work-orders/README.md:50`), and that session is active on the CSR lane (`:51`). Will you, or that session, release items 1–3 (G2, G3, G6, G15), or should the owner continue them? G11 and G17 share their files and wait for the same answer.
