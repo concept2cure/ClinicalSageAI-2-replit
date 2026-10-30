@@ -1,0 +1,28 @@
+# Green: the new tests with the change
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > one list of table keys, the server’s and the review’s 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the screen offers their cells, and the server accepts a map onto them 9ms
+ ✓ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > narrate_statistical_result: every figure as given, none from a retained run, and where the run is read 5ms
+ ✓ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > draft_safety_narrative: every fact as given, none from the study data, and where the sourced narratives are built 2ms
+ ✓ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > each tool says so in its description, before AnA calls it 1ms
+ ✓ server/services/ana/__tests__/narration-tools-figures-as-given.test.ts > the narration tools say their figures are as given > a refusal is unchanged: no figure, no narrative 1ms
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+# csrEvidenceVitals after the hash case was added:
+ Tests  3 passed (3)
+
+# Every AnA suite (server/services/ana/__tests__), the change in place
+      2  FAIL  server/services/ana/__tests__/document-template-description.test.ts
+      1  FAIL  server/services/ana/__tests__/notification-category-schema.test.ts
+ Test Files  2 failed | 448 passed | 1 skipped (451)
+      Tests  3 failed | 7235 passed | 3 skipped (7241)
+
+# Authoring, CSR, and every suite importing the scientific review, the engine's evidence context or the tool registry (125 files)
+      1  FAIL  server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts
+ Test Files  1 failed | 124 passed (125)
+      Tests  1 failed | 2065 passed (2066)
+
+# The four failures fail identically on the committed code without this change (red run above, same five files):
+ × server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 392 prior builtin objects and their recorded snapshots
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+ × server/services/ana/__tests__/notification-category-schema.test.ts > active producer categories reach the AnA notification input contract > allows the existing task, collaboration, schedule and digest producer spellings
