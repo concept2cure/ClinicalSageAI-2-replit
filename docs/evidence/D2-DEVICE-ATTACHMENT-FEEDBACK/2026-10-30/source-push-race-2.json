@@ -31,8 +31,10 @@
     "prior69_pins_unchanged": true,
     "current128_pins_unchanged": true,
     "browser36_pins_unchanged": true,
-    "canonical_work_order_rows_retained": 228,
-    "unresolved_conflicts": 0
+    "canonical_work_order_rows_retained": 341,
+    "unresolved_conflicts": 0,
+    "root_bold_row_subset_count": 228,
+    "count_note": "341 includes every table row; earlier 228 root count covered only bold work-order entries. No row was lost."
   },
   "next_push": "pending all normal gates"
 }
