@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 187 source/test/configuration
+source-preservation links. The current packet selects 210 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -289,6 +289,29 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   checks passed, and lint remained 190→190 with zero errors. Previous source
   epochs remain intact; neither earlier local nor upstream totals are borrowed
   or summed into this affected cohort.
+- Sixth normal push (`push-refusal-06-*`) at `624cd9285` passed **whole
+  TypeScript with 0 errors against baseline 0** and all normal gates, with 187
+  selected inputs unchanged. Git refused the update after the remote advanced
+  to `89b67685e`. This attempt published nothing and overwrote no remote work;
+  no force push or bypass was used. The successful compiler source epoch stays
+  distinct from the following settings integration.
+- Project settings integration: the incoming settings work merged normally;
+  a subsequent test-only commit `ae4ec443d` verifies RBM compatibility.
+  Independent server/UI reviews found only three editable profile fields, with
+  arbitrary metadata updates rejected and existing metadata preserved. Project
+  Home rereads the full programme after save using its retained owner and
+  metadata epoch; it does not replace the programme with a reduced settings
+  receipt. The literal RBM boolean, current-project identity and guarded RBM
+  door remain intact. No broad RBM, shared actor or signature contract changed;
+  new settings CSS is scoped to that UI. The focused actual settings PATCH
+  regression passed **38/38**, including preservation of the RBM selection
+  (`riskBasedMonitoring: true`) and an unrelated metadata key. Root's affected settings cohort
+  (`final-settings-*`) at `ae4ec443d` passed **318/318 across 15 actual files**,
+  exit 0, zero skipped and all **210 selected inputs unchanged**. Its production
+  build passed **exit 0** on those 210 stable inputs; all four selected CI checks
+  passed, and changed-file lint across 55 TypeScript files remained 190→190 with
+  zero errors. This is a separate source epoch; previous local and upstream
+  totals are not borrowed or summed into it.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -317,10 +340,10 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   bodies and receipt metadata and refuse unrelated namespace paths. The static
   API gate first exposed the old shared base literal; explicit addresses fixed
   it without broadening claims or weakening the gate. The recorded API gate
-  passed 590 named paths before the latest integration; the current API check
-  passes **591 named paths** with none refused. Current launch scope, launch API
+  passed 590 and then 591 named paths at earlier source epochs; the current API
+  check passes **593 named paths** with none refused. Current launch scope, launch API
   scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
-  with **187 selected inputs unchanged** through those checks
+  with **210 selected inputs unchanged** through those checks
   (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
@@ -340,6 +363,7 @@ Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3`, `59d0bd6eb` and `dd53c5a5f`; remote advancement then refused those
-updates. The current 187-input integration still requires its own compiler/gated-push retry
+`498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then
+refused those updates. The current 210-input integration still requires its own
+compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.

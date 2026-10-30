@@ -28,7 +28,7 @@ OK: Generated risk code types are up to date.
 [ci:migration-drop-safety] OK — 459 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
    ✅ Replay-safe DROPs passed.
    Validating no class vocabulary is restated...
-[ci:class-vocabulary] OK — 5880 file(s) scanned, no restated class vocabulary.
+[ci:class-vocabulary] OK — 5882 file(s) scanned, no restated class vocabulary.
    ✅ One class vocabulary passed.
    Validating new migrations are on a deploy path...
 [ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
@@ -172,8 +172,8 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
 [ci:pushed-lint-errors] OK — no ESLint errors in 55 changed file(s) against origin/concept2cure-v2.
    ✅ No ESLint errors in the pushed files.
    Checking that the pushed files gained no ESLint warnings...
-[ci:eslint-warning-ratchet] --since 03cb814a90962a9cdc4ccedbf8f3c4dd5d17a96c (03cb814a9) -- 55 lintable file(s) changed; linting both versions of each...
-[ci:eslint-warning-ratchet] no file changed its warning count since 03cb814a90962a9cdc4ccedbf8f3c4dd5d17a96c.
+[ci:eslint-warning-ratchet] --since 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10 (1ba873279) -- 55 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10.
    ✅ The pushed files gained no ESLint warnings.
    Typechecking (only if this push can change a type)...
 [ci:pushed-typecheck] 55 type-relevant file(s) changed against origin/concept2cure-v2: client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx, client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx, +50 more
@@ -183,5 +183,5 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
    ✅ Typecheck passed (or nothing type-relevant was pushed).
 ✅ Pre-push checks complete — all gates passed.
 To https://github.com/concept2cure/ClinicalSageAI-2-replit.git
- ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10 but expected 03cb814a90962a9cdc4ccedbf8f3c4dd5d17a96c)
+ ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 89b67685e582ff7a6f91487fa0877527f5ab6ea8 but expected 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10)
 error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit.git'
