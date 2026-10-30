@@ -1,0 +1,11 @@
+# migrations/20261027_cdi_public_reference_seed.sql against an EMPTY PostgreSQL 16 database (no cre_evidence_sources),
+# the state install-fresh's overlay ran it in when production-image-boot's provision step failed (2026-10-29/30).
+
+## As it was at 0a07f49d7 (added 2026-10-27), the version every failing run carried:
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/d1befc05-0644-58dc-9ee2-d8c8e8845597/scratchpad/seed/before.sql:58: ERROR:  CDI reference seed requires the canonical CRE source store
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE
+exit=3
+
+## As it is on trunk now (fixed in cc123a784, 2026-10-29 04:44):
+psql:migrations/20261027_cdi_public_reference_seed.sql:62: NOTICE:  cre_evidence_sources absent - CDI reference seed skipped
+exit=0
