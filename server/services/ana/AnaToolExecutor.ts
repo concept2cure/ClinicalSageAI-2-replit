@@ -16030,6 +16030,7 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
         organizationId: ctx?.organizationId ?? undefined,
         userId: ctx?.userId ?? undefined,
         projectId: ctx?.projectRef ?? ctx?.projectId ?? undefined,
+        contextSqlClient: ctx?.sqlClient,
         sourceContext: undefined as import('./draft-project-sources.js').DraftSourceContext | undefined,
       };
     })

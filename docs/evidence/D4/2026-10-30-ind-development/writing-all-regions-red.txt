@@ -1,0 +1,258 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > opens on the EU application agency and sends that explicit choice 169ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > uses the exact saved section agency before a different program or caller preference 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > lets a GLOBAL section defer to the recorded application 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > requires an explicit supported choice when no receiving agency is recorded 82ms
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers the complete shared writing vocabulary and opens on MHRA for a UK application 18ms
+   → expected '' to be 'MHRA' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > holds an unavailable exact section reference instead of falling back to its US program 20ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > updates an untouched default when the scoped read completes and changes projects 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > keeps a person’s supported selection and states the application mismatch 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > blocks an old unsupported retained choice without discarding the reviewed candidate 171ms
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > uses every canonical agency as a writing preference without expanding template or content authority 14ms
+   → expected Set{ 'US', 'CA', 'EU', 'JP' } to deeply equal Set{ 'US', 'EU', 'JP', 'CA', …(8) }
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference MHRA 1ms
+   → expected null to be 'MHRA' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference NMPA 1ms
+   → expected null to be 'NMPA' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference MFDS 0ms
+   → expected null to be 'MFDS' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference TGA 0ms
+   → expected null to be 'TGA' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference Swissmedic 0ms
+   → expected null to be 'Swissmedic' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference ANVISA 0ms
+   → expected null to be 'ANVISA' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference CDSCO 1ms
+   → expected null to be 'CDSCO' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference HSA 1ms
+   → expected null to be 'HSA' // Object.is equality
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary health_canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary HealthCanada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health-Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary  CA  0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary ca 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias hc 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Japan 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias EMEA 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown undefined unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown null unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown  unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown GLOBAL unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown ICH unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown invented unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unknown 7 unresolved 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > uses every canonical agency as a writing preference without expanding template or content authority
+AssertionError: expected Set{ 'US', 'CA', 'EU', 'JP' } to deeply equal Set{ 'US', 'EU', 'JP', 'CA', …(8) }
+
+- Expected
++ Received
+
+  Set {
+-   "AU",
+-   "BR",
+    "CA",
+-   "CH",
+-   "CN",
+    "EU",
+-   "IN",
+    "JP",
+-   "KR",
+-   "SG",
+-   "UK",
+    "US",
+  }
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:7:38
+      5| describe('authoring writing labels reuse the existing supported region…
+      6|   it('uses every canonical agency as a writing preference without expa…
+      7|     expect(new Set(WRITING_REGIONS)).toEqual(new Set(listCanonicalRegi…
+       |                                      ^
+      8|     expect(WRITING_AGENCIES).toEqual(['FDA', 'Health Canada', 'EMA', '…
+      9|     for (const code of WRITING_REGIONS) expect(writingAgencyOf(code)).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference MHRA
+AssertionError: expected null to be 'MHRA' // Object.is equality
+
+- Expected:
+"MHRA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference NMPA
+AssertionError: expected null to be 'NMPA' // Object.is equality
+
+- Expected:
+"NMPA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference MFDS
+AssertionError: expected null to be 'MFDS' // Object.is equality
+
+- Expected:
+"MFDS"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference TGA
+AssertionError: expected null to be 'TGA' // Object.is equality
+
+- Expected:
+"TGA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference Swissmedic
+AssertionError: expected null to be 'Swissmedic' // Object.is equality
+
+- Expected:
+"Swissmedic"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference ANVISA
+AssertionError: expected null to be 'ANVISA' // Object.is equality
+
+- Expected:
+"ANVISA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference CDSCO
+AssertionError: expected null to be 'CDSCO' // Object.is equality
+
+- Expected:
+"CDSCO"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the known regional writing preference HSA
+AssertionError: expected null to be 'HSA' // Object.is equality
+
+- Expected:
+"HSA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:13:36
+     11|
+     12|   it.each(['MHRA', 'NMPA', 'MFDS', 'TGA', 'Swissmedic', 'ANVISA', 'CDS…
+     13|     expect(writingAgencyOf(value)).toBe(value);
+       |                                    ^
+     14|   });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers the complete shared writing vocabulary and opens on MHRA for a UK application
+AssertionError: expected '' to be 'MHRA' // Object.is equality
+
+- Expected
++ Received
+
+- MHRA
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:72:28
+     70|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     71|     expect(Array.from(region().options).map(option => option.value)).t…
+     72|     expect(region().value).toBe('MHRA');
+       |                            ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 25 passed (35)
+   Start at  16:57:08
+   Duration  3.79s (transform 1.21s, setup 276ms, import 1.55s, tests 586ms, environment 834ms)
+

@@ -33,6 +33,8 @@ import {
 import { isBatchDraftFailure, type BatchDraftResult } from '../services/ana/batch-draft-result';
 import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
 import { requestConnectable } from '../db/requestDb.js';
+import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import { selectedDraftProject, draftProjectOptions, draftStreamFailure } from './ana-intelligence-draft-context';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
 import { canonicalJson, openTurnRecorder, writeTurnRecordSafely } from '../services/ana/turn-record.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
@@ -60,6 +62,9 @@ const logger = createScopedLogger('ana-intelligence');
  * serverError, internals withheld.
  */
 function failRequest(res: Response, where: string, error: unknown): Response {
+  if (error instanceof AnaProjectScopeError) {
+    return res.status(error.status).json({ success: false, error: error.code, message: error.message });
+  }
   if (isGatewayError(error)) {
     const { code, message } = classifyGatewayError(error);
     logger.warn(`${where}: the AI gateway declined the request`, { code });
@@ -117,13 +122,15 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    // Either a hardcoded framework OR a registry submission type unlocks authoring.
-    if ((!framework && !submissionType) || !sectionType || !instructions) {
+    const projectId = selectedDraftProject(req.body);
+    // An explicit project can supply its recorded filing through the service.
+    if ((!framework && !submissionType && projectId === undefined) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
+        error: 'Missing required fields: (framework, submissionType or project), sectionType, instructions',
       });
     }
 
+    const scope = draftProjectOptions(req, projectId);
     const service = getAnaDraftingService();
     const result = await service.draftDocument({
       framework: framework ?? 'general_regulatory',
@@ -136,6 +143,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       thinkingBudget,
       enableTools: enableTools ?? true,
       ...identityOf(req),
+      ...scope,
     });
 
     const auditTrail = await recordModelProvenance({
@@ -175,12 +183,14 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    if ((!framework && !submissionType) || !sectionType || !instructions) {
+    const projectId = selectedDraftProject(req.body);
+    if ((!framework && !submissionType && projectId === undefined) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
+        error: 'Missing required fields: (framework, submissionType or project), sectionType, instructions',
       });
     }
 
+    const scope = draftProjectOptions(req, projectId);
     // Set up SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -203,6 +213,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       thinkingBudget,
       enableTools: enableTools ?? true,
       ...identityOf(req),
+      ...scope,
       onStream: (chunk, metadata) => {
         const event = {
           type: metadata?.type || 'text',
@@ -242,13 +253,11 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       // client that branches on it. A gateway refusal carries the gateway's
       // own sentence; anything else is withheld — a driver message is no more
       // stream copy than it is response copy.
-      const failure = isGatewayError(error)
-        ? classifyGatewayError(error)
-        : { code: 'INTERNAL_ERROR', message: 'Drafting failed. The problem has been logged.' };
+      const failure = draftStreamFailure(error);
       if (failure.code === 'INTERNAL_ERROR') {
         logger.error('streaming the draft failed', { err: error?.message });
       }
-      res.write(`data: ${JSON.stringify({ type: 'error', code: failure.code, error: failure.message })}\n\n`);
+      res.write(`data: ${JSON.stringify(failure)}\n\n`);
       res.end();
     } else {
       return failRequest(res, 'streaming the draft', error);
@@ -430,7 +439,15 @@ router.post('/batch', async (req: Request, res: Response) => {
     // The server's identity on every request; a body-supplied organizationId
     // or userId is overwritten, never preferred.
     const identity = identityOf(req);
-    const enrichedRequests = requests.map((r: any) => ({ ...r, ...identity }));
+    const sharedProject = selectedDraftProject(req.body);
+    const enrichedRequests = requests.map((r: any) => {
+      const projectId = selectedDraftProject(r) ?? sharedProject;
+      const section = { ...r };
+      // Only the server supplies the executor. Collapse aliases into one ref.
+      for (const key of ['contextSqlClient', 'projectRef', 'project_id', 'projectId']) delete section[key];
+      return { ...section, ...identity, ...draftProjectOptions(req, projectId),
+        ...(projectId !== undefined ? { framework: section.framework ?? 'general_regulatory' } : {}) };
+    });
 
     const results = await getAnaDraftingService().batchDraft({
       requests: enrichedRequests,
