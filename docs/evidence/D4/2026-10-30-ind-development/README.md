@@ -241,3 +241,25 @@ The new study/protocol initiation and verified CSR STF-value corrections through
 `a97f503b5` were merged without conflict. Five focused tests of those owners pass
 92/92 and the merged client/server build passes. The 66 IND changed-source hashes
 remain identical; publication is retried normally after the merge.
+
+
+## Accepted publication
+
+Normal push of `8f0b6df37269be8ba9cdc0f0f6b4222b57040425` succeeded on
+2026-10-30 at 19:10 UTC. The exact remote ref was independently verified equal
+to that local commit. Every normal hook passed, including full-tree TypeScript
+0 against the unchanged zero baseline and net -1 ESLint warnings. All 66 retained
+IND source hashes match. See `publication-receipt.json`,
+`publication-accepted.txt.gz` and `publication-accepted-status.json.gz`.
+
+A second resumed push also passed every gate before another ref race; its
+receipt is `resumed-gates-second-ref-race*`. The subsequent `af226ae6a` merge
+changed no application source relative to the already qualified `5ff16e755`,
+so no additional test or build cohort was needed before the successful normal
+retry. No force push, hook bypass, dependency, schema, production deployment or
+scientific/regulatory/model qualification was introduced.
+
+The remaining audit work remains regional content (including the dated UK CTA
+outline and combined IRAS routing), nonclinical source binding, populated
+applicability and independent assessment. Writing labels and retrieval receipts
+are not a claim of complete expertise across all regions or therapeutic areas.

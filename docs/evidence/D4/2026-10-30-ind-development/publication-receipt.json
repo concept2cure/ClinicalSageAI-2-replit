@@ -1,0 +1,18 @@
+{
+  "source_commit": "8f0b6df37269be8ba9cdc0f0f6b4222b57040425",
+  "remote": "origin",
+  "ref": "refs/heads/concept2cure-v2",
+  "verified_remote_commit": "8f0b6df37269be8ba9cdc0f0f6b4222b57040425",
+  "verified_at": "2026-10-30T19:10:47.747410+00:00",
+  "normal_push_exit_code": 0,
+  "normal_gates": "all passed",
+  "typescript_errors": 0,
+  "typescript_baseline": 0,
+  "eslint_warning_delta": -1,
+  "ind_changed_source_hashes_verified": 66,
+  "push_log": "publication-accepted.txt.gz",
+  "push_log_sha256_uncompressed": "b2ae8aa0b9850fb19023beb5d21251cb3f48af6a84d3fd241c42a299f1dfdc6f",
+  "status": "publication-accepted-status.json.gz",
+  "deployment": "not performed",
+  "limits": "Regional content, nonclinical source binding, populated applicability and independent scientific/regulatory/model qualification remain open."
+}
