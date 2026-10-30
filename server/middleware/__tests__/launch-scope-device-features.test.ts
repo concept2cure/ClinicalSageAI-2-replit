@@ -58,7 +58,8 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-diagnostics', 'mdx/hooks/useIvd.ts'], ['device-diagnostics', 'mdx/hooks/useCdxClia.ts'],
     ['device-engineering', 'mdx/hooks/useEngineering.ts'], ['device-software', 'mdx/hooks/useSoftware.ts'],
     ['device-postmarket', 'mdx/hooks/usePostmarket.ts'], ['device-analytics', 'mdx/hooks/useAnalytics.ts'],
-    ['device-workstream', 'mdx/hooks/useClientReview.ts'], ['device-submission', 'mdx/hooks/useSubmissions.ts'],
+    // No device-submission: it folded into Submission Center (fold F5 item 1, 2026-10-30), with its hook.
+    ['device-workstream', 'mdx/hooks/useClientReview.ts'],
     // No device-validation: the organization-wide blocker list retired (fold F5 item 2, 2026-10-29), with its hook.
     ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
     // The IVDR family board names its read, and the workbench beside it; device-diagnostics mounts both (F2, folded 2026-10-29).

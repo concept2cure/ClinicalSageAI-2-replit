@@ -75,12 +75,14 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list
     // retired; a blocker is its filing's readiness (P-61 item 2). Its address
     // opens Submission Center, and a subscription carries there.
+    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into
+    // Submission Center's device filings, over one store (P-61 item 1); the old
+    // address opens it, and a subscription carries there.
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
       'device-diagnostics', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-submission',
       'device-analytics', 'human-factors', 'labeling',
     ],
     modules: ['projects', 'tasks'],

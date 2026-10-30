@@ -334,8 +334,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-cer' },
       },
       {
-        say: 'The submission packages are the final mile: eSTAR and eCTD pre-flight validation and the transmittal chain — the last step lives here too, not in a vendor hand-off.',
-        navigate: { target: 'device-submission' },
+        // 2026-10-30 (D2, fold F5 item 1): device filings are Submission Center's, over one store.
+        say: 'The final mile is in Submission Center: every device filing being tracked, each draft with its own readiness and every gap named, and each filing\'s history on its record. Filing it stays a signed human act.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
@@ -388,8 +389,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'change-assessment' },
       },
       {
-        say: 'The submission packages: eSTAR and eCTD pre-flight validation and the transmittal chain — the last mile lives here too, not in a vendor hand-off.',
-        navigate: { target: 'device-submission' },
+        // 2026-10-30 (D2, fold F5 item 1): device filings are Submission Center's, over one store.
+        say: 'The last mile, in Submission Center: each device filing with its readiness from the project\'s own content, every gap named, and its history on the record. Filing is a signed act a person makes.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'Close on governance: 21 CFR Part 11 signatures, hash-chained audit, and the rule that holds across every pathway — AnA prepares while a person approves. Then invite their questions and the next step.',

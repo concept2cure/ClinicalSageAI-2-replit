@@ -513,28 +513,12 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // fixing it. 'device-validation' is a DEEP_LINK_ALIASES entry for
   // 'submission-center'. Its claim, /api/submission-ops/blockers, has no client
   // caller now, so no screen claims it.
-  {
-    id: 'device-submission',
-    label: 'Device submission packages',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'rocket',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/submission-ops root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    // 2026-10-29 (D2, fold F5 item 2): /api/submission-ops/blockers was the
-    // retired blocker list's call, reached through the one Workbench file both
-    // screens shared. This screen calls only /api/submission-ops/packages, which
-    // the Vault and Tasks claim.
-    apiPrefixes: [],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.',
-  },
+  // No device-submission. The device submission-packages screen folded into
+  // Submission Center (D2, fold F5 item 1, 2026-10-30; decision P-61 item 1: one
+  // device-filing store, estar_submissions). 'device-submission' is a
+  // DEEP_LINK_ALIASES entry for 'submission-center', whose device filings read
+  // /api/510k/estar/submissions (its claim). The screen claimed nothing at the
+  // end: it called /api/submission-ops/packages, which no client calls now.
   {
     id: 'device-analytics',
     label: 'Device pathway analytics',

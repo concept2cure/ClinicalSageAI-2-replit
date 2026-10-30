@@ -61,7 +61,6 @@ import {
   SC_REGIONS,
   SC_SEQ_STATUS,
   SC_TRANSITIONS,
-  type ToneMap,
 } from '../fixtures/submission';
 import {
   BuilderWorkspace,
@@ -88,6 +87,15 @@ import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../
 import { ceremonyOpen } from '../ceremony';
 import { readSubmissionNavTarget, useOpenOnNavTarget, type SubmissionNavTarget } from './submissionNavTarget';
 import { TrackedFilingDetail } from './TrackedFilingDetail';
+import { TrackedFilingHistory } from './TrackedFilingHistory';
+import {
+  DeviceFilingsCard,
+  plural,
+  readAssemblyVerdict,
+  type AssemblyVerdictPayload,
+  type AssemblyVerdictState,
+  type DeviceFilingRow,
+} from './DeviceFilings';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
@@ -202,116 +210,10 @@ function requiredModule1For(
 // programSequence.ts, shared with Project home's list of the project's submissions.)
 
 /* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
-   eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
-   row. The device journey is read here from its own canonical tracker,
-   GET /api/510k/estar/submissions (server/routes/510k-estar-routes.ts →
-   estar_submissions), and rendered as its own Portfolio section. Only columns
-   the backend returns are typed; nullable columns render null-safe — never
-   fabricated. ── */
-
-// GET /api/510k/estar/submissions → { submissions: estar_submissions rows }.
-interface DeviceFilingRow {
-  id: string;
-  catalogKey: string;
-  programType: string; // 510k|de_novo|pma|q_sub|ide|513g
-  variant: string; // device|ivd
-  title: string | null;
-  status: string; // draft|filed|under_review|additional_info|decision|withdrawn
-  decision: string | null;
-  fdaTrackingNumber: string | null;
-  filedAt: string | null;
-  decisionDueAt: string | null;
-  projectId: number | null;
-}
-
-// Deterministic display map for the eSTAR filing-status enum (mirrors
-// shared/schema/estar-submission ESTAR_SUBMISSION_STATUSES) — reference
-// config, not sample data. Unknown statuses fall through Chip's honest
-// `{ l: k }` default, so a status is never invented.
-const ESTAR_FILING_STATUS: Record<string, ToneMap> = {
-  draft: { l: 'Draft', t: 'idle' },
-  filed: { l: 'Filed', t: 'ai' },
-  under_review: { l: 'Under review', t: 'ai' },
-  additional_info: { l: 'Additional info', t: 'warn' },
-  decision: { l: 'Decision', t: 'ok' },
-  withdrawn: { l: 'Withdrawn', t: 'idle' },
-};
-
-// POST /api/510k/estar/assemble → assembly verdict (device-assembly contract).
-interface AssemblyVerdictPayload {
-  artifactKind: string; // official-estar | content-package-draft | none
-  blockers?: string[];
-  /** The section readiness the blockers were written from
-   *  (assemble-device-submission.ts: `estar.summary`). */
-  estar?: { summary?: { missingRequired?: unknown; undetermined?: unknown } };
-}
-
-// Honest labels for the assembly verdict's artifactKind enum.
-const ARTIFACT_KIND_LABEL: Record<string, string> = {
-  'official-estar': 'official eSTAR producible',
-  'content-package-draft': 'draft content package only — not submittable',
-  none: 'nothing assemblable yet',
-};
-
-type AssemblyVerdictState =
-  | { state: 'loading' }
-  | { state: 'error' }
-  | { state: 'ready'; artifactKind: string; missingRequired: number; undetermined: number; otherBlockers: number };
-
-/* ── What the blocker list counts ───────────────────────────────────────────
-   `blockers` is a list of SENTENCES, not of blockers: the engine writes every
-   missing required eSTAR section into ONE sentence ("11 required eSTAR
-   section(s) missing: …") and every section of undetermined applicability into
-   another. The caption printed `blockers.length`, so an org with 11 required
-   sections missing and 7 undetermined read "· 2 blockers". The section counts
-   are read from the summary those sentences are written from; each remaining
-   entry (a template or market blocker) is one blocker. */
-function readAssemblyVerdict(p: AssemblyVerdictPayload): AssemblyVerdictState {
-  const blockers = Array.isArray(p.blockers) ? p.blockers : [];
-  const missingList = p.estar?.summary?.missingRequired;
-  const undeterminedList = p.estar?.summary?.undetermined;
-  const missingRequired = Array.isArray(missingList) ? missingList.length : 0;
-  const undetermined = Array.isArray(undeterminedList) ? undeterminedList.length : 0;
-  const sectionSentences = (missingRequired > 0 ? 1 : 0) + (undetermined > 0 ? 1 : 0);
-  return {
-    state: 'ready',
-    artifactKind: p.artifactKind,
-    missingRequired,
-    undetermined,
-    otherBlockers: Math.max(0, blockers.length - sectionSentences),
-  };
-}
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** The device-section header line: the org-wide assembly verdict (one call). */
-function assemblyReadinessLine(v: AssemblyVerdictState): string {
-  // The verdict is fetched for ONE pathway/variant (510(k), device) while the
-  // card lists every eSTAR program type, device and IVD. The caption used to
-  // read "Assembly readiness: … · 0 blockers" over all of them; it now names
-  // the scope the call actually covers.
-  if (v.state === 'loading') return 'Checking 510(k) device assembly readiness…';
-  if (v.state === 'error') return '510(k) device assembly readiness unavailable right now';
-  const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
-  const parts: string[] = [];
-  if (v.missingRequired > 0) parts.push(`${plural(v.missingRequired, 'required section', 'required sections')} missing`);
-  if (v.undetermined > 0) parts.push(`applicability of ${plural(v.undetermined, 'section', 'sections')} not established`);
-  if (v.otherBlockers > 0 || parts.length === 0) {
-    parts.push(parts.length === 0
-      ? plural(v.otherBlockers, 'blocker', 'blockers')
-      : plural(v.otherBlockers, 'other blocker', 'other blockers'));
-  }
-  return `510(k) device assembly readiness: ${kind} · ${parts.join(' · ')} (other pathways not assessed here)`;
-}
-
-/** Review-clock cell: only states the tracker actually knows. */
-function reviewClock(f: DeviceFilingRow): string {
-  if (f.decisionDueAt) {
-    const d = new Date(f.decisionDueAt);
-    if (!Number.isNaN(d.getTime())) return `Decision due ${d.toLocaleDateString()}`;
-  }
-  return f.filedAt ? 'No review clock' : 'Not filed yet';
-}
+   The card, its row and verdict types and its helpers live in
+   DeviceFilings.tsx (D2, fold F5 item 1, 2026-10-30), with the status filter
+   and each draft filing's gate. This screen reads the list and the one
+   assembly verdict, which its AnA context states. ── */
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
@@ -592,7 +494,6 @@ export function SubmissionCenter({
   );
   const deviceFilingsRaw = deviceRes.data?.submissions;
   const deviceFilings: DeviceFilingRow[] = Array.isArray(deviceFilingsRaw) ? deviceFilingsRaw : [];
-  const deviceEmpty = !deviceRes.loading && !deviceRes.error && deviceFilings.length === 0;
 
   // POST /api/510k/estar/assemble — ONE org-wide device-assembly verdict for
   // the section header (read-only on the server; renders/persists nothing).
@@ -1178,11 +1079,6 @@ export function SubmissionCenter({
   }, [subs.loading, seqs.loading]);
 
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
-  /* eSTAR program types are not eCTD application types: SC_APPTYPES has no
-     q_sub / ide / 513g, so the device table printed the raw DB token. */
-  const DEVICE_PROGRAM_LABEL: Record<string, string> = {
-    '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', q_sub: 'Q-Submission', ide: 'IDE', '513g': '513(g)',
-  };
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
@@ -1455,6 +1351,8 @@ export function SubmissionCenter({
       <VerdictNote notice={navMiss} />
       {filingLinkError && <p role="alert" className="sp-state">{filingLinkError}</p>}
       {filingTarget && ws === 'portfolio' && <TrackedFilingDetail filingId={filingTarget} onClose={() => setFilingTarget(null)} />}
+      {/* The filing's own history, under its record (fold F5 item 1). */}
+      {filingTarget && ws === 'portfolio' && <TrackedFilingHistory filingId={filingTarget} />}
       {navMiss?.tone === 'err' && <button type="button" className="btn ghost"
         onClick={() => {
           if (ceremonyOpen() || flow || acting !== null) return;
@@ -1577,104 +1475,24 @@ export function SubmissionCenter({
           </div>
         </div>
 
-        {/* Device filings — the eSTAR tracker's journey, read-only here.
-            eSTAR is not eCTD: these rows live in estar_submissions and never
-            masquerade as sequences. The header line is the org's one-call
-            device-assembly verdict (artifact kind + blocker count). */}
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Device filings · eSTAR</span>
-            <span className="s">{assemblyReadinessLine(assembly)}</span>
-          </div>
-          <div className="pj-card-b pj-card-b-flush">
-            {deviceRes.loading ? (
-              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
-                Loading device filings…
-              </div>
-            ) : deviceRes.error ? (
-              <EmptyState
-                tone="error"
-                icon={I.alertTriangle}
-                title="Couldn't load the device filings"
-                hint="The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable."
-              />
-            ) : deviceEmpty ? (
-              <EmptyState
-                icon={I.fileText}
-                title="No device filings tracked yet"
-                hint={available('device-510k')
-                  ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
-                  /* The surface it names is not in this release (F16: no dead ends). */
-                  : `Device filings are tracked from ${getSurfaceMeta('device-510k').label}, which is not part of this release.`}
-              />
-            ) : (
-              <table className="ub-inv">
-                <thead>
-                  <tr>
-                    <th>Filing</th>
-                    <th>Filing type</th>
-                    <th>Status</th>
-                    <th>FDA tracking</th>
-                    <th>Review clock</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deviceFilings.map((f) => (
-                    <tr key={f.id} className="sc-subrow">
-                      <td>
-                        <b>{f.title ?? f.catalogKey}</b>
-                        {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
-                      </td>
-                      <td>
-                        {DEVICE_PROGRAM_LABEL[f.programType] ?? f.programType} <span className="sc-cap">· {f.variant}</span>
-                      </td>
-                      <td>
-                        <Chip map={ESTAR_FILING_STATUS} k={f.status} />
-                        {f.decision ? <span className="sp-row-s"> · {f.decision}</span> : null}
-                      </td>
-                      <td>{f.fdaTrackingNumber ?? '—'}</td>
-                      <td>{reviewClock(f)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          aria-label={`Open tracked filing ${f.title ?? f.catalogKey}`}
-                          onClick={() => {
-                            if (entryBusy.current()) {
-                              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
-                              return;
-                            }
-                            if (!isTrackedFilingId(f.id)) {
-                              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
-                              return;
-                            }
-                            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
-                          }}
-                        >
-                          Open recorded filing
-                        </button>
-                        {/* Offered only where the 510(k) surface can be opened:
-                            outside this release it led to the locked panel
-                            (FILING_SPINE.md F16). */}
-                        {available('device-510k') && (
-                          <button
-                            type="button"
-                            className="sc-trans-b"
-                            title="Open the 510(k) surface — the device filing workspace"
-                            onClick={() => onNav && onNav('device-510k')}
-                          >
-                            {I.right} Open 510(k) surface
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+        <DeviceFilingsCard
+          res={deviceRes}
+          filings={deviceFilings}
+          assembly={assembly}
+          pathway={{ available: available('device-510k'), label: getSurfaceMeta('device-510k').label }}
+          onOpenFiling={(f) => {
+            if (entryBusy.current()) {
+              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
+              return;
+            }
+            if (!isTrackedFilingId(f.id)) {
+              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
+              return;
+            }
+            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
+          }}
+          onOpenPathway={() => onNav && onNav('device-510k')}
+        />
         </>
       )}
 

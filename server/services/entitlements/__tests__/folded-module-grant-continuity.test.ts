@@ -59,6 +59,9 @@ const CARRIED = [
   // Fold F5 item 2 (P-61 item 2): the organization-wide blocker list retired into
   // each filing's readiness; its address opens Submission Center.
   { source: 'device-validation', target: 'submission-center', fold: 'F5', tier: 'standard' },
+  // Fold F5 item 1 (P-61 item 1): the device submission-packages screen folded
+  // into Submission Center's device filings, over the one device-filing store.
+  { source: 'device-submission', target: 'submission-center', fold: 'F5', tier: 'standard' },
 ] as const;
 
 /** Folded screens that never had a catalogue row: nothing to carry. */

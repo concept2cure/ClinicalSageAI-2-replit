@@ -46,7 +46,11 @@ export const MDX_SURFACE_IDS = [
   // F5 item 2, 2026-10-29; decision P-61 item 2): a blocker belongs to a filing,
   // from that filing's deterministic readiness (EstarFilingPanel), and the old id
   // is a DEEP_LINK_ALIASES entry for Submission Center.
-  'device-submission',
+  // No `device-submission`. The device submission-packages screen folded into
+  // Submission Center (D2, fold F5 item 1, 2026-10-30; decision P-61 item 1: one
+  // device-filing store, estar_submissions), whose device filings carry a status
+  // filter, each draft's gate and each filing's history; the old id is a
+  // DEEP_LINK_ALIASES entry that lands there.
   'device-analytics',
 ] as const;
 

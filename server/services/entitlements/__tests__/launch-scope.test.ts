@@ -326,6 +326,23 @@ describe('the retired organization-wide blocker list', () => {
   });
 });
 
+describe('the folded device submission packages', () => {
+  it('are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/; decision P-61
+       item 1. The subset pin in 'the scope list itself' would pass with the id
+       left in one list, so this names it. It was a catalogue module; an existing
+       grant is kept, deprecated, by the catalogue, and carries to Submission
+       Center (P-61 item 4). */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-submission');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-submission');
+    expect(isLaunchSurface('device-submission')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('device-submission');
+    expect(LAUNCH_APPS.find((app) => app.id === 'submission-center')!.surfaces).toContain('submission-center');
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;

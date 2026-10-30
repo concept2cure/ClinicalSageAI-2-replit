@@ -1,0 +1,256 @@
+[
+ {
+  "id": "S1",
+  "what": "the migration takes a package on another organization's project",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "    JOIN public.projects pr ON pr.id = p.project_id AND pr.organization_id = p.org_id\n   WHERE lower(p.package_family) IN ('510k', '510(k)', 'de_novo', 'denovo', 'pma');",
+  "new": "    JOIN public.projects pr ON pr.id = p.project_id\n   WHERE lower(p.package_family) IN ('510k', '510(k)', 'de_novo', 'denovo', 'pma');",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S2",
+  "what": "a cancelled package becomes a draft filing",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "CASE WHEN p.status = 'cancelled' THEN 'withdrawn' ELSE 'draft' END,",
+  "new": "'draft',",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S3",
+  "what": "a completed package becomes a filed filing (a filing nobody signed)",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "CASE WHEN p.status = 'cancelled' THEN 'withdrawn' ELSE 'draft' END,",
+  "new": "CASE WHEN p.status = 'cancelled' THEN 'withdrawn' WHEN p.status = 'completed' THEN 'filed' ELSE 'draft' END,",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S4",
+  "what": "an IND package is migrated as a device filing",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "   WHERE lower(p.package_family) IN ('510k', '510(k)', 'de_novo', 'denovo', 'pma');",
+  "new": "   WHERE lower(p.package_family) IN ('510k', '510(k)', 'de_novo', 'denovo', 'pma', 'ind');",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S5",
+  "what": "the migration's insert is not guarded against a replay",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "   WHERE p.package_id = ANY (eligible)\n     AND NOT EXISTS (SELECT 1 FROM public.estar_submissions s WHERE s.source_package_id = p.package_id);",
+  "new": "   WHERE p.package_id = ANY (eligible);",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S6",
+  "what": "the history is not append-only (no UPDATE refusal)",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "      BEFORE UPDATE ON public.estar_submission_events",
+  "new": "      BEFORE DELETE ON public.estar_submission_events",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S7",
+  "what": "an event is held to its filing only, not to the filing's organization",
+  "file": "migrations/20261030_estar_filing_one_store.sql",
+  "old": "      FOREIGN KEY (submission_id, organization_id)\n      REFERENCES public.estar_submissions (id, organization_id) ON DELETE CASCADE;",
+  "new": "      FOREIGN KEY (submission_id)\n      REFERENCES public.estar_submissions (id) ON DELETE CASCADE;",
+  "test": "tests/schema-contract/estar-filing-one-store.pglite.test.ts"
+ },
+ {
+  "id": "S8",
+  "what": "a tracked filing is inserted outside the transaction of its created event",
+  "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+  "old": "  const { id } = await db.transaction(async (tx) => insertTrackedFiling(queryableFromDrizzle(tx), input, ctx));",
+  "new": "  const { id } = await insertTrackedFiling(queryableFromDrizzle(db), input, ctx);",
+  "test": "server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts"
+ },
+ {
+  "id": "S9",
+  "what": "a status change writes no event",
+  "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+  "old": "    await recordEstarSubmissionEvent(queryableFromDrizzle(tx), {\n      organizationId: ctx.organizationId,\n      submissionId: id,\n      eventType: 'status_changed',",
+  "new": "    if (Math.random() > 2) await recordEstarSubmissionEvent(queryableFromDrizzle(tx), {\n      organizationId: ctx.organizationId,\n      submissionId: id,\n      eventType: 'status_changed',",
+  "test": "server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts"
+ },
+ {
+  "id": "S10",
+  "what": "a signed filing writes no filed event",
+  "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+  "old": "  await recordFiledEvent(client, p, artifactSha256);",
+  "new": "",
+  "test": "server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts"
+ },
+ {
+  "id": "S11",
+  "what": "the history read does not check the filing's organization first",
+  "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+  "old": "  await getEstarSubmission(id, ctx);\n  const { rows } = await queryableFromDrizzle(db).query(",
+  "new": "  const { rows } = await queryableFromDrizzle(db).query(",
+  "test": "server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts"
+ },
+ {
+  "id": "S12",
+  "what": "a migrated filing takes no review clock from the catalogue",
+  "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+  "old": "  return row.reviewGoalDays ?? getCatalogEntry(row.catalogKey as EstarCatalogKey)?.reviewGoalDays ?? null;",
+  "new": "  return row.reviewGoalDays;",
+  "test": "server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts"
+ },
+ {
+  "id": "S13",
+  "what": "a filing with no project is assessed anyway",
+  "file": "server/routes/510k-estar-routes.ts",
+  "old": "    if (row.projectId == null) {\n      return res.status(200).json({\n        assessed: false, reason: 'no_project',",
+  "new": "    if (row.projectId === -1) {\n      return res.status(200).json({\n        assessed: false, reason: 'no_project',",
+  "test": "tests/routes/estar-filing-row-gate.test.ts"
+ },
+ {
+  "id": "S14",
+  "what": "the row gate reads without admitting the filing's project",
+  "file": "server/routes/510k-estar-routes.ts",
+  "old": "    await requireProjectAdmission(req, String(row.projectId));\n    const program =",
+  "new": "    const program =",
+  "test": "tests/routes/estar-filing-row-gate.test.ts"
+ },
+ {
+  "id": "S15",
+  "what": "the history read skips the project's admission",
+  "file": "server/routes/510k-estar-routes.ts",
+  "old": "    if (row.projectId != null) await requireProjectAdmission(req, String(row.projectId));\n    return res.status(200).json({ events:",
+  "new": "    return res.status(200).json({ events:",
+  "test": "tests/routes/estar-filing-row-gate.test.ts"
+ },
+ {
+  "id": "S16",
+  "what": "the row gate assesses with the project's integer id in place of its program",
+  "file": "server/routes/510k-estar-routes.ts",
+  "old": "      catalogKey: row.catalogKey, variant: row.variant, useProjectContent: true, programId: program.id,",
+  "new": "      catalogKey: row.catalogKey, variant: row.variant, useProjectContent: true, programId: String(row.projectId),",
+  "test": "tests/routes/estar-filing-row-gate.test.ts"
+ },
+ {
+  "id": "S17",
+  "what": "AnA's command maps an IND onto a 510(k) filing",
+  "file": "server/services/ana-ri/command-executor.ts",
+  "old": "  pma: 'pma_original',\n});",
+  "new": "  pma: 'pma_original',\n  ind: '510k',\n});",
+  "test": "server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts"
+ },
+ {
+  "id": "S18",
+  "what": "AnA's filing is written outside its signed transaction",
+  "file": "server/services/ana-ri/command-executor.ts",
+  "old": "  const client = await pool.connect();\n  try {\n    await client.query('BEGIN');\n    /* The filing's project is a projects row of this organization (PF-03),",
+  "new": "  const client = await pool.connect();\n  try {\n    /* The filing's project is a projects row of this organization (PF-03),",
+  "test": "server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts"
+ },
+ {
+  "id": "S19",
+  "what": "the gate asks for every filing, not drafts only",
+  "file": "client/src/concept2cure/v2/surfaces/DeviceFilings.tsx",
+  "old": "  if (filing.status === 'draft') return <FilingGate filing={filing} />;",
+  "new": "  return <FilingGate filing={filing} />;",
+  "test": "client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx"
+ },
+ {
+  "id": "S20",
+  "what": "the status filter offers statuses the list does not hold",
+  "file": "client/src/concept2cure/v2/surfaces/DeviceFilings.tsx",
+  "old": "              {[...counts.entries()].map(([k, n]) => (",
+  "new": "              {Object.keys(ESTAR_FILING_STATUS).map((k) => [k, counts.get(k) ?? 0] as [string, number]).map(([k, n]) => (",
+  "test": "client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx"
+ },
+ {
+  "id": "S21",
+  "what": "a failed read of the gate is drawn as not assessed",
+  "file": "client/src/concept2cure/v2/surfaces/DeviceFilings.tsx",
+  "old": "  if (gate.error || !gate.data) {\n    return (",
+  "new": "  if (gate.error || !gate.data) {\n    return <span className=\"sp-row-s\">Not assessed.</span>;\n    return (",
+  "test": "client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx"
+ },
+ {
+  "id": "S22",
+  "what": "a failed history read is an empty history",
+  "file": "client/src/concept2cure/v2/surfaces/TrackedFilingHistory.tsx",
+  "old": "          ? { id: filingId, kind: 'ready', events }\n          : { id: filingId, kind: 'error' });",
+  "new": "          ? { id: filingId, kind: 'ready', events }\n          : { id: filingId, kind: 'ready', events: [] });",
+  "test": "client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx"
+ },
+ {
+  "id": "S23",
+  "what": "an unknown actor is named System",
+  "file": "client/src/concept2cure/v2/surfaces/TrackedFilingHistory.tsx",
+  "old": "`User #${e.actorUserId}` : '\u2014');",
+  "new": "`User #${e.actorUserId}` : 'System');",
+  "test": "client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx"
+ },
+ {
+  "id": "S24",
+  "what": "device-submission has no alias",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  'device-submission': 'submission-center',\n",
+  "new": "",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts",
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "S25",
+  "what": "device-submission back on the device rail",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into Submission Center's device filings.\n    { label: 'Submit & file', items: ['submission-center', 'submission-twin',",
+  "new": "    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into Submission Center's device filings.\n    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'submission-twin',",
+  "test": "client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts"
+ },
+ {
+  "id": "S26",
+  "what": "the sales tour stops at device-submission again",
+  "file": "shared/navigation/demo-scripts.ts",
+  "old": "its history on the record. Filing is a signed act a person makes.',\n        navigate: { target: 'submissions' },",
+  "new": "its history on the record. Filing is a signed act a person makes.',\n        navigate: { target: 'device-submission' },",
+  "test": "client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts"
+ },
+ {
+  "id": "S27",
+  "what": "the mapping drops device-submission",
+  "file": "server/services/entitlements/folded-module-successors.ts",
+  "old": "  'device-submission': 'submission-center',\n",
+  "new": "",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ },
+ {
+  "id": "S28",
+  "what": "device-submission left in the Projects scope list",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "      'device-analytics', 'human-factors', 'labeling',",
+  "new": "      'device-submission', 'device-analytics', 'human-factors', 'labeling',",
+  "test": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts"
+  ]
+ },
+ {
+  "id": "S29",
+  "what": "20260810 upserts device-submission again",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "  ('gateway-transmittals', 'Gateway transmittals',",
+  "new": "  ('device-submission', 'Device submission packages', 'Package readiness.', 'Submit & file', '/concept2cure/device-submission', 'rocket', 330, '{\"tiers\": [], \"industries\": []}'::json),\n  ('gateway-transmittals', 'Gateway transmittals',",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "S30",
+  "what": "20260823 keeps the device-submission packaging row",
+  "file": "db/migrations/20260823_module_catalog_commercial_packaging.sql",
+  "old": "  ('device-software', 'standard'),\n  ('device-udi', 'standard'),",
+  "new": "  ('device-software', 'standard'),\n  ('device-submission', 'standard'),\n  ('device-udi', 'standard'),",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "S31",
+  "what": "a client screen reads the package store again",
+  "file": "client/src/concept2cure/v2/surfaces/DeviceFilings.tsx",
+  "old": "export const plural = ",
+  "new": "export const readPackages = () => fetch('/api/submission-ops/packages');\nexport const plural = ",
+  "test": "client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts"
+ }
+]

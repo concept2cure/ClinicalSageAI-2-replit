@@ -127,7 +127,10 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // list, retires (decision P-61 item 2); a blocker is its filing's readiness. The
 // retired id is an alias for Submission Center, which already publishes, so no
 // id is added (foldDeviceValidation.test.ts).
-const ID_BASELINE = 102;
+// 2026-10-30 D2 fold F5 item 1: device-submission folds into Submission Center
+// (decision P-61 item 1), whose own publish states the device filings. The
+// retired id is an alias, no longer a routable publisher (foldDeviceSubmission.test.ts).
+const ID_BASELINE = 101;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

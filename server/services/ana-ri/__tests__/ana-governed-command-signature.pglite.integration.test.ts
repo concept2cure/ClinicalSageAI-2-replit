@@ -179,6 +179,13 @@ beforeAll(async () => {
     'users', 'organization_users', 'concept2cure_conversations', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
   ]));
   await pg.exec(extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']));
+  /* The tracked-filing store create_submission_package writes (fold F5 item 1), from its creators on the set; the
+     one-store migration reads two columns 20260814 and 20260524 give these tables on a deployed database. */
+  await pg.exec('ALTER TABLE projects ADD COLUMN regulatory_program_id uuid; ALTER TABLE regulatory_programs ADD COLUMN product_type text;');
+  for (const f of ['migrations/20260730_estar_submission.sql', 'migrations/20260730_estar_submission_project_link.sql',
+    'migrations/20260908b_estar_submissions_filed_artifact.sql', 'migrations/20261030_estar_filing_one_store.sql']) {
+    await pg.exec(fs.readFileSync(path.join(__dirname, '../../../..', f), 'utf8'));
+  }
   await pg.exec(extractTableDdl('db/migrations/20260317_global_regulatory_compliance.sql', ['gdpr_data_subject_requests']));
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   await pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
@@ -196,7 +203,7 @@ beforeEach(async () => {
     DROP TABLE IF EXISTS concept2cure_thread_comments;
     DELETE FROM electronic_signatures; DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;
     DELETE FROM concept2cure_artifact_versions; DELETE FROM concept2cure_artifacts;
-    DELETE FROM concept2cure_conversations; DELETE FROM c2c_submission_packages;
+    DELETE FROM concept2cure_conversations; DELETE FROM c2c_submission_packages; DELETE FROM estar_submissions;
     DELETE FROM gdpr_data_subject_requests; DELETE FROM organization_users; DELETE FROM users;
   `);
   await pg.exec(THREAD_COMMENTS_DDL);
@@ -279,71 +286,76 @@ describe('place_in_dossier signs the placement it makes', () => {
   });
 });
 
-describe('create_submission_package signs the creation decision', () => {
-  const params = { projectId: PROJECT, title: 'IND 30-day safety update', packageFamily: 'ind' as const, targetDate: '2026-11-02' };
+/* Fold F5 item 1 (2026-10-30; P-61 item 1): create_submission_package tracks a device filing in estar_submissions,
+   where Submission Center lists it, and writes no c2c_submission_packages row; a family that is not a device filing
+   is refused by name. The package transmit's author check keeps its own suites; AnA creates no package for it. */
+describe('create_submission_package tracks a device filing and signs the creation decision', () => {
+  const params = { projectId: PROJECT, title: 'Infusion pump 510(k)', packageFamily: '510k' as const };
+  const filings = () => q(`SELECT id, organization_id, project_id, catalog_key, program_type, variant, title, status, created_by FROM estar_submissions`);
 
-  it('writes the signature over the ledger, claiming no content hash', async () => {
+  it('writes the tracked filing and its created event, and the signature over the ledger, claiming no content hash', async () => {
     const { createSubmissionPackage } = await import('../command-executor');
     const r = await createSubmissionPackage(ctxWith(signoff({ secondFactorVerified: false, authenticationMethod: 'password', signaturePurpose: 'authorship' })) as never, params);
-    expect(r.success).toBe(true);
-    const [pkg] = await q(`SELECT package_id FROM c2c_submission_packages`);
+    const [filing] = await filings();
+    expect(filing).toMatchObject({ organization_id: ORG, project_id: PROJECT, catalog_key: '510k', program_type: '510k', variant: 'device', title: params.title, status: 'draft', created_by: SIGNER });
+    expect(r.data).toMatchObject({ filingId: filing.id, catalogKey: '510k', status: 'draft' });
+    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
+    const events = await q(`SELECT event_type, to_status, actor_user_id, detail FROM estar_submission_events WHERE submission_id = $1`, [filing.id]);
+    expect(events).toEqual([{ event_type: 'created', to_status: 'draft', actor_user_id: SIGNER,
+      detail: { catalogKey: '510k', programType: '510k', variant: 'device', projectId: PROJECT, via: 'create_submission_package' } }]);
 
     const [sig] = await signatures();
-    expect(sig.signed_target).toBe(`submission-package:${pkg.package_id}`);
-    expect(sig.signature_meaning).toBe('authorship');
-    expect(sig.authentication_method).toBe('password');
-    expect(sig.second_factor_verified).toBe(false);
-    expect(sig.binding_basis).toBe(BINDING_BASIS.GOVERNED_ACTION_LEDGER);
+    expect(sig).toMatchObject({ signed_target: `estar-submission:${filing.id}`, signature_meaning: 'authorship', authentication_method: 'password',
+      second_factor_verified: false, binding_basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER });
     const [ledger] = await signLedger();
     expect(sig.bound_payload_digest).toBe(ledger.sha256_chain);
     const manifest = asJson(sig.signature_manifest);
     expect(manifest.command).toBe('create_submission_package');
     expect(JSON.stringify(manifest)).not.toMatch(/contentSha256|content_sha256/);
-    // The signer attests to the package definition.
+    // The signer attests to the filing's definition.
     expect(asJson(ledger.payload)).toMatchObject({
       meaning: 'authorship', command: 'create_submission_package',
-      projectId: PROJECT, packageFamily: 'ind', title: params.title, targetDate: params.targetDate,
+      projectId: PROJECT, catalogKey: '510k', variant: 'device', title: params.title,
     });
   });
 
-  it('records who created the package, so separation of duties can name its author at transmit', async () => {
-    // AnA's insert omitted created_by_id (the HTTP route sets it), so every
-    // package AnA created read "no creator recorded" and its transmit to the
-    // agency was refused for everyone. The author lookup here and below runs on
-    // this real table, through the transmit's own check.
+  it('takes a De Novo, a PMA or any eSTAR submission type by its catalogue key', async () => {
     const { createSubmissionPackage } = await import('../command-executor');
-    const r = await createSubmissionPackage(ctxWith(signoff()) as never, params);
-    expect(r.success).toBe(true);
-    const [pkg] = await q(`SELECT id, created_by_id FROM c2c_submission_packages`);
-    expect(pkg.created_by_id, 'the package records no creator').toBe(SIGNER);
+    expect((await createSubmissionPackage(ctxWith(signoff()) as never, { ...params, packageFamily: 'pma' })).success).toBe(true);
+    expect((await createSubmissionPackage(ctxWith(signoff()) as never, { projectId: PROJECT, title: 'Q-Sub', catalogKey: 'qsub_pre_submission', variant: 'ivd' } as never)).success).toBe(true);
+    expect((await filings()).map((f) => [f.catalog_key, f.variant]).sort()).toEqual([['pma_original', 'device'], ['qsub_pre_submission', 'ivd']]);
+  });
 
-    const { transmitIndependenceOf } = await import('../../submission-gateways/governed-transmit-checks');
-    expect(await transmitIndependenceOf(Number(pkg.id), ORG, SIGNER), 'its creator may transmit it').toBe('author');
-    expect(await transmitIndependenceOf(Number(pkg.id), ORG, SIGNER + 1), 'a colleague may not transmit it').toBe('independent');
+  it('refuses a family that is not a device filing, by name, writing nothing', async () => {
+    const { createSubmissionPackage } = await import('../command-executor');
+    for (const packageFamily of ['ind', 'nda', 'bla', 'cer']) {
+      const r = await createSubmissionPackage(ctxWith(signoff()) as never, { ...params, packageFamily } as never);
+      expect(r, packageFamily).toMatchObject({ success: false, error: 'NOT_A_DEVICE_FILING' });
+      expect(r.message, packageFamily).toMatch(/Submission Center/);
+    }
+    expect([...await filings(), ...await q(`SELECT 1 FROM c2c_submission_packages`), ...await signatures()]).toHaveLength(0);
   });
 
   it("another organization's project is refused before anything is written, signature included (PF-03)", async () => {
-    await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT + 1}, ${OTHER_ORG}, 'Their IND') ON CONFLICT DO NOTHING`);
+    await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT + 1}, ${OTHER_ORG}, 'Their device') ON CONFLICT DO NOTHING`);
     const { createSubmissionPackage } = await import('../command-executor');
     const r = await createSubmissionPackage(ctxWith(signoff()) as never, { ...params, projectId: PROJECT + 1 });
     expect(r).toMatchObject({ success: false, error: 'PROJECT_NOT_FOUND' });
-    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
-    expect(await signatures()).toHaveLength(0);
+    expect([...await filings(), ...await signatures()]).toHaveLength(0);
   });
 
-  it('without a verified sign-off creates no package', async () => {
+  it('without a verified sign-off creates no filing', async () => {
     const { createSubmissionPackage } = await import('../command-executor');
-    const r = await createSubmissionPackage(ctxWith(signoff({ signaturePurpose: undefined })) as never, params);
-    expect(r.success).toBe(false);
-    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
-    expect(await signatures()).toHaveLength(0);
+    expect((await createSubmissionPackage(ctxWith(signoff({ signaturePurpose: undefined })) as never, params)).success).toBe(false);
+    expect([...await filings(), ...await signatures()]).toHaveLength(0);
   });
 
-  it('a failed signature write rolls the package back', async () => {
+  it('a failed signature write rolls the filing and its event back', async () => {
     const { createSubmissionPackage } = await import('../command-executor');
     const r = await withSignatureStoreDown(() => createSubmissionPackage(ctxWith(signoff()) as never, params));
     expect(r.success).toBe(false);
-    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
+    expect(await filings()).toHaveLength(0);
+    expect(await q(`SELECT 1 FROM estar_submission_events`)).toHaveLength(0);
     expect(await signLedger()).toHaveLength(0);
   });
 });

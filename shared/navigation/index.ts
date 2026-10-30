@@ -209,7 +209,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'device-tasks', label: 'Device tasks', description: 'The device task workbench.', scope: 'global', group: 'module' },
   /* The organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29; P-61 item 2); the handle resolves to Submission Center (DEEP_LINK_ALIASES). */
   { id: 'device-validation', label: 'Device filing readiness', description: 'Submission Center: every tracked device filing. A filing\'s blockers are its own eSTAR filing readiness, on its pathway screen (the organization-wide blocker list retired).', scope: 'global', group: 'module' },
-  { id: 'device-submission', label: 'Device submissions', description: 'The device submission-packages workbench.', scope: 'global', group: 'module' },
+  /* The device submission packages folded into Submission Center (D2, fold F5 item 1, 2026-10-30; P-61 item 1); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-submission', label: 'Device filings', description: 'Submission Center: every tracked device filing, with each draft\'s readiness and each filing\'s history (the device submission-packages screen folded into it).', scope: 'global', group: 'module' },
   { id: 'device-analytics', label: 'Device analytics', description: 'Device analytics panels.', scope: 'global', group: 'module' },
 
   // ── Pharmaceutical development (the PDEV kit; `pdev` itself is above) ──

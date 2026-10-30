@@ -664,7 +664,8 @@ export const SEGMENT_MODULES = {
       ],
     },
     // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list retired; each filing's readiness is its own.
-    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
+    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into Submission Center's device filings.
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -946,8 +947,8 @@ export const ESIGN_MEANINGS = [
 ] as const;
 
 /** Deep-link aliases — SURFACE_VIEWS-only ids, intentionally not rail/registry
- * entries (BUILD_STATE): task-board → tasks board view · device-submission →
- * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
+ * entries (BUILD_STATE): task-board → tasks board view · ind-lifecycle →
+ * deliverable-first IND view, and every folded screen's old id → its home. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
   // Filing discovery and its authored reference now live in canonical intake.
   'filings-catalog': 'projects',
@@ -960,10 +961,6 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      .design/client-journey/INFORMATION_ARCHITECTURE.md). routing.ts
      SURFACE_ADDRESSES writes it; this reads it back. */
   features: 'apps',
-  // No `device-submission` alias. It pointed at `document-authoring` while
-  // SURFACE_VIEWS routed the same id to the device kit — the registry and the
-  // deep-link table disagreeing about what one id means. `device-submission` is
-  // the kit's submission-ops package view and resolves to itself.
   'ind-lifecycle': 'ind-checklist',
   // Legacy MDX links reach the existing device-filtered Projects view.
   // The device-workstream screen retains its separate A2.10 parity work.
@@ -1040,6 +1037,16 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      `device-validation` target land there; a subscription carries to it
      (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts). */
   'device-validation': 'submission-center',
+  /* The device submission-packages screen folded into Submission Center (D2,
+     fold F5 item 1, 2026-10-30; decision P-61 item 1: one device-filing store,
+     estar_submissions). Submission Center's device filings list every tracked
+     filing, packages migrated from c2c_submission_packages among them, with a
+     status filter and each draft filing's gate from its own readiness; each
+     filing's history is on its record. Old links, ⌘K hits and AnA's
+     `device-submission` target land there; a subscription carries to it
+     (decision P-61 item 4). It once aliased to `document-authoring`, while
+     SURFACE_VIEWS routed the same id to the kit; now there is one meaning. */
+  'device-submission': 'submission-center',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

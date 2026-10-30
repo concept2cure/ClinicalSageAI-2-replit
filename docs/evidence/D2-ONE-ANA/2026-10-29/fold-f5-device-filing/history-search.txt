@@ -12,3 +12,5 @@ client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx
 
 client/src/concept2cure/mdx/hooks/__tests__/useWorkbenchTemplates.test.ts
 client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts
+
+# Item 1 names: git log --all --diff-filter=D --name-only over *package*, *Package*, *milestone*, *Milestone*, *TrackedFiling*, *DeviceFiling*, *submission*event*, *filing*event*

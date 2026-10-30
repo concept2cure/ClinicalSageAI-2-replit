@@ -239,7 +239,7 @@ export const REAL: Layout = {
       // No device-vault: it folded into the Vault (D2, fold F3, 2026-10-29).
       // No device-tasks: it folded into Tasks (D2, 2026-10-29).
       // No device-validation: the organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29).
-      'device-submission': 'SubmissionsSurface',
+      // No device-submission: it folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
       'device-analytics': 'AnalyticsSurface',
     },
   },

@@ -3726,6 +3726,20 @@ export const C2C_MIGRATION_FILES = [
   // organization_id INTEGER NOT NULL, so the sweep below polices the
   // certificate. Every statement guarded; no DROP.
   'migrations/20261029k_tenant_offboarding_custody.sql',
+  // One device-filing store, estar_submissions (D2, fold F5 item 1, P-61 item 1,
+  // 2026-10-30; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/):
+  // public.estar_submission_events, a tracked filing's append-only history
+  // (UPDATE and TRUNCATE refused; DELETE is its filing's cascade or the tenant
+  // purge's, PURGE_CHILD_TABLES), held to its filing's organization by a
+  // composite key; estar_submissions.source_package_id; and, only where
+  // c2c_submission_packages exists (to_regclass; its creator 0002 is on no
+  // applier), each device package (510(k), De Novo, PMA) on its own
+  // organization's project migrated once into a draft or withdrawn tracked
+  // filing with its import event and milestones. After the three
+  // estar_submissions creators (20260730, its project link, 20260908b),
+  // 20260524 and 20260814. Public with organization_id INTEGER NOT NULL, so the
+  // sweeps below police the history. Every statement guarded; no DROP, no DELETE.
+  'migrations/20261030_estar_filing_one_store.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

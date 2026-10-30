@@ -67,7 +67,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'device-510k':            { mod: 'MedicalDevice',   noun: '510(k) section',            et: 'section' },
   'device-cer':             { mod: 'MedicalDevice',   noun: 'CER section',               et: 'section' },
   'device-diagnostics':     { mod: 'MedicalDevice',   noun: 'diagnostics item',          et: 'device' },
-  'device-submission':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
   cmc:                      { mod: 'CMC',             noun: 'CMC section',               et: 'section' },
   'ind-checklist':          { mod: 'IND',             noun: 'IND item',                  et: 'ind' },
   pdev:                     { mod: 'IND',             noun: 'development activity',      et: 'activity' },

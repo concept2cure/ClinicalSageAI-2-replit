@@ -93,9 +93,11 @@ import {
   listEstarSubmissions,
   getEstarSubmission,
   advanceEstarSubmission,
+  listEstarSubmissionEvents,
   EstarSubmissionError,
   type EstarFilingSignature,
 } from '../services/pathway-engines/estar/estar-submission-service';
+import { loadTaskHomePrograms } from '../services/tasking/task-home-programs';
 import {
   ESTAR_SUBMISSION_STATUSES,
   type EstarSubmissionStatus,
@@ -1832,41 +1834,44 @@ const filingReadinessSchema = z.object({
     .optional(),
 });
 
+type FilingReadinessInput = z.infer<typeof filingReadinessSchema>;
+
 /**
- * POST /api/510k/estar/filing-readiness
- * body: { catalogKey, variant, registration, leaves, qSubType? }
- *
  * The single "can this client file X, and what's left?" answer. Combines
  * registration eligibility + template/version resolution + content readiness (via
  * the right mapper) + official-template producibility into one honest verdict.
  * Producibility is resolved server-side from the fill orchestration, so the caller
  * gets a complete picture. Produces/persists nothing.
+ *
+ * One assessment, two callers: the filing-readiness panel (POST
+ * /filing-readiness, EstarFilingPanel) and each tracked filing's gate (GET
+ * /submissions/:id/readiness, Submission Center's device filings; fold F5 item
+ * 1, 2026-10-30). Returns the status and body the route answers with.
  */
-router.post('/filing-readiness', authMiddleware, async (req, res) => {
-  const validation = filingReadinessSchema.safeParse(req.body);
-  if (!validation.success) {
-    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
-  }
-  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId, programId } = validation.data;
+async function assessFilingReadinessFor(
+  req: Request,
+  input: FilingReadinessInput,
+): Promise<{ status: number; body: Record<string, unknown> }> {
+  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId, programId } = input;
 
   const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
   if (!entry) {
-    return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+    return { status: 400, body: { error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` } };
   }
 
   try {
     // Org is needed to read the persisted registration and/or the org's authored
     // content; resolve it once when either path requires it.
-    const needsOrg = !validation.data.registration || useProjectContent;
+    const needsOrg = !input.registration || useProjectContent;
     const organizationId = needsOrg ? resolveOrgId(req) : null;
     if (needsOrg && !organizationId) {
-      return res.status(400).json({ error: 'Organization context required' });
+      return { status: 400, body: { error: 'Organization context required' } };
     }
 
     // Registration: an explicit what-if payload if supplied, else the org's
     // persisted registration record (the "clients must register" source of truth).
     const registration =
-      validation.data.registration ?? (await resolveClientRegistration(requestDb(req), { organizationId: organizationId! }));
+      input.registration ?? (await resolveClientRegistration(requestDb(req), { organizationId: organizationId! }));
 
     // Content: explicit body leaves, plus the org's REAL authored device content
     // when requested — so readiness reflects what's actually written, not a
@@ -1895,7 +1900,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       registration,
       leaves: effectiveLeaves,
       qSubType,
-      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
+      deviceFlags: input.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
       /* The FDA version of the file the fill would use, so a template FDA has
@@ -1905,21 +1910,42 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     });
 
     if (!result) {
-      return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+      return { status: 400, body: { error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` } };
     }
-    return res.status(200).json({
-      ...result,
-      ...(content ? { deviceContentSource: content.source } : {}),
-    });
+    return {
+      status: 200,
+      body: {
+        ...result,
+        ...(content ? { deviceContentSource: content.source } : {}),
+      },
+    };
   } catch (error: any) {
     logger.error('estar filing-readiness failure', {
       err: error instanceof Error ? error.message : String(error),
     });
-    return res.status(500).json({
-      error: 'ESTAR_FILING_READINESS_FAILED',
-      message: 'Failed to assess eSTAR filing readiness. The problem has been logged.',
-    });
+    return {
+      status: 500,
+      body: {
+        error: 'ESTAR_FILING_READINESS_FAILED',
+        message: 'Failed to assess eSTAR filing readiness. The problem has been logged.',
+      },
+    };
   }
+}
+
+/**
+ * POST /api/510k/estar/filing-readiness
+ * body: { catalogKey, variant, registration, leaves, qSubType? }
+ *
+ * The filing-readiness panel's assessment (assessFilingReadinessFor, above).
+ */
+router.post('/filing-readiness', authMiddleware, async (req, res) => {
+  const validation = filingReadinessSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  const out = await assessFilingReadinessFor(req, validation.data);
+  return res.status(out.status).json(out.body);
 });
 
 // ── Submission lifecycle tracking (the filing → tracking bridge) ─────────────
@@ -2095,6 +2121,72 @@ router.get('/submissions/:id', authMiddleware, async (req, res) => {
     const row = await getEstarSubmission(String(req.params.id), { organizationId });
     if (row.projectId != null) await requireProjectAdmission(req, String(row.projectId));
     return res.status(200).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/**
+ * GET /api/510k/estar/submissions/:id/readiness — the filing's own gate (D2,
+ * fold F5 item 1, 2026-10-30; decision P-61 items 1 and 2).
+ *
+ * The readiness EstarFilingPanel assesses (assessFilingReadinessFor), for the
+ * filing's catalogue key and variant, against its project's own authored
+ * content. A blocker belongs to the filing and closes when it is fixed. A
+ * filing tracked under no project, or on a project that anchors no program, is
+ * not assessed and says which: an assessment with no program would read every
+ * device of the organization (the defect EstarFilingPanel's required programId
+ * closed). Read-only; the project is admitted before anything is read.
+ */
+router.get('/submissions/:id/readiness', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    await requireCurrentProjectActor(req);
+    const row = await getEstarSubmission(String(req.params.id), { organizationId });
+    if (row.projectId == null) {
+      return res.status(200).json({
+        assessed: false, reason: 'no_project', filingId: row.id,
+        message: "Readiness is assessed against a project's own authored content, and this filing is tracked under no project.",
+      });
+    }
+    await requireProjectAdmission(req, String(row.projectId));
+    const program = (await loadTaskHomePrograms(requestPgClient(req), organizationId, [row.projectId])).get(row.projectId);
+    if (!program) {
+      return res.status(200).json({
+        assessed: false, reason: 'no_program', filingId: row.id,
+        message: "Readiness is assessed against a project's own authored content, and this filing's project anchors no device program.",
+      });
+    }
+    const input = filingReadinessSchema.safeParse({
+      catalogKey: row.catalogKey, variant: row.variant, useProjectContent: true, programId: program.id,
+    });
+    if (!input.success) {
+      return res.status(409).json({ error: 'FILING_NOT_ASSESSABLE', message: 'This filing records a type or variant the readiness assessment does not take.' });
+    }
+    const out = await assessFilingReadinessFor(req, input.data);
+    if (out.status !== 200) return res.status(out.status).json(out.body);
+    return res.status(200).json({ assessed: true, filingId: row.id, programId: program.id, readiness: out.body });
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/**
+ * GET /api/510k/estar/submissions/:id/events — the filing's history, oldest
+ * first (estar_submission_events; fold F5 item 1, 2026-10-30): its start,
+ * each status change, its signed filing, and, for a filing migrated from a
+ * submission package, the package and its milestones. Read-only; the project is
+ * admitted before anything is read.
+ */
+router.get('/submissions/:id/events', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    await requireCurrentProjectActor(req);
+    const row = await getEstarSubmission(String(req.params.id), { organizationId });
+    if (row.projectId != null) await requireProjectAdmission(req, String(row.projectId));
+    return res.status(200).json({ events: await listEstarSubmissionEvents(row.id, { organizationId }) });
   } catch (error: any) {
     return submissionFail(res, error);
   }

@@ -8,3 +8,9 @@ submission-center: row, tiers ["standard"], industries [], deprecated false
 device-validation: no row
 device-submission: row, tiers ["standard"], industries [], deprecated false
 submission-center: row, tiers ["standard"], industries [], deprecated false
+
+# After item 1 (working tree over 041880cbd):
+# ref WT: 13 catalogue writers replayed on a fresh database
+device-validation: no row
+device-submission: no row
+submission-center: row, tiers ["standard"], industries [], deprecated false

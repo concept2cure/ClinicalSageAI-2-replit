@@ -1,3 +1,18 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+-- Decision P-61 item 1: one device-filing store, estar_submissions. The device
+-- submission-packages screen (device-submission) is folded into Submission
+-- Center, whose device filings list every tracked filing with a status filter,
+-- each draft's gate from its own readiness and each filing's history; device
+-- packages of c2c_submission_packages are migrated into it by
+-- migrations/20261030_estar_filing_one_store.sql. Removed: the id from step 1's
+-- keep-list and step 2's upsert, so a fresh database never holds the row and
+-- step 1 deprecates the existing row on every replay. The row, its metadata
+-- (its recorded tier included), module_subscriptions FKs and every tenant record
+-- stay; no DELETE, no appended DROP. A live grant carries to submission-center
+-- in the entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts); no grant row is
+-- written. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold F5 item 2: the organization-wide blocker list retires (CLAUDE.md Rule 1).
 -- Decision P-61 item 2: no organization-wide blocker list. A blocker belongs to
 -- a filing, from that filing's deterministic readiness (EstarFilingPanel), and is
@@ -334,7 +349,6 @@ UPDATE available_modules
    'device-postmarket',
    'device-presub',
    'device-software',
-   'device-submission',
    'device-udi',
    'device-workstream',
    'dispatch-readiness',
@@ -420,7 +434,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('evidence-search', 'Evidence search (RAG)', 'Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.', 'Evidence & data', '/concept2cure/evidence-search', 'search', 300, '{"tiers": [], "industries": []}'::json),
   ('insights', 'Reporting & analytics', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.', 'Evidence & data', '/concept2cure/insights', 'barChart', 310, '{"tiers": [], "industries": []}'::json),
   ('vault', 'Vault', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
-  ('device-submission', 'Device submission packages', 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.', 'Submit & file', '/concept2cure/device-submission', 'rocket', 330, '{"tiers": [], "industries": []}'::json),
   ('gateway-transmittals', 'Gateway transmittals', 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback (/api/mdx/gateways).', 'Submit & file', '/concept2cure/gateway-transmittals', 'rocket', 360, '{"tiers": [], "industries": []}'::json),
   ('haq-manager', 'Health authority questions', 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package. Contract ref (not yet a @shared file): @shared/types/haq', 'Submit & file', '/concept2cure/haq-manager', 'messageSquare', 370, '{"tiers": [], "industries": []}'::json),
   ('pyramid', 'Submission pyramid', 'Deterministic submission work breakdown — type selector (8 engine + 12 global types), dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase→task drill-down with full-metadata detail sheet (risk, CTD bindings, guidance, deps, deliverables), analytics (resources/bottlenecks, document coverage, critical path), global pyramid browser. Task status is the only client-owned state. Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts', 'Submit & file', '/concept2cure/pyramid', 'workflow', 380, '{"tiers": [], "industries": []}'::json),

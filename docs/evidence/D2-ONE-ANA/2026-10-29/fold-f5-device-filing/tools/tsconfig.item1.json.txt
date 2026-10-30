@@ -1,0 +1,51 @@
+{
+ "extends": "<repo>/tsconfig.json",
+ "compilerOptions": {
+  "incremental": false,
+  "noEmit": true
+ },
+ "include": [
+  "<repo>/client/src/**/*.d.ts",
+  "<repo>/server/**/*.d.ts",
+  "<repo>/shared/**/*.d.ts"
+ ],
+ "files": [
+  "<repo>/client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+  "<repo>/client/src/concept2cure/mdx/surfaceIds.ts",
+  "<repo>/client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx",
+  "<repo>/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+  "<repo>/client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts",
+  "<repo>/client/src/concept2cure/v2/fixtures/collab-data.ts",
+  "<repo>/client/src/concept2cure/v2/registryModel.ts",
+  "<repo>/client/src/concept2cure/v2/surfaceViews.ts",
+  "<repo>/client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+  "<repo>/client/src/concept2cure/v2/surfaces/DeviceFilings.tsx",
+  "<repo>/client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx",
+  "<repo>/client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts",
+  "<repo>/scripts/ci/check-launch-scope-api.ts",
+  "<repo>/scripts/visual-qa/dump-v2-surfaces.spec.tsx",
+  "<repo>/server/middleware/__tests__/launch-scope-device-features.test.ts",
+  "<repo>/server/routes/510k-estar-routes.ts",
+  "<repo>/server/services/ana-ri/command-executor.ts",
+  "<repo>/server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts",
+  "<repo>/server/services/entitlements/folded-module-successors.ts",
+  "<repo>/server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts",
+  "<repo>/server/services/entitlements/__tests__/launch-scope.test.ts",
+  "<repo>/server/services/pathway-engines/estar/estar-submission-service.ts",
+  "<repo>/server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts",
+  "<repo>/server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts",
+  "<repo>/server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts",
+  "<repo>/server/services/tenant/tenant-offboarding.ts",
+  "<repo>/shared/constants/launch-scope.ts",
+  "<repo>/shared/constants/mdx-project-features.ts",
+  "<repo>/shared/constants/ui-surface-registry.ts",
+  "<repo>/shared/constants/ui-surface-registry.ui-v2.ts",
+  "<repo>/shared/navigation/index.ts",
+  "<repo>/shared/navigation/demo-scripts.ts",
+  "<repo>/shared/schema/estar-submission.ts",
+  "<repo>/tests/schema-contract/catalog-module-claims.contract.test.ts",
+  "<repo>/tests/schema-contract/estar-filing-one-store.pglite.test.ts",
+  "<repo>/tests/routes/estar-filing-row-gate.test.ts",
+  "<repo>/client/src/concept2cure/v2/surfaces/TrackedFilingHistory.tsx"
+ ]
+}
