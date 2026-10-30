@@ -76,7 +76,10 @@
     "client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx",
     "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
     "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
-    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx"
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx",
+    "server/services/ectd/__tests__/dtd-bundler.test.ts",
+    "server/services/ectd/__tests__/stf-agency-source.test.ts",
+    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts"
   ],
   "inputs": [
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
@@ -209,8 +212,11 @@
     "server/services/csr/csr-assembly-plan.ts",
     "server/services/csr/csr-placement-lifecycle.ts",
     "server/services/csr/project-scope.ts",
+    "server/services/ectd/__tests__/dtd-bundler.test.ts",
+    "server/services/ectd/__tests__/stf-agency-source.test.ts",
     "server/services/ectd/__tests__/stf-csr-source-values.test.ts",
     "server/services/ectd/__tests__/stf-generator.test.ts",
+    "server/services/ectd/dtd-bundler.ts",
     "server/services/ectd/stf-generator.ts",
     "server/services/entitlements/__tests__/launch-scope.test.ts",
     "server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
@@ -246,6 +252,8 @@
     "server/services/rbm/risk-report.ts",
     "server/services/rbm/site-risk-engine.ts",
     "server/services/report-os/project-access.ts",
+    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
+    "server/services/submission-gateways/regional-packager.ts",
     "shared/constants/launch-scope.ts",
     "shared/constants/ui-surface-registry.ts",
     "shared/constants/ui-surface-registry.ui-v2.ts",

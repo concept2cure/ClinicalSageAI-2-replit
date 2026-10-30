@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 175 source/test/configuration
+source-preservation links. The current packet selects 180 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -257,6 +257,19 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   checks passed, and lint remained 190→190 with zero errors. The earlier
   334-case/153-input and 237-case/174-input results remain prior source epochs;
   their totals are not borrowed or added to this new affected cohort.
+- Pre-push STF packaging integration: fresh synchronization found incoming
+  `9e6ee17ba`, which merged normally into `0af600d7e` without conflicts. The
+  seven-file change includes three production files for supportive STF files
+  and agency prerequisites. Read-only review found no RBM, canonical actor,
+  signature or import-side-effect change. The only overlap with the prior
+  175-input selection is `stf-generator`; its new optional argument preserves
+  existing callers. Root's affected packaging cohort (`final-packaging-*`) at
+  `0af600d7e` passed **90/90 across 4 actual files**, exit 0, zero skipped and all
+  **180 selected inputs unchanged**. The production build passed **exit 0** on
+  those 180 stable inputs; all four selected CI checks passed and lint remained
+  190→190 with zero errors. This is a new affected cohort, not a rerun or sum of
+  the preceding attachment, RBM or upstream suites. Upstream totals are not
+  borrowed.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -288,7 +301,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   passed 590 named paths before the latest integration; the current API check
   passes **591 named paths** with none refused. Current launch scope, launch API
   scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
-  with **175 selected inputs unchanged** through those checks
+  with **180 selected inputs unchanged** through those checks
   (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
@@ -309,5 +322,5 @@ explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
 `498403dc3` and `59d0bd6eb`; remote advancement then refused both updates. The
-current 175-input integration still requires its own compiler/gated-push retry
+current 180-input integration still requires its own compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.
