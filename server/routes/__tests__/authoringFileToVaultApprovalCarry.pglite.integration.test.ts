@@ -231,4 +231,24 @@ describe('FD5 (c): a sealed Authoring approval carries to its Vault copy', () =>
     expect(await vaultVersionNotTransmittable(jdb.pool as never, ORG, vaultDocumentId, sha256)).toBe('not reviewed');
     expect(await q(`SELECT 1 FROM audit_logs WHERE action = 'vault.version.approval_carried' AND record_id = $1`, [vaultDocumentId])).toEqual([]);
   }, T);
+
+  // Independence is from every author, as the signing routes judge it, not
+  // only from whoever created the document: a co-author who wrote a section
+  // and signed its review is not an independent reviewer.
+  it('reviewed by a member who wrote one of its sections: nothing carries, and the version is not reviewed', async () => {
+    const { docId } = await signedDocument('Not carried: reviewed by a co-author', 'APPROVED', [REVIEW, APPROVE]);
+    const [section] = await q<{ id: string }>(
+      `SELECT id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY id LIMIT 1`, [docId, ORG]);
+    await q(
+      `INSERT INTO doc_revisions (id, section_id, content, created_by, tenant_id) VALUES ($1, $2, 'Co-authored text', $3, $4)`,
+      [randomUUID(), section.id, String(REVIEWER.id), ORG],
+    );
+    const res = await fileIt(docId);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const { vaultDocumentId, sha256, approval } = res.body.data;
+    expect(approval.carried).toBe(false);
+    expect(approval.reason).toMatch(/wrote part of this document \(.*Authoring revision ledger.*\) signed its review or approval/);
+    expect(await recordsFor(vaultDocumentId)).toEqual([]);
+    expect(await vaultVersionNotTransmittable(jdb.pool as never, ORG, vaultDocumentId, sha256)).toBe('not reviewed');
+  }, T);
 });
