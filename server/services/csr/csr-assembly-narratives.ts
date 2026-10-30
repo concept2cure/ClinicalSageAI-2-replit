@@ -2,8 +2,9 @@
  * D18 (2026-10-30): §14.3.3, the patient narratives the narrative job landed,
  * filed as their own leaf of an assembled CSR.
  *
- * What it draws: the section exactly as landed (csr_section_outputs §14.3.3,
- * which workflow-source-import verified against its SHA-256), as the opening
+ * What it draws: the section exactly as landed (csr_section_outputs §14.3.3;
+ * since 2026-10-30 read from the database a slice at a time,
+ * csr-narrative-landed.ts sqlLandedNarratives, never as one string), as the opening
  * and then one subject's narrative at a time, each read from the narrative
  * store a page at a time (csr-narrative-store.ts sqlNarrativeStore.page), so
  * at most a page of narrative text is held. Every subject has a bookmark
@@ -21,21 +22,24 @@
  *     leaves it unchanged, so the receipt's drawn SHA-256 is the stored one;
  *   - read back from the written PDF, the leaf defines H14.3.3 and every
  *     subject's destination.
+ * The match itself is csr-narrative-landed.ts walkLandedNarratives, the same
+ * one the Authoring import's reference is made through.
  * Narratives not landed are a gap, never an empty leaf.
  */
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { NarrativePageCursor, SavedNarrative } from './csr-narrative-job.js';
-import { narrativeSectionBlock } from './narrative-section.js';
+import type { SavedNarrative } from './csr-narrative-job.js';
 import { CsrPdfWriter } from './csr-pdf-writer.js';
 import { readLeafTargets } from './csr-pdf-structure.js';
 import { toWinAnsiSafe } from '../ectd/leaf-pdf-renderer.js';
 import { CSR_NARRATIVES_FILE, CSR_NARRATIVES_SECTION, e3Title, headingDestination, narrativeDestination } from './csr-assembly-plan.js';
+import { walkLandedNarratives, type LandedNarratives, type NarrativePages } from './csr-narrative-landed.js';
+
+export { NARRATIVES_PAGE } from './csr-narrative-landed.js';
 
 /** The build's stored narratives, read a page at a time in landing order (sequence, subject). */
-export interface CsrNarrativesSource {
-  page(after: NarrativePageCursor | null, limit: number): Promise<SavedNarrative[]>;
+export interface CsrNarrativesSource extends NarrativePages {
   /** When §14.3.3 has not landed: the narrative job's state, for the gap's reason. */
   notLandedReason?: string;
   /**
@@ -62,9 +66,6 @@ export type NarrativesOutcome =
   | { state: 'filed'; path: string; fileName: string; title: string; sha256: string; bytes: number; pages: number; subjects: string[]; verification: NarrativesVerification }
   | { state: 'missing'; reason: string; verification?: NarrativesVerification };
 
-/** Narratives read per page: the most narrative text held at once. */
-export const NARRATIVES_PAGE = 50;
-const BLOCK_START = '\n\nSubject ';
 const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
 
 function notLanded(source: CsrNarrativesSource | undefined): string {
@@ -81,74 +82,54 @@ function drawText(writer: CsrPdfWriter, text: string): void {
   }
 }
 
-interface Drawn { offset: number; subjects: string[]; receipt: NarrativeReceiptEntry[]; findings: string[] }
-
-/** Draw each stored narrative the landed section holds at the current offset; skip a row it does not (an earlier selection's, or refused). */
-async function drawNarratives(writer: CsrPdfWriter, content: string, source: CsrNarrativesSource, drawn: Drawn): Promise<void> {
-  let after: NarrativePageCursor | null = null;
+/** Draw one matched narrative under its treatment group's bookmark, with its subject's destination. */
+function drawer(writer: CsrPdfWriter, receipt: NarrativeReceiptEntry[], findings: string[]) {
   let arm: string | null = null;
-  for (;;) {
-    const rows = await source.page(after, NARRATIVES_PAGE);
-    if (!rows.length || drawn.offset >= content.length) return;
-    const last = rows[rows.length - 1];
-    after = { sequence: last.sequence, subjectId: last.subjectId };
-    for (const row of rows) {
-      if (row.status !== 'composed' || typeof row.content !== 'string') continue;
-      const block = narrativeSectionBlock({ subjectId: row.subjectId, armName: row.qc.armName, categories: row.qc.categories, events: row.qc.events, text: row.content });
-      if (!content.startsWith(block, drawn.offset)) continue;
-      if (row.contentHash !== sha256(row.content)) drawn.findings.push(`The stored narrative of subject ${row.subjectId} does not match its recorded SHA-256.`);
-      if (toWinAnsiSafe(block) !== block) drawn.findings.push(`The narrative of subject ${row.subjectId} holds characters the PDF fonts would change, so it cannot be filed as stored.`);
-      if (row.qc.armName !== arm) { arm = row.qc.armName; writer.heading(arm, 2); }
-      writer.heading(block.slice(2, block.indexOf('\n\n', 2)), 3, narrativeDestination(row.subjectId));
-      drawText(writer, row.content);
-      drawn.offset += block.length;
-      drawn.subjects.push(row.subjectId);
-      drawn.receipt.push({ subjectId: row.subjectId, storedSha256: row.contentHash, drawnSha256: sha256(toWinAnsiSafe(row.content)) });
-    }
-    await writer.drain();
-  }
+  return ({ row, block }: { row: SavedNarrative & { content: string }; block: string }) => {
+    if (toWinAnsiSafe(block) !== block) findings.push(`The narrative of subject ${row.subjectId} holds characters the PDF fonts would change, so it cannot be filed as stored.`);
+    if (row.qc.armName !== arm) { arm = row.qc.armName; writer.heading(arm, 2); }
+    writer.heading(block.slice(2, block.indexOf('\n\n', 2)), 3, narrativeDestination(row.subjectId));
+    drawText(writer, row.content);
+    receipt.push({ subjectId: row.subjectId, storedSha256: row.contentHash, drawnSha256: sha256(toWinAnsiSafe(row.content)) });
+  };
 }
 
-/** The subject whose landed text no stored narrative matches, read from the section at that point. */
-function unmatchedAt(content: string, offset: number): string {
-  const subject = new RegExp(`^${BLOCK_START.replace(/\n/g, '\\n')}(.+?) \\(`).exec(content.slice(offset, offset + 400))?.[1];
-  return subject ? `the narrative of subject ${subject} in the section` : `the section's text from character ${offset}`;
-}
-
-/** Render §14.3.3 into `outDir`, or say why it is not filed. A leaf that fails any check is removed. */
+/**
+ * Render §14.3.3 into `outDir`, or say why it is not filed. A leaf that fails any check is removed.
+ * `section` is the landed text: in memory (inlineLandedNarratives) or read from
+ * the database a slice at a time (csr-narrative-landed.ts sqlLandedNarratives).
+ */
 export async function renderNarrativesLeaf(input: {
-  section: { content: string } | undefined; source: CsrNarrativesSource | undefined; outDir: string; studyId: string; stamp: Date;
+  section: LandedNarratives | undefined; source: CsrNarrativesSource | undefined; outDir: string; studyId: string; stamp: Date;
 }): Promise<NarrativesOutcome> {
   if (!input.section) return { state: 'missing', reason: notLanded(input.source) };
   if (!input.source) {
     return { state: 'missing', reason: 'The build landed Section 14.3.3, but its stored narratives were not given to the assembly, so the section cannot be checked against them. Nothing was filed for it.' };
   }
-  const content = input.section.content;
+  const landed = input.section;
   const file = path.join(input.outDir, CSR_NARRATIVES_FILE);
   const title = `${CSR_NARRATIVES_SECTION} ${e3Title(CSR_NARRATIVES_SECTION)}`;
   const writer = new CsrPdfWriter({ path: file, title, runningHeader: `Study ${input.studyId} — Section 14.3.3 narratives`, stamp: input.stamp });
   writer.heading(title, 1, headingDestination(CSR_NARRATIVES_SECTION));
-  const start = content.indexOf(BLOCK_START);
-  const opening = start < 0 ? content : content.slice(0, start);
-  drawText(writer, opening);
-  const drawn: Drawn = { offset: opening.length, subjects: [], receipt: [], findings: [] };
-  await drawNarratives(writer, content, input.source, drawn);
+  drawText(writer, landed.opening);
+  const receipt: NarrativeReceiptEntry[] = [];
+  const drawnFindings: string[] = [];
+  const walk = await walkLandedNarratives(landed, input.source, drawer(writer, receipt, drawnFindings), () => writer.drain());
   const written = await writer.finish();
-  if (drawn.offset !== content.length) {
-    drawn.findings.unshift(`The landed Section 14.3.3 does not match the stored narratives: no stored narrative has the text of ${unmatchedAt(content, drawn.offset)} (edited or recomposed after it was landed).`);
-  } else {
+  const findings = [...walk.findings, ...drawnFindings];
+  if (walk.complete) {
     const targets = await readLeafTargets(file);
     const defined = targets?.destinations ?? new Set<string>();
-    for (const name of [headingDestination(CSR_NARRATIVES_SECTION), ...drawn.subjects.map(narrativeDestination)]) {
-      if (!defined.has(name)) drawn.findings.push(`The written leaf does not define the destination ${name}.`);
+    for (const name of [headingDestination(CSR_NARRATIVES_SECTION), ...walk.subjects.map(narrativeDestination)]) {
+      if (!defined.has(name)) findings.push(`The written leaf does not define the destination ${name}.`);
     }
   }
-  const verification: NarrativesVerification = { verified: drawn.findings.length === 0, subjects: drawn.subjects.length, pages: written.pages,
-    sectionSha256: sha256(content), findings: drawn.findings, receipt: drawn.receipt };
+  const verification: NarrativesVerification = { verified: findings.length === 0, subjects: walk.subjects.length, pages: written.pages,
+    sectionSha256: landed.sha256, findings, receipt };
   if (!verification.verified) {
     await fs.rm(file, { force: true });
-    const shown = drawn.findings.slice(0, 5).join(' ') + (drawn.findings.length > 5 ? ` (${drawn.findings.length - 5} more.)` : '');
+    const shown = findings.slice(0, 5).join(' ') + (findings.length > 5 ? ` (${findings.length - 5} more.)` : '');
     return { state: 'missing', reason: `${shown} Nothing was filed for Section 14.3.3. Run the narratives again, then assemble.`, verification: { ...verification, pages: null } };
   }
-  return { state: 'filed', path: file, fileName: CSR_NARRATIVES_FILE, title, sha256: written.sha256, bytes: written.bytes, pages: written.pages, subjects: drawn.subjects, verification };
+  return { state: 'filed', path: file, fileName: CSR_NARRATIVES_FILE, title, sha256: written.sha256, bytes: written.bytes, pages: written.pages, subjects: walk.subjects, verification };
 }

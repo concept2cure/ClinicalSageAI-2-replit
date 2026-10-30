@@ -1,4 +1,5 @@
 /** The existing editor's exact, server-verified source working copy contract. */
+import type { CsrNarrativeReference } from '../csr-narrative-reference';
 export type BinaryImportSource =
   | { kind: 'vault'; documentId: string }
   | { kind: 'data-room'; sourceId: number };
@@ -56,6 +57,9 @@ export interface WorkflowSectionOrigin {
    * hash and the retained run's evidence digest. Parsed, fail-closed, by
    * server/services/csr/csr-claim-receipts.ts; absent when the section has none. */
   csrEvidence?: Readonly<Record<string, unknown>>;
+  /** 2026-10-30: §14.3.3 imported by reference to the build's narrative store, not as
+   * inline text (shared/csr-narrative-reference.ts). The section holds the opening only. */
+  narrativeReference?: CsrNarrativeReference;
 }
 
 export interface WorkflowImportOrigin {

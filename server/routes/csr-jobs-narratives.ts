@@ -8,6 +8,9 @@
  *   GET  /api/csr/jobs/:jobId/narratives/status  the newest build: status, subjects done of total,
  *        stalled, the outcome or the refusal by code
  *   GET  /api/csr/jobs/:jobId/narratives         the per-subject QC list (no text)
+ *   GET  /api/csr/jobs/:jobId/narratives/text    a page of the composed narratives with their text
+ *        (?afterSequence=&afterSubject=&limit≤50), for the read-only §14.3.3 viewer in Authoring,
+ *        which holds §14.3.3 by reference to this store (2026-10-30)
  *
  * Access is the job's project, checked now as the signed-in user (write for
  * the POST). The build itself runs off the request thread
@@ -20,7 +23,7 @@ import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { db } from '../db';
 import { CsrScopeError, requireCsrJobAccess } from '../services/csr/project-scope';
-import { CsrNarrativeBuildError, readCsrNarrativeQc } from '../services/csr/csr-narrative-store.js';
+import { CsrNarrativeBuildError, readCsrNarrativeQc, readCsrNarrativeTextPage } from '../services/csr/csr-narrative-store.js';
 import { CsrNarrativeRunError, enqueueNarrativeRun, readLatestNarrativeRun, startNarrativeRun } from '../services/csr/csr-narrative-run.js';
 
 const log = createScopedLogger('csr-jobs-narratives');
@@ -84,6 +87,18 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
       if (!s) return;
       return res.json({ subjects: await readCsrNarrativeQc(q(), s.organizationId, s.jobId) });
     } catch (err) { return sendError(res, err, 'read the narrative QC list', { jobId: req.params.jobId }); }
+  });
+
+  router.get('/:jobId/narratives/text', async (req, res) => {
+    try {
+      const s = await scope(req, res, false);
+      if (!s) return;
+      const sequence = Number(req.query.afterSequence);
+      const subject = typeof req.query.afterSubject === 'string' ? req.query.afterSubject : '';
+      const after = req.query.afterSequence === undefined ? null : Number.isSafeInteger(sequence) && sequence >= 0 && subject && subject.length <= 200 ? { sequence, subjectId: subject } : undefined;
+      if (after === undefined) return res.status(400).json({ error: 'afterSequence must be a whole number and afterSubject a subject identifier.', code: 'CSR_NARRATIVE_PAGE_INVALID' });
+      return res.json(await readCsrNarrativeTextPage(q(), s.organizationId, s.jobId, after, Number(req.query.limit ?? 20)));
+    } catch (err) { return sendError(res, err, 'read the narratives', { jobId: req.params.jobId }); }
   });
 
   return router;

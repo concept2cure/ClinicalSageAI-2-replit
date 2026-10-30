@@ -1,0 +1,8 @@
+ × a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text and recorded hash both changed: the import no longer verifies, and assembly is refused 1169ms
+ × a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > its text changed under its recorded hash: the import no longer verifies, and assembly is refused 1148ms
+ ✓ a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > an edit the landed text cannot show (a facts digest) still changes the fingerprint: the import no longer verifies, and an earlier assembly is stale 133ms
+ ✓ a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > a landed §14.3.3 changed under its recorded hash is refused 14ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "{ origin: { kind: 'csr', …(13) }, …(5) }" instead of rejecting
+AssertionError: promise resolved "{ origin: { kind: 'csr', …(13) }, …(5) }" instead of rejecting
+      Tests  2 failed | 2 passed | 4 skipped (8)

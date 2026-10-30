@@ -87,6 +87,7 @@ import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type Ass
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -1613,7 +1614,9 @@ export function DocumentWorkbench({
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const editRefusal = actRefusal(docAccess.edit ?? null);
-  const contentReadOnly = docSealed || !!editRefusal;
+  /* §14.3.3 of an imported CSR is held by reference to the build's narrative store, not as text: read-only here (2026-10-30). */
+  const narrativeReference = narrativeReferenceFor(docProvenance?.importSource, activeSection?.code);
+  const contentReadOnly = docSealed || !!editRefusal || !!narrativeReference;
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -5355,6 +5358,7 @@ export function DocumentWorkbench({
                     proposals={draftProposals}
                   />
                 )}
+                {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
                 <div
                   style={{
                     minHeight: 460,
