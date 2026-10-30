@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-30T18:57:42.669850+00:00",
+  "observedAt": "2026-10-30T19:00:40.033547+00:00",
   "note": "Exact local raw evidence; large text deterministically gzip-compressed, executable source archived as text. Intermediate failures and unqualified cached-browser attempt retained. No node_modules/dependency cache. Counts overlap; do not sum cohorts.",
   "artifacts": [
     {
@@ -4044,6 +4044,51 @@
       "gzip": false
     },
     {
+      "original": "build-recovery-exit.json",
+      "stored": "qualification/build-recovery-exit.json",
+      "rawBytes": 331,
+      "rawSha256": "bfacecc5293d6ab074a327f95a47aee6267c299a738ecf2042be19dee2eef3a3",
+      "storedBytes": 331,
+      "storedSha256": "bfacecc5293d6ab074a327f95a47aee6267c299a738ecf2042be19dee2eef3a3",
+      "gzip": false
+    },
+    {
+      "original": "build-recovery-finish.json",
+      "stored": "qualification/build-recovery-finish.json",
+      "rawBytes": 28316,
+      "rawSha256": "dc9a0d9d42d15cf0e28ac2d9eab6da06f927f542432a352a7d44412313342f44",
+      "storedBytes": 28316,
+      "storedSha256": "dc9a0d9d42d15cf0e28ac2d9eab6da06f927f542432a352a7d44412313342f44",
+      "gzip": false
+    },
+    {
+      "original": "build-recovery-launcher.txt",
+      "stored": "qualification/build-recovery-launcher.txt",
+      "rawBytes": 459,
+      "rawSha256": "d9a84e89ecdd6ebfa5f8129cb4a3f3321c92f8c9b0627e047c9ba9b9802f64d0",
+      "storedBytes": 459,
+      "storedSha256": "d9a84e89ecdd6ebfa5f8129cb4a3f3321c92f8c9b0627e047c9ba9b9802f64d0",
+      "gzip": false
+    },
+    {
+      "original": "build-recovery-start.json",
+      "stored": "qualification/build-recovery-start.json",
+      "rawBytes": 28316,
+      "rawSha256": "c48882fb006d80c88189155cf83d99ddebeeb4a24b8bd2c5ed0ad02f5dcfd2e5",
+      "storedBytes": 28316,
+      "storedSha256": "c48882fb006d80c88189155cf83d99ddebeeb4a24b8bd2c5ed0ad02f5dcfd2e5",
+      "gzip": false
+    },
+    {
+      "original": "build-recovery.txt",
+      "stored": "qualification/build-recovery.txt",
+      "rawBytes": 16419,
+      "rawSha256": "c79204862e73088ac22d37a88e0de0d0166fd3383c51b30bc357ab3b110a8f77",
+      "storedBytes": 16419,
+      "storedSha256": "c79204862e73088ac22d37a88e0de0d0166fd3383c51b30bc357ab3b110a8f77",
+      "gzip": false
+    },
+    {
       "original": "build-settings-exit.json",
       "stored": "qualification/build-settings-exit.json",
       "rawBytes": 331,
@@ -5592,6 +5637,69 @@
       "gzip": false
     },
     {
+      "original": "final-recovery-finish.json",
+      "stored": "qualification/final-recovery-finish.json",
+      "rawBytes": 28228,
+      "rawSha256": "58171a8a037026f3d4e17e2413c9801bb6fc89f5c4c72709f77c68cef3a1a690",
+      "storedBytes": 28228,
+      "storedSha256": "58171a8a037026f3d4e17e2413c9801bb6fc89f5c4c72709f77c68cef3a1a690",
+      "gzip": false
+    },
+    {
+      "original": "final-recovery-launcher.txt",
+      "stored": "qualification/final-recovery-launcher.txt",
+      "rawBytes": 1057,
+      "rawSha256": "09062d971fc5a6d62647ddc384fa713b77c4a5dceca64351a37585c8358304e3",
+      "storedBytes": 1057,
+      "storedSha256": "09062d971fc5a6d62647ddc384fa713b77c4a5dceca64351a37585c8358304e3",
+      "gzip": false
+    },
+    {
+      "original": "final-recovery-results.json",
+      "stored": "qualification/final-recovery-results.json.gz",
+      "rawBytes": 68136,
+      "rawSha256": "142ee71b00b99b3a172848c9a6361f93a044c25e1c2fa7a3fcbfc27663b0a62c",
+      "storedBytes": 9040,
+      "storedSha256": "abccf58c18524894452409e839ae7026c7d33854a7f8992e4b535a29516f6d2c",
+      "gzip": true
+    },
+    {
+      "original": "final-recovery-selection.json",
+      "stored": "qualification/final-recovery-selection.json",
+      "rawBytes": 13946,
+      "rawSha256": "9ab92e6e2202cead47f03c3950ab51b5f2319637cb3c8778668a7ceff507785d",
+      "storedBytes": 13946,
+      "storedSha256": "9ab92e6e2202cead47f03c3950ab51b5f2319637cb3c8778668a7ceff507785d",
+      "gzip": false
+    },
+    {
+      "original": "final-recovery-start.json",
+      "stored": "qualification/final-recovery-start.json",
+      "rawBytes": 28228,
+      "rawSha256": "6981beff1149d472e05f307dfb500fe32ed0c9b80fe80383665614fdd873e91f",
+      "storedBytes": 28228,
+      "storedSha256": "6981beff1149d472e05f307dfb500fe32ed0c9b80fe80383665614fdd873e91f",
+      "gzip": false
+    },
+    {
+      "original": "final-recovery-summary.json",
+      "stored": "qualification/final-recovery-summary.json",
+      "rawBytes": 1057,
+      "rawSha256": "09062d971fc5a6d62647ddc384fa713b77c4a5dceca64351a37585c8358304e3",
+      "storedBytes": 1057,
+      "storedSha256": "09062d971fc5a6d62647ddc384fa713b77c4a5dceca64351a37585c8358304e3",
+      "gzip": false
+    },
+    {
+      "original": "final-recovery-tests.txt",
+      "stored": "qualification/final-recovery-tests.txt",
+      "rawBytes": 90,
+      "rawSha256": "bd9ea7972777adc25f7e93556be5a3ec4853c742e064165965522aca55af1400",
+      "storedBytes": 90,
+      "storedSha256": "bd9ea7972777adc25f7e93556be5a3ec4853c742e064165965522aca55af1400",
+      "gzip": false
+    },
+    {
       "original": "final-results.json",
       "stored": "qualification/final-results.json.gz",
       "rawBytes": 330777,
@@ -5684,10 +5792,37 @@
     {
       "original": "final-selection.json",
       "stored": "qualification/final-selection.json",
-      "rawBytes": 19004,
-      "rawSha256": "8bb413ed29745120d74a31d2f851bdd55b280f583142b5345257fc64f1ed13b2",
-      "storedBytes": 19004,
-      "storedSha256": "8bb413ed29745120d74a31d2f851bdd55b280f583142b5345257fc64f1ed13b2",
+      "rawBytes": 20080,
+      "rawSha256": "6e628f10de6f564ae66be07810e0ce7604d9d4d449b7842017a5d55a8a8525de",
+      "storedBytes": 20080,
+      "storedSha256": "6e628f10de6f564ae66be07810e0ce7604d9d4d449b7842017a5d55a8a8525de",
+      "gzip": false
+    },
+    {
+      "original": "final-settings-ci-finish.json",
+      "stored": "qualification/final-settings-ci-finish.json",
+      "rawBytes": 26983,
+      "rawSha256": "cba081957f75ba8cd365cf24df2f11a6c990c8b64383126365cce2d6105f07e6",
+      "storedBytes": 26983,
+      "storedSha256": "cba081957f75ba8cd365cf24df2f11a6c990c8b64383126365cce2d6105f07e6",
+      "gzip": false
+    },
+    {
+      "original": "final-settings-ci-start.json",
+      "stored": "qualification/final-settings-ci-start.json",
+      "rawBytes": 26983,
+      "rawSha256": "9bca4b237c3737c9edcd737ce096b0655b53b24bfe9e57c260e027ebb2ff9731",
+      "storedBytes": 26983,
+      "storedSha256": "9bca4b237c3737c9edcd737ce096b0655b53b24bfe9e57c260e027ebb2ff9731",
+      "gzip": false
+    },
+    {
+      "original": "final-settings-ci-summary.json",
+      "stored": "qualification/final-settings-ci-summary.json",
+      "rawBytes": 1022,
+      "rawSha256": "b79fcc1f1712172af71986360847c03d6e181ac191eec5a1e0cd0f6aa45e48e2",
+      "storedBytes": 1022,
+      "storedSha256": "b79fcc1f1712172af71986360847c03d6e181ac191eec5a1e0cd0f6aa45e48e2",
       "gzip": false
     },
     {
@@ -5716,6 +5851,15 @@
       "storedBytes": 172,
       "storedSha256": "6e5e2d3a8d6808c665b201601d9bedf156de7f2d1a76b52a6e20b9f8422ce904",
       "gzip": false
+    },
+    {
+      "original": "final-settings-lint.json",
+      "stored": "qualification/final-settings-lint.json.gz",
+      "rawBytes": 95875,
+      "rawSha256": "72e44f2835ac4c1781cdeefa98327d203694a9c0c969ad4eaafd202903fcf764",
+      "storedBytes": 7964,
+      "storedSha256": "6ba895059372cef0e0b81951cc9f4e701f708a30d0ec535fd982896a04378e6f",
+      "gzip": true
     },
     {
       "original": "final-settings-results.json",
@@ -6159,6 +6303,15 @@
       "gzip": false
     },
     {
+      "original": "incoming-d4-catalog-tasking-review.json",
+      "stored": "qualification/incoming-d4-catalog-tasking-review.json",
+      "rawBytes": 1736,
+      "rawSha256": "ca9e46b7d71733de755309d54356a3e8b3622394d977e867004262654e935bf9",
+      "storedBytes": 1736,
+      "storedSha256": "ca9e46b7d71733de755309d54356a3e8b3622394d977e867004262654e935bf9",
+      "gzip": false
+    },
+    {
       "original": "incoming-ed5c-review-merge.json",
       "stored": "qualification/incoming-ed5c-review-merge.json",
       "rawBytes": 3307,
@@ -6234,9 +6387,9 @@
       "original": "lint-final.json",
       "stored": "qualification/lint-final.json.gz",
       "rawBytes": 95875,
-      "rawSha256": "72e44f2835ac4c1781cdeefa98327d203694a9c0c969ad4eaafd202903fcf764",
-      "storedBytes": 7964,
-      "storedSha256": "6ba895059372cef0e0b81951cc9f4e701f708a30d0ec535fd982896a04378e6f",
+      "rawSha256": "50bcfdedf89b2b9879dcff54d2692646f91299334f9396dc5118c3766b79d4a9",
+      "storedBytes": 7965,
+      "storedSha256": "213dcc86861d79f33730fc18cd6f05edb3d77d6ad8ea3b8ca79d1ab0852bb912",
       "gzip": true
     },
     {
@@ -6252,9 +6405,9 @@
       "original": "lint-owned.mjs",
       "stored": "qualification/lint-owned.mjs.txt",
       "rawBytes": 2222,
-      "rawSha256": "bb808b1a0742e1278c124bf2c45f8749e3410e67fea2589d993753ba303bd5a1",
+      "rawSha256": "254e10e94073b244f6b32f0607c87d8bf20001beb01eebc33fa3a6b2f1d0f51d",
       "storedBytes": 2222,
-      "storedSha256": "bb808b1a0742e1278c124bf2c45f8749e3410e67fea2589d993753ba303bd5a1",
+      "storedSha256": "254e10e94073b244f6b32f0607c87d8bf20001beb01eebc33fa3a6b2f1d0f51d",
       "gzip": false
     },
     {
@@ -6264,6 +6417,15 @@
       "rawSha256": "c8bd794595b8a8333cecfef8e9285a76ece67ded9546a7257cc7f35a87bbbec3",
       "storedBytes": 70,
       "storedSha256": "c8bd794595b8a8333cecfef8e9285a76ece67ded9546a7257cc7f35a87bbbec3",
+      "gzip": false
+    },
+    {
+      "original": "lint-recovery-launcher.txt",
+      "stored": "qualification/lint-recovery-launcher.txt",
+      "rawBytes": 70,
+      "rawSha256": "86e05f6fdf78dca3ede4038774154c1f7786a98488be5c124debc1fc54e6bb74",
+      "storedBytes": 70,
+      "storedSha256": "86e05f6fdf78dca3ede4038774154c1f7786a98488be5c124debc1fc54e6bb74",
       "gzip": false
     },
     {
@@ -6827,10 +6989,10 @@
     {
       "original": "pack-evidence.py",
       "stored": "qualification/pack-evidence.py.txt",
-      "rawBytes": 2942,
-      "rawSha256": "14f4f275ab814b0664d460123da751f95026a330ed6987a5ae1e29329a2e0928",
-      "storedBytes": 2942,
-      "storedSha256": "14f4f275ab814b0664d460123da751f95026a330ed6987a5ae1e29329a2e0928",
+      "rawBytes": 2966,
+      "rawSha256": "964e8dbc748d835b04fade017804bc9f8f007d9592f810a9085a9c09e552f19c",
+      "storedBytes": 2966,
+      "storedSha256": "964e8dbc748d835b04fade017804bc9f8f007d9592f810a9085a9c09e552f19c",
       "gzip": false
     },
     {
@@ -7511,10 +7673,10 @@
     {
       "original": "publication-prepare.py",
       "stored": "qualification/publication-prepare.py.txt",
-      "rawBytes": 7130,
-      "rawSha256": "896fc92354a67ec45654791537830369bfec4d89dfc82186a211c32e38f1c1de",
-      "storedBytes": 7130,
-      "storedSha256": "896fc92354a67ec45654791537830369bfec4d89dfc82186a211c32e38f1c1de",
+      "rawBytes": 7224,
+      "rawSha256": "d855b7be50a4ed5717d8058a38798bd6659bde715e8daa6706797286fb728617",
+      "storedBytes": 7224,
+      "storedSha256": "d855b7be50a4ed5717d8058a38798bd6659bde715e8daa6706797286fb728617",
       "gzip": false
     },
     {
@@ -7920,6 +8082,15 @@
       "rawSha256": "c8a579e04cb3f12e71f539040c0800ea5fd0a5f81721a753b9e2c6059b16fb75",
       "storedBytes": 1105,
       "storedSha256": "c8a579e04cb3f12e71f539040c0800ea5fd0a5f81721a753b9e2c6059b16fb75",
+      "gzip": false
+    },
+    {
+      "original": "run-build-recovery.sh",
+      "stored": "qualification/run-build-recovery.sh.txt",
+      "rawBytes": 1105,
+      "rawSha256": "c1580da533f0cfc2b9e4930d06e71772e98b8d65f4504aeaa6c1ee6136f0481d",
+      "storedBytes": 1105,
+      "storedSha256": "c1580da533f0cfc2b9e4930d06e71772e98b8d65f4504aeaa6c1ee6136f0481d",
       "gzip": false
     },
     {

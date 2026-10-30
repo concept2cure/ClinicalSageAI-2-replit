@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-30T18:57:41.787728+00:00",
-  "sourceCommit": "ae4ec443dc92c688307340c26ba9bfe1d9b99264",
-  "scope": "210 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
+  "observedAt": "2026-10-30T19:00:29.845243+00:00",
+  "sourceCommit": "f254676b34f8d0a51f8b4c66db0225472f18a04d",
+  "scope": "220 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
@@ -120,12 +120,24 @@
       "result": "build0 atae4ec443d;210inputs unchanged"
     },
     {
-      "receipt": "qualification/final-ci-summary.json",
+      "receipt": "qualification/final-settings-ci-summary.json",
       "result": "launch-scope/API593/signature/SQL all0;210inputs unchanged"
     },
     {
-      "receipt": "qualification/lint-final.json.gz",
+      "receipt": "qualification/final-settings-lint.json.gz",
       "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings against89b67685e"
+    },
+    {
+      "receipt": "qualification/final-recovery-summary.json",
+      "result": "178/178 across11files atf254676b3;220inputs unchanged. Catalog/taskboard read recovery and retained entitlement/task target, RBM rail/context/intake/project door checks."
+    },
+    {
+      "receipt": "qualification/build-recovery-exit.json",
+      "result": "build0 atf254676b3;220inputs unchanged"
+    },
+    {
+      "receipt": "qualification/lint-final.json.gz",
+      "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings againstd4c745c5f"
     }
   ],
   "priorWholeTypeScript": {
@@ -152,6 +164,9 @@
     "client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx": "fe68c9b7cbd82c1b0c0156674ac23693d156e45e1193223428727865640f6c53",
     "client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx": "92042eaac2add2d860623da1e785426a4af262768ea51a9b919fc2c91e2feef6",
     "client/src/concept2cure/v2/__tests__/_ingest-xhr-fake.ts": "d7c582159a4a99871d4ca8f823fa2410341dfcc24576ee084e8b15f41700d7ff",
+    "client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx": "4094a942601d74c3e876f04a73b4caaf3136c4c3d3b9cb15c492bc418be586ba",
+    "client/src/concept2cure/v2/__tests__/appsLive.test.tsx": "549efafd291c961d35de1bc70e3ffd0a2d1d703008a6868fc7678ae03cc9f32d",
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx": "9da51cc87c3dc754d5f20454c2d615ef8e8040345f62a971c06afa5a09a156b3",
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx": "420baf6139a2282f32cb992d4bbfe3090a37a8dcc08a80457702cf38a5174715",
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx": "50bbd9c81143ad5a209f6f469104519f7cf1bca0691d001f78c025e3943d7da9",
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx": "63aa99355a56c769003f52e68a2a599e1fb127c2aca665938351b8ce72cde1f2",
@@ -177,6 +192,9 @@
     "client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx": "3ab404e3a6872bb1b4fcd28680d4b11607159f4d03bc87f6aaab1165a6263fdc",
     "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx": "5d9d899af58761bd6703ad23904a4f3e7211661cc6a04d088bd4b42dd12e3ca9",
     "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e",
+    "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx": "dd5d4f8afc90335de3e2e7c46ff16df06b2747c7c13f4aca78377bdff4d3030c",
+    "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx": "3de9c5c84ddb8a2393443b66ddf3f08a8982a5d68d81341ae54395f3f72a0102",
     "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "7128cb3f4070490b0ed0479a6d3cf6355c13635fac0b7d5778dd8a30b8993573",
     "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx": "a965fc36895c33e80315e6b2049c03c9fea0f7df9a887a6f00c80888fc6f2afa",
     "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx": "30b1065e72a28096372bb98fce6b05abbf4d1bfe1b35c0b1b0713977e880fe73",
@@ -189,9 +207,11 @@
     "client/src/concept2cure/v2/projectScopedRead.tsx": "9dcd711a081a9fece7b2952216858a421a627d72c5be6861181363a0184d3f99",
     "client/src/concept2cure/v2/registryModel.ts": "192340d35184bd95307631524d900db4e75bd1f97953efc64dd30ec6723a075a",
     "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "client/src/concept2cure/v2/styles/app-v2.css": "0e4308db0a3f210356afd5db1f9a9bbc5063eada860611d92f8144124102e3b5",
     "client/src/concept2cure/v2/styles/project-home-v2.css": "da717168f6787e3afba4fb8078bc1c4a634e33607c8b51199aea1784ac2e6940",
     "client/src/concept2cure/v2/styles/project-settings.css": "8a54240d4d37050fb17900fa554efcde6f30a779ae3659e3187fde2b96cffe85",
     "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "7fd38926c09f86499ad6f629638426926b00cc0e5e880d133c803b6b0ac5bcc9",
+    "client/src/concept2cure/v2/styles/workflows-v2.css": "1be535d55d7d6a2be52563097ae7e0c88899eddb10ebd544c31cfae8633d08fe",
     "client/src/concept2cure/v2/surfaceViews.ts": "3026a4c2bece76334497b1f7d4694d056545ffa18876da209509d739fff42376",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "5ef1536bfaf1d17f1b5a78d411a9e039019de96d4faa86e881e318c000a5e4e2",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx": "dc4a33e973e58da0f9d524c42ec3c559fc502eb898da3984c3a8dfb53d246848",
@@ -212,7 +232,9 @@
     "client/src/concept2cure/v2/surfaces/ProtocolWorkflowGuide.tsx": "f97b849ddde5313dc55cdb0c4ea88caf8fcd2f1109907ecbd32ffc3c0c427b8f",
     "client/src/concept2cure/v2/surfaces/Rbm.tsx": "865c285d912d306d0aa4bc57376e91e15bb89886ecb897ad041fb01931e591dc",
     "client/src/concept2cure/v2/surfaces/RiskRegister.tsx": "48a66bb26b8d2426781d42df9eb2f11b51f6684484fd23ee83b570f56f283a2e",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
     "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "a211037fea3140527a5501b0defe6469add550754302a117fa8f70203afd42ad",
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": "563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0",
     "client/src/concept2cure/v2/surfaces/projectSettingsRequest.ts": "1f32d1cefebb549f846a968e9b8586da25081c512644857f1e148ec3ba1292c2",
     "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "2e88b3a40cb6797efcbc58d40f4d8458eacb675d7eaf95ea59d716e782f8d9e7",
     "client/src/concept2cure/v2/surfaces/rbmWrites.tsx": "e11d649f94003975c304f31b1152d3d112e74a03a496be2ba889c4732a608dbe",
@@ -348,5 +370,5 @@
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending actual normal push/freshremoteproof for latest210inputs. Two gate refusals and four remote-advancement refusals retained; no force/bypass/baselinegrowth."
+  "publication": "Pending actual normal push/fresh remote proof for latest220inputs. Two gate refusals and four remote-advancement refusals retained; no force/bypass/baseline growth."
 }

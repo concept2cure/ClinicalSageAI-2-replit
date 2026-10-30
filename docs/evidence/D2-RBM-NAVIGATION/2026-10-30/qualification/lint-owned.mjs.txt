@@ -7,7 +7,7 @@ process.chdir(repo);
 const require=createRequire(repo+'/package.json');
 const {ESLint}=require('eslint');
 const eslint=new ESLint({cwd:repo});
-const base='89b67685e582ff7a6f91487fa0877527f5ab6ea8';
+const base='d4c745c5f5642257fa2c1b0efe7c414238cae835';
 const git=(args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
 const changed=git(['diff','--name-only',base,'--','client','server','shared','scripts']).split('\n');
 const added=git(['ls-files','--others','--exclude-standard','--','client','server','shared','scripts']).split('\n');

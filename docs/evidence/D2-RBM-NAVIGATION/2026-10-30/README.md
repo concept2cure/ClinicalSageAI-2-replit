@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 210 source/test/configuration
+source-preservation links. The current packet selects 220 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -312,6 +312,18 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   passed, and changed-file lint across 55 TypeScript files remained 190→190 with
   zero errors. This is a separate source epoch; previous local and upstream
   totals are not borrowed or summed into it.
+- Catalog/task-board recovery integration: incoming `d4c745c5f` merged normally
+  into `f254676b3` without conflicts. The six source/test/style inputs add honest
+  catalog and task-read recovery while preserving licensing, tier locks, governed
+  toggles, actor-keyed task sessions and project filters. No RBM rail, wizard,
+  launch admission, shared project-context or backend access source changed.
+  Root's affected cohort (`final-recovery-*`) at `f254676b3` passed **178/178
+  across 11 actual files**, exit 0, zero skipped and all **220 selected inputs
+  unchanged**. The production build passed **exit 0** with those 220 inputs
+  stable. Changed-file lint across 55 TypeScript files against `d4c745c5f`
+  remained 190→190 with zero errors. This separate source epoch does not borrow
+  or sum the preceding settings, RBM or upstream totals. Current-source whole
+  TypeScript, all normal push gates and fresh remote proof remain pending.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -332,7 +344,9 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   `.pde-work-heading` selectors in the incoming project/protocol styles. Existing
   declarations and RBM/rail selectors did not change in those reviewed diffs.
   Later mobile product-risk CSS is scoped to the MDX risk surfaces and does not
-  match RBM in the bounded incoming review.
+  match RBM in the bounded incoming review. The later recovery styles use only
+  `.tb` and `.workflow-page` selectors; the bounded diff does not change the
+  rail, RBM or project-wizard selectors.
   These reviews do **not** establish an exact-current whole-CSS browser rerun.
   Screenshots retain their original source scope and are not relabeled as later
   browser execution.
@@ -340,11 +354,12 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   bodies and receipt metadata and refuse unrelated namespace paths. The static
   API gate first exposed the old shared base literal; explicit addresses fixed
   it without broadening claims or weakening the gate. The recorded API gate
-  passed 590 and then 591 named paths at earlier source epochs; the current API
-  check passes **593 named paths** with none refused. Current launch scope, launch API
-  scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
-  with **210 selected inputs unchanged** through those checks
-  (`final-ci-summary.json`).
+  passed 590 and then 591 named paths at earlier source epochs; the settings
+  source epoch's API check passes **593 named paths** with none refused. Its
+  launch scope, launch API scope, signature ceremony and SQL-interpolation CI
+  checks all pass **exit 0**, with **210 selected inputs unchanged** through
+  those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
+  receipts; the current recovery integration still requires all normal push gates.
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -364,6 +379,6 @@ explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
 `498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then
-refused those updates. The current 210-input integration still requires its own
+refused those updates. The current 220-input integration still requires its own
 compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.

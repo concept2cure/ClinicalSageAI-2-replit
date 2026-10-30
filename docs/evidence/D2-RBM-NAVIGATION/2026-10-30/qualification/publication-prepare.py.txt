@@ -3,20 +3,20 @@ import datetime,hashlib,json,subprocess
 p=Path('/workspace/.cloud-setup/rbm-navigation');r=Path('/workspace/ClinicalSageAI-2-replit');e=r/'docs/evidence/D2-RBM-NAVIGATION/2026-10-30'
 accepted=json.loads((p/'code-push-exit.json').read_text());proof=json.loads((p/'publication-code-proof.json').read_text());log=(p/'code-push.txt').read_text()
 assert accepted['processExit']==0 and accepted['unchangedInputs']
-assert proof['acceptedCodeCommit']==accepted['pushedCommit'] and proof['sourcePinsMatchingLocalAndRemote']==210
+assert proof['acceptedCodeCommit']==accepted['pushedCommit'] and proof['sourcePinsMatchingLocalAndRemote']==220
 assert '[ci:typecheck-no-regression] OK — error count 0 matches baseline.' in log
 assert 'tsc --noEmit --incremental' in log
 sha=accepted['pushedCommit'];short=sha[:9]
 f=e/'README.md';s=f.read_text()
 a='write rolls them all back. Current-source whole TypeScript, normal push gates and\nfresh remote/source verification remain pending; publication is not yet claimed.'
-b=f'write rolls them all back. Whole TypeScript passed with zero errors, every normal\npush gate passed, and source `{short}` was accepted on `concept2cure-v2`.\nFresh remote proof matched all 210 selected inputs; see [PUBLICATION.md](PUBLICATION.md).'
+b=f'write rolls them all back. Whole TypeScript passed with zero errors, every normal\npush gate passed, and source `{short}` was accepted on `concept2cure-v2`.\nFresh remote proof matched all 220 selected inputs; see [PUBLICATION.md](PUBLICATION.md).'
 assert a in s;s=s.replace(a,b)
 a='Whole TypeScript, normal push gates and fresh remote proof remain pending.'
 assert a in s;s=s.replace(a,'Whole TypeScript, normal push gates and fresh remote/source proof are now\nrecorded in [PUBLICATION.md](PUBLICATION.md).')
-a='Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and\nexplicitly synthetic browser behavior only at the named sources. It does not\nestablish native PostgreSQL RLS, an authenticated hosted deployment, clinical\nvalidation or agency acceptance. Whole TypeScript and all normal gates passed at\n`498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then\nrefused those updates. The current 210-input integration still requires its own\ncompiler/gated-push retry\nand fresh remote/source verification before publication can be claimed.'
-b=f'Source publication is verified on `concept2cure-v2` at `{short}`, including\na zero-error whole TypeScript check, all normal push gates and a fresh match of\n210 selected source inputs. The exact receipts are linked in [PUBLICATION.md](PUBLICATION.md).\nLocal mounted HTTP, SQL/PGlite and explicitly synthetic browser behavior remain\nbounded to their named sources and collaborators. They do not establish native\nPostgreSQL RLS, an authenticated hosted deployment, clinical validation or agency\nacceptance.'
+a='Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and\nexplicitly synthetic browser behavior only at the named sources. It does not\nestablish native PostgreSQL RLS, an authenticated hosted deployment, clinical\nvalidation or agency acceptance. Whole TypeScript and all normal gates passed at\n`498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then\nrefused those updates. The current 220-input integration still requires its own\ncompiler/gated-push retry\nand fresh remote/source verification before publication can be claimed.'
+b=f'Source publication is verified on `concept2cure-v2` at `{short}`, including\na zero-error whole TypeScript check, all normal push gates and a fresh match of\n220 selected source inputs. The exact receipts are linked in [PUBLICATION.md](PUBLICATION.md).\nLocal mounted HTTP, SQL/PGlite and explicitly synthetic browser behavior remain\nbounded to their named sources and collaborators. They do not establish native\nPostgreSQL RLS, an authenticated hosted deployment, clinical validation or agency\nacceptance.'
 assert a in s;s=s.replace(a,b);f.write_text(s)
-f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':210,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
+f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':220,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
 (e/'PUBLICATION.md').write_text(f'''# RBM source publication
 
 Accepted code commit: [`{sha}`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/{sha}) on `concept2cure-v2`.
@@ -33,21 +33,21 @@ run reported **0 errors against baseline 0**; every other pre-push gate passed.
 No hook, compiler, SQL scanner or baseline was bypassed or widened. The SQL gate refusal, 27-error compiler refusal and later Git concurrent-update
 refusal are retained with their corrected successors.
 
-Fresh Git remote proof matched local HEAD and all **210 selected source/test/
+Fresh Git remote proof matched local HEAD and all **220 selected source/test/
 configuration inputs**, with a clean worktree and no unresolved conflicts. See
 [the proof](qualification/publication-code-proof.json),
 [the normal push transcript](qualification/code-push.txt), and
 [the exit receipt](qualification/code-push-exit.json).
 Transcript SHA-256: `{accepted['transcriptSha256']}`.
 
-Current affected qualification: **318/318 across 15 files** for settings/RBM
+Current affected qualification: **178/178 across 11 files** for catalog/taskboard
+recovery and RBM navigation/context, after **318/318 across 15 files** for settings/RBM
 compatibility, following **334/334 across 18 files**, plus the separate
 **237/237 across 12 files** Engineering integration and **38/38 across four files**
 attachment cohorts, plus **90/90 across four files** packaging and **28/28 across
 three files** protocol checks; cohorts
 overlap.
-The latest build exited 0, four
-focused CI gates exit 0, and changed TypeScript lint 0 errors with 190 warnings
+The latest build exited 0 and changed TypeScript lint 0 errors with 190 warnings
 before and after. The earlier 1082/54, 169/12, 220/12 and 70/3 cohorts have their
 own source epochs in README and qualified-source.json; they overlap and are not
 an additive total. Browser checks cover the actual rail and wizard on desktop
@@ -61,7 +61,7 @@ receipt and does not change the qualified source inputs.
 f=r/'docs/work-orders/README.md';lines=f.read_text().splitlines();counts=[0,0]
 for i,line in enumerate(lines):
  if line.startswith('| **W1 / D2 — reach existing Risk-Based Monitoring from the main rail and project setup.'):
-  cols=line.split('|');cols[3]=f' **delivered on canonical `{short}`** 2026-10-30 — RBM rail after CMC, persisted project choice/context, current-project access and draft ownership, atomic content-bound approval signatures. Current affected334/18, build/focused gates/lint, whole TypeScript0 and normal push pass; fresh210source-pin remote proof in the evidence PUBLICATION.md. Hosted/native PostgreSQL RLS and clinical acceptance remain unverified. ';lines[i]='|'.join(cols);counts[0]+=1
+  cols=line.split('|');cols[3]=f' **delivered on canonical `{short}`** 2026-10-30 — RBM rail after CMC, persisted project choice/context, current-project access and draft ownership, atomic content-bound approval signatures. Current affected178/11 (recovery) and318/15 (settings), build/focused gates/lint, whole TypeScript0 and normal push pass; fresh220source-pin remote proof in the evidence PUBLICATION.md. Hosted/native PostgreSQL RLS and clinical acceptance remain unverified. ';lines[i]='|'.join(cols);counts[0]+=1
  if line.startswith('| **W1 / D2 — complete existing filing-correspondence form ownership.'):
   cols=line.split('|');cols[3]=f' **form-ownership source included in canonical `{short}`; follow-ups paused for founder RBM priority** 2026-10-30 — retained correspondence source is published with the RBM release and full TypeScript0. Historical395/28 and intake265/16 cohorts remain in their dated evidence; current combined1082/54 includes the four correspondence files. Inbox/handoff legal links remain deferred. ';lines[i]='|'.join(cols);counts[1]+=1
 assert counts==[1,1],counts;f.write_text('\n'.join(lines)+'\n')
