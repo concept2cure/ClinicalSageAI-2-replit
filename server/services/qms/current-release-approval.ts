@@ -33,9 +33,20 @@ function recordedApprovalInstant(document: QmsDocumentRow): string | null {
     && approval.by === document.approver_id && instant(approval.at) === at ? at : null;
 }
 
+/**
+ * CAT2-19: an approval signed since 2026-10-29 binds the effective date in its
+ * manifest, and the row must still carry it. One signed before carries none,
+ * and is read as it was.
+ */
+function effectiveDateHolds(manifest: Record<string, unknown>, document: QmsDocumentRow): boolean {
+  if (manifest.effectiveDate === undefined) return true;
+  const stored = document.effective_date instanceof Date ? document.effective_date.toISOString() : String(document.effective_date ?? '');
+  return manifest.effectiveDate === stored.slice(0, 10);
+}
+
 function exactManifest(row: Record<string, unknown>, document: QmsDocumentRow, at: string): boolean {
   const manifest = record(row.signature_manifest);
-  if (!manifest) return false;
+  if (!manifest || !effectiveDateHolds(manifest, document)) return false;
   const matches = [[manifest.kind, 'governed-sign'], [manifest.command, 'approve'],
     [manifest.target, `qms-document:${document.id}`], [manifest.organizationId, document.organization_id],
     [manifest.signerId, document.approver_id], [row.signer_id, document.approver_id],
