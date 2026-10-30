@@ -1,0 +1,12 @@
+{
+  "base": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "files": {
+    "server/services/ectd/external-validator/index.ts": "12b4c254c7450f99cd617437bcfbdff89529005cd47c907525762a23fe80cc92",
+    "server/services/ectd/external-validator/gate.ts": "7b0db76efe38e864507e7470ec4c695735f539bf13a7c64564122f1e3df5739a",
+    "server/services/ectd/external-validator/types.ts": "f204e2c92cd3b354ddc460475910e7c4813a12a949d471669c8477ced4b1cb78",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts": "822d942782e55789d6a65a45f55d871c66daaa9ea24b4aa74096ea467dfa7edf",
+    "server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts": "2b567edbd259958df4a3431489d1414aebfa39398891ac95f839b475d84c1bd3",
+    "server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts": "1360c32974d411968bfeddcd525bc7d082b17c50b53efdbf051c4f711782ee87",
+    "server/services/ectd/external-validator/__tests__/lorenz-xml-report-fails-closed.test.ts": "131a461d13d697e63c47de665f5ceec4eaffd42bf299ca5e49c24f49b952ff27"
+  }
+}

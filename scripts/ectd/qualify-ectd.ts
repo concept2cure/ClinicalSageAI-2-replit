@@ -1,55 +1,70 @@
 /**
- * eCTD qualification runner (CLI).
+ * Existing eCTD qualification CLI: explicit automated outcomes and local evidence.
  *
- * Runs the qualification harness for eCTD v3.2.2 (FDA/EMA/PMDA/HC) and v4.0
- * (FDA HL7 RPS): generates golden packages, runs the accepted validators
- * (xmllint well-formedness/DTD, the FDA-criteria subset, the configured
- * external eValidator when present, and the RPS model validator), reopens each
- * ZIP to re-verify every checksum, exercises a lifecycle sequence, and writes
- * JSON reports recording the exact spec version qualified against.
+ * Missing schema/external proof is BLOCKED and exits nonzero. A technical pass
+ * does not establish legal approval, qualified profile coverage or agency acceptance.
  *
- * Usage:
- *   npm run qualify:ectd                 # all regions, v3 + v4
- *   ECTD_REQUIRE_DTD=true npm run qualify:ectd   # once DTDs are vendored, DTD-validate too
- *   EVALIDATOR_USE_FDA_CRITERIA_FALLBACK=true npm run qualify:ectd
- *
- * Reports land in ./qualification-reports/ (gitignored).
- *
- * @module scripts/ectd/qualify-ectd
+ * npm run qualify:ectd
+ * npm run qualify:ectd -- --region fda --no-v4 --report-dir ./qualification-reports
+ * Repeated --region values select the existing supported v3 targets.
  */
+import { runQualification, type RunQualificationOptions } from '../../server/services/ectd/qualification';
+import { DEFAULT_V3_REGIONS } from '../../server/services/ectd/qualification/qualify';
 
-import { runQualification } from '../../server/services/ectd/qualification';
-
-async function main(): Promise<void> {
-  const summary = await runQualification({ ranAt: new Date().toISOString() });
-
-  // eslint-disable-next-line no-console
-  console.log(`\neCTD qualification — ${summary.ranAt}`);
-  // eslint-disable-next-line no-console
-  console.log(`Reports: ${summary.reportDir}\n`);
-
-  for (const r of summary.reports) {
-    const mark = r.passed ? 'PASS' : 'FAIL';
-    // eslint-disable-next-line no-console
-    console.log(`[${mark}] ${r.id}  (${r.region.toUpperCase()} ${r.version})`);
-    for (const v of r.validators) {
-      const vm = v.ran ? (v.passed ? 'ok' : `${v.errorCount} error(s)`) : 'skipped';
-      // eslint-disable-next-line no-console
-      console.log(`        · ${v.name}: ${vm}`);
-    }
-    // eslint-disable-next-line no-console
-    console.log(`        · checksums: ${r.checksum.filesChecked} verified, ${r.checksum.mismatches.length} mismatch(es)`);
-    // eslint-disable-next-line no-console
-    console.log(`        · lifecycle (${r.lifecycle.operations.join('/')}): ${r.lifecycle.nextPackagePassed ? 'ok' : 'FAILED'}`);
+function options(args: string[]): RunQualificationOptions {
+  const result: RunQualificationOptions = { ranAt: new Date().toISOString() };
+  const regions: NonNullable<RunQualificationOptions['v3Regions']> = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--no-v4') { result.includeV4 = false; continue; }
+    if (!['--region', '--report-dir', '--work-dir'].includes(arg)) throw new Error(`Unknown argument: ${arg}`);
+    const value = args[++index];
+    if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
+    if (arg === '--region') {
+      const region = DEFAULT_V3_REGIONS.find(candidate => candidate === value);
+      if (!region) throw new Error(`Unsupported qualification region: ${value}`);
+      regions.push(region);
+    } else if (arg === '--report-dir') result.reportDir = value;
+    else result.workDir = value;
   }
-
-  // eslint-disable-next-line no-console
-  console.log(`\nOverall: ${summary.passed ? 'PASS' : 'FAIL'}\n`);
-  process.exit(summary.passed ? 0 : 1);
+  if (regions.length) result.v3Regions = [...new Set(regions)];
+  return result;
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('Qualification run failed:', err);
+type Outcome = { status?: string; passed?: boolean };
+function label(outcome: Outcome): 'PASSED' | 'FAILED' | 'BLOCKED' {
+  if (outcome.status === 'passed' && outcome.passed === true) return 'PASSED';
+  return outcome.status === 'failed' ? 'FAILED' : 'BLOCKED';
+}
+const write = (line: string) => process.stdout.write(`${line}\n`);
+
+function validationLabel(result: { ran: boolean; passed: boolean; errorCount: number }): string {
+  if (!result.ran) return 'not run';
+  if (result.passed) return 'ok';
+  return result.errorCount > 0 ? `${result.errorCount} error(s)` : 'unverified';
+}
+
+async function main(): Promise<void> {
+  const summary = await runQualification(options(process.argv.slice(2)));
+  write(`\neCTD qualification — ${summary.ranAt}`);
+  write(`Reports: ${summary.reportDir}\n`);
+  for (const report of summary.reports) {
+    write(`[${label(report)}] ${report.id}  (${report.region.toUpperCase()} ${report.version})`);
+    write(`        · available local checks: ${report.availableChecksPassed ? 'passed' : 'not all passed'}`);
+    for (const validator of report.validators) {
+      write(`        · ${validator.name}: ${validationLabel(validator)}`);
+    }
+    write(`        · checksums: ${report.checksum.filesChecked} verified, ${report.checksum.mismatches.length} mismatch(es)`);
+    write(`        · lifecycle (${report.lifecycle.operations.join('/')}): ${label({ status: report.lifecycle.status, passed: report.lifecycle.nextPackagePassed })}`);
+    for (const reason of report.blockers ?? []) write(`        · blocker: ${reason}`);
+  }
+  for (const reason of summary.blockers ?? []) write(`Blocker: ${reason}`);
+  write(`\nOverall: ${label(summary)}\n`);
+  write('Scope: automated package validation; no legal, licence, human or agency acceptance is established.');
+  process.exit(label(summary) === 'PASSED' ? 0 : 1);
+}
+
+main().catch(error => {
+  process.stderr.write(`Qualification run failed: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exit(1);
 });
