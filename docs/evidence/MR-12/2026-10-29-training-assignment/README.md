@@ -596,3 +596,34 @@ Nothing wrote a training task. The resolver of who is assigned (`readQmsTraining
 - **Slice 5:** the per-person due and overdue rows in G10 and `TrainingExpiry.tsx`.
 - **A receipt that lapses** (expires) is not a task on the day it lapses: nothing is scheduled. It shows as lapsing in G10. The next act that plans its document writes the task, due at once.
 - **A member who leaves the organization** keeps any open task until the next act that plans their documents.
+
+## Slice 4b: a training task's notice opens the reader that completes it (2026-10-30)
+
+Design §3.9 ("The notice opens the reader"). It is also QP1 of `docs/design/QMS_IN_PROJECTS_2026-10-30.md`, the founder's request of 2026-10-30 that Quality be "connected to talking and messaging".
+
+**What already exists** (re-read at `98cc17c8c5`):
+- Every notice opens through `GET /api/mdx/notifications/:id/target` (`notification-record-target.ts`).
+- A task's notice opened the Tasks board (`taskTarget`).
+- A controlled document's notice opened Quality on its editor, and for an authored document that requires view of the editing copy (`qualityTarget`).
+- The deep link reached the register through `QualityModule`, `QualityRoute`, `App` and `SopRegister` (`useControlledDocumentTarget`), always towards the editor.
+
+**A defect found on the way:**
+- The notice door read a task reference only as `TASK-…` or `ROUTE-…` (`noticeTaskId`, `shared/types/notification-navigation.ts`).
+- `createUnifiedTask` writes a UUID, and so do every source-task: periodic review, CAPA, and the training tasks of slice 4.
+- So the reminders the due-date sweep sends for those tasks opened nothing: the server answered 422 "This notification does not name a record…", and the client offered no "Open task".
+- `noticeTaskId` now reads both forms the task store holds (`task_id` is text). Red in `slice4b-red.txt`, client and server.
+
+**What changed:**
+- **`taskTarget`.** A `qms_training` task's notice resolves to Quality on its document with `qmsIntent: 'read'` and the label "Read and acknowledge" for the person assigned (`isQmsTrainingAssignee`). It asks nothing of the authored editing copy (P-50 Q2).
+- **Anyone no longer assigned** is asked what any notice on the document asks: view of the authored copy, or the inline document without the intent.
+- **A key that is not a training key** (`qms-document:<id>:user:<userId>`, anchored) opens nothing (422).
+- **The shared contract** admits `qmsIntent` on Quality only as absent or `read`.
+- **The client.** `QualityModule` carries only `read`. The register then opens `PersonalTrainingReader` instead of the editor, starting on the version approved for a later day when one waits (`startOnSuccessor`), and on the version in force otherwise. While an editor is open, the target waits, as every notice target does.
+- **`QMS_TRAINING_TASK_SOURCE`** moved to `shared/qms/training.ts`, so the notice target does not import the task writer. `training-task.ts` reads it from there.
+
+**Tests:** red first (`slice4b-red.txt`: 10 of 74 across five suites, three of them extended). Green (`slice4b-green.txt`):
+- 74/74;
+- 384/384 across every notification and Quality client suite;
+- 14/14 in `qms-training-tasks.dbtest.ts`, whose new case resolves a real training notice through the real door, for its recipient (200, the reader) and for someone else (404).
+
+Eight mutants, all killed (`slice4b-mutations.txt`).
