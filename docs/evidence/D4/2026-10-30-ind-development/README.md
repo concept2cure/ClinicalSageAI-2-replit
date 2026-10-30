@@ -201,3 +201,10 @@ push without changing the remote. The passing gates and ref-race status are
 retained in `normal-gates-pass-remote-race*`. The Vault upload-receipt changes
 were merged normally and the client/server build passed again before retrying.
 No force push or hook bypass was used.
+
+The next source again passed every gate, including the zero-error compiler, but
+the remote advanced during that run too. The second ref-race receipt is retained.
+The new study/protocol initiation and verified CSR STF-value corrections through
+`a97f503b5` were merged without conflict. Five focused tests of those owners pass
+92/92 and the merged client/server build passes. The 66 IND changed-source hashes
+remain identical; publication is retried normally after the merge.
