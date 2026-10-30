@@ -101,3 +101,15 @@ here. Formal/model/clinical qualification and production deployment are not
 established by these engineering checks. The four legacy fold prerequisites
 and all unrelated source/approval/signature/dispatch safeguards remain in force.
 Publication receipt follows normal hooks; no baseline expansion is authorized.
+
+
+## Publication
+
+Source commits `84520c3f1` (A3) and `e5fc8fc20` (IND review/oncology correction)
+were accepted on `origin/concept2cure-v2` in merge
+`fc1ece8d9` at 16:24 UTC on 2026-10-30. All normal push gates passed,
+including full TypeScript with zero errors and no added lint warnings.
+`publication-gates.log.gz` and `publication.json` retain the receipt. The two
+later incoming changes were documentation only; qualified source hashes match.
+No hook or baseline was bypassed. This is source publication and engineering
+verification, not deployment or formal/model/scientific qualification.

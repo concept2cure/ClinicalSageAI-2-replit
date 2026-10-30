@@ -157,3 +157,15 @@ reads through the configured HTTPS path retrieved the official pages below.
 No live AnA/model assessment, independent clinical/regulatory SME review, formal
 OQ, global filing qualification or agency transmission was performed. The next
 implementation belongs in P-73's already-owned slices and existing core screens.
+
+
+## Publication
+
+Source commits `84520c3f1` (A3) and `e5fc8fc20` (IND review/oncology correction)
+were accepted on `origin/concept2cure-v2` in merge
+`fc1ece8d9` at 16:24 UTC on 2026-10-30. All normal push gates passed,
+including full TypeScript with zero errors and no added lint warnings.
+`publication-gates.log.gz` and `publication.json` retain the receipt. The two
+later incoming changes were documentation only; qualified source hashes match.
+No hook or baseline was bypassed. This is source publication and engineering
+verification, not deployment or formal/model/scientific qualification.
