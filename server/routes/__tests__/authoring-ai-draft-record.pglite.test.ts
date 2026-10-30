@@ -65,7 +65,10 @@ vi.mock('../../services/ai-gateway/gateway.js', async (importOriginal) => ({
 vi.mock('../../services/vault/document-passage-search.js', () => ({
     searchDocumentPassages: async () => {
       if (h.searchThrows) throw h.searchThrows;
-      return { hits: h.hits.map(hit => ({ documentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', documentTitle: hit.title, text: hit.content, locator: null })), coverage: null, ranking: 'text' };
+      // This fixture returns a bounded passage, not the full underlying text.
+      // The production passage owner chooses its own window; the assertion
+      // below proves the check uses only what actually reached the model.
+      return { hits: h.hits.map(hit => ({ documentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', documentTitle: hit.title, text: hit.content.slice(0, 600), locator: null })), coverage: null, ranking: 'text' };
     },
 }));
 vi.mock('../../services/vault/document-catalog.service.js', () => ({ loadDocumentForOrg: async () => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', programId: '11111111-1111-4111-8111-111111111111', contentHash: 'a'.repeat(64), version: '1', catalog: { contentHash: 'a'.repeat(64), status: 'extracted' } }) }));
@@ -366,8 +369,9 @@ describe('the draft is checked against what the model was shown', () => {
     expect(check.sources).toEqual(['Data Room', 'context']);
   }, T);
 
-  it('a figure past the 600-character cut is not found: the model was never shown it', async () => {
+  it('a figure outside the synthetic 600-character passage is not found: the model was never shown it', async () => {
     const { res } = await draft();
+    expect(h.sent.at(-1)!.messages.map(message => message.content).join('\n')).not.toMatch(/14\.2 months/);
     const texts = res.body.draft.check.notFound.map((c: { text: string }) => c.text).join(' | ');
     expect(texts).toMatch(/14\.2 months/);
   }, T);

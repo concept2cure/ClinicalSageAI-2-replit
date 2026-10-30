@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/shared/authoring/__tests__/writing-regions.test.ts
+  17:3  error  Unexpected newline between function and ( of function call  no-unexpected-multiline
+
+✖ 1 problem (1 error, 0 warnings)
+

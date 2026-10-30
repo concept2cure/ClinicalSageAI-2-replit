@@ -43,7 +43,7 @@ const draftCalls = () => apiRequest.mock.calls.filter((c: unknown[]) => c[0] ===
 const fireToast = vi.fn();
 function mount(props: Partial<React.ComponentProps<typeof AuthoringAiDraft>> = {}) {
   return render(
-    <AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" docSealed={false}
+    <AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" region="FDA" docSealed={false}
       editorDirty={false} onAccepted={vi.fn()} onClose={vi.fn()} fireToast={fireToast} {...props} />,
   );
 }
@@ -185,7 +185,7 @@ describe('AuthoringAiDraft — accepting, comparing and ending a set of alternat
     let retained: AiDraftReviewState = { draft: null, body: '', changeReason: '', refusal: null };
     function Controlled() {
       const [state, setState] = React.useState(retained);
-      return <AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" docSealed={false}
+      return <AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" region="FDA" docSealed={false}
         editorDirty={false} onAccepted={vi.fn()} onClose={vi.fn()} fireToast={fireToast}
         reviewSession={{ state, update: next => { retained = next; setState(next); }, isCurrent: () => true }} />;
     }

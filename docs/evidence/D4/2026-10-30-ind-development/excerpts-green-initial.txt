@@ -1,0 +1,146 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > retains distant CSR metadata, methods, denominator, result, safety and limitations beyond the table of contents 45ms
+   → expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Patients with condition X were random…'
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > keeps different efficacy and exposed-safety populations attached to their own denominators 11ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > uses relevant CMC text without clinical-topic windows or instructions 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > does not convert nonclinical safety pharmacology into a clinical-topic search 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > preserves Unicode source coordinates after lowercase expansion and never slices a surrogate pair 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > uses the full short chunk without claiming a whole-document review 6ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > bounds every chunk and the passed remaining total allowance across seven sources 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > shows no source text at budget zero and names the omitted characters 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets -1 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 1.5 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets NaN 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets Infinity 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 9007199254740992 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > deduplicates nearby clinical topics rather than charging the same source characters twice 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 0 character allowance 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 1 character allowance 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 2 character allowance 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 3 character allowance 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 7 character allowance 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a quote present only in omitted text or stitched across two shown spans 5ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a changed original even when the requested quote and all shown text are unchanged 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > authenticates an unrelated shown span before accepting a quote from the first 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"version":2} 8ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextSha256":"not-a-hash"} 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextLength":-1} 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"shownChars":100000} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"omittedChars":-1} 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"budgetChars":2401} 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"promptChars":null} 5ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"basis":"sufficient"} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects reversed, out-of-bounds, overlapping and split-surrogate span receipts 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > retains distant CSR metadata, methods, denominator, result, safety and limitations beyond the table of contents
+AssertionError: expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Patients with condition X were random…'
+
+- Expected
++ Received
+
+- Patients with condition X were randomized in a double-blind parallel study; the prespecified primary analysis used the intention-to-treat population.
++ Excerpt 1; UTF-16 source offsets [0, 120); SHA-256 c43b14368a88299228d20a2e58fab3cf395a7c4dc45f000b08b042ee572ca3be
++ BEGIN_SOURCE_EXCERPT_1
++ Clinical Study Report
++ Protocol CLR-203, version 3, 14 September 2026
++ Table of Contents
++ 9 Study methods and population ..
++ END_SOURCE_EXCERPT_1
++
++ Excerpt 2; UTF-16 source offsets [7370, 7850); SHA-256 c4e1b4bb76c831af56c22bbc0ec25a79bfa436cffd26fe2ad48d42bbbfa90baa
++ BEGIN_SOURCE_EXCERPT_2
++ study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ 9 Study methods and population
++ Patients with condition X were randomized in a double-blind parallel study; the prespecified
++ END_SOURCE_EXCERPT_2
++
++ Excerpt 3; UTF-16 source offsets [15388, 15868); SHA-256 24fc49994a6094940beff13e8dd85fff37cd8391c0725c6345bd75eccda4750f
++ BEGIN_SOURCE_EXCERPT_3
++ 11.1 Analysis populations and denominator
++ The primary efficacy denominator was 300 randomized patients in the intention-to-treat analysis population; 18 patients with missing assessments were retained.
++ Appendix C: administrative attachment text without study findings.
++
++ Appendix C: administrative attachment text without study findings.
++
++ Appendix C: administrative attachment text without study findings.
++
++ Appendix C: administrative attachment text without study findings.
++
++ Append
++ END_SOURCE_EXCERPT_3
++
++ Excerpt 4; UTF-16 source offsets [23070, 23670); SHA-256 d6420f7532c0048dbf2135c02ae6d12d32ba11635265b852b2911386ef3ffdbd
++ BEGIN_SOURCE_EXCERPT_4
++ 11.4.1 Primary efficacy endpoint
++ The primary efficacy endpoint response was observed in 72 of 300 randomized patients under the prespecified estimand.
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment text without study findings.
++
++ Appendix D: administrative attachment tex
++ END_SOURCE_EXCERPT_4
++
++ Excerpt 5; UTF-16 source offsets [30708, 31068); SHA-256 96e9a2819f888cb249da83cfe330b24d8d49eac9d5650a0a5ca5fdaa65b9ab6a
++ BEGIN_SOURCE_EXCERPT_5
++ Serious adverse events
++ The safety population included 299 exposed patients; serious adverse events occurred in 9 exposed patients and two deaths were reported.
++ Appendix E: administrative attachment text without study findings.
++
++ Appendix E: administrative attachment text without study findings.
++
++ Appendix E: administrative attachment text without study finding
++ END_SOURCE_EXCERPT_5
++
++ Excerpt 6; UTF-16 source offsets [38170, 38530); SHA-256 278d14cc1a9ec5e150407401a5ae1cc50fb26b24cc376fbc531c373ba4dcf3ad
++ BEGIN_SOURCE_EXCERPT_6
++  attachment text without study findings.
++
++ Appendix E: administrative attachment text without study findings.
++
++ Appendix E: administrative attachment text without study findings.
++
++ 13 Discussion and limitations
++ The limitations include missing outcome data, short follow-up and a post-hoc subgroup analysis; uncertainty prevents extrapolation to excluded patients.
++ END_SOURCE_EXCERPT_6
++
++ Excerpt coverage: 2400 of 38530 source characters shown; 36130 characters omitted and not shown. Excerpts do not establish evidence sufficiency or a whole-document review. Do not infer what omitted evidence says.
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:48:33
+     46|     const result = clinical();
+     47|     for (const statement of ['Protocol CLR-203, version 3', METHODS, D…
+     48|       expect(result.promptText).toContain(statement);
+       |                                 ^
+     49|     }
+     50|     expect(result.basis).toBe('clinical-context-windows');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  16:49:40
+   Duration  509ms (transform 107ms, setup 82ms, import 69ms, tests 129ms, environment 0ms)
+
