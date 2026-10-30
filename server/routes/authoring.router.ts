@@ -13,6 +13,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
+import { applyOrganizationRole } from '../middleware/auth';
 import { getPool } from '../db';
 import { requestConnectable, requestPgClient } from '../db/requestDb';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
@@ -180,9 +181,10 @@ const router = Router();
 // resolves to the same file under vitest, tsx, and the production build —
 // verifyJwtWithRotation via ../utils/jwtVerify (whose .js is a shim that
 // re-exports the .ts), nonAccessTokenReason via ../middleware/tokenType (no .js
-// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin). An
-// extensionless import of '../middleware/auth' would instead bind to the stale
-// auth.js twin under vitest and silently drop AUTH_008/AUTH_009.
+// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin),
+// applyOrganizationRole via ../middleware/auth, whose .js twin is now a pure
+// re-export of auth.ts (KNOWN_ISSUES_LEDGER M-5), so every resolver runs the
+// same code.
 router.use((req: Request, res: Response, next: any) => {
   // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
   // anything downstream reads them. requireAny() reads x-roles, createAuditTrail
@@ -260,7 +262,17 @@ router.use((req: Request, res: Response, next: any) => {
   // AUTH_009 (terminal): live organization_users re-check — fail-closed 403 on a
   // revoked membership, fail-open only on infra-indeterminate. Same control and
   // ~60s cache as authenticateToken.
-  return enforceOrgMembership(req, res, next);
+  return enforceOrgMembership(req, res, () => {
+    // The membership row's role replaces the token's claim, as authenticateToken
+    // does (IAM-10). Until 2026-10-30 req.user.role stayed the claim, and the
+    // image upload re-entered its scope with it, so the token's copy of the role
+    // at sign-in reached app.current_user_role (P-72 slice 1a). x-roles follows.
+    applyOrganizationRole(req);
+    const live: unknown = (req.user as { roles?: unknown } | undefined)?.roles;
+    const liveRoles = Array.isArray(live) && live.length ? live : undefined;
+    setOrClear('x-roles', liveRoles ? liveRoles.map((r: unknown) => String(r).toUpperCase()).join(',') : undefined);
+    next();
+  });
 });
 /* A disk-backed multer instance and its MIME allowlist stood here, attached
    to no route. The two upload routes this file does serve build their own

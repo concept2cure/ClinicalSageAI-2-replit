@@ -67,18 +67,66 @@ export interface TenantScope {
 const tenantStorage = new AsyncLocalStorage<TenantScope>();
 
 /**
+ * The role string the platform arm of about 977 tenant policies compares with
+ * (`current_setting('app.current_user_role') = 'app_super_admin'`). Until P-72
+ * retires that arm (docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md), any
+ * scope that sends it reads and writes every tenant's rows.
+ */
+export const PLATFORM_SCOPE_ROLE = 'app_super_admin';
+
+/** A scope carried the platform role where only the system scope may (P-72 slice 1a). */
+export class PlatformScopeRoleRefusedError extends Error {
+  readonly code = 'PLATFORM_SCOPE_ROLE_REFUSED';
+  constructor(where: string) {
+    super(
+      `${where}: the platform role '${PLATFORM_SCOPE_ROLE}' is refused on a tenant, per-user or request scope; ` +
+        'only the system scope (runWithSystemTenantScope) carries it (P-72)',
+    );
+    this.name = 'PlatformScopeRoleRefusedError';
+  }
+}
+
+/** Whether `role` is the platform role string, however it is cased or padded. */
+export function isPlatformScopeRole(role: unknown): boolean {
+  return typeof role === 'string' && role.trim().toLowerCase() === PLATFORM_SCOPE_ROLE;
+}
+
+/**
+ * Refuse the platform role on every scope but the system scope's own shape:
+ * tenant '0', no organization, no bound account (D6, P-72 slice 1a;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). A request's scope always
+ * names a real organization, so a role string taken from a token or a membership
+ * row can never open the platform scope. As app_service in tenant A's scope,
+ * the string read B's tasks, audit trail, users and legal holds, updated B's
+ * task, and wrote itself onto A's membership (slice 0, item 5).
+ */
+export function assertScopeRoleAdmissible(
+  scope: Pick<TenantScope, 'tenantId' | 'role' | 'orgUuid' | 'accountId'>,
+  where: string,
+): void {
+  if (!isPlatformScopeRole(scope.role)) return;
+  // String(): a JavaScript caller can hand in the number 0 (withTenantConnection stringifies it first).
+  const systemShape =
+    String(scope.tenantId) === '0' && scope.role === PLATFORM_SCOPE_ROLE && !scope.orgUuid && scope.accountId == null;
+  if (!systemShape) throw new PlatformScopeRoleRefusedError(where);
+}
+
+/**
  * Run `fn` inside a tenant scope. Returns whatever `fn` returns. Used by
  * the request middleware (so `next()` runs in scope) and by
- * `withTenantConnection` (which adds session-var setup on top).
+ * `withTenantConnection` (which adds session-var setup on top). Throws,
+ * before `fn` runs, on a scope that carries the platform role outside the
+ * system scope's shape (`assertScopeRoleAdmissible`).
  */
 export function runWithTenantScope<T>(scope: TenantScope, fn: () => T): T {
+  assertScopeRoleAdmissible(scope, 'runWithTenantScope');
   return tenantStorage.run(scope, fn);
 }
 
 /** Explicit scope for audited estate-wide schedulers and workers. */
 export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
   if (!caller.trim()) throw new Error('runWithSystemTenantScope: caller is required');
-  return runWithTenantScope({ tenantId: '0', role: 'app_super_admin', source: 'job', caller }, fn);
+  return runWithTenantScope({ tenantId: '0', role: PLATFORM_SCOPE_ROLE, source: 'job', caller }, fn);
 }
 
 /**

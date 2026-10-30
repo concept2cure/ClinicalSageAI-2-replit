@@ -3745,6 +3745,21 @@ export const C2C_MIGRATION_FILES = [
   // 20260524 and 20260814. Public with organization_id INTEGER NOT NULL, so the
   // sweeps below police the history. Every statement guarded; no DROP, no DELETE.
   'migrations/20261030_estar_filing_one_store.sql',
+  // Platform scope is a role: the pre-auth lookups (D1 and D6, P-72 slice 1a,
+  // 2026-10-30; docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5 and
+  // §4.2; docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). Creates the
+  // NOLOGIN role c2c_platform_scope if absent, with the applier as a member.
+  // Re-creates user_id_for_email, user_id_for_reset_token and
+  // invitations_for_member from their stored definitions without a SET clause
+  // that names a custom setting (PostgreSQL 15+ refuses such a clause to the
+  // non-superuser RDS master, so the deploy halted at 20260928). Then hands the
+  // three to the role, with SELECT on only the columns they read. Then fails
+  // the deploy if any function's SET clause names a custom setting, or if
+  // app_service is a member of the role. After their creators (20260928, the
+  // policies of which admit the role) and before the isolation tail. Reads no
+  // other entry's objects, so its place among the 20261029–30 files is free.
+  // Creates no table, column or policy; every step conditional on stored state.
+  'migrations/20261030b_platform_scope_role.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

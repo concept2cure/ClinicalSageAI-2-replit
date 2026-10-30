@@ -66,14 +66,39 @@
 --     about an account outside it — "does this address already have an account"
 --     — when an administrator adds a member (an existing account in another
 --     organization gets a consent invitation, not a membership). It answers with
---     the id only; no other column crosses. SECURITY DEFINER with the platform
---     role set for its own body, so it answers on any owner.
+--     the id only; no other column crosses. SECURITY DEFINER, owned by the
+--     NOLOGIN role c2c_platform_scope (see the 2026-10-30 note below), so it
+--     answers on any owner.
 --
 -- users is not org-keyed, so neither the tenant sweep nor its heal pass touches
 -- it, and the policy names are its own. RLS is enabled and FORCEd.
 --
 -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it does
 -- not; CREATE OR REPLACE for the function. Nothing is dropped (Rule 1).
+--
+-- AMENDED IN PLACE 2026-10-30 (Rule 1; D1 and D6, P-72 slice 1a; design
+-- docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5; evidence
+-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). REMOVED: the clause
+-- `SET app.current_user_role = 'app_super_admin'` from user_id_for_email and
+-- user_id_for_reset_token. Two reasons:
+--   - PostgreSQL 15 and later refuse a function whose SET clause names a custom
+--     setting to any creator that is not a superuser ("permission denied to set
+--     parameter"). The RDS master is not one, so deploy-migrate halted at this
+--     file on a production-shaped applier (321 of the set's 456 files had
+--     applied, at bbb4b2c00), measured in slice 0 and again in slice 1a
+--     (docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-0/item1-deploy-replay.txt).
+--     CI's applier is a superuser, so CI never showed it.
+--   - The clause entered the platform scope through a session setting, which
+--     P-72 retires.
+-- What replaces it: migrations/20261030b_platform_scope_role.sql hands both
+-- functions to the NOLOGIN role c2c_platform_scope, which the runtime role is
+-- never granted, with SELECT on only the columns they read. Each policy below
+-- gains the arm CURRENT_USER = 'c2c_platform_scope' beside the platform-role
+-- arm (the design's P'). CURRENT_USER is that role only inside a SECURITY
+-- DEFINER function it owns, so no session can set it, and the arm admits
+-- nothing else. On a database where that file has not run yet, the functions
+-- belong to their creator and answer as before on a superuser owner.
+-- Signatures, grants and the id-only answers are unchanged.
 
 -- AMENDED IN PLACE 2026-09-29 (Rule 1): this function was created
 -- unconditionally, and a LANGUAGE sql body is validated when it is created, so
@@ -93,7 +118,6 @@ BEGIN
     STABLE
     SECURITY DEFINER
     SET search_path = pg_catalog, public
-    SET app.current_user_role = 'app_super_admin'
     AS $body$
       SELECT id FROM public.users WHERE email = p_email
     $body$
@@ -111,7 +135,6 @@ BEGIN
       STABLE
       SECURITY DEFINER
       SET search_path = pg_catalog, public
-      SET app.current_user_role = 'app_super_admin'
       AS $body$
         SELECT id FROM public.users WHERE reset_token = p_token_hash AND p_token_hash IS NOT NULL
       $body$
@@ -126,6 +149,8 @@ DECLARE
   off        CONSTANT text := $e$(NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on')$e$;
   account    CONSTANT text := $e$(users.id = (substring(current_setting('app.current_account_id', true) from '^[0-9]+$'))::integer)$e$;
   super      CONSTANT text := $e$(current_setting('app.current_user_role', true) = 'app_super_admin')$e$;
+  -- 2026-10-30 (P-72 slice 1a): the pre-auth lookups' owner, inside its own definers only.
+  platform   CONSTANT text := $e$(CURRENT_USER = 'c2c_platform_scope'::name)$e$;
   member     CONSTANT text := $e$(EXISTS (
     SELECT 1 FROM public.organization_users ou
      WHERE ou.user_id = users.id
@@ -140,7 +165,7 @@ BEGIN
     RETURN;
   END IF;
 
-  may_reach := format('(%s OR %s OR %s OR %s)', off, super, member, account);
+  may_reach := format('(%s OR %s OR %s OR %s OR %s)', off, super, platform, member, account);
 
   ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
   ALTER TABLE public.users FORCE ROW LEVEL SECURITY;
