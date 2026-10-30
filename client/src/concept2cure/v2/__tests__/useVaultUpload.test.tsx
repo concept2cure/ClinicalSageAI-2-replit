@@ -320,11 +320,11 @@ describe('useVaultUpload — how far a file has got (MR-08 Stage 6 step 2)', () 
     expect(outcome.failed).toEqual([{ name: 'csr.pdf', reason: 'the connection dropped before the file was sent' }]);
   });
 
-  it("a reply that is not JSON is refused with its status, never read as recorded", async () => {
+  it("a gateway reply that is not JSON leaves the recording unknown", async () => {
     stubIngestXhr(vi.fn(async () => ({ ok: false, status: 502, json: async () => { throw new Error('<html>'); } })));
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
     const outcome = await latest!.upload([new File(['x'], 'csr.pdf')]);
-    expect(outcome.failed).toEqual([{ name: 'csr.pdf', reason: 'the server refused it (HTTP 502)' }]);
+    expect(outcome.failed).toEqual([{ name: 'csr.pdf', reason: 'the server reply did not confirm whether it was recorded (HTTP 502)', unknown: true }]);
   });
 });

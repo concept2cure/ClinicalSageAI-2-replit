@@ -25,7 +25,8 @@ import * as React from 'react';
 import { PathwayPanes } from '../pathway/PathwayPanes';
 import type { PathwayKey } from '../../types';
 
-vi.mock('@/utils/authToken', () => ({
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(),
   getAuthToken: () => 'test-token',
   getOrgId: () => '7',
 }));

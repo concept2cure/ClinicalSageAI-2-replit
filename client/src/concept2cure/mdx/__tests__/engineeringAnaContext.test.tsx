@@ -39,12 +39,10 @@ const H = vi.hoisted(() => ({
   held: null as null | { id: string; release: () => void; gate: Promise<void> },
 }));
 
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'E. Editor', permissions: ['governed:write'] }) }));
 const programs = vi.hoisted(() => ({ programs: [] as Program[], loading: false, error: null as string | null, refresh: () => {} }));
 vi.mock('../hooks/useMdxPrograms', () => ({ useMdxPrograms: () => programs }));
 vi.mock('../../v2/surfaceContext', async (importOriginal) => {
@@ -62,6 +60,7 @@ import { MdxSurfaceHost } from '../MdxSurfaceHost';
 import { clearShellProject, publishShellProject } from '../../v2/shellProject';
 import { toModuleContext, useActiveSurfaceContext } from '../../v2/surfaceContext';
 import { __resetSurfaceActionBus } from '../../v2/surfaceActions';
+import { endCompanySession, seedCompanySession } from '../../v2/__tests__/_company-session-fixture';
 
 const A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -78,7 +77,10 @@ const input = (id: string, over: Record<string, unknown> = {}) => ({
   ver: 'pass', verRef: 'VER-1', val: 'pass', valRef: 'VAL-1', ...over,
 });
 /** Project A: six hazards; three inputs, one fully traced. Project B: two hazards, one input. */
-const RISKS: Record<string, unknown[]> = { [A]: [1, 2, 3, 4, 5, 6].map(hazard), [B]: [1, 2].map(hazard) };
+const RISKS: Record<string, unknown[]> = {
+  [A]: [1, 2, 3, 4, 5, 6].map(n => ({ ...hazard(n), program_id: A })),
+  [B]: [1, 2].map(n => ({ ...hazard(n), program_id: B })),
+};
 const INPUTS: Record<string, unknown[]> = {
   [A]: [input('DI-01'), input('DI-02', { outputs: [], ver: null, val: null }), input('DI-03', { val: 'pending' })],
   [B]: [input('DI-09')],
@@ -121,6 +123,7 @@ const programOf = (c: Omit<SurfaceContext, 'surfaceId'>) => (c.facts?.program as
 const hazardsIn = (c: Omit<SurfaceContext, 'surfaceId'>) => (c.facts?.riskRegister as { totalHazards?: number } | null | undefined)?.totalHazards;
 
 beforeEach(() => {
+  seedCompanySession({ organizationId: '7', displayName: 'E. Editor', firstName: 'E.', lastName: 'Editor' }, 'engineering-context');
   wire = null;
   H.computed.length = 0;
   H.held = null;
@@ -137,6 +140,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  endCompanySession();
   vi.unstubAllGlobals();
   clearShellProject();
   __resetSurfaceActionBus();
