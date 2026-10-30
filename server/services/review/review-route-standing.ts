@@ -26,6 +26,16 @@
  * by the member's assignee, bound to the route's content digest, with the
  * role's meaning, and not withdrawn (isSignatureWithdrawn) — finding B3.
  *
+ * An Authoring member (RR5) signs with the existing REVIEWER e-sign, whose row
+ * is in authoring_signatures, not electronic_signatures (it is never copied:
+ * §11.70, authoring-approval-carryover.ts). Its id is stamped on the member row
+ * as route_authoring_signature_id, and it is verified by the same rule: this
+ * organization's row (tenant_id), over this document (doc_id), by the member's
+ * own account (its signer e-mail is the assignee's), bound to the route's
+ * content digest (content_hash, the sections digest the FD5(c) carry-over
+ * reads), with the role's Authoring meaning (AUTHORING_SIGN_MEANING). An
+ * Authoring signature has no withdrawal.
+ *
  * Every statement carries `organization_id = $1`.
  *
  * @module server/services/review/review-route-standing
@@ -43,6 +53,9 @@ export type MemberOutcome = 'pending' | 'signed' | 'returned' | 'handed back';
 
 /** The declared §11.50 meaning each role's signature carries. */
 export const ROUTE_SIGN_MEANING: Record<RouteRole, string> = { reviewer: 'REVIEWED', approver: 'APPROVED' };
+
+/** The same meanings as the Authoring signing ceremony stores them (authoring.router.ts SIGNATURE_MEANINGS; RR5). */
+export const AUTHORING_SIGN_MEANING: Record<RouteRole, string> = { reviewer: 'REVIEWER', approver: 'APPROVER' };
 
 /** The governed target a subject's signatures and naming history are written on. */
 export function routeSubjectTarget(type: RouteSubjectType, id: string): string {
@@ -63,7 +76,8 @@ export interface RouteHeader {
   statusAt: string | null;
   contentDigest: string;
   reviewDueAt: string | null;
-  approvalDueAt: string;
+  /** Null on a route that names no approver (an Authoring route at RR5). */
+  approvalDueAt: string | null;
   createdAt: string;
 }
 
@@ -77,8 +91,8 @@ export interface RouteMember {
   outcome: MemberOutcome;
   stepOpen: boolean;
   dueDate: string | null;
-  /** The verified signature, when outcome is 'signed'. */
-  signature: { id: number; printedName: string | null; meaning: string; signedAt: string } | null;
+  /** The verified signature, when outcome is 'signed': an electronic_signatures id, or (Authoring, RR5) an authoring_signatures uuid. */
+  signature: { id: number | string; printedName: string | null; meaning: string; signedAt: string } | null;
   /** The governed act a return or hand-back is recorded as. */
   actId: string | null;
 }
@@ -125,26 +139,47 @@ function header(r: Record<string, any>): RouteHeader {
     statusAt: iso(r.status_at),
     contentDigest: String(r.content_digest),
     reviewDueAt: iso(r.review_due_at),
-    approvalDueAt: iso(r.approval_due_at)!,
+    approvalDueAt: iso(r.approval_due_at),
     createdAt: iso(r.created_at)!,
   };
 }
 
-const MEMBER_SQL = `
+const MEMBER_SELECT = `
   SELECT t.review_route_id::text AS route_id, t.task_id, t.assignee_id, t.assignee_name, t.review_role, t.review_step,
-         t.route_signature_id, t.route_act_id, t.due_date, act.command AS act_command,
-         es.id AS sig_id, es.signer_id, es.signer_name, es.signature_meaning, es.signed_at, es.signed_target,
-         es.bound_payload_digest, es.verification_status, es.superseded_by, es.is_valid
-    FROM unified_tasks t
-    LEFT JOIN electronic_signatures es ON es.id = t.route_signature_id AND es.organization_id = $1
+         t.route_signature_id, t.route_act_id, t.due_date, act.command AS act_command,`;
+const MEMBER_WHERE = `
     LEFT JOIN c2c_ana_actions act ON act.id = t.route_act_id AND act.org_id = $1
    WHERE t.organization_id = $1 AND t.review_route_id = ANY($2::uuid[]) AND t.deleted_at IS NULL
    ORDER BY t.review_step, t.id`;
-/** The same read, locking the member rows (after the subject's own row lock). */
-const MEMBER_SQL_FOR_UPDATE = `${MEMBER_SQL} FOR UPDATE OF t`;
+const memberSql = (authoring: boolean) => (authoring
+  ? `${MEMBER_SELECT}
+         asig.id::text AS asig_id, asig.doc_id::text AS asig_doc_id, asig.signer_name AS asig_signer_name,
+         asig.meaning AS asig_meaning, asig.content_hash AS asig_content_hash, asig.signed_at AS asig_signed_at,
+         (asig.id IS NOT NULL AND lower(asig.signer_email) = lower(au.email)) AS asig_by_assignee
+    FROM unified_tasks t
+    LEFT JOIN authoring_signatures asig ON asig.id = t.route_authoring_signature_id AND asig.tenant_id = $1
+    LEFT JOIN organization_users aou ON asig.id IS NOT NULL AND aou.organization_id = $1 AND aou.user_id = t.assignee_id
+    LEFT JOIN users au ON au.id = aou.user_id${MEMBER_WHERE}`
+  : `${MEMBER_SELECT}
+         es.id AS sig_id, es.signer_id, es.signer_name, es.signature_meaning, es.signed_at, es.signed_target,
+         es.bound_payload_digest, es.verification_status, es.superseded_by, es.is_valid
+    FROM unified_tasks t
+    LEFT JOIN electronic_signatures es ON es.id = t.route_signature_id AND es.organization_id = $1${MEMBER_WHERE}`);
+/** The members' read: an Authoring route's reads its signatures' own table (RR5); every other route's reads electronic_signatures. */
+const MEMBER_SQL = memberSql(false);
+const AUTHORING_MEMBER_SQL = memberSql(true);
+
+/** The Authoring signature stamped on a member row (RR5): this document's, the member's own, over the route's digest, with the role's meaning. */
+function verifiedAuthoringSignature(row: Record<string, any>, route: { header: RouteHeader; target: string }, role: RouteRole): boolean {
+  if (row.asig_id == null || row.asig_by_assignee !== true) return false;
+  if (routeSubjectTarget('authoring_document', String(row.asig_doc_id)) !== route.target) return false;
+  if (row.asig_content_hash !== route.header.contentDigest) return false;
+  return String(row.asig_meaning ?? '').toUpperCase() === AUTHORING_SIGN_MEANING[role];
+}
 
 /** Whether the signature stamped on a member row is that member's, over this route's content, with the role's meaning, and in force (B3). */
 function verifiedSignature(row: Record<string, any>, route: { header: RouteHeader; target: string }, role: RouteRole): boolean {
+  if (route.target.startsWith('authoring-document:')) return verifiedAuthoringSignature(row, route, role);
   if (row.sig_id == null || row.signed_target !== route.target) return false;
   if (Number(row.signer_id) !== Number(row.assignee_id)) return false;
   if (row.bound_payload_digest !== route.header.contentDigest) return false;
@@ -159,6 +194,14 @@ function outcomeOf(row: Record<string, any>, verified: boolean): MemberOutcome {
   return row.act_command === 'review-route.hand-back' ? 'handed back' : 'returned';
 }
 
+/** A verified signature as the round shows it: an Authoring signature's own columns (RR5), else the electronic signature's. */
+function signatureOf(row: Record<string, any>): NonNullable<RouteMember['signature']> {
+  if (row.asig_id != null) {
+    return { id: String(row.asig_id), printedName: row.asig_signer_name ?? null, meaning: String(row.asig_meaning), signedAt: iso(row.asig_signed_at)! };
+  }
+  return { id: Number(row.sig_id), printedName: row.signer_name ?? null, meaning: String(row.signature_meaning), signedAt: iso(row.signed_at)! };
+}
+
 function toMember(row: Record<string, any>, route: { header: RouteHeader; target: string }): RouteMember {
   const role = row.review_role as RouteRole;
   const verified = verifiedSignature(row, route, role);
@@ -171,9 +214,7 @@ function toMember(row: Record<string, any>, route: { header: RouteHeader; target
     outcome: outcomeOf(row, verified),
     stepOpen: false,
     dueDate: iso(row.due_date),
-    signature: verified
-      ? { id: Number(row.sig_id), printedName: row.signer_name ?? null, meaning: String(row.signature_meaning), signedAt: iso(row.signed_at)! }
-      : null,
+    signature: verified ? signatureOf(row) : null,
     actId: row.route_act_id ?? null,
   };
 }
@@ -187,7 +228,9 @@ async function readMembers(
 ): Promise<Map<string, RouteMember[]>> {
   const out = new Map<string, RouteMember[]>(routes.map((r) => [r.header.id, []]));
   if (routes.length === 0) return out;
-  const { rows } = await q.query(forUpdate ? MEMBER_SQL_FOR_UPDATE : MEMBER_SQL, [organizationId, routes.map((r) => r.header.id)]);
+  const sql = routes.some((r) => r.target.startsWith('authoring-document:')) ? AUTHORING_MEMBER_SQL : MEMBER_SQL;
+  // The same read, locking the member rows (after the subject's own row lock).
+  const { rows } = await q.query(forUpdate ? `${sql} FOR UPDATE OF t` : sql, [organizationId, routes.map((r) => r.header.id)]);
   const byId = new Map(routes.map((r) => [r.header.id, r]));
   for (const row of rows) {
     const route = byId.get(String(row.route_id));

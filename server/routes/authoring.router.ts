@@ -14,14 +14,22 @@ import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
 import { getPool } from '../db';
-import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
 import { readAuthoringDocuments, readAuthoringDocument, readAuthoringDocumentSections, AuthoringReadInputError } from '../services/authoring/authoring-document-read';
 import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
 import {
-  readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews,
+  readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews, reassignAuthoringReviewRequest,
   AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed,
 } from '../services/authoring/peer-review';
+import {
+  authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
+  routeOnVerdict, routeReviewRequest,
+} from '../services/authoring/authoring-review-route';
+import { ReviewRouteRefusal } from '../services/review/review-route-member';
+import { handBackMember, reassignMember, routeTxOf, senderTimeZone } from '../services/review/review-route';
+import { readRouteRounds } from '../services/review/review-route-standing';
+import { listRouteCandidates, namingOf } from '../services/review/review-route-candidates';
 import type { PoolClient } from 'pg';
 import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/source-read-access';
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
@@ -92,7 +100,7 @@ import {
 import {
   checkSectionWritable,
   checkDocumentWritable,
-  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError,
+  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError, refuseNarrativeReferenceContentWrite,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 // The document/section creators, the Part 11 evidence writers and the export
@@ -1880,6 +1888,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      if (content !== undefined) await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       // The previous body is a transaction-held fact, read after the parent
       // reservation and before this update. Client-supplied text and the
@@ -2240,6 +2249,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
       result = await client.query(
         `UPDATE authoring_sections
          SET content = $1, updated_at = NOW()
@@ -3064,6 +3074,12 @@ function peerReviewFailure(res: Response, error: unknown): Response {
   return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
 }
 
+/** A review route's refusal (RR5: the request's route, or a route act), in the peer-review envelope. */
+function routeOrPeerReviewFailure(res: Response, error: unknown): Response {
+  if (error instanceof ReviewRouteRefusal) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+  return peerReviewFailure(res, error);
+}
+
 function validPeerReviewers(reviewers: unknown): reviewers is Array<{ id: string | number; name?: string; email?: string }> {
   if (!Array.isArray(reviewers) || !reviewers.length) return false;
   const ids = new Set<string>();
@@ -3172,6 +3188,9 @@ async function closeReviewTasksOnVerdict(
       orm.eq(unifiedTasks.taskType, 'review'),
       orm.eq(unifiedTasks.assigneeId, actor),
       orm.isNull(unifiedTasks.deletedAt),
+      // A review route's member row is the route's (RR5): its review signature
+      // closes it, and a negative verdict returns the route (routeOnVerdict).
+      orm.isNull(unifiedTasks.reviewRouteId),
       orm.inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
     ))
     .orderBy(unifiedTasks.taskId)
@@ -3229,15 +3248,37 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     if (!body.success) return res.status(400).json({ success: false,
       error: { code: 'REVIEW_INPUT_INVALID', message: 'A verdict and the exact saved review context are required.' } });
     const saved = await submitAuthoringPeerReview(requestConnectable(req), { ...peerReviewInput(req), body: body.data },
-      { audit: peerReviewAudit(req), closeTasks: closeReviewTasksOnVerdict });
+      { audit: peerReviewAudit(req), closeTasks: closeVerdictTasksAndRoute });
     if (saved.tasks.notices.length) {
       const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
       for (const notice of saved.tasks.notices) notifyTaskEvent(notice);
     }
     return res.json({ success: true, review: saved.review,
-      tasks: { completed: saved.tasks.completed, leftOpen: saved.tasks.leftOpen }, auditTrail: saved.auditTrail });
+      tasks: { completed: saved.tasks.completed, leftOpen: saved.tasks.leftOpen },
+      route: saved.tasks.returnedRouteId ? { id: saved.tasks.returnedRouteId, status: 'returned' } : null, auditTrail: saved.auditTrail });
   } catch (error) { return peerReviewFailure(res, error); }
 });
+
+/**
+ * The verdict's two task effects, on its transaction (RR5): a grandfathered
+ * review task closes as before (closeReviewTasksOnVerdict, which leaves route
+ * rows alone), and a named reviewer's "changes requested" or "rejected"
+ * returns the document's route (routeOnVerdict), unblocking nobody. The
+ * route's rows are locked here, before the verdict's audit row; it is returned
+ * after it, with the task rows' ledger.
+ */
+async function closeVerdictTasksAndRoute(client: Queryable, v: Parameters<typeof closeReviewTasksOnVerdict>[1]) {
+  const route = await routeOnVerdict(client, { tenantId: v.tenantId, docId: v.docId, reviewerId: v.reviewerId, verdict: v.verdict, reason: v.reason });
+  const legacy = await closeReviewTasksOnVerdict(client, v);
+  const recordLegacy = legacy.record;
+  return Object.assign(legacy, {
+    returnedRouteId: route.routeId,
+    record: async () => {
+      await recordLegacy();
+      legacy.notices.push(...await route.record());
+    },
+  });
+}
 
 // POST /api/authoring/documents/:id/request-review - Request review from users
 /** The pool the permission helpers take; a transaction client answers the same queries. */
@@ -3318,23 +3359,170 @@ const REVIEWER_IS_AUTHOR_REFUSAL = {
   field: 'reviewers',
 } as const;
 
+/** What each reviewer's route task carries beyond the route: the instructions the sender wrote, and a priority. */
+function reviewTaskDetails(body: Record<string, unknown> | undefined): { description?: string; priority?: string } {
+  const instructions = typeof body?.instructions === 'string' ? body.instructions.trim().slice(0, 4000) : '';
+  const priority = typeof body?.priority === 'string' && ['low', 'medium', 'high', 'critical'].includes(body.priority) ? body.priority : undefined;
+  return { ...(instructions ? { description: instructions } : {}), ...(priority ? { priority } : {}) };
+}
+
+/**
+ * Since RR5 (docs/design/REVIEW_ROUTING_2026-10-23.md) the request, its
+ * Reviewer grants, the review route's header and each reviewer's route task
+ * are ONE transaction: they commit together or not at all. The body names the
+ * reviewers, a governed reason (now required: sending is a governed act, M2)
+ * and the route: `{ reviewDueDate }`, or one after another
+ * `{ order: 'sequential', reviewStepDueDates }`, each the end of that day in
+ * the sender's time zone. Each person is admitted by the route's one member
+ * validator (signing authority, project access, separation of duties).
+ * Notices go after COMMIT.
+ */
 router.post('/documents/:id/request-review', async (req: Request, res: Response) => {
   try {
     const { reviewers } = req.body;
     if (!validPeerReviewers(reviewers)) return res.status(400).json({ success: false,
       error: 'reviewers must be a non-empty array of distinct reviewer identities with valid optional name and email fields' });
-    const stated = optionalGovernedReason(req.body?.reason);
-    if (!stated.ok) return res.status(400).json({ success: false, error: stated.error, field: 'reason' });
+    const stated = requireGovernedReason(req.body?.reason);
+    if (!stated.ok) return res.status(400).json({ success: false, error: { code: 'REASON_REQUIRED', message: `${stated.error} Nothing was requested.` }, field: 'reason' });
     const input = peerReviewInput(req);
+    let notices: import('../services/tasking/task-side-effects').TaskEventNotice[] = [];
     const saved = await requestAuthoringPeerReviews(requestConnectable(req), { ...input, reviewers, reason: stated.reason }, {
       audit: peerReviewAudit(req),
       grant: (client, current) => grantRequestedReviewers({ client, req, docId: input.documentId,
         tenantId: input.tenantId, scope: current.scope, principal: current.actor.principal,
         reviews: current.reviews.map(review => ({ id: review.id, reviewer_id: review.reviewer_id,
           reviewer_email: typeof review.reviewer_email === 'string' ? review.reviewer_email : null })), reason: current.reason }),
+      route: {
+        prepare: (ids) => parseAuthoringRoute(req.body?.route, ids.map(Number)),
+        write: async (client, current) => {
+          const sent = await routeReviewRequest(client, { tenantId: input.tenantId, senderId: Number(current.actor.id), docId: input.documentId,
+            reason: stated.reason, request: current.prepared, taskDetails: reviewTaskDetails(req.body) });
+          notices = sent.notices;
+          return { id: sent.routeId, added: sent.added, timeZone: sent.timeZone, tasks: sent.members };
+        },
+      },
     });
+    const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
+    for (const notice of notices) notifyTaskEvent(notice);
     return res.json({ success: true, ...saved, message: `Review requested from ${reviewers.length} reviewer(s)` });
-  } catch (error) { return peerReviewFailure(res, error); }
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+// ── RR5: the document's review route (docs/design/REVIEW_ROUTING_2026-10-23.md) ──
+// GET  /documents/:id/review-route                    the round: every member, the naming history
+// GET  /documents/:id/route-candidates[?for=reassign] who may be named, with the one validator's answer
+// POST /documents/:id/review-route/reassign           the sender or an administrator (RR3's reassignMember);
+//                                                     the review request moves with the assignment
+// POST /documents/:id/review-route/hand-back          a named reviewer (RR3's handBackMember)
+
+/**
+ * A read of the document's route, on one transaction of the request's own
+ * connection, rolled back: it writes nothing. Not READ ONLY, because the
+ * member validator reads signing authority FOR SHARE, as it does at a send.
+ */
+async function readOnRoute<T>(req: Request, work: (client: RequestSqlClient, input: ReturnType<typeof peerReviewInput>) => Promise<T>): Promise<T> {
+  const input = peerReviewInput(req);
+  const client = await requestConnectable(req).connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT 1 FROM authoring_documents WHERE id::text = lower($1) AND tenant_id = $2', [input.documentId, input.tenantId]);
+    if (!found.rows.length) throw new AuthoringPeerReviewRefused(404, 'REVIEW_DOCUMENT_NOT_FOUND', 'Document not found.');
+    return await work(client, input);
+  } finally {
+    await client.query('ROLLBACK').catch(() => undefined);
+    client.release();
+  }
+}
+
+router.get('/documents/:id/review-route', async (req: Request, res: Response) => {
+  try {
+    const round = await readOnRoute(req, async (client, input) => (await readRouteRounds(client, {
+      organizationId: input.tenantId, subjectType: 'authoring_document', subjectIds: [input.documentId.toLowerCase()],
+    })).get(input.documentId.toLowerCase()) ?? null);
+    return res.json({ success: true, round });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+router.get('/documents/:id/route-candidates', async (req: Request, res: Response) => {
+  try {
+    const body = await readOnRoute(req, async (client, input) => {
+      const readerId = Number(input.actorId);
+      const subject = await authoringRouteSubject(client, { tenantId: input.tenantId, docId: input.documentId });
+      const standing = await authoringStanding(client, input.tenantId, subject.id);
+      const candidates = await listRouteCandidates(client, {
+        organizationId: input.tenantId, subjectTarget: `authoring-document:${subject.id}`, programId: subject.programId,
+        contentDigest: subject.contentDigest, readerId, naming: namingOf(standing, readerId, req.query.for === 'reassign'),
+      });
+      return { timeZone: await senderTimeZone(client, readerId), canonicalId: null, candidates };
+    });
+    return res.json({ success: true, ...body });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+/** The actor's reason for a route act, or the 400 that says so with nothing written. */
+function routeActReason(req: Request, res: Response): string | null {
+  const stated = requireGovernedReason(req.body?.reason);
+  if (stated.ok) return stated.reason;
+  res.status(400).json({ success: false, error: { code: 'REASON_REQUIRED', message: `${stated.error} Nothing was changed.` }, field: 'reason' });
+  return null;
+}
+
+/** The open route on the document (under its row lock, which the caller holds), or the refusal. */
+async function liveAuthoringRoute(client: RequestSqlClient, tenantId: number, docId: string, forUpdate: boolean) {
+  const subject = await authoringRouteSubject(client, { tenantId, docId });
+  const standing = await authoringStanding(client, tenantId, subject.id, forUpdate);
+  if (standing.state !== 'live') throw new ReviewRouteRefusal(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+  return { subject, standing };
+}
+
+router.post('/documents/:id/review-route/reassign', async (req: Request, res: Response) => {
+  const reason = routeActReason(req, res); if (reason === null) return;
+  const taskId = typeof req.body?.taskId === 'string' ? req.body.taskId.trim() : '';
+  const assigneeId = Number(req.body?.assigneeId);
+  if (!taskId || !Number.isSafeInteger(assigneeId) || assigneeId <= 0) return res.status(400).json({ success: false,
+    error: { code: 'ROUTE_INVALID', message: 'Name the assignment (taskId) and the person to give it to (assigneeId). Nothing was changed.' } });
+  try {
+    const input = peerReviewInput(req);
+    let notices: import('../services/tasking/task-side-effects').TaskEventNotice[] = [];
+    const saved = await reassignAuthoringReviewRequest(requestConnectable(req), { ...input, reason }, {
+      audit: peerReviewAudit(req),
+      // The standing under the document's row lock, without locking the member rows (RR3's decision 1).
+      route: async (client) => {
+        const { subject, standing } = await liveAuthoringRoute(client, input.tenantId, input.documentId, false);
+        const done = await reassignMember(routeTxOf(client), req, {
+          organizationId: input.tenantId, actorUserId: Number(input.actorId), reason, subject, standing, taskId, assigneeId,
+        });
+        notices = done.notices;
+        return { routeId: standing.route!.id, taskId, fromUserId: done.member.userId, toUserId: done.to.userId, actId: done.actId };
+      },
+      grant: (client, current) => grantRequestedReviewers({ client, req, docId: input.documentId, tenantId: input.tenantId,
+        scope: current.scope, principal: current.actor.principal, reason: current.reason,
+        reviews: current.reviews.map(review => ({ id: review.id, reviewer_id: review.reviewer_id,
+          reviewer_email: typeof review.reviewer_email === 'string' ? review.reviewer_email : null })) }),
+    });
+    void sendTaskNotices(notices);
+    return res.json({ success: true, ...saved });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+router.post('/documents/:id/review-route/hand-back', async (req: Request, res: Response) => {
+  const reason = routeActReason(req, res); if (reason === null) return;
+  let client: Awaited<ReturnType<ReturnType<typeof requestConnectable>['connect']>> | null = null;
+  try {
+    const input = peerReviewInput(req);
+    client = await requestConnectable(req).connect();
+    await client.query('BEGIN');
+    const doc = await client.query('SELECT id::text AS id FROM authoring_documents WHERE id::text = lower($1) AND tenant_id = $2 FOR UPDATE', [input.documentId, input.tenantId]);
+    if (!doc.rows.length) throw new AuthoringPeerReviewRefused(404, 'REVIEW_DOCUMENT_NOT_FOUND', 'Document not found.');
+    const { subject, standing } = await liveAuthoringRoute(client, input.tenantId, input.documentId, true);
+    const done = await handBackMember(routeTxOf(client), { organizationId: input.tenantId, actorUserId: Number(input.actorId), reason, subject, standing });
+    await client.query('COMMIT');
+    void sendTaskNotices(done.notices);
+    return res.json({ success: true, route: { id: standing.route!.id, taskId: done.member.taskId, role: done.member.role, actId: done.actId } });
+  } catch (error) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    return routeOrPeerReviewFailure(res, error);
+  } finally { client?.release(); }
 });
 
 // ============= AI Integration =============
@@ -3821,6 +4009,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       transaction.began = true;
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {
@@ -4815,7 +5004,18 @@ async function adoptionForSigning(client: Queryable, req: Request, current: Awai
   return null;
 }
 
+/** Notices a committed act owes (RR5: a route signature's), sent after COMMIT. */
+async function sendTaskNotices(notices: import('../services/tasking/task-side-effects').TaskEventNotice[]): Promise<void> {
+  if (!notices.length) return;
+  const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
+  for (const notice of notices) notifyTaskEvent(notice);
+}
+
 function workflowGovernanceReply(error: unknown, res: Response): boolean {
+  if (error instanceof ReviewRouteRefusal) {
+    res.status(error.status).json({ success: false, code: error.code, error: error.code, message: error.message });
+    return true;
+  }
   if (error instanceof DocumentWriteReservationError) {
     res.status(error.status).json({ success:false,code:error.code,error:error.code,message:error.message });
     return true;
@@ -5123,9 +5323,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     const email = getActorEmail(req);
     const tenantId = getTenantId(req);
 
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    if (!email) return res.status(401).json({ error: 'Authentication required' });
 
     // §11.10(g) authority, checked BEFORE the credentials. Order matters: an
     // unauthorized caller must not learn whether a password is correct, and
@@ -5171,6 +5369,8 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
          re-authentication code; before the status flip, the snapshot and the
          signature row, so a refused approval seals nothing. */
       if (meaning === 'APPROVER' && await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      // RR5: on a live review route only a named reviewer whose turn it is signs REVIEWER, over the route's content; refused before the credential.
+      const routed = meaning === 'REVIEWER' ? await authoringReviewerPrecheck(client, { tenantId, docId: String(current.doc.id), title: String(current.doc.title ?? ''), signerId: Number(getActorId(req)), digest: sectionsDigest(current.sections) }) : null;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -5215,6 +5415,8 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         covered,
         tenantId,
       });
+      // RR5: the named reviewer's route task closes on this signature, on this transaction (authoring-review-route.ts).
+      const routeNotices = routed ? await closeAuthoringReviewerTask(client, routed, { tenantId, signatureId, actorUserId: Number(getActorId(req)), reason: intent }) : [];
 
       // Spine F1: the approval signature approves the filing sections it
       // covers, in this transaction, recorded through recordGovernedAction.
@@ -5263,7 +5465,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       });
 
       await client.query('COMMIT');
-      committed = true;
+      committed = true; void sendTaskNotices(routeNotices);
       res.json({
         success: true,
         signatureId,

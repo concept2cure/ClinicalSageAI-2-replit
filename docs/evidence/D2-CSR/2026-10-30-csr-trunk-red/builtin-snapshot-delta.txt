@@ -1,0 +1,25 @@
+Per-object builtin snapshot delta, server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts
+Each column computed by builtinTemplateSnapshot over getBuiltinAuthoringTemplates() at a git-archive of that commit (entryIds; RI_* planning rows excluded as in the test).
+Baseline 13bafc62ff~1 = 392 objects, sha256 dcebcbec...acf3c (the recorded value). HEAD 3435c04e0f = working tree = 446, sha256 0ddcbd2f...971a.
+
+== base-13bafc62ff_1.json -> base-13bafc62ff.json: +2 -0 ~8
+ added: ['component:blank_crf', 'component:crf_annotation_worksheet']
+ removed: []
+ changed: ['component:clinical_study_report', 'module:M5', 'phase5.protocol_outline:deliverable:0', 'registry:ICH_CSR', 'section:m5.3.5', 'section:m5.3.5.1', 'section:m5.3.5.2', 'section:m5.3.5.3']
+== base-13bafc62ff.json -> base-14b27100d9.json: +19 -0 ~56
+ added: ['component:nonclinical_study_report', 'component:us_lifecycle_cbe_0', 'component:us_lifecycle_cbe_30', 'component:us_lifecycle_end_of_phase_2_meeting', 'component:us_lifecycle_ind_cmc_amendment', 'component:us_lifecycle_ind_information_amendment', 'component:us_lifecycle_ind_protocol_amendment', 'component:us_lifecycle_ind_response_to_clinical_hold', 'component:us_lifecycle_ise', 'component:us_lifecycle_iss', 'component:us_lifecycle_pre_bla_meeting', 'component:us_lifecycle_pre_ind_meeting', 'component:us_lifecycle_pre_nda_meeting', 'component:us_prescribing_information', 'registry:ICH_CTD_M2', 'registry:ICH_CTD_M3', 'registry:ICH_CTD_M4', 'registry:ICH_CTD_M5', 'registry:US_CTD_M1_REGIONAL']
+ removed: []
+ changed: ['component:drug_product', 'component:drug_substance', 'component:dsur', 'component:informed_consent', 'component:investigators_brochure', 'component:pbrer', 'component:protocol', 'component:statistical_analysis_plan', 'module:M3', 'phase3.drug_product:deliverable:0', 'phase3.drug_product:subtask:composition', 'phase3.drug_product:subtask:container_closure', 'phase3.drug_product:subtask:pd_controls', 'phase3.drug_product:subtask:pd_development', 'phase3.drug_product:subtask:pd_manufacture', 'phase3.drug_substance:deliverable:0', 'phase3.drug_substance:subtask:characterisation', 'phase3.drug_substance:subtask:controls', 'phase3.drug_substance:subtask:general_info', 'phase3.drug_substance:subtask:manufacture', 'phase3.drug_substance:subtask:ref_standards', 'phase3.drug_substance:subtask:stability', 'phase3.manufacturing:deliverable:0', 'phase3.manufacturing:deliverable:1', 'phase3.stability:deliverable:0', 'phase3.stability:deliverable:1', 'phase5.design:deliverable:1', 'phase5.protocol_finalize:deliverable:0', 'phase5.protocol_outline:deliverable:0', 'registry:EU_PSUR', 'registry:ICH_DSUR', 'registry:ICH_IB', 'registry:ICH_ICF', 'registry:ICH_M3_DP', 'registry:ICH_M3_DS', 'registry:ICH_PROTOCOL', 'registry:ICH_SAP', 'section:m3.2.A', 'section:m3.2.P', 'section:m3.2.P.1', 'section:m3.2.P.2', 'section:m3.2.P.3', 'section:m3.2.P.4', 'section:m3.2.P.5', 'section:m3.2.P.6', 'section:m3.2.P.7', 'section:m3.2.P.8', 'section:m3.2.R', 'section:m3.2.S', 'section:m3.2.S.1', 'section:m3.2.S.2', 'section:m3.2.S.3', 'section:m3.2.S.4', 'section:m3.2.S.5', 'section:m3.2.S.6', 'section:m3.2.S.7']
+== base-14b27100d9.json -> base-42bbb941e2.json: +33 -0 ~4
+ added: ['component:us_lifecycle_expanded_access_individual', 'component:us_lifecycle_expanded_access_intermediate', 'component:us_lifecycle_expanded_access_treatment', 'component:us_lifecycle_us_bla_annual_report', 'component:us_lifecycle_us_bla_cbe_0', 'component:us_lifecycle_us_bla_cbe_30', 'component:us_lifecycle_us_bla_distribution_report', 'component:us_lifecycle_us_bla_pas', 'component:us_lifecycle_us_bla_pediatric_annual_report', 'component:us_lifecycle_us_bla_periodic_adverse_experience_report', 'component:us_lifecycle_us_bla_pmr_status_report', 'component:us_lifecycle_us_bpdr', 'component:us_lifecycle_us_cber_lot_release', 'component:us_lifecycle_us_cber_master_file', 'component:us_lifecycle_us_eua_therapeutic', 'component:us_lifecycle_us_interact_meeting', 'component:us_lifecycle_us_type_d_meeting', 'registry:US_BLA_ANNUAL', 'registry:US_BLA_CBE0', 'registry:US_BLA_CBE30', 'registry:US_BLA_DISTRIBUTION', 'registry:US_BLA_PAE_REPORT', 'registry:US_BLA_PEDIATRIC_ANNUAL', 'registry:US_BLA_PMR_ANNUAL', 'registry:US_BPDR', 'registry:US_CBER_LOT_RELEASE', 'registry:US_CBER_MASTER_FILE', 'registry:US_EUA_THERAPEUTIC', 'registry:US_EXPANDED_ACCESS_INDIVIDUAL', 'registry:US_EXPANDED_ACCESS_INTERMEDIATE', 'registry:US_EXPANDED_ACCESS_TREATMENT', 'registry:US_INTERACT', 'registry:US_TYPE_D_MEETING']
+ removed: []
+ changed: ['component:us_lifecycle_cbe_0', 'component:us_lifecycle_cbe_30', 'registry:US_BLA_SUPP', 'registry:US_NDA_ANNUAL']
+== base-42bbb941e2.json -> base-HEAD.json: +0 -0 ~7
+ (bisected in builtin-snapshot-bisect.txt: all 7 change at a2a91a87db, CSR slice 4, and at no other commit measured in the range)
+ added: []
+ removed: []
+ changed: ['component:clinical_study_report', 'module:M5', 'registry:ICH_CSR', 'section:m5.3.5', 'section:m5.3.5.1', 'section:m5.3.5.2', 'section:m5.3.5.3']
+== base-HEAD.json -> now.json: +0 -0 ~0
+ added: []
+ removed: []
+ changed: []

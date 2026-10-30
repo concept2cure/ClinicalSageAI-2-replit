@@ -7547,7 +7547,8 @@ export const reviewRoutes = pgTable('review_routes', {
   reviewOrder: text('review_order').notNull(),
   reviewDueAt: timestamp('review_due_at', { withTimezone: true }),
   reviewerStepDueAt: timestamp('reviewer_step_due_at', { withTimezone: true }).array(),
-  approvalDueAt: timestamp('approval_due_at', { withTimezone: true }).notNull(),
+  // Null on an Authoring route that names no approver (RR5, 2026-10-29 note in the migration).
+  approvalDueAt: timestamp('approval_due_at', { withTimezone: true }),
   contentDigest: text('content_digest').notNull(),
   status: text('status').default('open').notNull(),
   statusReason: text('status_reason'),
@@ -7675,6 +7676,7 @@ export const unifiedTasks = pgTable(
     reviewStep: integer('review_step'),
     routeSignatureId: integer('route_signature_id'), // electronic_signatures.id
     routeActId: text('route_act_id'), // c2c_ana_actions id of a return or hand-back
+    routeAuthoringSignatureId: uuid('route_authoring_signature_id'), // authoring_signatures.id (RR5)
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),

@@ -106,9 +106,13 @@ export const qmsJobRoleUpdateSchema = z.object({ name: jobRoleName.optional(), d
 export const qmsJobRoleMemberSchema = z.object({ userId: id, reason: governedReason }).strict();
 /** A DELETE body: the reason only (DELETE requests carry a JSON body here, as TaskBoard's do). */
 export const qmsGovernedRemovalSchema = z.object({ reason: governedReason }).strict();
+/** One requirement on a controlled document: exactly one job role or one person (the table's num_nonnulls CHECK). */
+export const qmsTrainingAssignmentSchema = z.object({ jobRoleId: id.optional(), userId: id.optional(), reason: governedReason })
+  .strict().refine(b => (b.jobRoleId === undefined) !== (b.userId === undefined), { message: 'Name exactly one job role or one person.' });
 
 export type QmsJobRoleCreate = z.infer<typeof qmsJobRoleCreateSchema>;
 export type QmsJobRoleUpdate = z.infer<typeof qmsJobRoleUpdateSchema>;
+export type QmsTrainingAssignmentInput = z.infer<typeof qmsTrainingAssignmentSchema>;
 
 export type QmsTrainingAcknowledgementInput = z.infer<typeof qmsTrainingAcknowledgementInputSchema>;
 export type QmsTrainingAcknowledgement = z.infer<typeof qmsTrainingAcknowledgementSchema>;

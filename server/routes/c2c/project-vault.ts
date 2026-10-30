@@ -468,8 +468,8 @@ export async function recordVaultDownload(
  */
 export async function recordVaultArchive(
   req: Request,
-  d: { orgId: number; userId: number | undefined; programId: string; sealId: string; manifestSha256: string;
-    archiveSha256: string; archiveSize: number; documentCount: number; withheldCount: number },
+  d: { orgId: number; userId: number | undefined; action: 'vault.data_room.archive' | 'vault.folder.export';
+    resourceType: string; resourceId: string; details: Record<string, unknown> },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
   try {
@@ -477,18 +477,17 @@ export async function recordVaultArchive(
     await client.query('BEGIN');
     await setTenantContextTx(client, d.orgId);
     await writeChainedAuditRow(client, {
-      tenantId: d.orgId, userId: d.userId, action: 'vault.data_room.archive',
-      resourceType: 'vault_data_room_seal', resourceId: d.sealId,
+      tenantId: d.orgId, userId: d.userId, action: d.action,
+      resourceType: d.resourceType, resourceId: d.resourceId,
       ipAddress: req.ip, userAgent: req.headers['user-agent'],
-      details: { programId: d.programId, manifestSha256: d.manifestSha256, archiveSha256: d.archiveSha256,
-        archiveSize: d.archiveSize, documentCount: d.documentCount, withheldCount: d.withheldCount },
+      details: d.details,
     });
     await client.query('COMMIT');
     return true;
   } catch (auditErr) {
     await client?.query('ROLLBACK').catch(() => undefined);
-    logger.error('vault closing archive refused: audit write failed', {
-      sealId: d.sealId, err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    logger.error('vault archive refused: audit write failed', {
+      action: d.action, resourceId: d.resourceId, err: auditErr instanceof Error ? auditErr.message : String(auditErr),
     });
     return false;
   } finally {
@@ -2964,8 +2963,9 @@ export default function createProjectVaultRoutes(): Router {
       const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
       const built = await stage.finish(contents);
       const recorded = await recordVaultArchive(req, {
-        orgId, userId: actorId, programId: id, sealId: seal.id, manifestSha256: seal.manifestSha256,
-        archiveSha256: built.sha256, archiveSize: built.size, documentCount: built.files.length, withheldCount: withheld.length,
+        orgId, userId: actorId, action: 'vault.data_room.archive', resourceType: 'vault_data_room_seal', resourceId: seal.id,
+        details: { programId: id, manifestSha256: seal.manifestSha256, archiveSha256: built.sha256, archiveSize: built.size,
+          documentCount: built.files.length, withheldCount: withheld.length },
       });
       if (!recorded) {
         return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
@@ -2985,6 +2985,80 @@ export default function createProjectVaultRoutes(): Router {
       if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
+
+  /* ── GET /:id/folders/:folderId/export (MR-08 Stage 6 step 3) ──────────────
+     The current version of every document a folder shows, by the tree's own
+     rows, each read through the one verified reader and staged by the seal's
+     archive builder, with manifest.json, INDEX.txt, SHA256SUMS and the
+     documents' audit trail (vault-folder-export.ts). One file that fails its
+     hash refuses the whole export. A withdrawn file is listed as withheld. A
+     chained row carrying the archive's SHA-256 is committed before a byte is
+     sent, and a failed write sends nothing. Anyone the project admits may
+     export, as they may download each file. */
+  router.get('/:id/folders/:folderId/export', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const { planFolderExport, folderExportDocument, buildFolderExportContents } = await import('../../services/vault/vault-folder-export.js');
+    const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
+    const { SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
+    let sending = false;
+    try {
+      const plan = await planFolderExport(pool, { organizationId: orgId, programId: id, folderId: String(req.params.folderId ?? '') });
+      if (!plan.ok) return res.status(plan.status).json({ success: false, error: plan.code, message: plan.message });
+      stage = await openVaultArchive();
+      const staged = await stageFolderFiles(orgId, plan, cabinetNumbers(plan.view, plan.programRows), stage, folderExportDocument);
+      if (!staged.ok) return res.status(409).json({ success: false, error: 'EXPORT_FILE_UNVERIFIED', message: staged.message });
+      const actorId = governedActorId(req) ?? undefined;
+      const contents = await buildFolderExportContents(pool, { organizationId: orgId, userId: actorId, programId: id,
+        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld });
+      const built = await stage.finish(contents);
+      const recorded = await recordVaultArchive(req, {
+        orgId, userId: actorId, action: 'vault.folder.export', resourceType: 'vault_folder', resourceId: `${id}:${plan.folder.id}`,
+        details: { programId: id, folderId: plan.folder.id, folderLabel: plan.folder.label, archiveSha256: built.sha256, archiveSize: built.size,
+          documentCount: built.files.length, withheldCount: staged.withheld.length, documentIds: built.files.map((f) => f.id) },
+      });
+      if (!recorded) {
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The export could not be recorded in the audit trail, so it was not sent.' });
+      }
+      sending = true;
+      res.setHeader('X-Archive-Withheld', String(staged.withheld.length));
+      sendStagedArchive(res, built, stage, `vault-${plan.folder.id}-export-${built.sha256.slice(0, 8)}.zip`);
+      return undefined;
+    } catch (err) {
+      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault folder export failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
+    } finally {
+      if (!sending) await stage?.cleanup().catch(() => undefined);
+    }
+  });
+
+  /** Read and stage each file the plan names; the first that fails its hash refuses them all. */
+  async function stageFolderFiles(
+    orgId: number,
+    plan: Extract<Awaited<ReturnType<typeof import('../../services/vault/vault-folder-export.js').planFolderExport>>, { ok: true }>,
+    numbers: Map<string, string | null>,
+    stage: { put: (doc: { id: string; title: string | null; fileName: string | null; indexNumber: string | null; sha256: string | null }, bytes: Buffer) => Promise<string | null> },
+    describe: typeof import('../../services/vault/vault-folder-export.js').folderExportDocument,
+  ) {
+    const documents: ReturnType<typeof describe>[] = [];
+    const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    for (const { row, file } of plan.inFolder) {
+      const doc = describe(row, numbers.get(String(row.id)) ?? null);
+      if (file.binary_available === false) { withheld.push({ id: doc.id, title: doc.title, sha256: doc.sha256, why: WITHHELD_BY_DISPOSITION }); continue; }
+      const read = await readSealedBytes(orgId, doc.id, file);
+      const refused = read.ok
+        ? await stage.put({ id: doc.id, title: doc.title, fileName: typeof file.file_name === 'string' ? file.file_name : null, indexNumber: doc.indexNumber, sha256: doc.sha256 }, read.bytes)
+        : read.why;
+      if (refused) return { ok: false as const, message: `${doc.title ?? doc.id} could not be exported: ${refused} Nothing was sent.` };
+      documents.push(doc);
+    }
+    return { ok: true as const, documents, withheld };
+  }
 
   return router;
 }
