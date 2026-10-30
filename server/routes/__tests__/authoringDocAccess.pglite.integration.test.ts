@@ -18,7 +18,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
-import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
+import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
 import express from 'express';
 import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { runWithTenantScope } from '../../db/tenantStore';
@@ -83,8 +84,11 @@ let docId: string;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
+    // RR5: Send for review writes its review route (review_routes, the members as unified_tasks rows,
+    // the naming row on the governed ledger) and reads the sender's time zone.
     prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
-      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';`,
+      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';
+      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks', 'task_dependencies', 'cross_module_task_links'])}`,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -109,7 +113,13 @@ beforeAll(async () => {
       // Access reports must consult the deployed QMS governance stores, even for an unbound authored document.
       'migrations/20260511_qms_and_labeling.sql',
       'db/migrations/20261014_qms_controlled_authoring_content.sql',
+      'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+      'db/migrations/20260807_task_graph_org_columns.sql',
+      'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      'migrations/20261023_review_routes.sql',
     ],
+    testOnlySql: `${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
+      CREATE TABLE IF NOT EXISTS notification_preferences (id serial PRIMARY KEY, user_id integer, timezone text);`,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -266,10 +276,12 @@ describe('GET /docs/:docId — the caller’s access', () => {
  * two must agree.
  */
 describe('Send for review: the report is the decision the request meets', () => {
+  // RR5: the request names its review route's due date.
   const send = (as: (r: request.Test) => request.Test) =>
     as(request(gatedApp).post(`/api/authoring/documents/${docId}/request-review`)).send({
       reviewers: [{ id: REVIEWER.id, name: REVIEWER.name }],
       reason: 'Ready for medical review.',
+      route: { reviewDueDate: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10) },
     });
 
   it('a member with an editing role but no document grant cannot read its metadata and still cannot send it for review', async () => {
@@ -306,9 +318,18 @@ describe('Send for review: the report is the decision the request meets', () => 
     const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.body.access.assignReview).toEqual({ allowed: true, reason: null });
 
-    const sent = await send(author);
-    expect(sent.status, JSON.stringify(sent.body)).toBe(200);
-    expect(sent.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending' })]);
+    // RR5: a reviewer named on the review route holds signing authority and reaches the program's project
+    // (the route's member validator); this suite's reviewer is otherwise a viewer.
+    await jdb.pool.query(`UPDATE organization_users SET role = 'reviewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
+    await jdb.pool.query(`INSERT INTO project_members (project_id, organization_id, user_id, role, status) VALUES (42, $1, $2, 'edit', 'active')`, [ORG, REVIEWER.id]);
+    try {
+      const sent = await send(author);
+      expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+      expect(sent.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending' })]);
+    } finally {
+      await jdb.pool.query(`UPDATE organization_users SET role = 'viewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
+      await jdb.pool.query(`DELETE FROM project_members WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
+    }
   });
 });
 

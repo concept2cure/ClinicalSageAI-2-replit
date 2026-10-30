@@ -20,7 +20,7 @@ import { unifiedTasks } from '../../../shared/schema';
 import { auditTaskActionInTx } from './task-audit';
 import { queryableFromDrizzle, type DrizzleRunner } from '../../db/drizzle-queryable';
 
-type RouteColumn = 'reviewRouteId' | 'reviewRole' | 'reviewStep' | 'routeSignatureId' | 'routeActId';
+type RouteColumn = 'reviewRouteId' | 'reviewRole' | 'reviewStep' | 'routeSignatureId' | 'routeActId' | 'routeAuthoringSignatureId';
 type InsertTask = typeof unifiedTasks.$inferInsert;
 
 /** The Drizzle handle a task write runs on: a transaction. */
