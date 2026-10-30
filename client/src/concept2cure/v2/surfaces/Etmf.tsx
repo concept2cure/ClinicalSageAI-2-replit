@@ -23,7 +23,8 @@
  *   are shown as honest "not yet available" states.
  *
  * Grounded verbatim in concept2cure-v2:
- *   assessTmfCompleteness / TMF_REFERENCE_MODEL (server tmf-completeness.ts)
+ *   assessTmfCompleteness (server tmf-completeness.ts) over TMF_REFERENCE_MODEL
+ *     (shared/constants/domain/tmf-reference-model.ts)
  *   GET  /api/etmf/trials/:trialId/completeness?scope=
  *   POST /api/etmf/trials/:trialId/artifacts {artifactCode,documentRef?}
  *   POST /api/etmf/trials/:trialId/artifacts/bulk
@@ -43,11 +44,13 @@ import {
   VAULT_INGEST_DOCUMENT_TYPES,
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
-// tmfArtifactName maps a reference-model code → its human name. It reads the
-// DIA TMF Reference Model catalog (ICH E6(R3) Appendix C) — canonical reference config,
-// not fixture DATA — so a `missing` code the backend returns can be labelled.
-import { tmfArtifactName } from '../fixtures/etmf';
-import type { TmfCompletenessResult } from '../fixtures/etmf';
+// tmfArtifactName maps a reference-model code → its human name, from the one
+// DIA TMF Reference Model catalog (ICH E6(R3) Appendix C), so a `missing` code
+// the backend returns can be labelled. It came from a client copy of the
+// catalog in fixtures/etmf.ts until 2026-10-30 (ETMF_CONVERGENCE slice E1).
+import { tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
+// The completeness response, typed by the service that computes it.
+import type { TmfCompletenessResult } from '../../../../../server/services/etmf/tmf-completeness';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
