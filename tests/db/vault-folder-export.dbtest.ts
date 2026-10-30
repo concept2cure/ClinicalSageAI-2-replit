@@ -302,7 +302,7 @@ describe('what an export holds, says and records (security review, 2026-10-30)',
     const zip = new AdmZip(res.body as Buffer);
     const exported = (JSON.parse(zip.readAsText('manifest.json')).files as Array<{ id: string }>).map((f) => f.id).sort();
     expect(exported).toEqual([ids.overview, ids.suggested].sort());
-    expect(zip.readAsText('INDEX.txt')).toMatch(/not yet confirmed by a person \(1\):\n  Nonclinical overview/);
+    expect(zip.readAsText('INDEX.txt')).toMatch(/not yet confirmed by a person \(1\):\n {2}Nonclinical overview/);
   });
 
   it('refuses, rather than leave out, a document the folder showed and the file read no longer finds', async () => {
