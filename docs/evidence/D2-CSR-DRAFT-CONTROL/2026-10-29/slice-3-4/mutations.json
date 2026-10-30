@@ -1,0 +1,813 @@
+{
+ "note": "Each mutation applied alone, its tests run, the file restored. restoredByteForByte false means another lane wrote the file during the window; the restore then reversed only the mutated text in place, keeping the other writer's change (see README).",
+ "killed": 41,
+ "of": 41,
+ "mutations": [
+  {
+   "mutation": "S3-M1 the base is consumed instead of read",
+   "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > sends the model the base as parked and the instruction, and parks a new candidate naming derivedFrom 179ms",
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > reads the base and never consumes it: the base still accepts after it was revised 67ms",
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is refused before the model is asked > when the base is unknown, already accepted, or a candidate of another section 79ms",
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is refused before the model is asked > when the saved section changed after the base was drafted 44ms",
+    "\u00d7 server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store \u2014 the read a revision is drafted from (CSR draft control, slice 3) > reads a live candidate without claiming it, so it still accepts 8ms",
+    "\u00d7 server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store \u2014 the read a revision is drafted from (CSR draft control, slice 3) > says when the saved section changed since the candidate was drafted, or the candidate names no base 3ms",
+    "\u00d7 server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store \u2014 the read a revision is drafted from (CSR draft control, slice 3) > carries derivedFrom from park to accept 4ms"
+   ],
+   "seconds": 14.2,
+   "sha256Before": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "sha256Restored": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M2 the new candidate parks no derivedFrom",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > sends the model the base as parked and the instruction, and parks a new candidate naming derivedFrom 173ms",
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > accepting the revision records derivedFrom on the audit row, with the generator 82ms"
+   ],
+   "seconds": 9.9,
+   "sha256Before": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "sha256Restored": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M3 the stored generator loses derivedFrom on read and accept",
+   "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > accepting the revision records derivedFrom on the audit row, with the generator 102ms",
+    "\u00d7 server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store \u2014 the read a revision is drafted from (CSR draft control, slice 3) > carries derivedFrom from park to accept 7ms"
+   ],
+   "seconds": 12.6,
+   "sha256Before": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "sha256Restored": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M4 the instruction is not the person\u2019s words in the check",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > the revision\u2019s record and check > re-runs the check against the sources: the base is not one, and the instruction is the person\u2019s 45ms"
+   ],
+   "seconds": 10.0,
+   "sha256Before": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "sha256Restored": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M5 the base text counts as a source of the check",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > the revision\u2019s record and check > re-runs the check against the sources: the base is not one, and the instruction is the person\u2019s 40ms"
+   ],
+   "seconds": 9.7,
+   "sha256Before": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "sha256Restored": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M6 a base drafted against an older saved section is admitted",
+   "file": "server/services/authoring/authoring-draft-template.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is refused before the model is asked > when the saved section changed after the base was drafted 44ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 4ms"
+   ],
+   "seconds": 12.1,
+   "sha256Before": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "sha256Restored": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M7 the turn record does not say what was asked",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > the revision\u2019s record and check > records the instruction as asked and the base text as model input 56ms"
+   ],
+   "seconds": 11.1,
+   "sha256Before": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "sha256Restored": "aaf1aaba6e0617591a03177b2a8b9a131e7a4b4bb8f24c88154a302979f94d28",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M8 the revision prompt omits the base text",
+   "file": "server/services/authoring/authoring-draft-template.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > sends the model the base as parked and the instruction, and parks a new candidate naming derivedFrom 187ms",
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > the revision\u2019s record and check > records the instruction as asked and the base text as model input 59ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 29ms"
+   ],
+   "seconds": 11.7,
+   "sha256Before": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "sha256Restored": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M9 the revision prompt lets the model answer for a figure",
+   "file": "server/services/authoring/authoring-draft-template.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > sends the model the base as parked and the instruction, and parks a new candidate naming derivedFrom 216ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 6ms"
+   ],
+   "seconds": 13.4,
+   "sha256Before": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "sha256Restored": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M10 the base read is not section-scoped",
+   "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is refused before the model is asked > when the base is unknown, already accepted, or a candidate of another section 65ms",
+    "\u00d7 server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store \u2014 the read a revision is drafted from (CSR draft control, slice 3) > is tenant-, section- and expiry-scoped, as the claim is 10ms"
+   ],
+   "seconds": 15.6,
+   "sha256Before": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "sha256Restored": "a3862889c5f4c493a963f48ea5f1326453c01fc9120c5e8dec30649960a88a1f",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M11 the client revises the first entry, not the one shown",
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > asks the existing route to revise the candidate shown, by its draftId and its tone, with the instruction as sent 414ms",
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > shows the revision against the text it revised as a redline, and the person can go back to any earlier entry 243ms"
+   ],
+   "seconds": 3.6,
+   "sha256Before": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "sha256Restored": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M12 a revision overwrites the entry it revises",
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > asks the existing route to revise the candidate shown, by its draftId and its tone, with the instruction as sent 5348ms",
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > shows the revision against the text it revised as a redline, and the person can go back to any earlier entry 140ms",
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > keeps focus where the person is: on the control pressed, or wherever they moved it 5159ms",
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > revises a lone draft and lists both, keeping \u201cDraft again\u201d a single draft 5098ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > revise by instruction (slice 3) > joins the list as a new entry derived from the one named, shown, with nothing it revises replaced 6ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > revise by instruction (slice 3) > lists a lone draft first, so the person can go back to it, and keeps \u201cDraft again\u201d a single draft 1ms"
+   ],
+   "seconds": 19.0,
+   "sha256Before": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "sha256Restored": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M13 the client adds an answer the server did not derive from the text shown",
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 a revision fails closed > refuses an answer the server did not derive from the text shown, and keeps what is shown 5060ms"
+   ],
+   "seconds": 8.4,
+   "sha256Before": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "sha256Restored": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M14 the revision does not open against the text it revised",
+   "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > shows the revision against the text it revised as a redline, and the person can go back to any earlier entry 128ms"
+   ],
+   "seconds": 3.3,
+   "sha256Before": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "sha256Restored": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M15 the revision drops the tone of the entry it revises",
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > asks the existing route to revise the candidate shown, by its draftId and its tone, with the instruction as sent 373ms",
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > keeps focus where the person is: on the control pressed, or wherever they moved it 5109ms"
+   ],
+   "seconds": 8.2,
+   "sha256Before": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "sha256Restored": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M16 the entry left loses its edits when a revision arrives",
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > asks the existing route to revise the candidate shown, by its draftId and its tone, with the instruction as sent 456ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > revise by instruction (slice 3) > joins the list as a new entry derived from the one named, shown, with nothing it revises replaced 5ms"
+   ],
+   "seconds": 4.2,
+   "sha256Before": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "sha256Restored": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M17 a lone draft is not listed once revised",
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > revises a lone draft and lists both, keeping \u201cDraft again\u201d a single draft 5054ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > revise by instruction (slice 3) > lists a lone draft first, so the person can go back to it, and keeps \u201cDraft again\u201d a single draft 6ms"
+   ],
+   "seconds": 9.3,
+   "sha256Before": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "sha256Restored": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M18 a lone draft beside its revisions reads as three alternatives",
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > revises a lone draft and lists both, keeping \u201cDraft again\u201d a single draft 84ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > revise by instruction (slice 3) > lists a lone draft first, so the person can go back to it, and keeps \u201cDraft again\u201d a single draft 7ms"
+   ],
+   "seconds": 4.8,
+   "sha256Before": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "sha256Restored": "1d26131ef30bb9cf76c61fd59800d3f4b9b416f1672236179b7c6c911a84b807",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M19 the draft response does not say what it was derived from",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts > a revision is a new candidate drafted from the one shown > sends the model the base as parked and the instruction, and parks a new candidate naming derivedFrom 185ms"
+   ],
+   "seconds": 12.2,
+   "sha256Before": "e29d251a1ba4efd57ff5f1cbe839a3ca64e65d6180274608959a026d0654249d",
+   "sha256Restored": "e29d251a1ba4efd57ff5f1cbe839a3ca64e65d6180274608959a026d0654249d",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M20 focus dropped while AnA works is not returned",
+   "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > keeps focus where the person is: on the control pressed, or wherever they moved it 5117ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 5384ms"
+   ],
+   "seconds": 21.1,
+   "sha256Before": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "sha256Restored": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S3-M21 the revision takes focus the person moved elsewhere",
+   "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft \u2014 revise the text shown by instruction > keeps focus where the person is: on the control pressed, or wherever they moved it 173ms"
+   ],
+   "seconds": 3.6,
+   "sha256Before": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "sha256Restored": "2eb3af12f61989b883617bcaa03f5aafeb81a00a239bb0c432f1197e2107806c",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M1 the proposal drops prefix and suffix",
+   "file": "client/src/concept2cure/v2/editor/draftPassage.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/draftPassage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA\u2019s tracked change 5741ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > replaces the first occurrence when that is the one selected 5421ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 5325ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftPassage.test.ts > the passage proposal > replaces exactly the quote, named by its context, against the saved base 7ms"
+   ],
+   "seconds": 24.7,
+   "sha256Before": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "sha256Restored": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M2 the editor sends no context with the selection",
+   "file": "client/src/concept2cure/v2/editor/draftPassage.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA\u2019s tracked change 1195ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > replaces the first occurrence when that is the one selected 814ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 711ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > says before the click that the replacement carries no source citations and AnA supplies no figures 697ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps an answer the governed-write rule does not admit out of the section 765ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > refuses an answer the server did not draft for the passage selected, and lists nothing 673ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps a refusal from the server beside the passage, with its remedy, and lists nothing 690ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > goes back to the section draft, which is as it was 665ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > ends the passage when the panel closes, so Draft from sources opens the section draft 682ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > belongs to its section: another section, and coming back, show the section draft 907ms"
+   ],
+   "seconds": 12.8,
+   "sha256Before": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "sha256Restored": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M3 the server takes the first occurrence when the context names none",
+   "file": "server/services/authoring/authoring-draft-passage.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-passage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts > a passage is refused before the model is asked > when it occurs more than once and its context does not pick one 26ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-passage.test.ts > the passage is admitted only from the saved section > refuses words that occur more than once when the context does not pick one 3ms"
+   ],
+   "seconds": 10.3,
+   "sha256Before": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "sha256Restored": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M4 a passage is parked as a whole-section candidate",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts > a passage is drafted from the saved section, as a replacement of the passage only > parks no candidate, so the whole-section accept can never take a passage 40ms"
+   ],
+   "seconds": 10.8,
+   "sha256Before": "4c796acee731cd88671115d0ddd7a61b92061ea401aef322e44215401929ed35",
+   "sha256Restored": "e29d251a1ba4efd57ff5f1cbe839a3ca64e65d6180274608959a026d0654249d",
+   "restoredByteForByte": false,
+   "restore": "mutated text reversed in place (file changed by another writer meanwhile)",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M5 the prompt does not hold the passage",
+   "file": "server/services/authoring/authoring-draft-template.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-passage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts > a passage is drafted from the saved section, as a replacement of the passage only > shows the model the saved section and the passage, and answers with the passage it drafted for 140ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-passage.test.ts > the passage block and the route parts > appends to the one prompt: the saved section and the passage as data, a replacement of the passage only, no figure from the model 5ms"
+   ],
+   "seconds": 10.5,
+   "sha256Before": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "sha256Restored": "f4bae7362ea50d33d15eae50050258ee64dfe36e3a881bc49d1d600c49796081",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M6 a passage running into a pending change is admitted",
+   "file": "server/services/authoring/authoring-draft-passage.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-passage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-passage.test.ts > the passage is admitted only from the saved section > refuses a passage the saved section does not hold, or that runs into a pending change 3ms"
+   ],
+   "seconds": 10.7,
+   "sha256Before": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "sha256Restored": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M7 the client lists an answer drafted for another passage",
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > refuses an answer the server did not draft for the passage selected, and lists nothing 5275ms"
+   ],
+   "seconds": 14.5,
+   "sha256Before": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "sha256Restored": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M8 the replacement names no turn record",
+   "file": "client/src/concept2cure/v2/editor/DraftPassage.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA\u2019s tracked change 775ms"
+   ],
+   "seconds": 9.3,
+   "sha256Before": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "sha256Restored": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M9 the panel skips its own governed-write refusal",
+   "file": "client/src/concept2cure/v2/editor/DraftPassage.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps an answer the governed-write rule does not admit out of the section 302ms"
+   ],
+   "seconds": 9.1,
+   "sha256Before": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "sha256Restored": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M10 the workbench does not wire the editor\u2019s offer",
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA\u2019s tracked change 1154ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > replaces the first occurrence when that is the one selected 810ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 698ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > says before the click that the replacement carries no source citations and AnA supplies no figures 743ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps an answer the governed-write rule does not admit out of the section 642ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > refuses an answer the server did not draft for the passage selected, and lists nothing 692ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps a refusal from the server beside the passage, with its remedy, and lists nothing 699ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > goes back to the section draft, which is as it was 669ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > ends the passage when the panel closes, so Draft from sources opens the section draft 671ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > opens the section draft, not the passage, when Draft from sources is pressed in Document view 777ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > belongs to its section: another section, and coming back, show the section draft 678ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > with nothing selected 634ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for a selection that runs across paragraphs 643ms",
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for words that read the same, with the same text around them, in more than one place 704ms"
+   ],
+   "seconds": 14.4,
+   "sha256Before": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "sha256Restored": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M11 closing the panel keeps the passage",
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > ends the passage when the panel closes, so Draft from sources opens the section draft 316ms"
+   ],
+   "seconds": 9.6,
+   "sha256Before": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "sha256Restored": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M12 Draft from sources in Document view reopens the passage",
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > opens the section draft, not the passage, when Draft from sources is pressed in Document view 5499ms"
+   ],
+   "seconds": 14.2,
+   "sha256Before": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "sha256Restored": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M19 a refusal of the passage is only a passing toast",
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps a refusal from the server beside the passage, with its remedy, and lists nothing 5265ms"
+   ],
+   "seconds": 14.7,
+   "sha256Before": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "sha256Restored": "642306b367d73ba43f3d5ecf315873bcf618315b3e081780fdf50d11c2c46da1",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M20 the passage outlives a change of section",
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > belongs to its section: another section, and coming back, show the section draft 441ms"
+   ],
+   "seconds": 9.7,
+   "sha256Before": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "sha256Restored": "68f13de601c40e472d4a103d75853476311b84601eb6f97232ae6e2f9a3c199b",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M13 focus is not returned after the replacement lands",
+   "file": "client/src/concept2cure/v2/editor/DraftPassage.tsx",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 5411ms"
+   ],
+   "seconds": 14.9,
+   "sha256Before": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "sha256Restored": "d2f3f511908819b667ebc92f42675cd84bdab26003dd22b1bdfb42f936abcb9e",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M14 the server does not say which passage it drafted for",
+   "file": "server/routes/authoring.router.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts > a passage is drafted from the saved section, as a replacement of the passage only > shows the model the saved section and the passage, and answers with the passage it drafted for 116ms"
+   ],
+   "seconds": 9.4,
+   "sha256Before": "e29d251a1ba4efd57ff5f1cbe839a3ca64e65d6180274608959a026d0654249d",
+   "sha256Restored": "e29d251a1ba4efd57ff5f1cbe839a3ca64e65d6180274608959a026d0654249d",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M15 a passage that also revises a draft is admitted",
+   "file": "server/services/authoring/authoring-draft-passage.ts",
+   "tests": [
+    "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-passage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts > a passage is refused before the model is asked > when it is malformed, or also asks to revise a draft 63ms",
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-passage.test.ts > the passage block and the route parts > refuses a passage that also asks to revise a draft 3ms"
+   ],
+   "seconds": 10.7,
+   "sha256Before": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "sha256Restored": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M16 the passage block lets the model add a figure",
+   "file": "server/services/authoring/authoring-draft-passage.ts",
+   "tests": [
+    "server/services/authoring/__tests__/authoring-draft-passage.test.ts"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 server/services/authoring/__tests__/authoring-draft-passage.test.ts > the passage block and the route parts > appends to the one prompt: the saved section and the passage as data, a replacement of the passage only, no figure from the model 5ms"
+   ],
+   "seconds": 2.9,
+   "sha256Before": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "sha256Restored": "bc69207a2bc8553462c49626930c150c8f18a427fb1191412da04ba634f32e80",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "final pass, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M17 a selection across paragraphs is offered",
+   "file": "client/src/concept2cure/v2/editor/draftPassage.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for a selection that runs across paragraphs 209ms"
+   ],
+   "seconds": 9.1,
+   "sha256Before": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "sha256Restored": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  },
+  {
+   "mutation": "S4-M18 the editor offers a selection the door would not land in one place",
+   "file": "client/src/concept2cure/v2/editor/draftPassage.ts",
+   "tests": [
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx"
+   ],
+   "exitCode": 1,
+   "killed": true,
+   "failingTests": [
+    "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for words that read the same, with the same text around them, in more than one place 228ms"
+   ],
+   "seconds": 9.5,
+   "sha256Before": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "sha256Restored": "d60fac0b78c52f7104fa82ef89ba6760f9fbab31222a55f1c82d79d58a6b90d4",
+   "restoredByteForByte": true,
+   "restore": "original bytes written back",
+   "run": "re-run on the final source, 2026-10-30"
+  }
+ ]
+}

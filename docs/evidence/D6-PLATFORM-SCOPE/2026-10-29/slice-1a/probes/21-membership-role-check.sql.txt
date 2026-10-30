@@ -1,0 +1,38 @@
+-- P-72 slice 1a, part 2: which role strings organization_users.role takes, and from whom. Each write rolled back.
+-- Run as app_service (the runtime role). The owner rows come from 22-*.sql.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS a_id, uuid AS a_uuid FROM organizations WHERE slug = 'p72-a' \gset
+SELECT min(user_id) AS a_admin FROM organization_users WHERE organization_id = :a_id \gset
+SELECT current_user AS who, (SELECT conname FROM pg_constraint WHERE conrelid = 'public.organization_users'::regclass AND contype = 'c' AND conname = 'organization_users_role_known') AS role_check;
+\echo '== 1. the system scope (tenant 0, app_super_admin, the platform arm) writes app_super_admin onto A''s membership'
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'app_super_admin' WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;
+\echo '== 2. the system scope writes an unknown role string (no assignable role, no staff role)'
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'p72_not_a_role' WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;
+\echo '== 3. A''s own scope (role admin) writes an unknown role string onto its own member'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'p72_not_a_role' WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;
+\echo '== 4. control: A''s own scope assigns each assignable role (ASSIGNABLE_ORG_ROLES), and changes a persona'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'approver' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET role = 'manager' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET role = 'reviewer' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET role = 'member' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET role = 'viewer' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET role = 'admin' WHERE organization_id = :a_id AND user_id = :a_admin;
+UPDATE organization_users SET persona = NULL WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;
+\echo '== 5. control: the system scope mints a staff role the platform still recognises (super_admin)'
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'super_admin' WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;

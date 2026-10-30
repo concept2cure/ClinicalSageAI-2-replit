@@ -38,12 +38,34 @@
 -- organization's scope, where the table's own policy admits the row, after the
 -- invitation is confirmed as the caller's (tenant-users.ts).
 --
--- SECURITY DEFINER with the platform role set for its own body, so it answers
--- on any owner (the table is FORCEd); the membership test reads
--- app.current_tenant_id, which that SET does not touch. EXECUTE is revoked from
--- PUBLIC and granted to app_service. The table's own policy is unchanged.
+-- SECURITY DEFINER, owned by the NOLOGIN role c2c_platform_scope (see the
+-- 2026-10-30 note below), so it answers on any owner (the table is FORCEd); the
+-- membership test reads app.current_tenant_id, the caller's own tenant. EXECUTE
+-- is revoked from PUBLIC and granted to app_service. The table's tenant policy
+-- is unchanged.
 --
--- Converges on every run (CREATE OR REPLACE). Nothing is dropped (Rule 1).
+-- Converges on every run (CREATE OR REPLACE; ALTER POLICY when the policy
+-- exists, CREATE when it does not). Nothing is dropped (Rule 1).
+--
+-- AMENDED IN PLACE 2026-10-30 (Rule 1; D1 and D6, P-72 slice 1a; design
+-- docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5; evidence
+-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). REMOVED: the clause
+-- `SET app.current_user_role = 'app_super_admin'`. PostgreSQL 15 and later
+-- refuse a function whose SET clause names a custom setting to any creator that
+-- is not a superuser, so a deploy by the RDS master could not create it. The
+-- clause also entered the platform scope through a session setting, which
+-- P-72 retires. What replaces it:
+--   - migrations/20261030b_platform_scope_role.sql hands the function to the
+--     NOLOGIN role c2c_platform_scope, which the runtime role is never granted,
+--     with SELECT on only the columns it reads;
+--   - ADDED here: organization_invitations_platform_scope_read, a SELECT policy
+--     admitting CURRENT_USER = 'c2c_platform_scope' (the design's P' arm, for
+--     this one table until the sweep's template carries it). CURRENT_USER is
+--     that role only inside a SECURITY DEFINER function it owns, so no session
+--     can set it. Policies are permissive and OR together, so the tenant policy
+--     still decides every other reader. The sweep and its heal pass touch only a
+--     policy named tenant_isolation_policy.
+-- The signature, the grant and the columns returned are unchanged.
 
 -- AMENDED IN PLACE 2026-09-29 (Rule 1): the function was created
 -- unconditionally, and a LANGUAGE sql body is validated when it is created, so
@@ -75,7 +97,6 @@ BEGIN
     STABLE
     SECURITY DEFINER
     SET search_path = pg_catalog, public
-    SET app.current_user_role = 'app_super_admin'
     AS $body$
       SELECT i.id, i.organization_id, i.email, i.role, i.status, i.invited_by_id,
              i.created_at, i.responded_at
@@ -93,6 +114,16 @@ BEGIN
   REVOKE ALL ON FUNCTION public.invitations_for_member(integer) FROM PUBLIC;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
     GRANT EXECUTE ON FUNCTION public.invitations_for_member(integer) TO app_service;
+  END IF;
+
+  -- Added 2026-10-30 (see the amendment note above): the function owner's read.
+  IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'organization_invitations'
+                AND policyname = 'organization_invitations_platform_scope_read') THEN
+    ALTER POLICY organization_invitations_platform_scope_read ON public.organization_invitations
+      USING (CURRENT_USER = 'c2c_platform_scope'::name);
+  ELSE
+    CREATE POLICY organization_invitations_platform_scope_read ON public.organization_invitations
+      FOR SELECT USING (CURRENT_USER = 'c2c_platform_scope'::name);
   END IF;
   RAISE NOTICE '[invitations-for-member] an invitee finds their own invitations from their own organization';
 END

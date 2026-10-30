@@ -1,0 +1,54 @@
+/**
+ * P-72 slice 1a: the sign-in, password-reset and invitation lookups, through the SERVER'S OWN code
+ * (server/services/auth/pre-auth-account.ts, tenantStore.runWithPreAuthScope / runWithTenantScope, the instrumented
+ * pool), as the runtime role app_service with RLS_ENFORCE=on, on a production-shaped copy (every table FORCEd and
+ * owned by the non-superuser RDS master). Read-only.
+ * Env: APP_DATABASE_URL (app_service), DATABASE_URL (owner, for the fixture ids), RLS_ENFORCE=on, REPO (source tree).
+ */
+const REPO = process.env.REPO ?? '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import(`/home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/index.js`)).default;
+const S = `${REPO}/server`;
+const { getPool } = await import(`${S}/db/runtime.ts`);
+await import(`${S}/db.ts`); // installs the pool instrumentation, as the server does
+const { runWithPreAuthScope, runWithTenantScope } = await import(`${S}/db/tenantStore.ts`);
+const { accountIdForEmail, bindAccountByEmail, bindAccountByResetToken } = await import(`${S}/services/auth/pre-auth-account.ts`);
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+const [A, B] = (await owner.query(`SELECT id, uuid::text uuid FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const bAdmin = (await owner.query(`SELECT id FROM users WHERE email = 'p72-b-admin@example.invalid'`)).rows[0].id;
+const fns = (await owner.query(`SELECT p.oid::regprocedure::text fn, pg_get_userbyid(p.proowner) owner, p.proconfig FROM pg_proc p
+   WHERE p.proname IN ('user_id_for_email','user_id_for_reset_token','invitations_for_member') ORDER BY 1`)).rows;
+const out: Record<string, unknown> = {
+  runtimeRole: await runWithPreAuthScope('p72-s1a:whoami', async () => (await getPool().query('SELECT current_user AS u, session_user AS s')).rows[0]),
+  functions: fns, expectedAccountId: bAdmin };
+async function step(name: string, fn: () => Promise<unknown>) {
+  try { out[name] = await fn(); } catch (e: any) { out[name] = `ERR ${String(e.message).slice(0, 200)}`; }
+}
+await step('sign-in: bindAccountByEmail(B admin), then read the bound row', () => runWithPreAuthScope('p72-s1a:sign-in', async () => {
+  const id = await bindAccountByEmail('p72-b-admin@example.invalid');
+  const row = id == null ? null : (await getPool().query('SELECT id, email FROM users WHERE id = $1', [id])).rows[0] ?? null;
+  return { id, boundRowRead: row };
+}));
+await step('sign-in, case as stored only: unknown address', () => runWithPreAuthScope('p72-s1a:sign-in-unknown', () => accountIdForEmail('nobody@example.invalid')));
+await step('password reset: bindAccountByResetToken(hash), then read the bound row', () => runWithPreAuthScope('p72-s1a:reset', async () => {
+  const id = await bindAccountByResetToken('s1a-reset-hash');
+  const row = id == null ? null : (await getPool().query('SELECT id, email, reset_token IS NOT NULL AS has_token FROM users WHERE id = $1', [id])).rows[0] ?? null;
+  return { id, boundRowRead: row };
+}));
+await step('password reset: a token nobody holds', () => runWithPreAuthScope('p72-s1a:reset-unknown', () => bindAccountByResetToken('no-such-hash')));
+await step('invitations_for_member(B admin) from B\'s own scope (A\'s invitation)', () => runWithTenantScope(
+  { tenantId: String(B.id), orgUuid: B.uuid, role: 'admin', source: 'request', caller: 'p72-s1a:invitations' },
+  async () => (await getPool().query('SELECT organization_id, email, status FROM public.invitations_for_member($1)', [bAdmin])).rows));
+await step('invitations_for_member(B admin) from A\'s scope (not a member there: nothing)', () => runWithTenantScope(
+  { tenantId: String(A.id), orgUuid: A.uuid, role: 'admin', source: 'request', caller: 'p72-s1a:invitations-other' },
+  async () => (await getPool().query('SELECT organization_id, email, status FROM public.invitations_for_member($1)', [bAdmin])).rows));
+await step('the pre-auth scope reads no other row of users', () => runWithPreAuthScope('p72-s1a:unbound', async () =>
+  (await getPool().query('SELECT count(*)::int n FROM users')).rows[0].n));
+// The runtime login cannot become the owner: no session reaches the role's arm.
+const direct = new pg.Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+try { await direct.query('SET ROLE c2c_platform_scope'); out['app_service: SET ROLE c2c_platform_scope'] = 'ALLOWED'; }
+catch (e: any) { out['app_service: SET ROLE c2c_platform_scope'] = `refused: ${e.message}`; }
+await direct.end();
+console.log(JSON.stringify(out, null, 2));
+await owner.end();
+await getPool().end().catch(() => undefined);
+process.exit(0);
