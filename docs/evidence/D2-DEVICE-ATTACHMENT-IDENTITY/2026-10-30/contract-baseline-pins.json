@@ -1,0 +1,18 @@
+{
+  "baseline": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "sha256": {
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "7aaa36a2843af27ccedd317b1aca3eae12f32718b9ff1ff4c9514f1c8f964a87",
+    "client/src/concept2cure/v2/useVaultUpload.ts": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+    "client/src/concept2cure/v2/vaultIngestTransport.ts": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f",
+    "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+    "client/src/concept2cure/mdx/hooks/useDossier.ts": "2d25a59d3a61391a63e20b3c934ae1152afa0146319c19cdd2a2841bf957b68c",
+    "client/src/concept2cure/mdx/hooks/useSectionVersions.ts": "daaa6dec0f885abf689a4dd4ecf66e0f869e066d694114f71000dd91dc11a169",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "851e38f86dff04ba69b630d2dba313feda53ae53d7a0cfdc168624bde4e48111",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "b0cfd0a045b9cc644910d7477e190fed00932e5c147e06520daea24090825d89",
+    "server/routes/vault-ingest.ts": "9f8e4cf8e31582692c980b3b4a7e30f12a2a60e2bbb65a25bddbebaa63d4eae3",
+    "server/services/vault/vault-ingest.service.ts": "1929d3425df21becf45023427f9063fefa5518ecec5b2db4352448ab966dd3fe",
+    "server/services/vault/vault-reupload.ts": "e366f3ab5ee389a1dd19281306f9cebeb0b226a6759d55610a5dc96381a14489",
+    "shared/constants/domain/vault-document-code.ts": "4d3a659af585ed41b428d8f5b8ef0eb47dd698c72a1d19e845b122780e288eb5"
+  }
+}
