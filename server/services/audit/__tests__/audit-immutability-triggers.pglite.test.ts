@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS electronic_signatures (
 );
 CREATE TABLE IF NOT EXISTS concept2cure_signatures (id SERIAL PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS concept2cure_submission_snapshots (id SERIAL PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS concept2cure_artifact_versions (id SERIAL PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS concept2cure_thread_comments (id SERIAL PRIMARY KEY, comment_id TEXT, body TEXT, deleted_at TIMESTAMPTZ);
 CREATE SCHEMA IF NOT EXISTS vault;
 CREATE TABLE IF NOT EXISTS vault.documents (id SERIAL PRIMARY KEY, content_hash TEXT);

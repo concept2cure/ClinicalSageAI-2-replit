@@ -1236,6 +1236,24 @@ that the server pins per request; binding it cryptographically is not in scope.
 Why: the reason given for P-59 and P-70. A control any session can switch off is not a control, and a regulated
 customer's isolation is the product's first promise.
 
+*Amended 2026-10-29, same day, on the design* (`docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md`). Production
+and staging run PostgreSQL 15, so the role is simply not granted to the runtime role; `WITH SET FALSE` is not used.
+Its five questions are decided:
+
+- **F1:** shadow mode is replaced by a login exemption for the migration applier and single-role dev
+  (`CURRENT_USER = SESSION_USER` and membership of a NOLOGIN exemption role), never held by the runtime role.
+- **F2:** `app_service` may call the platform doors now; a second runtime role is a per-door grant change later.
+- **F3:** the purge's lifecycle columns are writable only through platform doors, and the database also holds
+  `purge_eligible_at`, so no door erases before the retention window closes without a recorded override.
+- **F4:** no PostgreSQL upgrade is needed.
+- **F5:** if slice 0 shows that the tenant export lacks the Vault, its rows leave through a reviewed door
+  (`platform_export_vault_rows`); no Vault policy is widened. Slice 0 measures this first, because a departing
+  customer must get their Vault back (P-58).
+
+One defence-in-depth point is in scope for slice 1: the request path passes the token's role claim to the database
+verbatim. No assignable role is `app_super_admin`, and no route mints such a token, but the database must not take
+the platform scope from a request's string.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

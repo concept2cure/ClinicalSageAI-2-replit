@@ -62,6 +62,8 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 
 import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
+import { AlternativeReview, AlternativesPicker } from '../editor/DraftAlternatives';
+import { NO_ALTERNATIVES, alternativeWording, type DraftProposalTarget } from '../editor/draftAlternatives';
 import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
 export { failureOf, createEmptyAiDraftReviewState } from '../editor/authoringDraftTransport';
 export type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewState, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
@@ -90,6 +92,11 @@ export interface AuthoringAiDraftProps {
   onAccepted: (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => void;
   onClose: () => void;
   fireToast: FireToast;
+  /** The saved section as the editor loaded it: compared against, and paired with, chosen paragraphs. */
+  savedContent?: string;
+  savedUpdatedAt?: string | null;
+  /** The workbench's own proposal door (EditorBridge.propose); absent, paragraphs cannot be added. */
+  proposals?: DraftProposalTarget;
 }
 
 const TONES = ['professional', 'concise', 'detailed'] as const;
@@ -263,6 +270,9 @@ export function AuthoringAiDraft({
   onAccepted,
   onClose,
   fireToast,
+  savedContent = '',
+  savedUpdatedAt = null,
+  proposals,
 }: AuthoringAiDraftProps) {
   const review = useAuthoringDraftReview({ sectionId, docId, programId, reviewSession, docSealed, editorDirty,
     onAccepted, onClose, fireToast, describeAcceptFailure });
@@ -270,12 +280,14 @@ export function AuthoringAiDraft({
   const { tone, region, context, requirements } = { ...defaults, ...review.state.generationInputs };
   const setInputs = (next: Partial<AiDraftGenerationInputs>) => review.setGenerationInputs(next, defaults);
   const { draft, body, changeReason, refusal, acceptUnknown, baseChanged, checkedContent } = review.state;
-  const { generating, generatingSince, accepting, checking } = review;
+  const { generating, generatingSince, accepting, checking, phase } = review;
+  const generateAlternatives = () => review.generateAlternatives({ tone, region, context, requirements });
   const setBody = (value: string) => review.patch({ body: value });
   const setChangeReason = (value: string) => review.patch({ changeReason: value });
   const generate = () => review.generate({ tone, region, context, requirements });
   const accept = review.accept;
   const edited = draft != null && body !== draft.generated;
+  const wording = alternativeWording(review.state, edited);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   useEffect(() => { headingRef.current?.focus(); }, []);
 
@@ -339,7 +351,7 @@ export function AuthoringAiDraft({
       {generating && (
         <AnaActivity
           streaming
-          phase={`Retrieving Data Room evidence and drafting ${sectionCode}…`}
+          phase={phase ?? `Retrieving Data Room evidence and drafting ${sectionCode}…`}
           startedAt={generatingSince ?? undefined}
         />
       )}
@@ -420,13 +432,23 @@ export function AuthoringAiDraft({
               }
             >
               {generating ? 'Drafting…' : 'Draft section'}
+            </button>{' '}
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => void generateAlternatives()}
+              disabled={busy || docSealed || !!acceptUnknown} data-testid="ai-draft-alternatives"
+              title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}>
+              Draft three alternatives
             </button>
           </div>
+          <p style={{ fontSize: 11, margin: 0, color: 'var(--text-300)' }}>
+            Three alternatives ask for a professional, a concise and a detailed text in turn. Region, context and
+            requirements apply to each. Each is a separate draft with its own check.
+          </p>
         </>
       )}
 
       {draft && grounding && (
         <>
+          <AlternativesPicker state={review.state} accepting={accepting} onShow={review.showAlternative} />
           {/* ── Grounding: the fact a reviewer needs before reading a word ── */}
           <div
             className="scaf-note"
@@ -445,6 +467,8 @@ export function AuthoringAiDraft({
 
           <DraftCheck check={draft.check} edited={edited} />
           <DraftRecord turnRecord={draft.turnRecord} />
+          <AlternativeReview state={review.state} draft={draft} label={wording.paragraphLabel} edited={edited} savedContent={savedContent}
+            savedUpdatedAt={savedUpdatedAt} target={proposals} busy={busy} docSealed={docSealed} />
 
           {/* A model draft the server could not park cannot reach the accept
               endpoint at all. Say what adopting it would actually record. */}
@@ -532,7 +556,7 @@ export function AuthoringAiDraft({
                 disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId}
                 data-testid="ai-draft-accept"
               >
-                {accepting ? 'Saving…' : 'Accept and record citations'}
+                {accepting ? 'Saving…' : wording.accept}
               </button>
             )}
             {/* Regenerating replaces the buffer, so once the author has edited
@@ -542,26 +566,18 @@ export function AuthoringAiDraft({
             <button
               className="btn ghost"
               style={{ height: 30 }}
-              onClick={() => void generate()}
+              onClick={() => void (wording.shown ? generateAlternatives() : generate())}
               disabled={busy || docSealed || !!acceptUnknown}
               data-testid="ai-draft-regenerate"
-              title={
-                edited
-                  ? 'Generates a new draft, replacing the text you have edited here.'
-                  : 'Generates a new draft, replacing the one shown.'
-              }
+              title={wording.againTitle}
             >
-              {generating
-                ? 'Drafting…'
-                : edited
-                  ? 'Draft again — replaces your edits'
-                  : 'Draft again'}
+              {generating ? 'Drafting…' : wording.again}
             </button>
             <button
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => {
-                review.patch({ draft: null, body: '', refusal: null, acceptUnknown: false, baseChanged: false, checkedContent: undefined });
+                review.patch({ draft: null, body: '', refusal: null, acceptUnknown: false, baseChanged: false, checkedContent: undefined, ...NO_ALTERNATIVES });
               }}
               disabled={busy}
               data-testid="ai-draft-discard"

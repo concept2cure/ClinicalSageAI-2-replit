@@ -1,0 +1,143 @@
+{
+ "command": "npx eslint --format json <files>",
+ "baselineTakenBeforeEdits": true,
+ "totalWarnings": 14,
+ "totalBaselineWarnings": 14,
+ "files": [
+  {
+   "file": "client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "errors": 0,
+   "warnings": 12,
+   "baselineWarnings": 12,
+   "messages": [
+    {
+     "line": 348,
+     "rule": "complexity",
+     "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15."
+    },
+    {
+     "line": 782,
+     "rule": "max-lines",
+     "message": "File has too many lines (5040). Maximum allowed is 500."
+    },
+    {
+     "line": 1247,
+     "rule": "max-lines-per-function",
+     "message": "Function 'DocumentWorkbench' has too many lines (4202). Maximum allowed is 100."
+    },
+    {
+     "line": 1247,
+     "rule": "complexity",
+     "message": "Function 'DocumentWorkbench' has a complexity of 463. Maximum allowed is 15."
+    },
+    {
+     "line": 2152,
+     "rule": "complexity",
+     "message": "Async arrow function has a complexity of 17. Maximum allowed is 15."
+    },
+    {
+     "line": 2425,
+     "rule": "complexity",
+     "message": "Arrow function has a complexity of 32. Maximum allowed is 15."
+    },
+    {
+     "line": 3150,
+     "rule": "complexity",
+     "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+    },
+    {
+     "line": 3206,
+     "rule": "complexity",
+     "message": "Async arrow function has a complexity of 36. Maximum allowed is 15."
+    },
+    {
+     "line": 3371,
+     "rule": "react-hooks/exhaustive-deps",
+     "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array."
+    },
+    {
+     "line": 3738,
+     "rule": "complexity",
+     "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+    },
+    {
+     "line": 6234,
+     "rule": "max-lines-per-function",
+     "message": "Arrow function has too many lines (210). Maximum allowed is 100."
+    },
+    {
+     "line": 6234,
+     "rule": "complexity",
+     "message": "Arrow function has a complexity of 24. Maximum allowed is 15."
+    }
+   ]
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "errors": 0,
+   "warnings": 0,
+   "baselineWarnings": 0,
+   "messages": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+   "errors": 0,
+   "warnings": 2,
+   "baselineWarnings": 2,
+   "messages": [
+    {
+     "line": 260,
+     "rule": "max-lines-per-function",
+     "message": "Function 'AuthoringAiDraft' has too many lines (309). Maximum allowed is 100."
+    },
+    {
+     "line": 260,
+     "rule": "complexity",
+     "message": "Function 'AuthoringAiDraft' has a complexity of 47. Maximum allowed is 15."
+    }
+   ]
+  }
+ ]
+}
