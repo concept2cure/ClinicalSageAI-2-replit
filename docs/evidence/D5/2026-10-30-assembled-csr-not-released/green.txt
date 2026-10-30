@@ -1,0 +1,25 @@
+# Green
+ ✓ server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > an assembled CSR file > reads as not approved to Validation and Dispatch 11ms
+ ✓ server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > an assembled CSR file > is staged but noted unfinalized, so freeze and transmit refuse it 6ms
+ ✓ server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > the server's own rendered forms and reports (control) > a rendered safety report is released as before 4ms
+      Tests  3 passed (3)
+
+# Batch 1: server/services/ectd
+      1  FAIL  server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts
+ Test Files  1 failed | 127 passed | 1 skipped (129)
+      Tests  1 failed | 1715 passed | 4 skipped (1720)
+  (lifecycle-parent-leaf-binding: red on trunk since 7c464cf1b, fixed in this change; 1/1 after)
+
+# Batch 2: server/services/csr and the CSR job, compile, export, dispatch and transmit routes
+ Test Files  51 passed (51)
+      Tests  408 passed (408)
+
+# Batch 3: server/services/submission-gateways and tests/golden-journeys
+      5  FAIL  server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts
+      6  FAIL  server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+      5  FAIL  server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+      2  FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts
+ Test Files  5 failed | 61 passed (66)
+      Tests  18 failed | 617 passed | 10 skipped (645)
+  (the five gateway packaging files are the slice-1 baseline, same files and counts: docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/wide.txt)

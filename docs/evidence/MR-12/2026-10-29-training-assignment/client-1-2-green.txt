@@ -1,0 +1,21 @@
+# GREEN (2026-10-30): the panels' test, then every Quality client test (jsdom).
+ ✓ TrainingAssignments.test.tsx > Job roles > a failed read says so, never "No job roles yet" 43ms
+ ✓ TrainingAssignments.test.tsx > Job roles > a verified empty list says there are none; while loading it says so 137ms
+ ✓ TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 42ms
+ ✓ TrainingAssignments.test.tsx > Job roles > an administrator creates a role with its reason, through the governed route, and the list is read again 136ms
+ ✓ TrainingAssignments.test.tsx > Job roles > a refused change shows the server's sentence and keeps the form 110ms
+ ✓ TrainingAssignments.test.tsx > Job roles > a role assigned to a document cannot be deleted, and says why; removing a holder sends a DELETE with its reason 64ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 5ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > a verified empty list says nobody is assigned, and that training opens with the version in force 5ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > an assigner sees every person and how each is covered 7ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 15ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > when whether you may change them could not be checked, it says so and offers nothing 11ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > a version approved for a later day is named 5ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > assigns a job role not yet assigned, with its reason; the role already assigned is not offered 55ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > withdraws an assignment with its reason; a refusal is shown in the server's words 56ms
+ ✓ TrainingAssignments.test.tsx > Who must train on a document > when the roles and people cannot be read, nothing can be assigned, and it says so 31ms
+      Tests  15 passed (15)
+
+# client/src/concept2cure/quality (all 27 files):
+ Test Files  27 passed (27)
+      Tests  283 passed (283)

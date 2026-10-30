@@ -166,7 +166,7 @@ describe('Vault — opens on the document File to Vault named', () => {
     expect(await screen.findByTestId(PLACE)).toBeTruthy();
     expect(within(detail()).getAllByText(DOC_TITLE).length).toBeGreaterThan(0);
     const list = document.querySelector('.vd-list') as HTMLElement;
-    expect(within(list).getByText(/Module 5 · Clinical/)).toBeTruthy();
+    expect(within(list.querySelector('.vd-breadcrumb') as HTMLElement).getByText(/Module 5 · Clinical/)).toBeTruthy();
     // One-shot: the target is consumed, so a later visit opens normally.
     expect((window as any).C2C_VAULT_TARGET).toBeNull();
   });

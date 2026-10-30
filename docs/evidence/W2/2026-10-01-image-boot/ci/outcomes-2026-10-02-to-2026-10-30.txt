@@ -1,0 +1,25 @@
+# Every completed CI run on concept2cure-v2 created 2026-10-01 21:00 UTC – 2026-10-30 08:21 UTC that
+# carries the job (read through the GitHub API on 2026-10-30): 1,071 runs.
+
+production-image-boot conclusion   runs
+  success                           847   first 2026-10-02 11:03, last 2026-10-29 11:48 (job start)
+  failure                           119
+  cancelled                         105   queued 24 h without a runner; GitHub cancels a job at 24 h
+
+Failures by day (job start): 10-09 20 · 10-11 1 · 10-12 1 · 10-13 45 · 10-14 8 · 10-15 1 · 10-19 25 ·
+10-29 14 · 10-30 4. Every window before 10-29 was followed by green runs.
+
+The current red window (runs started 2026-10-29 17:51 onward, every one on a commit created
+2026-10-27 21:38 – 2026-10-28):
+  failing step   "Provision the empty database with the provision image"
+  cause          migrations/20261027_cdi_public_reference_seed.sql (added in 0a07f49d7, 2026-10-27
+                 21:38 UTC) raised "CDI reference seed requires the canonical CRE source store" on a
+                 fresh install, so install-fresh reported INCOMPLETE and db:provision stopped.
+                 ci.yml's "Blank DB Provisioning + Deploy Migration" failed the same way.
+  fixed          cc123a784 (2026-10-29 04:44 UTC): an absent store skips with a NOTICE.
+                 seed-replay-empty-db.txt runs both versions against an empty database: exit 3, exit 0.
+  not yet seen   no run on a commit after cc123a784 had reached the job when this was read. CI ran
+                 about 36 h behind (191 runs queued), so the first post-fix result is still to come.
+
+So the job did what it exists for: it refused an image whose provision path cannot provision an empty
+database, on the first commits that broke it.

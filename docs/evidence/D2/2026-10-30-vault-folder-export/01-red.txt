@@ -1,0 +1,34 @@
+# 01-red: before this change (no folder-export route, no export button)
+
+## Server: tests/db/vault-folder-export.dbtest.ts on real PostgreSQL 16, as app_service, RLS_ENFORCE=on. The route does not exist: the request falls through to the client's HTML.
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > holds the folder's current versions, their manifest, an index, SHA256SUMS and audit trail, and records its own hash before sending
+   → <!DOCTYPE html>
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > a viewer the project admits may export it, as they may download each file
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses another organisation's project, an unknown folder and an empty folder, and records nothing
+   → Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > sends nothing when the export cannot be recorded in the audit trail
+   → expected true to be false // Object.is equality
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > lists a document whose original file a disposition withdrew as withheld, and does not read it
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses the whole export when one file no longer matches its hash, and records and sends nothing
+   → expected 404 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+
+## Client: vaultFolderExport.test.tsx with the export button taken out of Vault.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers export on a filing folder only
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers nothing on the cabinet itself, on Unfiled, or on a folder with no documents
+   → Unable to find an element by: [data-testid="vault-folder-export"]
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > saves the archive when it hashes to the SHA-256 the server recorded
+   → Unable to find role="button" and name `/^Export Module 3 · Quality/`
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > says when a withdrawn file is not in it
+   → Unable to find role="button" and name `/^Export Module 3 · Quality/`
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > does not save a file that does not match the recorded SHA-256
+   → Unable to find role="button" and name `/^Export Module 3 · Quality/`
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > says nothing was saved, in the server's words, when the export is refused
+   → Unable to find role="button" and name `/^Export Module 3 · Quality/`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)

@@ -1,0 +1,26 @@
+# RED at trunk 8659f31539 (2026-10-30), slice 3a: server/services/qms/__tests__/training-compliance.pglite.test.ts with the assignment cases, against the roster-based read (PGlite, the production query).
+# The roster-era cases pass: each document there is assigned a job role every member holds. The seven new or changed cases fail: the roster is the denominator, there is no 'me' line, no summary, and expiry lists people nobody assigned.
+ ✓ training-compliance.pglite.test.ts > current-version controlled-procedure training > requires a fresh acknowledgment after revision and retains v1 training as history 91ms
+ ✓ training-compliance.pglite.test.ts > current-version controlled-procedure training > counts distinct members with unexpired current-version evidence and preserves cycle dates 59ms
+ ✓ training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users 60ms
+ ✓ training-compliance.pglite.test.ts > current-version controlled-procedure training > isolates documents and organizations even when they have equal version strings 77ms
+ × training-compliance.pglite.test.ts > current-version controlled-procedure training > says a document is assigned but has nobody active when no assigned member remains, retaining training history 55ms
+ ✓ training-compliance.pglite.test.ts > current-version controlled-procedure training > includes all trainable effective types and excludes draft, retired, deleted and nontrainable records 149ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (e) the denominator is the distinct active people assigned by role and by name, not the roster 48ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N 42ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > a removed assignment, a removed holder and a deleted role assign nobody 36ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > the viewer's own line: whether they are assigned, and whether their receipt counts now 38ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > the summary averages the assigned, readable documents only 58ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > expiry lists the people assigned only 39ms
+ ✓ training-compliance.pglite.test.ts > per-person training expiry (G10) > lists each active member whose current training lapses within the window, and by when 59ms
+ ✓ training-compliance.pglite.test.ts > per-person training expiry (G10) > names a member whose training on the release in force lapsed, and never one who renewed it 52ms
+ ✓ training-compliance.pglite.test.ts > per-person training expiry (G10) > never lists a member whose current receipt has no expiry 41ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { id: 1, …(9) } ] to deeply equal [ ObjectContaining{…} ]
+AssertionError: expected [ { id: 1, …(9) } ] to deeply equal [ ObjectContaining{…} ]
+AssertionError: expected [ { id: 1, …(9) }, { id: 2, …(9) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+AssertionError: expected [ { id: 1, …(9) } ] to deeply equal [ ObjectContaining{…} ]
+AssertionError: expected undefined to deeply equal { assigned: true, countsNow: true }
+TypeError: summarizeQmsTrainingCompliance is not a function
+AssertionError: member 11 is current but not assigned: expected [ 10, 11 ] to deeply equal [ 10 ]
+      Tests  7 failed | 8 passed (15)

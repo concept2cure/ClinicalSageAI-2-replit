@@ -1,0 +1,14 @@
+# Red: the committed router (HEAD db53f8b43), the new cases
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the creator is refused, nothing is signed or approved, and no re-authentication is spent 86ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a contributor to a section is an author too 11ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an independent approver approves as before 12ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a document with no recorded author cannot be shown independent: 409, nothing signed 6ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an authorship lookup that fails is 503, in the canonical sentence, not the driver text 8ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the author signing as AUTHOR is not a separation-of-duties case 7ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign, which can seal at the last workflow step, is refused to an author too > the creator signing as REVIEWER is refused, and nothing is signed 7ms
+ × server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > the author signing AUTHOR at the last step records authorship and approves nothing 19ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > a reviewer signing REVIEWER at the last step records review and approves nothing 12ms
+   → expected true to be false // Object.is equality
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > an independent APPROVER at the last step approves and freezes, as before (control) 7ms
+      Tests  2 failed | 8 passed (10)

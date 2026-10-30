@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json';
 import { resolveCitation } from '../../../shared/authoring/citations';
+import { isCsrTemplateId, labelledCsr } from '../../../shared/authoring/csr-scientific-review';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { withTenantConnection, type WithTenantConnectionOptions } from '../../db/withTenantConnection';
 import { sectionContentToBlocks, collectCitedSourceIds } from '../../export/authoring-section-content';
@@ -121,9 +122,9 @@ export function savedIsCsr(header: Record<string, unknown>): boolean {
   // study's title with module null, so its provenance is the saved identity too.
   const provenance = header.provenance as { importSource?: { kind?: unknown } } | null | undefined;
   if (provenance && typeof provenance === 'object' && provenance.importSource?.kind === 'csr') return true;
-  return [header.module, header.product_code, header.title]
-    .filter((value): value is string => typeof value === 'string')
-    .some(value => /(?:^|[^a-z0-9])(?:csr|clinical study report)(?:$|[^a-z0-9])/i.test(value));
+  // 2026-10-30: the one CSR rule (shared/authoring/csr-scientific-review.ts):
+  // the label, plural included, and the built-in CSR templates by stored id.
+  return [header.module, header.product_code, header.title].some(labelledCsr) || isCsrTemplateId(header.template_id);
 }
 
 /** CSR slice 5: the evidence summary on every page; its detail is paginated as items. */

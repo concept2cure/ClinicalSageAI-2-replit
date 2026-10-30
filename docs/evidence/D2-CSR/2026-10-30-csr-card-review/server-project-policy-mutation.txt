@@ -1,0 +1,44 @@
+# Mutation: the real project-policy check in resolveCsrScope (server/services/csr/project-scope.ts), which requireCsrJobAccess calls, is disabled
+# sha256 before: 515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e
+diff --git a/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/project-scope.ts.bak b/server/services/csr/project-scope.ts
+index 2315163625..0328c56d2c 100644
+--- a/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/project-scope.ts.bak
++++ b/server/services/csr/project-scope.ts
+@@ -91,7 +91,7 @@ export async function resolveCsrScope(database: Pick<RequestDb, 'select' | 'exec
+   const [project] = await database.select({ id: projects.id, status: projects.status, clientWorkspaceId: projects.clientWorkspaceId }).from(projects).where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId))).limit(1);
+   if (!project) throw new CsrScopeError('CSR_PROJECT_NOT_FOUND', 404, 'Project not found for this organization.');
+   const actor = await readCsrProjectActor(database, organizationId, options.actorUserId);
+-  if (!await canAccessReportProject(organizationId, actor, projectId, queryableFromDrizzle(database))) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor does not have access to this project.');
++  if (false && !await canAccessReportProject(organizationId, actor, projectId, queryableFromDrizzle(database))) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor does not have access to this project.');
+   if (clientWorkspaceId !== undefined && clientWorkspaceId !== project.clientWorkspaceId) throw new CsrScopeError('CSR_WORKSPACE_SCOPE_MISMATCH', 403, 'The selected project is not in this client workspace.');
+   if (options.forWrite !== false && ['archived', 'deleted'].includes(project.status)) throw new CsrScopeError('CSR_PROJECT_ARCHIVED', 409, 'New CSR builds are unavailable for an archived project. Retained CSR work can still be read.');
+   return { projectId, ...(programId ? { programId } : {}), ...(clientWorkspaceId ? { clientWorkspaceId } : {}) };
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves an organization-visible project's headings to an ordinary member 50ms
+ × server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a same-organization member without access to a private project, with no headings 20ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves the private project to its member, so the refusal is the project policy and not the job 12ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a user who is not in the organization at all 6ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > gives 404 when the access check finds no job in this organization 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a same-organization member without access to a private project, with no headings
+AssertionError: expected 200 to be 403 // Object.is equality
+- Expected
++ Received
+- 403
++ 200
+ ❯ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts:71:24
+     69|   it('refuses a same-organization member without access to a private p…
+     70|     const res = await headings(2, 5);
+     71|     expect(res.status).toBe(403);
+       |                        ^
+     72|     expect(res.body.code).toBe('CSR_PROJECT_ACCESS_DENIED');
+     73|     expect(res.body).not.toHaveProperty('headings');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  08:33:04
+   Duration  7.09s (transform 2.13s, setup 103ms, import 3.91s, tests 2.78s, environment 0ms)
+exit: 1
+# restored sha256: 515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e

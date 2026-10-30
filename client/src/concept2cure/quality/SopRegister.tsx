@@ -46,6 +46,7 @@ import {
   STATUS_TONE,
   formatDate,
   isReviewOverdue,
+  coverageKpiOf,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
@@ -67,7 +68,8 @@ import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './Cont
 
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
-import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
+import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel } from './TrainingCoverage';
+import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
 import { TrainingExpiry } from './TrainingExpiry';
 import { RegisterSignatureLine } from './RegisterSignatureLine';
 export interface SopRegisterProps {
@@ -233,6 +235,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
   const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
+  /** The document whose training assignments are open (P-49). */
+  const [assigning, setAssigning] = React.useState<QmsDoc | null>(null);
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [history, setHistory] = React.useState<QmsDoc | null>(null);
@@ -268,10 +272,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
   const overdueCount = reviewDue.filter((r) => r.overdue).length;
-  const trainedRows = training.filter((t) => t.of > 0 && t.eligible !== false);
-  const trainingPct = trainedRows.length
-    ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
-    : 0;
+  // The server's summary (P-49): the client computes no percentage.
+  const coverage = coverageKpiOf(training, trainComp.summary ?? null);
   /* A read that has not answered is not an empty register. An unread register
      resolves to `[]` above, so until 2026-09-25 a 401, a 500 or a
      dropped connection rendered "Effective documents 0" and "Review overdue 0 —
@@ -368,20 +370,20 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
             tone={overdueCount ? 'err' : 'ok'}
           />
         )}
-        {/* No trained rows is nothing assessed, not 0% compliance. */}
-        {trainUnread || trainedRows.length === 0 ? (
+        {/* Nothing assessed is not 0% compliance: no figure, and why. */}
+        {trainUnread || coverage.pct === null ? (
           <Kpi
             label="Acknowledgement coverage"
             val="—"
-            sub={trainUnread ? unreadSub(trainFailed) : training.length === 0 ? 'No training-controlled documents yet' : training.every((t) => t.eligible === false) ? 'Verified released text is unavailable' : 'No active roster members to assess'}
+            sub={trainUnread ? unreadSub(trainFailed) : coverage.sub}
           />
         ) : (
           <Kpi
             label="Acknowledgement coverage"
-            val={String(trainingPct)}
+            val={String(coverage.pct)}
             unit="%"
-            sub="Average verified-release coverage of active roster"
-            tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
+            sub={coverage.sub}
+            tone={coverage.pct >= 95 ? 'ok' : coverage.pct >= 80 ? 'warn' : 'err'}
           />
         )}
       </div>
@@ -511,6 +513,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                 <NextReviewCell doc={d} overdue={overdue} />
                 <div className="qms-cell qms-rowacts">
                   <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
+                  <TrainingChip doc={d} onOpen={setAssigning} />
                   {d.status === 'draft' && (
                     <button
                       className="qms-chip"
@@ -608,6 +611,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         <TrainingExpiry />
       </div>
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
+      {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
         onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
       {reviewing && <QmsRouteForm doc={reviewing} mode="send" onClose={() => setReviewing(null)} onSent={() => sent(reviewing)} />}
@@ -672,4 +676,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       )}
     </>
   );
+}
+
+/** Who must train on this document (P-49): offered on a document that carries read-and-understood, until it is retired. */
+function TrainingChip({ doc, onOpen }: { doc: QmsDoc; onOpen: (doc: QmsDoc) => void }) {
+  if (doc.status === 'retired' || !(QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(doc.docType)) return null;
+  return <button type="button" className="qms-chip" title="Who must read and acknowledge this document: job roles and named people"
+    onClick={() => onOpen(doc)}>{I.users} Training</button>;
 }

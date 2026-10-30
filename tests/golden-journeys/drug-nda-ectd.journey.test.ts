@@ -296,6 +296,10 @@ beforeAll(async () => {
       // constraint, so a cross-organization anchor is refused by the database
       // as it is in production, not only by the writer.
       'migrations/20260925b_submissions_program_anchor.sql',
+      // The sequences a submission filed outside the platform (D7, 2026-10-29):
+      // creating a sequence reads the declared baseline, and refuses a number
+      // inside it. The real table, its guards and its signature trigger.
+      'migrations/20261029g_submission_filed_baselines.sql',
       // A placement reads its document's project (PF-11): an authoring filing
       // copy reaches its document through the alias map. The real tables.
       'db/migrations/20260725_authoring_document_loop_tables.sql',

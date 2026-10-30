@@ -364,20 +364,14 @@ export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
 export const DISPATCH_QC_CHECK: AnaTool = {
   name: 'dispatch_qc_check',
   description:
-    'Run a final adversarial pre-transmit QC pass and decide whether dispatch may proceed. Hard rule: never cleared when there are open error-severity validation findings or unacknowledged Shadow Review criticals. This does NOT transmit — it gates. Tenant comes from the active context; the call is audited.',
+    'Run the final pre-transmit QC on a stored sequence and say whether dispatch may proceed. The verdict is the platform\'s dispatch-readiness assessment of that sequence (the gate freeze, dispatch and transmit enforce: validation findings, Shadow Review, the agency-grade validation gate, the release signature); it is never computed from counts you supply, and a model narrative, when one is configured, only explains it. This does NOT transmit. Tenant comes from the active context; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
-      region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
-      validation_errors: { type: 'number', description: 'Count of open error-severity validation findings.' },
-      unresolved_shadow_criticals: { type: 'number', description: 'Count of unacknowledged Shadow Review criticals.' },
-      leaves: {
-        type: 'array',
-        items: { type: 'object', properties: { section_code: { type: 'string' }, operation: { type: 'string' } }, required: ['section_code', 'operation'] },
-      },
+      sequence_id: { type: 'number', description: 'The stored sequence to assess.' },
       submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
     },
-    required: ['region', 'validation_errors', 'unresolved_shadow_criticals', 'leaves'],
+    required: ['sequence_id'],
   },
 };
 
