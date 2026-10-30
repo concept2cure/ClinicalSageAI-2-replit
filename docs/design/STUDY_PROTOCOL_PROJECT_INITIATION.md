@@ -89,3 +89,50 @@ selection path as starting/selecting a protocol, since filing can change scope.
 The existing tab/section state is factored into `ProtocolWorkNavigation.ts` so
 the workspace remains within the repository's function-size limit. It composes
 the same leave-guard registry, with no second navigation state or service.
+
+## Continuation — AnA navigation respects the same pending-work guard
+
+Launch row D2; the user requested continued improvement after publication.
+
+### What already exists
+
+- `client/src/concept2cure/v2/V2App.tsx`: one serial Live Drive queue checks
+  governed ceremonies and dispatches `beforeunload` before navigation. It does
+  not yet consult the shared surface-leave registry, so protocol status-only
+  changes can be lost when AnA changes the surface, project or remounts it.
+- `client/src/concept2cure/v2/driveQueue.ts`: refuses a move before calling its
+  navigation callback; failed moves report their actual reason to the driving
+  run instead of being counted as applied. Keep this owner and contract.
+- `client/src/concept2cure/v2/navParams.ts`: the existing shared leave registry
+  and native-dialog refusal. No new guard registry or router is needed.
+- `client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts`: registers
+  pending text/status/save state and local dialogs; nested dialogs are found
+  by the shared check. It does not itself own shell navigation.
+- `client/src/concept2cure/v2/editor/DocumentWorkbench.tsx`: registers the
+  canonical editor's current dirty/busy state. Its explicit user save/leave
+  handoffs stay with the existing editor.
+
+Consult the shared refusal from the existing Live Drive queue before any
+navigation can publish another project, stash parameters or remount a screen.
+Keep the existing ceremony and `beforeunload` checks, entitlement checks,
+same-run failure reporting and explicit user handoffs. A refused move must not
+replay after saving; a fresh request may proceed once the guard clears.
+Manual shell/browser-history navigation is a separate boundary, not claimed by
+this slice. No new editor, canvas, generator, store, surface or API.
+
+The existing `surfaceActions.ts` bus also navigates when an action's resolved
+owner is not mounted. Compare against its existing `registeredSurfaceId()`
+before performing such a cross-owner action; same-owner actions retain their own
+existing handlers and safeguards. Checking only explicit navigate moves would
+leave this path open.
+Use the actual mounted owner, not the current route: the shared editor may
+legitimately register inside a different host route. Resolve aliases through
+the existing `resolveSurfaceIdForTarget()` before comparing.
+
+`V2App.tsx` also owns `followWork`, the artifact-saved callback that focuses a
+saved Vault artifact. This currently bypasses the serial queue and can navigate
+away from pending work. Check the same shared refusal before stashing/focusing
+an artifact. A skipped focus is not a failed save and must not replay later as
+a delayed surprise. Keep saved-artifact identity/deduplication behavior explicit.
+Mark the artifact focus handled before refusing it, so a repeated event for the
+same saved artifact cannot jump the screen once the pending guard clears.

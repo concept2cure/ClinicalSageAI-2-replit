@@ -7,7 +7,7 @@
  * lifecycle sequence, and reopens each ZIP to re-verify every checksum.
  */
 
-import { describe, it, expect } from 'vitest';
+import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -29,6 +29,37 @@ const XMLLINT = await isXmllintAvailable();
 async function tmp(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), 'ectd-qual-test-'));
 }
+
+// These native local-check fixtures must not inherit an installed agency corpus
+// or send synthetic packages to an externally configured licensed validator.
+const fixtureEnvironmentKeys = [
+  'ECTD_DTD_DIR', 'ECTD_SCHEMA_DIR', 'EVALIDATOR_BINARY', 'EVALIDATOR_ENDPOINT',
+  'EVALIDATOR_PROFILE_FDA', 'EVALIDATOR_PROFILE_EMA', 'EVALIDATOR_PROFILE_PMDA',
+  'EVALIDATOR_PROFILE_CA', 'EVALIDATOR_USE_FDA_CRITERIA_FALLBACK',
+] as const;
+const savedFixtureEnvironment = new Map<string, string | undefined>();
+let fixtureWork: string | undefined;
+
+beforeAll(async () => {
+  for (const key of fixtureEnvironmentKeys) savedFixtureEnvironment.set(key, process.env[key]);
+  fixtureWork = await tmp();
+  const dtdDir = path.join(fixtureWork, 'empty-dtd');
+  const schemaDir = path.join(fixtureWork, 'empty-schema');
+  await fs.mkdir(dtdDir);
+  await fs.mkdir(schemaDir);
+  for (const key of fixtureEnvironmentKeys) process.env[key] = '';
+  process.env.ECTD_DTD_DIR = dtdDir;
+  process.env.ECTD_SCHEMA_DIR = schemaDir;
+});
+
+afterAll(async () => {
+  for (const key of fixtureEnvironmentKeys) {
+    const previous = savedFixtureEnvironment.get(key);
+    if (previous === undefined) delete process.env[key];
+    else process.env[key] = previous;
+  }
+  if (fixtureWork) await fs.rm(fixtureWork, { recursive: true, force: true });
+});
 
 describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
   it('generates a well-formed, checksum-verified FDA package with a working lifecycle', async () => {
@@ -52,14 +83,15 @@ describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
       expect(r.lifecycle.operationsWithModifiedFile).toContain('replace');
       // …and every pointer names a leaf ID the 0000 package actually carries.
       expect(r.lifecycle.modifiedFileUnresolved).toEqual([]);
-      expect(r.lifecycle.nextPackagePassed).toBe(true);
-      expect(r.passed).toBe(true);
+      expect(r.lifecycle).toMatchObject({ status: 'blocked', availableChecksPassed: true, nextPackagePassed: false });
+      expect(r).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
+      expect(r.blockers.length).toBeGreaterThan(0);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
   }, 30000);
 
-  it.each(['ema', 'pmda', 'ca'] as Region[])('qualifies region %s (well-formed + checksums)', async (region) => {
+  it.each(['ema', 'pmda', 'ca'] as Region[])('records local checks for region %s without complete qualification', async (region) => {
     const work = await tmp();
     try {
       const r = await qualifyV3(region, work);
@@ -67,7 +99,8 @@ describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
       for (const v of r.validators.filter((x) => x.name.includes('well-formed'))) {
         expect(v.passed).toBe(true);
       }
-      expect(r.passed).toBe(true);
+      expect(r).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
+      expect(r.blockers.length).toBeGreaterThan(0);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
@@ -84,7 +117,8 @@ describe('eCTD v4.0 qualification', () => {
       const model = r.validators.find((v) => v.name === 'rps-model-validator');
       expect(model?.passed).toBe(true);
       const wf = r.validators.find((v) => v.name.includes('well-formed'));
-      if (wf) expect(wf.passed).toBe(true);
+      if (wf?.ran) expect(wf.passed).toBe(true);
+      else expect(wf).toMatchObject({ ran: false, passed: false });
       // Package checksums + per-document SHA-256 integrity re-verified.
       expect(r.checksum.ok).toBe(true);
       expect(r.notes.some((n) => n.includes('integrity mismatch'))).toBe(false);
@@ -93,8 +127,9 @@ describe('eCTD v4.0 qualification', () => {
       // predecessor via relatedContextOfUse (its modified-file analogue).
       expect(r.lifecycle.operations).toContain('revise');
       expect(r.lifecycle.operationsWithModifiedFile).toContain('revise');
-      expect(r.lifecycle.nextPackagePassed).toBe(true);
-      expect(r.passed).toBe(true);
+      expect(r.lifecycle).toMatchObject({ status: 'blocked', availableChecksPassed: true, nextPackagePassed: false });
+      expect(r).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
+      expect(r.blockers.length).toBeGreaterThan(0);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
@@ -102,7 +137,7 @@ describe('eCTD v4.0 qualification', () => {
 });
 
 describe.skipIf(!XMLLINT)('runQualification (full suite, preserved reports)', () => {
-  it('runs FDA v3 + v4 and writes reports with exact spec versions', async () => {
+  it('runs FDA v3 + v4 and preserves blocked outcomes with declared spec versions', async () => {
     const work = await tmp();
     const reportDir = path.join(work, 'reports');
     try {
@@ -113,14 +148,17 @@ describe.skipIf(!XMLLINT)('runQualification (full suite, preserved reports)', ()
         workDir: work,
         ranAt: '2026-07-30T00:00:00.000Z',
       });
-      expect(summary.passed).toBe(true);
+      expect(summary).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
+      expect(summary.blockers.length).toBeGreaterThan(0);
       expect(summary.reports.length).toBe(2);
-      // Reports were preserved with the exact qualified spec versions.
+      // Preserve declared references without calling unexecuted coverage qualified.
       const v3 = JSON.parse(await fs.readFile(path.join(reportDir, 'v3.2.2-fda.json'), 'utf8'));
       expect(v3.specVersions.validationCriteria).toContain('v4.5');
       expect(v3.specVersions.fdaRegionalDtd).toContain('v3.3');
+      expect(v3).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
       const v4 = JSON.parse(await fs.readFile(path.join(reportDir, 'v4.0-fda.json'), 'utf8'));
       expect(v4.specVersions.fdaRegionalIg).toContain('18.8');
+      expect(v4).toMatchObject({ status: 'blocked', availableChecksPassed: true, passed: false });
       expect(await fs.readFile(path.join(reportDir, 'summary.json'), 'utf8')).toContain('"passed"');
     } finally {
       await fs.rm(work, { recursive: true, force: true });

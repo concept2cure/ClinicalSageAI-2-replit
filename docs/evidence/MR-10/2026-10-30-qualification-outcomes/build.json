@@ -1,0 +1,11 @@
+{
+  "canonicalBase": "af226ae6a5efa16fbd79a3a91234c9bfa5d54277",
+  "command": "npm exec --yes --package=node@22 -- npm run build",
+  "exitCode": 0,
+  "outputs": [
+    "client",
+    "server dist/index.js",
+    "audit-chain verifier dist/ops/verify-audit-chain.mjs"
+  ],
+  "sourceInputChangesAfterTestsAndBuild": []
+}

@@ -1,0 +1,48 @@
+{
+  "startedAt": "2026-10-30T19:09:48.537054+00:00",
+  "finishedAt": "2026-10-30T19:09:51.490598+00:00",
+  "canonicalBase": "af226ae6a5efa16fbd79a3a91234c9bfa5d54277",
+  "command": [
+    "npm",
+    "exec",
+    "--yes",
+    "--package=node@22",
+    "--",
+    "node",
+    "--import",
+    "tsx",
+    "scripts/ectd/qualify-ectd.ts",
+    "--region",
+    "fda",
+    "--no-v4",
+    "--report-dir",
+    "/tmp/ectd-outcome-actual-fddjbgia/reports",
+    "--work-dir",
+    "/tmp/ectd-outcome-actual-fddjbgia/packages"
+  ],
+  "runtimeSelectorPresenceOnly": {
+    "ECTD_DTD_DIR": false,
+    "ECTD_SCHEMA_DIR": false,
+    "EVALIDATOR_BINARY": false,
+    "EVALIDATOR_ENDPOINT": false,
+    "EVALIDATOR_PROFILE_FDA": false,
+    "EVALIDATOR_PROFILE_EMA": false,
+    "EVALIDATOR_PROFILE_PMDA": false,
+    "EVALIDATOR_PROFILE": false,
+    "EVALIDATOR_USE_FDA_CRITERIA_FALLBACK": false,
+    "ECTD_REQUIRE_DTD": false,
+    "ECTD_REQUIRE_EVALIDATOR": false,
+    "ECTD_REQUIRE_RPS_SCHEMA": false
+  },
+  "nativeXmlTool": "/tmp/csr-stf-xml-tools/runtime/usr/bin/xmllint (libxml 2.9.14)",
+  "exitCode": 1,
+  "status": "blocked",
+  "availableChecksPassed": true,
+  "purpose": "actual existing CLI over golden synthetic documents in unconfigured runtime; expected incomplete-qualification refusal, no agency acceptance",
+  "artifacts": {
+    "amendment.zip": "63060e5e2f945e48ee65187006871a4ab9d73a18f3e0b7848992cc83a80ee48f",
+    "original.zip": "f555a0a5bcebb8034fc8db41ce9e77fd1226aec0699aa3ffd526576164938765",
+    "summary.json": "443d661f2501653ee53743f8f8a79ab28cd8cf5a9819a82bdeb0beb04d501a76",
+    "v3.2.2-fda.json": "c997d6ac7c3d3609cf3f9529fa6f6b753c893d27df6e1b998e345a33b7e3adf4"
+  }
+}

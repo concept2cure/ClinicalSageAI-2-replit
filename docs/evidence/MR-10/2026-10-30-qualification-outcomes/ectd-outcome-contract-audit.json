@@ -1,0 +1,59 @@
+{
+  "kind": "read-only audit of existing qualification API, summary, CLI and test contract",
+  "scope": "No repository edits, tests, build, compiler, provider, publication or Git mutation performed.",
+  "sourceOwners": [
+    {
+      "path": "server/services/ectd/qualification/qualify.ts",
+      "finding": "QualificationReport and QualificationSummary passed count emitted validators/hash/lifecycle checks, not absent schema/external prerequisites; runQualification empty report selection passes reports.every vacuously."
+    },
+    {
+      "path": "scripts/ectd/qualify-ectd.ts",
+      "finding": "Only non-test API consumer found. Prints PASS/FAIL from passed and exits0 for missing-asset/engine runs that currently pass available checks."
+    },
+    {
+      "path": "server/services/ectd/qualification/__tests__/qualification.test.ts",
+      "finding": "Opening v3/v4/full-summary tests explicitly expect aggregate true without schemas/engine. Their concrete well-formed/hash/lifecycle assertions remain useful positive controls."
+    },
+    {
+      "path": "server/services/ectd/external-validator/gate.ts",
+      "finding": "Existing factual assessment distinguishes coherent passed/failed external runs from not_assessed/invalid, without conflating internal_subset or advisory clearance with completion."
+    }
+  ],
+  "minimalContract": {
+    "reportAndSummaryFields": {
+      "status": "required passed | failed | blocked",
+      "availableChecksPassed": "required boolean retaining useful executed/local-check aggregate, explicitly separate from qualification completeness",
+      "blockers": "required string[] describing missing/unverified prerequisites with report/sequence/file attribution",
+      "passed": "existing boolean retained, true iff status is passed"
+    },
+    "scope": "Automated technical qualification only. Never counsel/license/profile qualification, current-FDA coverage, human witnessing or agency acceptance.",
+    "precedence": "Failed when observed executed checks establish actual invalid content/integrity or a coherent external run reports errors. Otherwise blocked when required proof/execution is absent, unrun, invalid or unsupported. Passed only for complete nonempty coherent technical proof with successful checks.",
+    "importantDistinction": "An unrun operational error or invalid external report cannot be counted as a known content failure or clean count; preserve the canonical assessment and raw diagnostics, and block qualification.",
+    "localEvidence": "Keep raw validators, checksums, lifecycle operations/pointers, notes and declaration versions. Do not parse prose notes to decide machine status.",
+    "lifecycle": "Retain local lifecycle check outcome separately if needed; nextPackagePassed should not imply complete qualification when amendment index/schema/external proof is absent.",
+    "emptySelection": "Reject v3Regions=[] and includeV4=false before package/report work, or emit explicit blocked nonempty reason. Do not allow success from an empty reports array.",
+    "duplicateSelection": "Prefer reject duplicate v3 region selections because current report IDs overwrite the same JSON filename; optional if root keeps this slice strictly to empty selection.",
+    "summary": "Nonempty complete set required. A known failure dominates blocked in overall status; preserve all missing prerequisites and concrete failures with report identity.",
+    "cli": "Print explicit PASS/FAIL/BLOCKED from status and print blockers. Exit0 only for passed; exit1 for failed or blocked keeps existing nonzero failure convention. Available local success may be printed separately but cannot produce Overall PASS.",
+    "compatibility": "No live API or persisted report reader found. Change obsolete aggregate true test expectations; keep old saved evidence immutable and labelled with its historical limited meaning."
+  },
+  "boundedVersionAdvice": {
+    "v3": "Reuse captured-package DTD interpretation plus the canonical external report gate for both original and amendment. Include amendment index in actual file checks. Do not let an internal subset satisfy external completion or run fallback twice.",
+    "v4": "No captured/confined complete-schema proof exists in this owner. Keep real local model/WF/XSD/integrity controls, but explicitly block complete technical qualification pending that proof; do not introduce another XSD engine in this slice.",
+    "versions": "Retain existing specVersions as declared reference targets. Clarify they do not certify current criteria4.7 or actual profile coverage. No silent version bump."
+  },
+  "failingFirstCases": [
+    "Actual isolated empty-drop-point/unconfigured FDA v3 run: local WF/checksum/lifecycle controls succeed while status blocked and passed false; missing DTD/supportive/external reasons explicit.",
+    "Actual isolated v4 missing-schema run: internal local controls retained; blocked overall, never complete solely because absent XSD emitted no row.",
+    "Missing xmllint execution: blocked and diagnostic preserved, never passed or claimed package-content failure.",
+    "Synthetic complete v3 captured proof and coherent selected external report for both sequences: narrowly labelled technical positive control passes; no agency acceptance claimed.",
+    "Original external clean, amendment external unrun/mismatched/incoherent: blocked overall and per-amendment identity preserved; no clean count inferred.",
+    "Coherent executed external error report or actual malformed XML/checksum/lifecycle pointer failure: failed result, raw diagnostics retained, nonzero CLI.",
+    "Selected internal subset succeeds: local result retained, external assessment not established, no duplicate subset run, overall blocked.",
+    "Only amendment index malformed or unvalidated while regional/STF rows clean: cannot produce nextPackagePassed or aggregate passed.",
+    "Empty run selection: nonzero/rejected or explicit blocked result; no empty overall success.",
+    "Persisted report and summary status/availableChecksPassed/blockers match in-memory outcome.",
+    "CLI blocked case prints BLOCKED plus actionable reasons and exits nonzero; complete synthetic positive and known-failure controls prove all formatter/exit branches."
+  ],
+  "testBoundary": "Keep existing manifest and real XML checks, including intentionally synthetic stand-in schema tests, intact. Change only their unsupported aggregate qualification claims. A native unconfigured run plus CLI observation supplies real negative integration evidence; controlled external reports in tests are wiring tests only."
+}

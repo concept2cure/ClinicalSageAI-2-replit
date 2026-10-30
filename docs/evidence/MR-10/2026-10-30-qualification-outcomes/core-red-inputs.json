@@ -1,0 +1,16 @@
+{
+  "kind": "corrected core tests before qualification production change",
+  "canonicalBase": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "files": {
+    "server/services/ectd/qualification/qualify.ts": "b1c360e2e1b374fdf48d1683f84517fd952f6520fac0349be7a7323d64b3f85a",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "40bfcdf739de54f13f2a570bd54e2f08426ef13deed3e7c11c2f0974c1a883f7",
+    "server/services/ectd/external-validator/index.ts": "12b4c254c7450f99cd617437bcfbdff89529005cd47c907525762a23fe80cc92",
+    "server/services/ectd/external-validator/gate.ts": "7b0db76efe38e864507e7470ec4c695735f539bf13a7c64564122f1e3df5739a",
+    "server/services/ectd/dtd-bundler.ts": "87849d63455d8eb05291a327586382747531223a4284a7ca7bbe8ef850b0901f",
+    "server/services/ectd/qualification/golden-fixtures.ts": "0a12c7bef35847a6310218c4696999cca966bb5be7705e450df31dc1926c1f57",
+    "package.json": "d5237fb405d77f3fb5aba77245c8ba832be7c88d65114822e5b2bfe221757fc6",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26"
+  }
+}

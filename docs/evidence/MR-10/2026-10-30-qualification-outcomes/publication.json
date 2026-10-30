@@ -1,0 +1,91 @@
+{
+  "recordedAt": "2026-10-30T19:22:54.448884+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "implementationCommit": "dcdd4cb97f7c1547806919caff3ece9c2d2d1522",
+  "acceptedSource": "61fe4fd81d7283c6e47a221ef44bc20bd7af1b62",
+  "acceptedParentRemote": "4f92b436430c7881df67b5b72cf3d0db96d39c71",
+  "normalSourcePushExitCode": 0,
+  "fullTypecheck": {
+    "errors": 0,
+    "compilerExitCode": 0,
+    "baseline": 0,
+    "hook": "normal ci:pushed-typecheck / typecheck-no-regression --incremental"
+  },
+  "scopedLint": {
+    "changedTypeScriptFiles": 8,
+    "errors": 0,
+    "warningGrowth": 0,
+    "normalPushRatchetPassed": true
+  },
+  "affectedRegression": {
+    "testsPassed": 348,
+    "testFilesPassed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "inputs": "final-inputs.json",
+    "testedCanonicalBase": "af226ae6a5efa16fbd79a3a91234c9bfa5d54277"
+  },
+  "committedBlobVerification": {
+    "commit": "61fe4fd81d7283c6e47a221ef44bc20bd7af1b62",
+    "pinnedFilesCompared": 334,
+    "mismatches": []
+  },
+  "builds": [
+    {
+      "source": "af226ae6a5efa16fbd79a3a91234c9bfa5d54277",
+      "withUncommittedImplementation": true,
+      "exitCode": 0,
+      "log": "ectd-outcome-build.log.gz"
+    },
+    {
+      "source": "5a72e64aa1191373d54c8ac83ed815f35e3f7ef3",
+      "exitCode": 0,
+      "log": "ectd-outcome-merged-build.log.gz"
+    },
+    {
+      "source": "61fe4fd81d7283c6e47a221ef44bc20bd7af1b62",
+      "exitCode": 0,
+      "log": "ectd-outcome-final-merged-build.log.gz"
+    }
+  ],
+  "actualUnconfiguredCommand": {
+    "exitCode": 1,
+    "status": "blocked",
+    "availableChecksPassed": true,
+    "execution": "actual-unconfigured-run/execution.json",
+    "acceptance": "Expected incomplete-qualification refusal over golden synthetic documents; no agency pass."
+  },
+  "publicationRetries": [
+    {
+      "source": "5a72e64aa1191373d54c8ac83ed815f35e3f7ef3",
+      "allNormalGatesPassed": true,
+      "compilerErrors": 0,
+      "pushExitCode": 1,
+      "reason": "Remote advanced to documentation-only IND receipt3ab7b7220 during gates."
+    },
+    {
+      "source": "598d73d61f1d7d6b69bff75ac7461a9eb5c01f01",
+      "allNormalGatesPassed": true,
+      "compilerErrors": 0,
+      "pushExitCode": 1,
+      "reason": "Remote advanced to4f92b4364, carrying disjoint protocol navigation preservation."
+    }
+  ],
+  "concurrentWork": "Canonical Vault/project/catalog, recorded drafting and protocol changes preserved by merges. No qualification input changed in those merges; final merged application rebuilt. No force push, branch or hook/baseline bypass.",
+  "review": "Independent read-only code review found malformed mismatch attribution; reproduced3cases RED, fixed, final review clear. Read-only evidence consistency review clear.",
+  "agencyQualification": "Blocked pending existing recorded prerequisites; current criteria coverage, counsel/license decisions, human witnessing and agency acceptance not established.",
+  "verificationArtifactManifest": "artifact-manifest.json",
+  "publicationArtifactsSha256": {
+    "ectd-outcome-commit.log.gz": "fe3fa657dd2e6568b5595ba00b22afbf04e06c28d2b7506337012be9a6080897",
+    "ectd-outcome-publication-merge.log.gz": "250091958d1661a15957a9ca3817dd8a662b19fb598f40bc356e83015066a147",
+    "ectd-outcome-publication-merge2.log.gz": "c0c46e9198ebccb3272a6bc911c240219f75d16bca79a4dac334727b9f32f026",
+    "ectd-outcome-publication-merge3.log.gz": "80c1dbb8edbc436769ff6191ee3cf69926a2f44c60c8929adaccda7707275dcd",
+    "ectd-outcome-merged-build.log.gz": "456c4d308bc0cb54ee56fbf46f91049647152cabc9c7d05029a0ac5ce420c10f",
+    "ectd-outcome-final-merged-build.log.gz": "11a3e1a3495ef8f7737d5fe340781a058c20b8c59ff6cfd2fbc88e6d53fc4dbd",
+    "ectd-outcome-push-attempt1-ref-race.log.gz": "a8c00825c2f95a1c521fceac99a4b790a219fb5f2c0ba76bd383ad1d1fbb4d48",
+    "ectd-outcome-push-attempt2-ref-race.log.gz": "c8b3c5fe05dbedbd1f1d20f4c7a889fd9e7c38f9e39b5a4d8a7188b4525fb138",
+    "ectd-outcome-push.log.gz": "e2cfe4c0c0383b0d105bf986004ebf27e034deafab14267ca2fb8f7af41ade0e"
+  },
+  "deploymentOrRemoteCiCompletionClaimed": false
+}

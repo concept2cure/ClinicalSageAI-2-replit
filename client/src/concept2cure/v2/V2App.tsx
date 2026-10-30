@@ -39,6 +39,7 @@ import {
   applySurfaceAction,
   cancelPendingSurfaceAction,
   readDirectiveProgram,
+  registeredSurfaceId,
   validateDriveAction,
 } from './surfaceActions';
 import { waitingForPerson } from './anaWorkModel';
@@ -47,7 +48,7 @@ import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { RunPolicyContext } from './RunPolicySwitch';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { isAnaRunPolicy } from '@shared/ana/run-policy';
-import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
+import { resolveSurfaceIdForTarget, stashNavParamsForTarget, surfaceLeaveRefusal } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { ceremonyOpen } from './ceremony';
 import { publishShellProject } from './shellProject';
@@ -460,7 +461,13 @@ export function V2App() {
         // Recheck when the move takes its turn. A governed form can open
         // after an event arrived while another operation was still running.
         if (ceremonyOpen()) return 'Finish or cancel the open governed form before AnA changes the screen.';
-        if (move.kind === 'navigate') {
+        // The action bus navigates too when its resolved owner is not mounted.
+        // Compare actual registration, since the shared editor can be nested in another route.
+        const leavesOwner = move.kind === 'navigate'
+          || registeredSurfaceId() !== resolveSurfaceIdForTarget(move.directive.surfaceId);
+        if (leavesOwner) {
+          const pending = surfaceLeaveRefusal();
+          if (pending) return pending;
           // The canonical editor owns this refusal only while its buffer is
           // dirty. Check before navigation can publish a different program.
           const leave = new Event('beforeunload', { cancelable: true });
@@ -708,6 +715,9 @@ export function V2App() {
       if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
       if (followedArtifactsRef.current.has(artifactId)) return;
       followedArtifactsRef.current.add(artifactId);
+      // Consume a blocked focus too: duplicate save events must not move the
+      // screen later after the person clears their pending work.
+      if (surfaceLeaveRefusal()) return;
       const focus = resolveSurfaceAction('vault.focus-document', { artifactId });
       if (focus.ok) applySurfaceAction(focus.directive, nav);
     },
