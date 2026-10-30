@@ -1,0 +1,11 @@
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > recording a meeting > names this organisation's submission, or none, and never another tenant's 13ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > runs one way, needs the date a move records, and does not reopen a closed meeting 15ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > does not move another organisation's meeting 2ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > listing meetings > shows meetings with no submission and those on programs the reader may open, and no other 6ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > names this project's minutes letter when the minutes are received, and nothing else 18ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > refuses a minutes letter on a meeting that names no submission, or on any other move 9ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > clears the link when the letter is purged, and never blocks the purge 11ms
+ ✓ client/src/concept2cure/v2/__tests__/haMeetingMove.test.tsx > MoveMeetingForm > offers a scheduled meeting held or cancelled, and sends the held date 396ms
+ ✓ client/src/concept2cure/v2/__tests__/haMeetingMove.test.tsx > MoveMeetingForm > offers a held meeting's project's minutes letters, only those, and names the chosen one (P-39 step 4c) 123ms
+ ✓ client/src/concept2cure/v2/__tests__/haMeetingMove.test.tsx > MoveMeetingForm > offers no move for a closed or cancelled meeting 1ms
+      Tests  10 passed (10)

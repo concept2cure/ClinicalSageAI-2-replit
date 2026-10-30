@@ -9,7 +9,9 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
+import fs from 'node:fs';
+import path from 'node:path';
+import { extractTableDdl, REPO_ROOT } from '../../../../tests/golden-journeys/harness';
 
 vi.mock('../../../db', () => ({ pool: { query: vi.fn() } }));
 import { createInteractionTx, listInteractions, updateInteractionStatusTx } from '../ha-service';
@@ -25,11 +27,22 @@ beforeAll(async () => {
     CREATE TABLE organizations (id integer PRIMARY KEY);
     CREATE TABLE users (id integer PRIMARY KEY);
     CREATE TABLE submissions (id integer PRIMARY KEY, organization_id integer NOT NULL, program_id uuid, deleted_at timestamptz);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid, status text);
+    INSERT INTO projects VALUES (100, 1, '${PROGRAM_A}', 'active'), (101, 1, '${PROGRAM_B}', 'active');
     INSERT INTO organizations VALUES (1), (2);
     INSERT INTO users VALUES (5);
     INSERT INTO submissions VALUES (10, 1, '${PROGRAM_A}', NULL), (11, 1, '${PROGRAM_B}', NULL), (20, 2, '${PROGRAM_A}', NULL);
   `);
   await pg.exec(extractTableDdl('migrations/20260610_ha_interactions_commitments.sql', ['ha_interactions']));
+  await pg.exec(extractTableDdl('db/migrations/20260331_communication_center_scaffold.sql', ['concept2cure_agency_communications']));
+  const minutesLink = fs.readFileSync(path.join(REPO_ROOT, 'migrations/20261030_ha_interaction_minutes_letter.sql'), 'utf8');
+  await pg.exec(minutesLink);
+  await pg.exec(minutesLink); // replayed on every deploy
+  const letter = (id: string, project: number, source: string) =>
+    `('${id}', 1, ${project}, '${source}', 'Meeting minutes', 'email', 'medium', 'pending', 'open', '{}'::jsonb)`;
+  await pg.exec(`INSERT INTO concept2cure_agency_communications
+    (event_id, organization_id, project_id, source_type, communication_type, source_channel, urgency, human_review_status, closure_status, audit_metadata)
+    VALUES ${letter('ace_minutes_a', 100, 'meeting_minutes')}, ${letter('ace_ir_a', 100, 'information_request')}, ${letter('ace_minutes_b', 101, 'meeting_minutes')}`);
 }, 60_000);
 afterAll(async () => { await pg?.close(); });
 
@@ -73,3 +86,39 @@ describe('listing meetings', () => {
     expect((await listInteractions(1, undefined, [PROGRAM_A, PROGRAM_B], q)).some((r) => Number(r.submission_id) === 11)).toBe(true);
   });
 });
+
+describe("naming a meeting's minutes (P-39 step 4c)", () => {
+  async function heldMeeting(submissionId?: number) {
+    const { id } = await createInteractionTx(q, 1, 5, meeting(submissionId));
+    await updateInteractionStatusTx(q, 1, id, 'scheduled', { scheduledDate: '2026-11-02' });
+    await updateInteractionStatusTx(q, 1, id, 'held', { heldDate: '2026-11-02' });
+    return id;
+  }
+
+  it("names this project's minutes letter when the minutes are received, and nothing else", async () => {
+    const id = await heldMeeting(10);
+    const minutes = (eventId: string) => updateInteractionStatusTx(q, 1, id, 'minutes_received', { minutesReceivedDate: '2026-12-01', minutesEventId: eventId });
+    await expect(minutes('ace_ir_a')).rejects.toMatchObject({ code: 'BAD_INPUT' });
+    await expect(minutes('ace_minutes_b')).rejects.toMatchObject({ code: 'BAD_INPUT' });
+    await expect(minutes('ace_nowhere')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await minutes('ace_minutes_a');
+    expect((await pg.query<any>('SELECT minutes_event_id FROM ha_interactions WHERE id = $1', [id])).rows[0].minutes_event_id).toBe('ace_minutes_a');
+    expect((await listInteractions(1, undefined, [PROGRAM_A], q)).find((r) => r.id === id)).toMatchObject({ minutes_event_id: 'ace_minutes_a', project_id: 100 });
+  });
+
+  it('refuses a minutes letter on a meeting that names no submission, or on any other move', async () => {
+    const orgLevel = await heldMeeting();
+    await expect(updateInteractionStatusTx(q, 1, orgLevel, 'minutes_received', { minutesReceivedDate: '2026-12-01', minutesEventId: 'ace_minutes_a' }))
+      .rejects.toMatchObject({ code: 'BAD_INPUT' });
+    const { id } = await createInteractionTx(q, 1, 5, meeting(10));
+    await expect(updateInteractionStatusTx(q, 1, id, 'requested', { minutesEventId: 'ace_minutes_a' })).rejects.toMatchObject({ code: 'BAD_INPUT' });
+  });
+
+  it('clears the link when the letter is purged, and never blocks the purge', async () => {
+    const id = await heldMeeting(11);
+    await updateInteractionStatusTx(q, 1, id, 'minutes_received', { minutesReceivedDate: '2026-12-01', minutesEventId: 'ace_minutes_b' });
+    await pg.query(`DELETE FROM concept2cure_agency_communications WHERE event_id = 'ace_minutes_b'`);
+    expect((await pg.query<any>('SELECT minutes_event_id FROM ha_interactions WHERE id = $1', [id])).rows[0].minutes_event_id).toBeNull();
+  });
+});
+
