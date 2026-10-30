@@ -257,3 +257,30 @@ The existing eSTAR helper supports De Novo, while the surrounding 510(k) view
 still carries predicate/SE-specific content; its existence does not justify
 routing De Novo strategy through that entire view. A regression first fails
 on the missing Author handoff, then passes with the corrected destination.
+
+## Risk-file continuation on 2026-10-30
+
+### What already exists
+
+The previous environment's unfinished local risk changes were lost when that environment was replaced. Published workflow changes remain on the canonical branch. This continuation starts from `47ce1d3d95eff4a6b3614146cc79b670d7b20645` and follows the accepted direction in `.design/client-journey/INFORMATION_ARCHITECTURE.md`.
+
+- `client/src/concept2cure/v2/surfaces/RiskRegister.tsx` is now the canonical ISO 14971 panel. `mdx/surfaces/EngineeringSurface.tsx` mounts it and the existing `DesignControlsTrace.tsx`; `engineeringPanelsContext.ts` reports their context into the host's single AnA publish. `Risk.tsx` was removed in fold F1c (`303f4901`). It must remain removed. The newer core feature includes signed acceptance and signed-content lock behavior.
+- `ProjectMdxWorkflow.tsx` reaches Engineering from risk, design-control and manufacturing workstreams. `projectDoors.ts` owns job-based button labels. The missing handoff is focus on the requested existing subsection; a second Risk screen or Evidence register would reverse the accepted fold.
+- `RiskRegister.tsx` already reads project lists and writes hazards with programId. Its list mapper does not hydrate persisted controls, its delayed mutations lack current-visit/session guards, and a malformed acceptance row can fall back to locally accepted status. Complete these paths while preserving the existing signature ceremony and lock.
+- `projectScopedRead.tsx` verifies scope metadata. `dataConnect.tsx`, the authoring current-read/session helpers and `shellProject.ts` already provide current actor/read/visit ownership. Reuse those guards, rather than inventing an independent session mechanism.
+- `server/routes/mdx-risk-management.ts` now checks organization ownership using `server/lib/admit-project.ts`, gates editing roles, and uses `governed-signed-act.ts`, `mdx-risk-acceptance-lock.ts` and existing signed-content services. It still needs current private/shared-project admission on all record/control reads and mutations; the same-project binding must survive ID substitution and reparenting.
+- `server/services/c2c/current-program-access.ts` and `server/services/report-os/project-access.ts` already own current program visibility and shared edit policy. Extend the existing risk API with those policies. No migration, duplicate store or alternate signature implementation.
+- `navParams.ts` already supplies TTL-bounded one-shot navigation parameters and events; `shared/navigation/index.ts` owns allowed navigation parameters. Extend that handoff for existing engineering subsections, with project/actor/visit binding and busy-dialog protection.
+- Existing qualification includes `foldRiskDesignControls.test.ts`, `EngineeringSurface.riskRegister.test.tsx`, risk mapping/honesty, signed-acceptance/signed-content, route recomputation and current project-access suites. Deleted-history search in this shallow checkout shows `303f4901`; the earlier checkout also established the retired `/api/design-risk` deletion (`153481465`), whose incompatible tables must remain retired.
+
+### Completion contract
+
+The risk workstream reaches the existing engineering risk subsection with the selected project unchanged; design controls similarly reaches its existing trace. Feature access, project refusal, signed acceptance/reopen, content locks and the host's composed AnA context remain in force. Persisted controls are read for the selected hazard with explicit loading/refusal/error/empty states. A retired project visit, actor or mount cannot hydrate current state or report a late write as current work. The client never fabricates acceptance from a missing/malformed signed row.
+
+Risk API reads apply current project visibility, including unfiltered lists, and retain NULL program organization records only where an organization list is explicitly requested. Writes require current actor and canonical shared-edit admission in the same transaction; scoped selectors must match records, both ends of reparenting require admission, and introduced-risk links cannot cross organization/project boundaries. Signature ceremony and signed-content locks are preserved. Exact implementation boundaries are reviewed against current signed helpers before edits.
+
+D2 evidence is filed under `docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/`. Automated tests, actual-component synthetic browser evidence and source/build/gate receipts qualify this source change; they do not establish a deployed runtime or human client acceptance.
+
+Integration review also traced `server/routes/mdx-engineering.ts`: its existing aggregate returns the same risk and control records before the register's separate read. It checks organization ownership and runs panel SQL through the global pool. Current project admission must therefore guard this existing aggregate too, on the pinned request executor and again after panel reads. Otherwise a private project's records could still reach the same screen through the aggregate. Extend that route and its existing qualification; no second engineering service or independent visibility rule.
+
+Browser review traced the phone layout to the existing shared `.risk-split` two-column recipe in `v2/styles/misc-surfaces-v2.css`. The MDX host clips horizontal overflow, so document width alone missed a 333px matrix beside a 193px drawer in a 390px viewport. The existing MDX stylesheet now stacks those same components below 640px and constrains matrix tracks. A Chromium regression fails on the original computed columns and passes with one column; no replacement register or stylesheet is introduced. The MDX host also keys Engineering by project, retiring its cached aggregate and working state when the project changes.

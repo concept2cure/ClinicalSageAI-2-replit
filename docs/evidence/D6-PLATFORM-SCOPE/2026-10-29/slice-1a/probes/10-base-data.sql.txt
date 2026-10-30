@@ -1,0 +1,17 @@
+-- P-72 slice 1a: data on the base copy (a copy of slice 0's seeded two-tenant database, c2c_p72_seed), as the superuser, past triggers.
+-- B's admin holds a reset token; A invites B's admin (a cross-organization invitation, read through invitations_for_member from B);
+-- a third account in A holds a membership role outside every list the server writes ('legacy_reviewer'), to show the role check keeps it writable.
+\set ON_ERROR_STOP on
+SET session_replication_role = 'replica';
+UPDATE users SET reset_token = 's1a-reset-hash', reset_token_expires_at = now() + interval '1 hour' WHERE email = 'p72-b-admin@example.invalid';
+INSERT INTO users (email, name, password_hash, status)
+VALUES ('p72-a-legacy@example.invalid', 'p72 a legacy', '$2a$10$abcdefghijklmnopqrstuuJ8bJ3xNnpGQwq5vYpQmB4M3Z8f1G2a', 'active') ON CONFLICT DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+SELECT o.id, u.id, 'legacy_reviewer' FROM organizations o, users u WHERE o.slug = 'p72-a' AND u.email = 'p72-a-legacy@example.invalid' ON CONFLICT DO NOTHING;
+INSERT INTO organization_invitations (organization_id, user_id, email, role, status, invited_by_id)
+SELECT a.id, ub.id, ub.email, 'member', 'pending', ua.id
+  FROM organizations a, users ua, users ub
+ WHERE a.slug = 'p72-a' AND ua.email = 'p72-a-admin@example.invalid' AND ub.email = 'p72-b-admin@example.invalid';
+SET session_replication_role = 'origin';
+SELECT o.slug, u.email, ou.role FROM organization_users ou JOIN organizations o ON o.id = ou.organization_id JOIN users u ON u.id = ou.user_id WHERE o.slug LIKE 'p72-%' ORDER BY 1, 2;
+SELECT i.id, o.slug AS inviting_org, i.email, i.status FROM organization_invitations i JOIN organizations o ON o.id = i.organization_id WHERE i.user_id = (SELECT id FROM users WHERE email = 'p72-b-admin@example.invalid') AND o.slug = 'p72-a';

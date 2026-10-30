@@ -21,6 +21,7 @@ import { getProjectSignals } from '../intelligence/rim.js';
 import { querySignals, getRecurringPatterns, type IntelligenceSignal } from '../intelligence/signal-capture.js';
 import { patternRegistry } from '../intelligence/pattern-registry.js';
 import { getProjectIntelligence } from '../intelligence/project-intelligence-service.js';
+import { hasProjectRecordedNotes } from '../../../shared/project-recorded-context.js';
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies } from './deficiency-taxonomy.js';
@@ -1146,43 +1147,39 @@ async function enrichWithProjectSummary(projectId: ProjectRowId, orgId?: number)
        NaN on every v2 project turn (QA 2026-10-08 j5; ana-14). */
     const intel = await getProjectIntelligence(projectId, orgId);
     if (!intel) return '';
+    if (!hasProjectRecordedNotes(intel)) throw new Error('Recorded project profile notes could not be verified');
 
-    const parts: string[] = ['## Project Intelligence Profile'];
+    const parts: string[] = ['## Project Intelligence Profile', 'Recorded profile notes, not verified evidence or approvals.'];
     if (intel.regulatoryStrategy) parts.push(`**Strategy:** ${intel.regulatoryStrategy}`);
     if (intel.targetIndication) parts.push(`**Indication:** ${intel.targetIndication}`);
     if (intel.targetPopulation) parts.push(`**Population:** ${intel.targetPopulation}`);
 
     if (intel.riskFactors.length > 0) {
-      parts.push(`\n**Known Risks (${intel.riskFactors.length}):**`);
-      for (const r of intel.riskFactors.slice(0, 5)) {
-        parts.push(`- [${(r as any).severity || 'medium'}] ${(r as any).description || (r as any).factor || String(r)}`);
-      }
+      parts.push(`\n**Recorded Risks (${intel.riskFactors.length}):**`, ...intel.riskFactors.slice(0, 5).map(r =>
+        `- ${r.risk} | Recorded likelihood: ${r.likelihood} | Recorded impact: ${r.impact}${r.mitigation ? ` | Mitigation: ${r.mitigation}` : ''}`));
     }
 
     if (intel.openQuestions.length > 0) {
       parts.push(`\n**Open Questions (${intel.openQuestions.length}):**`);
-      for (const q of intel.openQuestions.slice(0, 3)) {
-        parts.push(`- ${(q as any).question || String(q)}`);
-      }
+      parts.push(...intel.openQuestions.slice(0, 3).map(q =>
+        `- ${q.question}${q.context ? ` | Context: ${q.context}` : ''}${q.priority ? ` | Recorded priority: ${q.priority}` : ''}`));
     }
 
     if (intel.keyDecisions.length > 0) {
       parts.push(`\n**Key Decisions (${intel.keyDecisions.length}):**`);
-      for (const d of intel.keyDecisions.slice(0, 3)) {
-        parts.push(`- ${(d as any).decision || String(d)} (${(d as any).status || 'pending'})`);
-      }
+      parts.push(...intel.keyDecisions.slice(0, 3).map(d =>
+        `- ${d.decision} | Rationale: ${d.rationale} | Recorded date: ${d.date}${d.source ? ` | Source: ${d.source}` : ''}`));
     }
 
     if (intel.learnedInsights.length > 0) {
       parts.push(`\n**Learned Insights (${intel.learnedInsights.length}):**`);
-      for (const i of intel.learnedInsights.slice(0, 3)) {
-        parts.push(`- ${(i as any).insight || String(i)}`);
-      }
+      parts.push(...intel.learnedInsights.slice(0, 3).map(i =>
+        `- ${i.insight} | Source: ${i.source} | Recorded date: ${i.extractedAt}${i.confidence === null ? '' : ` | Recorded confidence: ${i.confidence}`}`));
     }
 
     parts.push(`\n**Documents:** ${intel.documentStats.totalIngested} ingested | ${intel.memoryEntryCount} memory atoms`);
 
-    return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
+    return '\n\n' + parts.join('\n') + '\n\nUse these recorded notes to personalize your responses without treating them as verified findings.';
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     // The turn budget handles this failure; an empty profile is a different result.
     throw e;

@@ -45,12 +45,24 @@ const h = vi.hoisted(() => {
     ncDown: null as null | { code: string },
   };
   const sent: Array<{ sql: string; args: unknown[] }> = [];
+  function admissionRows(sql: string, args: unknown[]): { rows: Array<Record<string, unknown>> } | null {
+    if (/SELECT ou\.role/.test(sql)) return { rows: [{ role: 'viewer' }] };
+    if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{
+      id: args[2], owner_id: 9, created_by_id: 9, settings: {}, visibility: 'org_public', members: [], review_assigned: false,
+    }] };
+    if (/client_workspace_id AS "clientWorkspaceId" FROM projects/.test(sql)) return { rows: state.projects
+      .filter(p => p.regulatory_program_id === args[0] && p.organization_id === args[1])
+      .map(p => ({ id: p.id, clientWorkspaceId: 71 })) };
+    return null;
+  }
   const query = vi.fn(async (sql: string, args: unknown[] = []): Promise<{ rows: Array<Record<string, unknown>> }> => {
     sent.push({ sql, args });
     if (/FROM regulatory_programs/.test(sql)) {
       const [id, org] = args as [string, number];
       return { rows: state.owner.get(id) === org ? [{ id }] : [] };
     }
+    const admission = admissionRows(sql, args);
+    if (admission) return admission;
     if (/FROM qms_nonconforming_products/.test(sql)) {
       if (state.ncDown) throw Object.assign(new Error('column "program_id" does not exist'), state.ncDown);
       const org = args[0] as number;
@@ -100,6 +112,7 @@ function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: ORG, role: 'viewer' };
+    Object.assign(req, { dbClient: { query: (sql: string, params?: unknown[]) => h.query(sql, params) } });
     next();
   });
   a.use('/api/mdx', engineeringRouter);

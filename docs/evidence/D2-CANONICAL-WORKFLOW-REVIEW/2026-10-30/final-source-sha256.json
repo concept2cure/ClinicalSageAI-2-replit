@@ -1,0 +1,16 @@
+{
+  "client/src/concept2cure/v2/surfaceActions.ts": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
+  "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+  "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+  "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "e057fa9661a3308dbb9f0cf31335fb03286279727d8435c239c5f9ee4f854bc6",
+  "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": "c47955252bde36f14c714e36b05f07bc3d90ab6091b2237b7fd2b502c253d581",
+  "client/src/concept2cure/v2/editor/citationAdmission.ts": "6b071684f6839bfa673eaaea68f15c17a148b0e75fefc783c34a4a54937f0464",
+  "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "9e8902274471789e36ba952e47e4ac51a5b88679f2b300c290b76db4dc35e132",
+  "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": "167df31292a807b81979808985812a0ddbd55288038a9267218da87bcf3e566f",
+  "client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts": "c0229da821607611ed48085cd1d9e0ce74441f9c02df6e08fa438465c1b1e73f",
+  "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "73dc2af1d10587d233923cb9044b2a7fcce019a0c804b7fdb923c8d9559965bc",
+  "client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx": "d5197f69e1808c8f71ba819fa5bc8d78f38e96e34a902eac63cf421c91cbf730",
+  "client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx": "48e54568f7cb9e0bfcf8ada3758510614e4268aed83175c9d0296605ff151a15",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx": "f4d80c505b74bdefd6d9e2e0361cb1391d959ea83f7297d6de6032401f290a89",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx": "b82c4b7c983a327242bf99f0f10fe765a316e2d8ebb9294d47cd16a965dd8fea"
+}

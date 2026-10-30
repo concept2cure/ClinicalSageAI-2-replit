@@ -1,0 +1,152 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs 558ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Prior-session recorded safety source'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session 1093ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Source recorded —'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session 666ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Citation removed.'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session 575ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Earlier session source re-read.'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement 753ms
+   → expected <div class="scaf-note" …(3)>…(2)</div> to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=false) 494ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true) 687ms
+   → expected '20000000-0000-4000-8000-000000000001' to be '20000000-0000-4000-8000-000000000002' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Prior-session recorded safety source'
+
+Expected: "Prior-session recorded safety source"
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourcePrior-session recorded safety source· cited Not checked against content Re-read sourceRemove"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:112:43
+    110|     await act(async () => { oldBody.resolve({ sources: [source('Prior-…
+    111|
+    112|     expect(document.body.textContent).not.toContain('Prior-session rec…
+       |                                           ^
+    113|     await screen.findByText('Current recorded protocol');
+    114|     expect(replacementSourceReads).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Source recorded —'
+
+Expected: "Source recorded —"
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 2 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 2 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveSource recorded — this section now cites it, with the source’s current checksum."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:141:43
+    139|     await act(async () => { pending.resolve(ok({ success: true, create…
+    140|
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+       |                                           ^
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Citation removed.'
+
+Expected: "Citation removed."
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveCitation removed."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:142:43
+    140|
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+       |                                           ^
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+    144|     expect(screen.getByTestId('sources-rail-open').textContent?.replac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Earlier session source re-read.'
+
+Expected: "Earlier session source re-read."
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveEarlier session source re-read."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:143:43
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+       |                                           ^
+    144|     expect(screen.getByTestId('sources-rail-open').textContent?.replac…
+    145|     expect(sourceReads.length).toBe(readsBeforeReceipt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement
+AssertionError: expected <div class="scaf-note" …(3)>…(2)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="scaf-note"
+  data-testid="refresh-skipped"
+  role="alert"
+  style="margin: 12px; font-size: 12px; border-left-color: var(--error);"
+>
+  <div
+    style="display: flex; gap: 8px; align-items: baseline;"
+  >
+    <b>
+      1
+       citation
+       could not be re-read
+    </b>
+    <span
+      style="flex: 1 1 0%;"
+    />
+    <button
+      class="nda-open"
+    >
+      Dismiss
+    </button>
+  </div>
+  <div
+    style="margin-top: 4px;"
+  >
+    The recorded source could not be verified. Nothing was changed.
+  </div>
+</div>
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:161:53
+    159|       skipped: [{ cite_id: 'old-private-citation', reason: 'source_not…
+    160|
+    161|     expect(screen.queryByTestId('refresh-skipped')).toBeNull();
+       |                                                     ^
+    162|     expect(document.body.textContent).not.toContain('Re-read 0 citatio…
+    163|     expect(sourceReads.length).toBe(readsBeforeReceipt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true)
+AssertionError: expected '20000000-0000-4000-8000-000000000001' to be '20000000-0000-4000-8000-000000000002' // Object.is equality
+
+Expected: "20000000-0000-4000-8000-000000000002"
+Received: "20000000-0000-4000-8000-000000000001"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:183:49
+    181|     await screen.findByText('Re-read 1 citation: none had changed.');
+    182|     await waitFor(() => expect(sourceReads.length).toBeGreaterThan(rea…
+    183|     expect(sourceReads[sourceReads.length - 1]).toBe(expectedSection);
+       |                                                 ^
+    184|     await screen.findByText(switchSection ? 'Second-section recorded p…
+    185|     expect((screen.getByTestId('refresh-all-sources') as HTMLButtonEle…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  16:41:57
+   Duration  9.17s (transform 2.87s, setup 149ms, import 3.62s, tests 4.83s, environment 441ms)
+

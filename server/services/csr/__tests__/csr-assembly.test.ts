@@ -46,9 +46,9 @@ describe('an imported CSR assembles into separate 5.3.5.1 leaves with their STF 
     expect(result.structure.linksChecked).toBeGreaterThan(40);
     expect(result.unresolvedReferences).toEqual([]);
     const byAppendix = new Map(result.leaves.map(l => [l.appendix, l]));
-    expect(byAppendix.get('body')).toMatchObject({ fileName: 'csr-body.pdf', stfFileTag: 'study-report', ctdSection: '5.3.5.1', studyId: 'SYN-LMN201-B', operation: 'new' });
-    expect(byAppendix.get('14')).toMatchObject({ fileName: CSR_TABLES_FILE, stfFileTag: 'study-report' });
-    expect(byAppendix.get('14.3.3')).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', stfFileTag: 'study-report', origin: 'generated' });
+    expect(byAppendix.get('body')).toMatchObject({ fileName: 'csr-body.pdf', stfFileTag: 'study-report-body', ctdSection: '5.3.5.1', studyId: 'SYN-LMN201-B', operation: 'new' });
+    expect(byAppendix.get('14')).toMatchObject({ fileName: CSR_TABLES_FILE, stfFileTag: 'study-report-body' });
+    expect(byAppendix.get('14.3.3')).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', stfFileTag: 'study-report-body', origin: 'generated' });
     expect(byAppendix.get('16.1.1')).toMatchObject({ stfFileTag: 'protocol-or-amendment', origin: 'supplied' });
     expect(byAppendix.get('16.1.5')).toMatchObject({ stfFileTag: 'signatures-investigators', origin: 'supplied' });
     expect(byAppendix.get('16.2.7')).toMatchObject({ stfFileTag: 'adverse-event-listings', origin: 'generated' });
@@ -221,9 +221,11 @@ describe('hand-off to Submission Center’s packager', () => {
     expect(bundle.stf).toEqual({ studies: 1, leaves: result.leaves.length, untagged: 0 });
     const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
     const stf = await zip.file('m5/5-3-5-1/syn-lmn201-b/stf-syn-lmn201-b.xml')!.async('string');
-    for (const tag of ['study-report', 'protocol-or-amendment', 'signatures-investigators', 'adverse-event-listings', 'demographic-data']) {
+    for (const tag of ['study-report-body', 'protocol-or-amendment', 'signatures-investigators', 'adverse-event-listings', 'demographic-data']) {
       expect(stf).toContain(`<file-tag name="${tag}" info-type="ich"/>`);
     }
+    expect(stf.match(/<file-tag name="study-report-body" info-type="ich"\/>/g)).toHaveLength(3);
+    expect(stf).not.toContain('<file-tag name="study-report"');
     expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-body.pdf');
     expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-16-2-7-adverse-events.pdf');
     expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-14-3-3-narratives.pdf');

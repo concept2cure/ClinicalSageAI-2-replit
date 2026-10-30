@@ -69,6 +69,7 @@ import { buildLifecycleBindings } from './lifecycleBindings';
 import { supersedeOnVaultApproval } from './vault-lifecycle-record';
 import { BINDING_BASIS, drizzleSignatureClient } from '../part11/signature-persistence';
 import { writeChainedAuditRow } from '../auditService';
+import { resolveTargetAuthors, SeparationOfDutiesAuthorUnresolvedError, type TargetAuthorship } from '../governance/separation-of-duties';
 import {
   findVaultLifecycleRecord,
   lockVaultLifecycleStart,
@@ -212,8 +213,29 @@ function carriedSignOff(
 }
 
 /**
+ * Everyone who wrote the document, as the signing routes judge independence
+ * (separation-of-duties.ts, authoring-document): its creator, every revision's
+ * author and every visible section change. NotCarried when that cannot be
+ * established; a failed lookup throws and nothing carries.
+ */
+async function documentAuthors(q: LifecycleQueryable, input: CarryInput): Promise<TargetAuthorship> {
+  let authorship: TargetAuthorship;
+  try {
+    authorship = await resolveTargetAuthors(`authoring-document:${input.authoringDocumentId}`, input.organizationId, q);
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw new NotCarried(err.message);
+    throw err;
+  }
+  if (!authorship.modelled || authorship.authors.length === 0 || authorship.incomplete) {
+    throw new NotCarried('Who wrote this document could not be established, so separation of duties cannot be checked.');
+  }
+  return authorship;
+}
+
+/**
  * The author, reviewer and approver as members of this organization, three
- * different people (FD4 (a)), or NotCarried saying which rule failed.
+ * different people (FD4 (a)), with neither signer among the document's
+ * authors, or NotCarried saying which rule failed.
  */
 async function independentSigners(
   q: LifecycleQueryable,
@@ -229,6 +251,10 @@ async function independentSigners(
   if (authorId === null) throw new NotCarried('The document’s author is not a member of this organization on record, so separation of duties cannot be checked.');
   if (reviewerId === null || approverId === null) throw new NotCarried('A signer of the Authoring review or approval is not a member of this organization on record.');
   if (reviewerId === authorId || approverId === authorId) throw new NotCarried('The document’s author signed its review or approval, and the Vault requires someone other than the author.');
+  const written = await documentAuthors(q, input);
+  if (written.authors.includes(reviewerId) || written.authors.includes(approverId)) {
+    throw new NotCarried(`Someone who wrote part of this document (${written.sources.join(', ')}) signed its review or approval, and the Vault requires someone other than its authors.`);
+  }
   if (reviewerId === approverId) throw new NotCarried('The approver also signed the review, and a different person reviews before approval.');
   return { authorId, reviewerId, approverId };
 }

@@ -1,0 +1,12 @@
+[
+  "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts",
+  "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+  "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+  "server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts",
+  "server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts",
+  "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts",
+  "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+  "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+  "server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts",
+  "server/services/csr/__tests__/csr-builder-scope-quota.test.ts"
+]

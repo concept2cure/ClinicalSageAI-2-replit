@@ -28,6 +28,10 @@ beforeAll(async () => {
   database = new PGlite();
   h.database = drizzle(database);
   await database.exec(`
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(99);
+    INSERT INTO organizations (id) VALUES (7),(8);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer, status text,
       owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}'::jsonb, regulatory_program_id text);
     INSERT INTO projects VALUES (11,7,NULL,'active',NULL,NULL,'{}','${PROGRAM}'), (12,7,NULL,'active',NULL,NULL,'{}',NULL);

@@ -12,14 +12,14 @@ describe('app-registry — single source of truth', () => {
     }
   });
 
-  it('maps apps to the REAL entitlement module ids (verified against the catalog)', () => {
-    // These are the actual module ids from available_modules / license enabledModules.
-    expect(appModuleId('cmc')).toBe('cmc-wizard');
-    expect(appModuleId('study_protocol_design')).toBe('protocol-designer');
-    expect(appModuleId('clinical_csr')).toBe('csr-author');
-    expect(appModuleId('cer')).toBe('cer-generator');
-    expect(appModuleId('submission_center')).toBe('ectd-coauthor');
-    expect(appModuleId('substantial_equiv')).toBe('510k-submission');
+  it('maps features to their canonical core entitlement owner', () => {
+    // Legacy rows stay historical; the live feature names its core owner.
+    expect(appModuleId('cmc')).toBe('cmc');
+    expect(appModuleId('study_protocol_design')).toBe('protocol-dev');
+    expect(appModuleId('clinical_csr')).toBe('document-authoring');
+    expect(appModuleId('cer')).toBe('device-cer');
+    expect(appModuleId('submission_center')).toBe('submission-center');
+    expect(appModuleId('substantial_equiv')).toBe('device-510k');
   });
 
   it('leaves always-available apps unmapped (no module id)', () => {
@@ -40,6 +40,6 @@ describe('app-registry — single source of truth', () => {
     const a = getApp('cmc');
     expect(a.label).toBe('CMC (Module 3)');
     expect(a.discipline).toBe('quality_cmc');
-    expect(a.moduleId).toBe('cmc-wizard');
+    expect(a.moduleId).toBe('cmc');
   });
 });

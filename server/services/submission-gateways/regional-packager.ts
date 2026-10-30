@@ -55,6 +55,7 @@ import {
   dtdRequiredFromEnv,
   resolveDtdDir,
   STF_DTD,
+  STF_STYLESHEET,
   hasPassedPackageDtdValidation,
   type DtdReadinessResult,
   type DtdRegion,
@@ -1277,6 +1278,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       }
       const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? [], {
         dtdSystemPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/dtd/${STF_DTD}`),
+        stylesheetPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/style/${STF_STYLESHEET}`),
       });
       stfSummary = { studies: stfResult.summary.studies, leaves: stfResult.summary.leaves, untagged: stfUncovered.length };
       for (const file of stfResult.files) {

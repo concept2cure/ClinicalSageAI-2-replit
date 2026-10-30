@@ -1,0 +1,64 @@
+{
+  "workstream": "W1 / D2 \u2014 existing CSR authoring and expertise",
+  "sourceCommit": "6747c44709702ed016afa446ef52d2c99710614d",
+  "branch": "concept2cure-v2",
+  "qualifiedInputs": "publication-qualified-inputs.json",
+  "qualifiedStaticInputCount": 3015,
+  "csrQualification": {
+    "distinctTests": 854,
+    "suites": 71,
+    "bridge": "reconciled-qualification-bridge.json",
+    "fullRun": "reconciled-regression.json",
+    "correctedFixtureRepeat": "reconciled-runner-fixture.json",
+    "note": "Full run853 pass/1 fixture failure; production unchanged. Other70 suites834 passes plus corrected suite20 passes qualify854 distinct tests."
+  },
+  "currentEditorQualification": {
+    "tests": 87,
+    "suites": 12,
+    "receipt": "publication-editor-regression.json",
+    "bridge": "publication-editor-bridge.json",
+    "note": "Eight CSR suites overlap prior results; totals are not summed. All server/shared inputs unchanged."
+  },
+  "lint": {
+    "scopedFiles": 29,
+    "errors": 0,
+    "warnings": 8,
+    "warningGrowth": 0,
+    "normalPushLintedFiles": 30,
+    "normalPushWarningGrowth": 0,
+    "receipt": "reconciled-lint.json"
+  },
+  "editorUiRepoGates": {
+    "passed": 7,
+    "failed": 0,
+    "receipt": "publication-editor-gates.json"
+  },
+  "build": {
+    "exitCode": 0,
+    "receipt": "publication-build.json"
+  },
+  "compiler": {
+    "mode": "Normal pre-push full-program incremental TypeScript gate",
+    "errors": 0,
+    "baseline": 0,
+    "baselineChanged": false,
+    "baselineSha256": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+    "receipt": "source-push.json"
+  },
+  "publication": {
+    "normalHooksPassed": true,
+    "directCanonicalPush": true,
+    "forceOrBypass": false,
+    "receipt": "source-push.json",
+    "acceptedGitProof": "accepted-source-git-proof.json"
+  },
+  "validationBoundary": {
+    "provider": "Mocked only; no live call",
+    "humanClinicalStatisticalReview": "Not run",
+    "humanWorksheetCases": "164\u2013169 remain Not run",
+    "nativePostgresConcurrencyRls": "Not qualified by PGlite/seam tests",
+    "agencyAcceptance": "Not run",
+    "deployment": "None"
+  },
+  "pausedFilingWork": "Preserved in canonical source256c794eb and original packet; remains in progress, no all-filing completeness claim."
+}

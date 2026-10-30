@@ -1,0 +1,9 @@
+{
+  "qualifiedBase": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "laterDocumentationBase": "47ce1d3d95eff4a6b3614146cc79b670d7b20645",
+  "sha256": {
+    "server/services/ana/therapeutic-area-profiles/oncology.ts": "e8b8d699870ed9da81ed4bb032030bed409bb8a440d0768d448975234a7743bd",
+    "tests/regulatory/oncology-dose-guidance-scope.test.ts": "38666e4e057a6c71d30e8d48565566e1963ae8104eccfdae4aa72c16c2b0128f",
+    "tests/regulatory/therapeutic-area-coverage.test.ts": "3e3bbe6a94fe2d174b4ae38dbde5e1c7eea288f4456ab3e91b3959fb8a6862cb"
+  }
+}

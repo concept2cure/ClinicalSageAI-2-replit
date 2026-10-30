@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-30T16:29:09.128332+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts",
+    "-t",
+    "unbound results"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.704,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "unbound-results-red-source-freeze.json",
+  "sourcesBefore": {
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts": "e164b64f03106c1b17e5f349098f74d7a1412af057f9c54f2b03a3350b02e9ce",
+    "server/services/csr-builder.ts": "525c514d73f6d44da3067f1813fe90fec1042e748fbaf3610583a0820676cf20",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  },
+  "sourcesAfter": {
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts": "e164b64f03106c1b17e5f349098f74d7a1412af057f9c54f2b03a3350b02e9ce",
+    "server/services/csr-builder.ts": "525c514d73f6d44da3067f1813fe90fec1042e748fbaf3610583a0820676cf20",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  },
+  "sourceDrift": [],
+  "rawOutput": "unbound-results-red.log.gz",
+  "rawGzipSha256": "a4a947bc8752a8dba46c766d7d81d04b7519a1c2d8c4cdc4090da446cd23fb52",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  2 failed | 17 skipped (19)",
+    "Duration  4.14s (transform 2.12s, setup 153ms, import 3.41s, tests 15ms, environment 0ms)"
+  ]
+}

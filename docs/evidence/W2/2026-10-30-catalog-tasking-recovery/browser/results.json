@@ -1,0 +1,522 @@
+{
+  "kind": "Chromium actual catalog component with real hooks/canonical transport/styles and synthetic loopback HTTP responses",
+  "date": "2026-10-30T16:46:20.406Z",
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "status": "passed",
+      "initial": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingCatalog": {
+        "modes": {
+          "catalog": "held",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 1,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingLicense": {
+        "modes": {
+          "catalog": "success",
+          "license": "held",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 1,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "final": {
+        "modes": {
+          "catalog": "success",
+          "license": "success",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "searchPreserved": true,
+      "layouts": [
+        {
+          "stage": "failure",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "buttons": [
+            {
+              "text": "Retry subscription details",
+              "x": 1076.375,
+              "width": 172.625,
+              "right": 1249,
+              "visible": true,
+              "disabled": false
+            },
+            {
+              "text": "Retry features",
+              "x": 1139.625,
+              "width": 109.375,
+              "right": 1249,
+              "visible": true,
+              "disabled": false
+            }
+          ],
+          "alerts": [
+            {
+              "body": {
+                "width": 850.375,
+                "bottom": 343.6875
+              },
+              "actions": {
+                "y": 284.1875,
+                "width": 172.625
+              }
+            },
+            {
+              "body": {
+                "width": 913.625,
+                "bottom": 497.1875
+              },
+              "actions": {
+                "y": 437.6875,
+                "width": 109.375
+              }
+            }
+          ],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "catalog-loading",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "buttons": [
+            {
+              "text": "Retry subscription details",
+              "x": 1076.375,
+              "width": 172.625,
+              "right": 1249,
+              "visible": true,
+              "disabled": false
+            }
+          ],
+          "alerts": [
+            {
+              "body": {
+                "width": 850.375,
+                "bottom": 343.6875
+              },
+              "actions": {
+                "y": 284.1875,
+                "width": 172.625
+              }
+            }
+          ],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "subscription-loading",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "buttons": [],
+          "alerts": [],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "recovered",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "buttons": [],
+          "alerts": [],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        }
+      ],
+      "screenshots": [
+        "catalog-1440-failure.png",
+        "catalog-1440-catalog-loading.png",
+        "catalog-1440-subscription-loading.png",
+        "catalog-1440-recovered.png"
+      ],
+      "uncaughtErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "note": "503 console errors are deliberately controlled synthetic failure responses. No verified sign-in/session/database/deployed-app claim."
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "initial": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingCatalog": {
+        "modes": {
+          "catalog": "held",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 1,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingLicense": {
+        "modes": {
+          "catalog": "success",
+          "license": "held",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 1,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "final": {
+        "modes": {
+          "catalog": "success",
+          "license": "success",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/catalog",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          },
+          {
+            "path": "/api/module-subscriptions/license",
+            "method": "GET",
+            "organization": "1",
+            "bearerPresent": false
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "searchPreserved": true,
+      "layouts": [
+        {
+          "stage": "failure",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "buttons": [
+            {
+              "text": "Retry subscription details",
+              "x": 76,
+              "width": 172.625,
+              "right": 248.625,
+              "visible": true,
+              "disabled": false
+            },
+            {
+              "text": "Retry features",
+              "x": 76,
+              "width": 109.375,
+              "right": 185.375,
+              "visible": true,
+              "disabled": false
+            }
+          ],
+          "alerts": [
+            {
+              "body": {
+                "width": 263,
+                "bottom": 446.1875
+              },
+              "actions": {
+                "y": 456.1875,
+                "width": 263
+              }
+            },
+            {
+              "body": {
+                "width": 263,
+                "bottom": 653.6875
+              },
+              "actions": {
+                "y": 663.6875,
+                "width": 263
+              }
+            }
+          ],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "catalog-loading",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "buttons": [
+            {
+              "text": "Retry subscription details",
+              "x": 76,
+              "width": 172.625,
+              "right": 248.625,
+              "visible": true,
+              "disabled": false
+            }
+          ],
+          "alerts": [
+            {
+              "body": {
+                "width": 263,
+                "bottom": 446.1875
+              },
+              "actions": {
+                "y": 456.1875,
+                "width": 263
+              }
+            }
+          ],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "subscription-loading",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "buttons": [],
+          "alerts": [],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        },
+        {
+          "stage": "recovered",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "buttons": [],
+          "alerts": [],
+          "font": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+        }
+      ],
+      "screenshots": [
+        "catalog-390-failure.png",
+        "catalog-390-catalog-loading.png",
+        "catalog-390-subscription-loading.png",
+        "catalog-390-recovered.png"
+      ],
+      "uncaughtErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "note": "503 console errors are deliberately controlled synthetic failure responses. No verified sign-in/session/database/deployed-app claim."
+    }
+  ]
+}

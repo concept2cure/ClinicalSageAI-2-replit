@@ -70,7 +70,6 @@ export const NAV_GROUP_OF: Record<string, string> = {
   quality: 'both',
   'nda-cockpit': 'biopharma',
   'maa-cockpit': 'biopharma',
-  'agency-meetings': 'both',
   'shadow-review': 'both',
   'dispatch-readiness': 'both',
   'communication-center': 'both',
@@ -193,7 +192,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'filing-strategy',
   'tasks',
   'review',
-  'agency-meetings',
   'vault',
   'evidence-search',
   'haq-manager',
@@ -666,7 +664,7 @@ export const SEGMENT_MODULES = {
     // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list retired; each filing's readiness is its own.
     // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into Submission Center's device filings.
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: the device segment had no biostatistics surface either,
@@ -699,7 +697,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: this segment had no biostatistics surface at all, and the
@@ -761,7 +759,6 @@ export const SEGMENT_MODULES = {
         'shadow-review',
         'dispatch-readiness',
         'tasks',
-        'agency-meetings',
         'audit-trail',
         'quality',
       ],
@@ -802,7 +799,7 @@ export const SEGMENT_MODULES = {
       label: 'Author & assemble',
       items: ['protocol-dev', 'document-authoring', 'csr-workflow', 'template-library'],
     },
-    { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
+    { label: 'Research administration', items: ['research-admin'] },
     {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'decision-lineage', 'insights'],
@@ -828,7 +825,7 @@ export const SEGMENT_MODULES = {
   ],
   health: [
     { label: 'Author & assemble', items: ['protocol-dev', 'document-authoring', 'template-library'] },
-    { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
+    { label: 'Research administration', items: ['research-admin'] },
     {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'decision-lineage'],
@@ -950,6 +947,12 @@ export const ESIGN_MEANINGS = [
  * entries (BUILD_STATE): task-board → tasks board view · ind-lifecycle →
  * deliverable-first IND view, and every folded screen's old id → its home. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
+  /* Agency Meetings retired into Communication (P-39 step 4, 2026-10-30;
+     docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/). A meeting is recorded,
+     moved and given its minutes letter on Communication's Meetings tab
+     (HaMeetings.tsx); its briefing book is the meeting package in the editor, on
+     the IND screen. Old links, skills and demo steps land there. */
+  'agency-meetings': 'communication-center',
   // Filing discovery and its authored reference now live in canonical intake.
   'filings-catalog': 'projects',
   // Former dossier screens now reach all three recorded reads on Author.

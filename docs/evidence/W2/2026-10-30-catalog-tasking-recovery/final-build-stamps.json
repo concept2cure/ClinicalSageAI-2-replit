@@ -1,0 +1,10 @@
+{
+  "qualifiedSourceCommit": "80156568ef7e816de42bc87dd71960ea472baf39",
+  "clientAssets": [
+    "index-CkDTo9AI.js"
+  ],
+  "serverMatches": true,
+  "bothPinnedWith": "BUILD_COMMIT",
+  "buildExitCode": 0,
+  "notes": "Production client/server/audit-verifier build. Existing chunk-size warnings; supersedes intermediate mixed-stamp artifact."
+}

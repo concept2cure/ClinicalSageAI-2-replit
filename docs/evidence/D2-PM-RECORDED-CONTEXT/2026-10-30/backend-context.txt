@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:45:34.091Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:45:34.199Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:45:34.200Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:45:34.200Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns only saved profile facts bound to current actor/program/anchor/workspace, without global DB fallback 61ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > allows an admitted current reader without conferring a write or creating records 39ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns authoritative null without creating a missing profile 38ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > normalizes nullable saved lists while preserving nullable instruction absence 33ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > does not alter either profile records or the separate authored instructions 32ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses profile-failure instead of reporting an empty profile 35ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses memory-failure instead of reporting an empty profile 37ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses duplicate profiles rather than selecting an arbitrary first row 28ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded risk_factors rather than filtering it into absence 63ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded open_questions rather than filtering it into absence 28ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded key_decisions rather than filtering it into absence 22ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded learned_insights rather than filtering it into absence 21ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after role-change during profile SQL 27ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after revocation during profile SQL 28ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after workspace-change during profile SQL 24ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses a revoked private share, inactive actor, foreign UUID and missing anchor 20ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 0 14ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 01 13ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2147483648 12ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2 11ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 3 14ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > requires actual request ALS and request database with no fallback 9ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > verifies owned saved workspace without imposing an active-workspace policy 34ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > nullable historical project parent > retains an authoritative null parent without selecting an arbitrary workspace 45ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical intelligence summary caller compatibility > omits saved instructions from legacy summaries unless explicitly requested by the scoped adapter 8ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical intelligence summary caller compatibility > scopes the existing count by profile/project/org and preserves the two-argument default caller 6ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  16:45:29
+   Duration  9.21s (transform 3.62s, setup 86ms, import 1.63s, tests 7.22s, environment 0ms)

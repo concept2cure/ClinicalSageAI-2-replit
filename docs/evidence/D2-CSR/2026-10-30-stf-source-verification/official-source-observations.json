@@ -1,0 +1,211 @@
+{
+  "source": {
+    "url": "https://www.fda.gov/media/159383/download",
+    "title": "ICH eCTD STF Specification V2.6.1",
+    "date": "2008-06-03",
+    "pages": 22,
+    "sha256": "63132c3751682193f6f13db125ee03583b740680851c0f0e6412561438b482da"
+  },
+  "readAtUtc": "2026-10-30T17:06:50.431733+00:00",
+  "findings": {
+    "body": {
+      "tag": "study-report-body",
+      "infoType": "ich",
+      "e3Sections": "1,3\u201315",
+      "printedPage": 8
+    },
+    "genericStudyReportListed": false,
+    "appendixRoles": [
+      {
+        "e3": "16.1.1",
+        "tag": "protocol-or-amendment",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.2",
+        "tag": "sample-case-report-form",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.3",
+        "tag": "iec-irb-consent-form-list",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.4",
+        "tag": "list-description-investigator-site",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.5",
+        "tag": "signatures-investigators",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.6",
+        "tag": "list-patients-with-batches",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.7",
+        "tag": "randomisation-scheme",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.8",
+        "tag": "audit-certificates-report",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.9",
+        "tag": "statistical-methods-interim-analysis-plan",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.10",
+        "tag": "inter-laboratory-standardisation-methods-quality-assurance",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.11",
+        "tag": "publications-based-on-study",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.1.12",
+        "tag": "publications-referenced-in-report",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.3",
+        "tag": "case-report-forms",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.1",
+        "tag": "discontinued-patients",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.2.2",
+        "tag": "protocol-deviations",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 8
+      },
+      {
+        "e3": "16.2.3",
+        "tag": "patients-excluded-from-efficacy-analysis",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.4",
+        "tag": "demographic-data",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.5",
+        "tag": "compliance-and-drug-concentration-data",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.6",
+        "tag": "individual-efficacy-response-data",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.7",
+        "tag": "adverse-event-listings",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      },
+      {
+        "e3": "16.2.8",
+        "tag": "listing-individual-laboratory-measurements-by-patient",
+        "matchesSource": true,
+        "infoType": "ich",
+        "printedPage": 9
+      }
+    ],
+    "currentDocumentTagsAbsentFrom2008Table": [
+      "analysis-dataset-legacy",
+      "data-tabulation-dataset-legacy",
+      "study-report"
+    ],
+    "currentDocumentTagsNeedingUsInfoTypeIn2008Table": [
+      "analysis-program",
+      "annotated-crf",
+      "antibacterial",
+      "data-listing-data-definition",
+      "data-listing-dataset",
+      "safety-report",
+      "special-pathogen",
+      "subject-profiles"
+    ],
+    "officialIchTagsMissingFromCurrentList": [
+      "study-report-body"
+    ],
+    "officialUsTagsMissingFromDocumentList": [
+      "analysis-data-definition",
+      "analysis-dataset",
+      "antiviral",
+      "data-tabulation-data-definition",
+      "data-tabulation-dataset",
+      "ecg",
+      "image",
+      "ise",
+      "iss",
+      "pm-description"
+    ],
+    "officialJpTagsNotInCurrentList": [
+      "complete-patient-list",
+      "serious-adverse-event-patient-list",
+      "adverse-event-patient-list",
+      "abnormal-lab-values-patient-list"
+    ]
+  },
+  "limits": [
+    "2008 PDF table does not establish current standardized dataset refinements or full current regional controlled vocabularies.",
+    "STF applicability requires current regional guidance; this source is not eCTD v4.0.",
+    "E3 14 and 14.3.3 are within 1,3\u201315, supporting study-report-body for separate tables/narratives; no narrative-specific row is present.",
+    "No DTD/XML conformance, agency acceptance or historical artifact correction was executed.",
+    "No direct download URL for valid-values.xml is embedded in this PDF."
+  ]
+}

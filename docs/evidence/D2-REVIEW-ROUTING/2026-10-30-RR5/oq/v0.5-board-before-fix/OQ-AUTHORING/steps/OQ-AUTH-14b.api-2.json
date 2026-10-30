@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5242/api/tasks/my-work",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "taskId": "ROUTE-9fa7555c-2",
+            "title": "Review: OQ-003 Clinical Overview 20261030150319",
+            "projectId": 2,
+            "projectName": "OQ-003 Authoring program 20261030150319",
+            "moduleType": "Authoring",
+            "taskType": "review",
+            "status": "pending",
+            "priority": "medium",
+            "dueDate": "2026-11-06T23:59:59.999Z",
+            "overdue": false,
+            "dueSoon": false,
+            "blocked": false,
+            "waitingOn": null,
+            "reviewRole": "reviewer",
+            "approvalRequired": false,
+            "approvalStatus": "not_started",
+            "criticalPath": false
+          }
+        ],
+        "total": 1,
+        "overdue": 0,
+        "dueSoon": 0,
+        "blocked": 0,
+        "approvalsPending": 0
+      }
+    }
+  }
+}

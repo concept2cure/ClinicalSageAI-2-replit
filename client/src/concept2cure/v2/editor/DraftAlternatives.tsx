@@ -12,12 +12,14 @@ import { anaInsertRefusal } from './anaInsertGate';
 import type { AiDraftReviewState, PendingAiDraft } from './authoringDraftTransport';
 import type { EditorProposalReceipt } from './editorProposalReceipt';
 import {
-  approachOf, defaultPairing, draftParagraphAuthor, draftParagraphs, paragraphProposals, paragraphRefusal,
-  savedParagraphs, shapeLine, type DraftProposalTarget, type ParagraphPlan,
+  alternativeDescription, alternativeLabel, alternativeName, approachOf, comparedText, defaultPairing, draftParagraphAuthor, draftParagraphs,
+  MAX_INSTRUCTION_CHARS, paragraphProposals, paragraphRefusal, QUICK_INSTRUCTIONS, revisedIndex, revisionRefusal, savedParagraphs,
+  type DraftProposalTarget, type ParagraphPlan,
 } from './draftAlternatives';
 import '../styles/redline.css';
 
 const NOTE: React.CSSProperties = { margin: 0, fontSize: 12 };
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const QUIET: React.CSSProperties = { fontSize: 11, color: 'var(--text-300)' };
 
 /** The alternatives as a radio group: native arrow keys, one shown at a time. */
@@ -44,16 +46,15 @@ export function AlternativesPicker({ state, accepting, onShow }: {
       <div id={headingId} style={{ fontSize: 12, fontWeight: 600 }}>Alternatives</div>
       <div ref={groupRef} role="radiogroup" aria-labelledby={headingId} style={{ display: 'grid', gap: 4 }}>
         {list.map((alt, i) => {
-          const { label, asked } = approachOf(alt.approach);
           const descId = `${name}-d${i}`;
           return (
             <div key={`${alt.approach}-${i}`} style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <label style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'baseline' }}>
                 <input type="radio" name={name} checked={(state.shownAlternative ?? 0) === i} disabled={disabled}
                   aria-describedby={descId} onChange={() => onShow(i)} />
-                {label}
+                {alternativeLabel(alt)}
               </label>
-              <span id={descId} style={QUIET}>{`${asked} · ${shapeLine(alt.draft.generated)}`}</span>
+              <span id={descId} style={QUIET}>{alternativeDescription(list, i)}</span>
             </div>
           );
         })}
@@ -71,33 +72,41 @@ export function AlternativesPicker({ state, accepting, onShow }: {
         })}
       </div>
       <div role="status" data-testid="ai-draft-alternatives-status" style={QUIET}>
-        {last ? `${approachOf(last.approach).label} alternative is ready (${list.length} of ${total}).` : ''}
+        {last?.revision ? `${capital(alternativeName(list, list.length - 1))} is ready and shown. The text it revises is kept.`
+          : last ? `${approachOf(last.approach).label} alternative is ready (${list.length} of ${total}).` : ''}
       </div>
     </div>
   );
 }
 
-/** The comparison and the choice by paragraph, for the draft shown. */
+/** The comparison, the revision and the choice by paragraph, for the draft shown. */
 export function AlternativeReview(props: { state: AiDraftReviewState; draft: PendingAiDraft; label: string; edited: boolean;
-  savedContent: string; savedUpdatedAt: string | null; target?: DraftProposalTarget; busy: boolean; docSealed: boolean }) {
+  savedContent: string; savedUpdatedAt: string | null; target?: DraftProposalTarget; busy: boolean; docSealed: boolean;
+  onRevise?: (instruction: string) => void }) {
   const held = props.busy || props.docSealed || !!props.state.acceptUnknown;
   return (
     <>
       <AlternativeCompare state={props.state} savedContent={props.savedContent} />
+      {props.onRevise && <ReviseText name={props.label} edited={props.edited} busy={held}
+        refusal={revisionRefusal(props.state, props.docSealed)} onRevise={props.onRevise} />}
       <ParagraphChoice draft={props.draft} label={props.label} edited={props.edited} savedContent={props.savedContent}
         savedUpdatedAt={props.savedUpdatedAt} target={props.target} busy={held} />
     </>
   );
 }
 
-/** The shown alternative against the saved section or another alternative, as a redline. */
+/** The shown entry against the saved section, another entry or, for a revision, the text it revised, as a redline. */
 export function AlternativeCompare({ state, savedContent }: { state: AiDraftReviewState; savedContent: string }) {
   const selectId = useId();
-  const [against, setAgainst] = useState('none');
+  const list = state.alternatives ?? [];
   const shown = state.shownAlternative ?? 0;
-  const others = (state.alternatives ?? []).map((alt, i) => ({ alt, i })).filter(({ i }) => i !== shown);
-  const other = against === 'saved' ? savedContent
-    : against.startsWith('alternative:') ? state.alternatives?.[Number(against.slice(12))]?.body ?? null : null;
+  const from = revisedIndex(state);
+  /* The choice belongs to the entry it was made on; a revision opens on the text it revised (N against N-1). */
+  const [choice, setChoice] = useState<{ shown: number; value: string } | null>(null);
+  const against = choice?.shown === shown ? choice.value : from !== null ? 'revised' : 'none';
+  const setAgainst = (value: string) => setChoice({ shown, value });
+  const others = list.map((_, i) => i).filter(i => i !== shown);
+  const other = comparedText(state, against, savedContent, renderSafeMarkdown);
   return (
     <div style={{ display: 'grid', gap: 4 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 12 }}>
@@ -105,7 +114,8 @@ export function AlternativeCompare({ state, savedContent }: { state: AiDraftRevi
         <select id={selectId} value={against} onChange={e => setAgainst(e.target.value)} style={{ height: 28 }}>
           <option value="none">Nothing</option>
           <option value="saved">The saved section</option>
-          {others.map(({ alt, i }) => <option key={i} value={`alternative:${i}`}>{`${approachOf(alt.approach).label} alternative`}</option>)}
+          {from !== null && <option value="revised">{`The text it revised (${alternativeName(list, from)}, as AnA drafted it)`}</option>}
+          {others.map(i => <option key={i} value={`alternative:${i}`}>{capital(alternativeName(list, i))}</option>)}
         </select>
       </div>
       {other !== null && (
@@ -118,7 +128,8 @@ export function AlternativeCompare({ state, savedContent }: { state: AiDraftRevi
   );
 }
 
-function useProposalStates(receipts: readonly EditorProposalReceipt[], target?: DraftProposalTarget) {
+/** The editor's state of each proposal this panel landed: pending, settled or unavailable. */
+export function useProposalStates(receipts: readonly EditorProposalReceipt[], target?: DraftProposalTarget) {
   const [, refresh] = useState(0);
   const subscribe = target?.subscribeProposalChanges;
   useEffect(() => {
@@ -130,6 +141,64 @@ function useProposalStates(receipts: readonly EditorProposalReceipt[], target?: 
 }
 
 interface Landed { plan: ParagraphPlan; receipt: EditorProposalReceipt | null }
+
+/**
+ * A browser drops focus from a control that becomes disabled while AnA works. When the work ends,
+ * focus that fell to the page returns to the control pressed; focus the person moved elsewhere stays
+ * theirs. Returns the call that names the control pressed.
+ */
+export function useFocusReturn(busy: boolean): (control: HTMLElement) => void {
+  const pressed = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (busy || typeof document === 'undefined') return;
+    const control = pressed.current;
+    pressed.current = null;
+    if (control?.isConnected && (!document.activeElement || document.activeElement === document.body)) control.focus();
+  }, [busy]);
+  return (control: HTMLElement) => { pressed.current = control; };
+}
+
+const REVISE_NOTE = 'A revision is a new draft with its own check and record, listed under Alternatives; the text it revises is kept. '
+  + 'AnA revises the text as it drafted it. AnA does not supply figures: the check names any figure the sources shown do not hold.';
+
+/** Ask AnA to revise the text shown, by a quick instruction or the person's own words. Nothing is saved or replaced. */
+function ReviseText({ name, edited, busy, refusal, onRevise }: {
+  name: string; edited: boolean; busy: boolean; refusal: string | null; onRevise: (instruction: string) => void;
+}) {
+  const inputId = useId();
+  const noteId = useId();
+  const [instruction, setInstruction] = useState('');
+  const disabled = busy || refusal !== null;
+  const pressed = useFocusReturn(busy);
+  const send = (words: string, control: HTMLElement) => {
+    if (disabled || !words.trim()) return;
+    pressed(control);
+    onRevise(words.trim());
+    setInstruction('');
+  };
+  return (
+    <fieldset style={{ border: '1px solid var(--border)', borderRadius: 6, padding: 8, display: 'grid', gap: 8, margin: 0 }}>
+      <legend style={{ fontSize: 12, fontWeight: 600 }}>{`Ask AnA to revise ${name}`}</legend>
+      <p id={noteId} role="note" data-testid="ai-draft-revise-note" style={NOTE}>{refusal ?? REVISE_NOTE}</p>
+      {edited && !refusal && <p style={QUIET}>Your edits to the proposed content stay with the text shown and are not sent.</p>}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {QUICK_INSTRUCTIONS.map(words => (
+          <button key={words} type="button" className="btn ghost" style={{ height: 28 }} disabled={disabled}
+            aria-describedby={noteId} onClick={e => send(words, e.currentTarget)}>{words}</button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 12 }}>
+        <label htmlFor={inputId}>Your instruction</label>
+        <input id={inputId} value={instruction} maxLength={MAX_INSTRUCTION_CHARS} disabled={disabled} aria-describedby={noteId}
+          onChange={e => setInstruction(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send(instruction, e.currentTarget); } }}
+          style={{ height: 28, flex: '1 1 220px', minWidth: 0 }} />
+        <button type="button" className="btn ghost" style={{ height: 28 }} disabled={disabled || !instruction.trim()}
+          aria-describedby={noteId} title={!instruction.trim() ? 'Write an instruction first.' : undefined}
+          onClick={e => send(instruction, e.currentTarget)}>Revise</button>
+      </div>
+    </fieldset>
+  );
+}
 
 const STANDARD_NOTE = 'Each chosen paragraph is added to the editor as AnA’s tracked change, for you to accept, reject or edit there before you save. '
   + 'Paragraphs added this way carry no source citations; accepting the whole alternative records them.';
@@ -214,7 +283,7 @@ export function ParagraphChoice({ draft, label, edited, savedContent, savedUpdat
   const landedCount = landed.reduce((sum, l) => sum + l.plan.paragraphs.length, 0);
   return (
     <fieldset style={{ border: '1px solid var(--border)', borderRadius: 6, padding: 8, display: 'grid', gap: 8, margin: 0 }}>
-      <legend style={{ fontSize: 12, fontWeight: 600 }}>{`Paragraphs of the ${label.toLowerCase()} alternative`}</legend>
+      <legend style={{ fontSize: 12, fontWeight: 600 }}>{`Paragraphs of ${label}`}</legend>
       <p id={noteId} role="note" data-testid="ai-draft-paragraph-note" style={NOTE}>{note}</p>
       {edited && <p style={QUIET}>Paragraphs are offered as AnA drafted them. Edit a chosen paragraph in the editor after it is added; your words there are recorded as yours.</p>}
       {paragraphs.map((text, i) => (

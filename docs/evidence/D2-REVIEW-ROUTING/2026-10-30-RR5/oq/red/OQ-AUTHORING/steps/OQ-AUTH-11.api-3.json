@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5241/api/authoring/docs/b2db0239-f655-4941-919e-a6209ab222e1/freeze",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "second freeze",
+      "version": "1.1",
+      "meaning": "AUTHOR"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 39,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Document is already frozen"
+    }
+  }
+}

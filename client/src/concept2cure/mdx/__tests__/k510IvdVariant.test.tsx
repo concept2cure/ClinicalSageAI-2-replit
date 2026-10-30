@@ -139,10 +139,10 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
     // row has resolved; the readiness probe also runs on the pre-load frame
     // (no program yet ⇒ 510k), so the one that matters is the last.
     const fetchSpy = globalThis.fetch as unknown as { mock: { calls: unknown[][] } };
-    const urls = fetchSpy.mock.calls.map((c) => String(c[0]));
-    const fieldReads = urls.filter((u) => u.includes('/estar/official-fields'));
-    const readinessReads = urls.filter((u) => u.includes('/estar/readiness'));
-    expect(fieldReads.length).toBeGreaterThan(0);
+    const urls = () => fetchSpy.mock.calls.map((c) => String(c[0]));
+    await waitFor(() => expect(urls().filter((u) => u.includes('/estar/official-fields')).length).toBeGreaterThan(0));
+    const fieldReads = urls().filter((u) => u.includes('/estar/official-fields'));
+    const readinessReads = urls().filter((u) => u.includes('/estar/readiness'));
     expect(fieldReads.every((u) => u.includes('type=de_novo') && u.includes('variant=ivd'))).toBe(true);
     expect(readinessReads[readinessReads.length - 1]).toContain('type=de_novo');
   });

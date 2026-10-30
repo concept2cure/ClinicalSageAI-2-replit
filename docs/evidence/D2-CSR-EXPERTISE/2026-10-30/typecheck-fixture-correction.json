@@ -1,0 +1,7 @@
+{
+  "failedReceipt": "typecheck.json",
+  "diagnostics": 11,
+  "productionChangesForTyping": [],
+  "correction": "One documented test-only PGlite-to-node-pg driver-envelope type bridge. The real SQL fixture and all row/access assertions remain; no any, fabricated rows or relaxed production type/baseline.",
+  "baseline": 0
+}

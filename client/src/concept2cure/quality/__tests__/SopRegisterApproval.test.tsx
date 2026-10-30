@@ -34,6 +34,7 @@ const H = vi.hoisted(() => ({
   refresh: vi.fn(),
   signed: null as unknown,
   signError: null as string | null,
+  assigned: { listing: null as unknown, failed: false },
 }));
 
 const DRAFT = {
@@ -50,6 +51,8 @@ vi.mock('../hooks', () => ({
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
   useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
+  useTrainingAssignments: () => ({ ...H.assigned, error: H.assigned.failed ? 'unavailable' : null, refresh: vi.fn() }),
+  useJobRoles: () => ({ listing: null, failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
@@ -63,8 +66,10 @@ vi.mock('../../_shared/components/EsignModal', () => ({
     action: string;
     meanings?: string[];
     onSign: (i: { meaning: string; reason: string; password: string; totp?: string }) => Promise<unknown>;
+    renderMeaningDetails?: (meaning: string, committing: boolean) => React.ReactNode;
   }) => (
     <div role="dialog" aria-label={p.action} data-meanings={(p.meanings ?? []).join(',')}>
+      {p.renderMeaningDetails?.(p.meanings?.[0] ?? '', false)}
       <button
         onClick={() =>
           p
@@ -95,6 +100,7 @@ beforeEach(() => {
   H.refresh.mockReset();
   H.signed = null;
   H.signError = null;
+  H.assigned = { listing: null, failed: false };
 });
 afterEach(cleanup);
 
@@ -330,5 +336,43 @@ describe('SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4)', 
     expect(lines[0]).toContain('Retired by Q. Lead');
     expect(lines[0]).toContain('Meaning: Retirement');
     expect(lines[1]).toContain('no retirement signature is on record');
+  });
+});
+
+/* The approval reaches the people assigned to train (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12):
+   the dialog says how many, and whether the day chosen leaves them a training period. */
+describe('SopRegister — the approve dialog names who it reaches', () => {
+  const listing = (peopleCount: number, assignments: unknown[] = [{ id: 1 }]) => ({
+    assignments, trainable: { inForce: null, pending: null }, people: [], peopleCount, peopleScope: 'everyone', canAssign: true,
+  });
+  const open = () => { renderRegister(); fireEvent.click(screen.getByRole('button', { name: /Approve/ })); };
+  const later = () => {
+    const day = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10);
+    fireEvent.change(screen.getByLabelText(/Effective from/), { target: { value: day } });
+    return day;
+  };
+
+  it('says effective today leaves the people assigned no training period', () => {
+    H.assigned = { listing: listing(3), failed: false };
+    open();
+    expect(screen.getByText('3 people are assigned to train on this document. Effective today leaves them no training period: it is in force when you sign.')).toBeTruthy();
+  });
+
+  it('says a later day lets them read it ahead, until the day it takes effect', () => {
+    H.assigned = { listing: listing(1), failed: false };
+    open();
+    const day = later();
+    expect(screen.getByText(`1 person is assigned to train on this document. They can read and acknowledge it from approval until it takes effect on ${day}.`)).toBeTruthy();
+  });
+
+  it.each([
+    ['nobody is assigned', listing(0, []), false, 'No one is assigned to train on this document.'],
+    ['nobody assigned is an active member', listing(0), false, 'No one assigned to train on this document is an active member.'],
+    ['the read failed', null, true, 'Who is assigned to train on this document could not be read.'],
+  ])('says so when %s, with no count', (_case, value, failed, sentence) => {
+    H.assigned = { listing: value, failed };
+    open();
+    expect(screen.getByText(sentence)).toBeTruthy();
+    expect(screen.queryByText(/\d+ (people are|person is) assigned/)).toBeNull();
   });
 });

@@ -1,0 +1,8 @@
+2026-10-30 current canonical qualification
+
+The first normal push passed every hook, full TypeScript zero errors included, then Git refused the ref because canonical origin advanced. The complete log is preserved in the first-attempt compressed evidence.
+Merged normal canonical669aa2236 (new CSR source-bound drafting, late-job scope checks and evidence) at d7768844a. No receipt implementation or native-contract-test changes. The only shared stylesheet delta adds the QMS training-successor selector; it changes no upload selector or token value. No package/compiler/AGENTS/hook change.
+
+After merge:170/170 affected checks across13files pass. Complete production client/server/audit-verifier build passes. Actual hook/XHR/parser/staging browser cohort rebuilt and rerun:32/32flows pass, with matched actor/project metadata, one POST perflow, no page errors or horizontal overflow. Existing browser JSON/screenshots remain byte-identical, retained ascurrent evidence. These checks overlap earlier cohorts and are not added to their totals.
+Normal push retried only after current-source checks pass. Final exact publication SHA, remote verification, CI state and hooks: /workspace/shared/vault-upload-receipts-release.json; final hook log: /workspace/shared/vault-upload-receipts-push.txt.
+No forced update, hook bypass, deployment or launch acceptance claim.

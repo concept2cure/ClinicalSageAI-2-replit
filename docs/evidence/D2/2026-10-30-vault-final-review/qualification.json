@@ -1,0 +1,44 @@
+{
+  "head": "06330ca1ef7e076a6c28aa242823f56a0780cd60",
+  "regressionChecks": 2540,
+  "regressionFiles": 232,
+  "cohorts": {
+    "vaultMdxServices": {
+      "passed": 2351,
+      "files": 222,
+      "batches": 14
+    },
+    "mergedCallers": {
+      "passed": 115,
+      "files": [
+        "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx",
+        "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx",
+        "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx",
+        "client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx",
+        "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+        "server/routes/__tests__/mdx-risk-access.test.ts"
+      ]
+    },
+    "canonicalStf": {
+      "passed": 74,
+      "files": [
+        "server/services/csr/__tests__/csr-stf-source-values.test.ts",
+        "server/services/ectd/__tests__/stf-csr-source-values.test.ts",
+        "server/services/ectd/__tests__/stf-generator.test.ts",
+        "server/services/submission-gateways/__tests__/stf-packaging.test.ts"
+      ]
+    }
+  },
+  "nativeArchiveChecks": 36,
+  "browserFlows": 52,
+  "mutationsCaught": 8,
+  "baselineWidened": false,
+  "deployment": false,
+  "notes": [
+    "The 222-file manifest was initialized before canonical convergence. Client batches0-9 were requalified after merging ed5c91058; unchanged Vault service batches10-13 retain their complete original receipts.",
+    "Failed caller-fixture/shared-error/engineering-fixture receipts are preserved separately and never counted as passing.",
+    "Focused, drawer, native-original and earlier review cohorts overlap; their counts are not added to this disjoint regression total.",
+    "The separate hostile Vault surface probe also passes; its single multi-payload case is not included in2540.",
+    "Normal publication gates provide the final current-head compiler proof; CI and deployment are reported separately."
+  ]
+}

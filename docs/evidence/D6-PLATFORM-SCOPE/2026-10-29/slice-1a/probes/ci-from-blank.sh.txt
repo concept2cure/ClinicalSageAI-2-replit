@@ -1,0 +1,14 @@
+#!/bin/bash
+# CI's real-database lane shape: from a blank database, install-fresh then deploy-migrate, as the superuser, from tree $1; database $2; logs to $3.
+TREE=$1 NAME=$2 OUT=$3
+PG="postgresql://postgres@127.0.0.1:55472"
+psql "$PG/postgres?sslmode=disable" -q -c "DROP DATABASE IF EXISTS $NAME WITH (FORCE)" -c "CREATE DATABASE $NAME"
+export DATABASE_URL="$PG/$NAME?sslmode=disable" DATABASE_OWNER_URL="$PG/$NAME?sslmode=disable"
+export APP_DATABASE_URL="postgresql://app_service:local-p72-pw@127.0.0.1:55472/$NAME?sslmode=disable"
+export APP_SERVICE_DB_PASSWORD=local-p72-pw NODE_ENV=test
+unset TEST_DATABASE_URL
+cd "$TREE" || exit 9
+node scripts/db/install-fresh.mjs > $OUT-install-fresh.log 2>&1; echo "install-fresh exit $?" >> $OUT-install-fresh.log
+node scripts/db/deploy-migrate.mjs > $OUT-deploy-migrate.log 2>&1; echo "deploy-migrate exit $?" >> $OUT-deploy-migrate.log
+node scripts/db/deploy-migrate.mjs > $OUT-deploy-migrate-replay.log 2>&1; echo "deploy-migrate exit $?" >> $OUT-deploy-migrate-replay.log
+for f in $OUT-install-fresh.log $OUT-deploy-migrate.log $OUT-deploy-migrate-replay.log; do tail -n 1 $f; done

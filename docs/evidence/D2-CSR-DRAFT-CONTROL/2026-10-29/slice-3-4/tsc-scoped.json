@@ -1,0 +1,59 @@
+{
+ "command": "npx tsc -p tsconfig.scoped.json",
+ "config": {
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": {
+   "noEmit": true,
+   "typeRoots": [
+    "/home/user/ClinicalSageAI-2-replit/node_modules/@types",
+    "/home/user/ClinicalSageAI-2-replit/server/types"
+   ]
+  },
+  "include": [],
+  "files": [
+   "/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/csr-draft-control/vite-client.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/types/global.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/shared/types/jsx-modules.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/shared/types/third-party.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/auth.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/types/auth-request.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/types/global.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/types/index.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DraftPassage.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/draftPassage.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/__tests__/draftPassage.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+   "/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-draft-template.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/authoring/__tests__/authoring-draft-template.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-draft-passage.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/services/authoring/__tests__/authoring-draft-passage.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/shared/authoring/draft-passage.ts"
+  ]
+ },
+ "errors": 0,
+ "exit": "exit 0",
+ "canary": {
+  "file": "tsc-canary.ts (two deliberate type errors through draftPassage.ts and authoring-draft-template.ts)",
+  "errors": [
+   "../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneB/resume/tsc-canary.ts(4,14): error TS2322: Type 'string | undefined' is not assignable to type 'number'.",
+   "../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneB/resume/tsc-canary.ts(5,14): error TS2322: Type 'number' is not assignable to type 'string'."
+  ],
+  "exit": "exit 2"
+ }
+}

@@ -1,0 +1,8 @@
+{
+  "scope": "Exact current runner/helper and cancellation counterexample.",
+  "files": {
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "99f1d8e8b0ff12b72db1d3056754621b6bd0ff89a63586c414fa1bb29a7ae232",
+    "server/services/csr/csr-job-runner.ts": "63c0eb6be315ef3fb8b3a5d2e645f342bdef28d7b6defbd837a9b6a37bd9a833",
+    "server/services/csr/csr-job-evidence.ts": "bad81d2ed01c1edabc1a3323f8825276e8009a90bf3633790792aff1a2295327"
+  }
+}

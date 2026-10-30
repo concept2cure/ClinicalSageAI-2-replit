@@ -106,11 +106,11 @@ describe('detectActiveModule', () => {
   });
 
   it('still routes by what is recorded', () => {
-    expect(detectActiveModule(intelligence({ activeProject: project({ submissionType: 'IND' }) }))).toBe('ind-filing');
-    expect(detectActiveModule(intelligence())).toBe('ectd-coauthor');
+    expect(detectActiveModule(intelligence({ activeProject: project({ submissionType: 'IND' }) }))).toBe('ind-checklist');
+    expect(detectActiveModule(intelligence())).toBe('submission-center');
     const base = intelligence();
     expect(
       detectActiveModule(intelligence({ organization: { ...base.organization!, industryMode: 'medtech' } })),
-    ).toBe('510k-submission');
+    ).toBe('device-510k');
   });
 });

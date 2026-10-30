@@ -51,6 +51,13 @@ const logger = createScopedLogger('vault-filing');
 export type FilingConfidence = 'high' | 'medium' | 'none';
 export type PlacementStatus = 'unfiled' | 'suggested' | 'confirmed';
 
+/** The one cabinet placement rule: a retained folder alone does not file an Unfiled row. */
+export function cabinetFolderOf(row: { folder_id?: unknown; placement_status?: unknown }): string | null {
+  return typeof row.folder_id === 'string' && row.folder_id && (row.placement_status || 'unfiled') !== 'unfiled'
+    ? row.folder_id : null;
+}
+
+
 export interface FilingInput {
   fileName: string;
   title?: string | null;

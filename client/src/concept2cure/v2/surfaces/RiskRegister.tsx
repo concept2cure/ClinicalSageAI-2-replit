@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
 import { I } from '../icons';
@@ -15,6 +15,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import {
   ProjectRefused,
+  ReadRefused,
   useProjectScopedRead,
   type ProjectReadOptions,
   type ProjectReadStatus,
@@ -28,7 +29,9 @@ import '../styles/project-home-v2.css';
 import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
 import { C2CToast, useToast, type FireToast } from '../toast';
-import { SignedContentLine, signedContentForAna, signedContentWords, useSignedRecord, type SignedRecordRead } from '../SignedContentState';
+import { SignedContentLine, signedContentForAna, signedContentWords, type SignedRecordRead } from '../SignedContentState';
+import { riskControlsForAna, riskItemPath, riskRowsBelongToProject, useRiskOwnedState, useRiskReadOwner, useRiskRecordRead, useRiskToast, type RiskRecordRead } from './riskRecordRead';
+import type { DataReadOwner } from '../dataConnect';
 
 /* ════ The ISO 14971 risk register ════
 
@@ -56,6 +59,7 @@ import { SignedContentLine, signedContentForAna, signedContentWords, useSignedRe
    so the surface never fabricates a value the backend did not return. */
 export interface RawRiskItem {
   id: number;
+  program_id?: string | null;
   ref_code: string | null;
   hazard: string;
   hazardous_situation: string | null;
@@ -210,10 +214,11 @@ type SignInput = { meaning: EsigMeaning; reason: string; password: string; totp?
 export async function postResidualAcceptance(
   dbId: number,
   input: SignInput,
+  programId?: string | null,
 ): Promise<{ row: unknown; manifest: EsigSignedManifest }> {
   let res: Response;
   try {
-    res = await apiRequest('PATCH', '/api/mdx/risk-items/' + dbId, {
+    res = await apiRequest('PATCH', riskItemPath(dbId, programId), {
       status: 'accepted',
       meaning: input.meaning,
       reason: input.reason,
@@ -333,7 +338,7 @@ function acceptanceSentence(s: SignedRecordRead | null): string {
 
 function riskAnaContext(x: {
   status: ProjectReadStatus; summary: RiskSummary; view: MatrixView; row: RiskRow | undefined;
-  riskState: AssessmentState; canWrite: boolean; signature: SignedRecordRead | null;
+  riskState: AssessmentState; canWrite: boolean; signature: SignedRecordRead | null; controls: RiskRecordRead;
 }): AnaContext {
   const { summary, view, row } = x;
   const unread = UNREAD_CONTEXT[x.status];
@@ -378,6 +383,7 @@ function riskAnaContext(x: {
             probability: row.prob, residualProbability: row.probR ?? null,
             status: row.status, residualAcceptability: row.res ?? null,
             residualAcceptanceSignature: x.signature ? signedContentForAna(x.signature.facet, x.signature.reading) : null,
+            controls: riskControlsForAna(x.controls, row.controls),
           }
         : null,
     },
@@ -527,6 +533,7 @@ function adoptedControl(cr: Record<string, unknown>, v: Record<string, string>):
 }
 
 interface WriteDeps {
+  owner: DataReadOwner;
   programId: string | null;
   row: RiskRow | undefined;
   setRows: React.Dispatch<React.SetStateAction<RiskRow[]>>;
@@ -543,17 +550,21 @@ function riskWrites(d: WriteDeps) {
   // status/acceptability). No optimistic HZ-<n> id; the success toast fires only
   // after the write is confirmed, and any failure is stated with nothing added.
   const addHazard = async (v: Record<string, string>) => {
+    if (!d.owner.current()) return;
     if (!v.hazard || !v.harm) { d.fire('Hazard and harm are required'); return; }
     try {
-      const res = await apiRequest('POST', '/api/mdx/risk-items', hazardBody(v, d.programId));
+      const res = await apiRequest('POST', '/api/mdx/risk-items' + (d.programId ? `?program_id=${encodeURIComponent(d.programId)}` : ''), hazardBody(v, d.programId));
       const json = await res.json().catch(() => null);
+      if (!d.owner.current()) return;
       if (!res.ok) { d.fire('Couldn’t add the hazard — ' + errText(json, res.status) + '. Nothing was saved.'); return; }
-      const adopted = mapRiskItems([envRow(json)])?.[0];
+      const saved = envRow(json) as RawRiskItem | null;
+      const adopted = d.programId && saved?.program_id !== d.programId ? undefined : mapRiskItems([saved])?.[0];
       if (!adopted) { d.fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
       d.setRows(rs => [{ ...adopted, _new: true }, ...rs.filter(r => r.id !== adopted.id)]);
       d.setSel(adopted.id); d.setForm(false);
       d.fire('Hazard ' + adopted.id + ' saved · status ' + adopted.status);
     } catch (e) {
+      if (!d.owner.current()) return;
       d.fire('Couldn’t add the hazard — ' + thrownClause(e) + '. Nothing was saved.');
     }
   };
@@ -563,22 +574,27 @@ function riskWrites(d: WriteDeps) {
   // the SERVER's risk_controls row (real id). Nothing is added on failure; the
   // former fabricated RC-<n> id and swallowed error are gone.
   const addControl = async (v: Record<string, string>) => {
+    if (!d.owner.current()) return;
     const row = d.row;
     if (!row) return;
     if (row.dbId == null) { d.fire('This hazard isn’t in the governed file yet — reload before adding controls'); return; }
     try {
-      const res = await apiRequest('POST', '/api/mdx/risk-items/' + row.dbId + '/controls', {
+      const res = await apiRequest('POST', riskItemPath(row.dbId, d.programId, '/controls'), {
         description: v.desc, controlType: v.type || 'protective_measure', status: v.status || 'proposed',
       });
       const json = await res.json().catch(() => null);
+      if (!d.owner.current()) return;
       if (!res.ok) { d.fire('Couldn’t add the control — ' + errText(json, res.status) + '. Nothing was saved.'); return; }
       const cr = envRow(json) as Record<string, unknown> | null;
-      if (!cr || typeof cr !== 'object') { d.fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
+      if (!cr || typeof cr !== 'object' || typeof cr.id !== 'number' || (cr.risk_item_id !== undefined && cr.risk_item_id !== row.dbId)) {
+        d.fire('Saved, but the server returned an unexpected record — reload to see it', 'error'); return;
+      }
       const nc = adoptedControl(cr, v);
       d.setRows(rs => rs.map(r => r.id === row.id ? { ...r, controls: [...(r.controls || []), nc] } : r));
       d.setCtrlForm(false);
       d.fire('Risk control saved to ' + row.id);
     } catch (e) {
+      if (!d.owner.current()) return;
       d.fire('Couldn’t add the control — ' + thrownClause(e) + '. Nothing was saved.');
     }
   };
@@ -589,13 +605,20 @@ function riskWrites(d: WriteDeps) {
   // signature is confirmed, so status and residual acceptability (res) come from
   // the record. Controls are preserved (the item PATCH doesn't return them).
   const openAcceptance = (r: RiskRow) => {
+    if (!d.owner.current()) return;
     if (r.dbId == null) { d.fire('This hazard isn’t in the governed file yet — reload before accepting its residual risk'); return; }
     d.setAccepting(r);
   };
   const signAcceptance = async (r: RiskRow, input: SignInput): Promise<EsigSignedManifest> => {
-    const { row: signedRow, manifest } = await postResidualAcceptance(r.dbId as number, input);
+    if (!d.owner.current()) throw new Error('The risk-file context changed. Return to the original project and check the hazard before signing.');
+    const { row: signedRow, manifest } = await postResidualAcceptance(r.dbId as number, input, d.programId);
+    if (!d.owner.current()) throw new Error('The risk-file context changed. Check the signed outcome in the original project before signing again.');
     const adopted = mapRiskItems([signedRow])?.[0];
-    d.setRows(rs => rs.map(x => x.id === r.id ? (adopted ? { ...adopted, controls: x.controls } : { ...x, status: 'accepted', open: false }) : x));
+    const raw = signedRow as RawRiskItem | null;
+    if (!adopted || adopted.dbId !== r.dbId || adopted.status !== 'accepted' || (d.programId && raw?.program_id !== d.programId)) {
+      throw new Error('The server did not confirm the signed hazard record. Reload the original risk file before signing again.');
+    }
+    d.setRows(rs => rs.map(x => x.dbId === r.dbId ? { ...adopted, controls: x.controls } : x));
     d.fire(r.id + ' residual risk accepted and signed');
     return manifest;
   };
@@ -633,6 +656,7 @@ export interface RiskRegisterState {
   setAccepting: (r: RiskRow | null) => void;
   /** The selected accepted hazard's acceptance signature state; null when no accepted hazard is selected. */
   acceptanceSignature: SignedRecordRead | null;
+  controlRead: RiskRecordRead;
   writes: ReturnType<typeof riskWrites>;
   toast: ReturnType<typeof useToast>[0];
   authUser: ReturnType<typeof useAuthUser>;
@@ -640,20 +664,28 @@ export interface RiskRegisterState {
   anaContext: AnaContext;
 }
 
+function scopedRiskRead(live: ProjectScopedRead<RawRiskItem>, programId: string | null): ProjectScopedRead<RawRiskItem> {
+  const badRows = live.status === 'ready' && (!riskRowsBelongToProject(live.rows, programId)
+    || (live.rows.length > 0 && mapRiskItems(live.rows) === null));
+  return badRows ? { ...live, status: 'unkeyed', rows: [], error: "The risk-file rows did not match this project's record." } : live;
+}
+
 export function useRiskRegister(opts: RiskRegisterOptions): RiskRegisterState {
+  const owner = useRiskReadOwner(opts.programId);
   // REAL slice: GET /api/mdx/risk-items (server mdx-risk-management.ts) reads the
   // governed risk_items table — the project's rows, an honest empty, an honest failed load, or
   // an honest refusal, never a fixture. Raw rows carry numeric
   // severity/probability (1..5) plus nullable columns; mapRiskItems maps them
   // onto the RiskRow display contract null-safe. A stable EMPTY_ROWS stands in
   // until the read is the project's, so the re-seed effect below can't thrash.
-  const read = useProjectScopedRead<RawRiskItem>('/api/mdx/risk-items', opts);
+  const live = useProjectScopedRead<RawRiskItem>('/api/mdx/risk-items', { ...opts, owner });
+  const read = scopedRiskRead(live, opts.programId);
   const mapped = useMemo<RiskRow[]>(
     () => (read.status === 'ready' ? (mapRiskItems(read.rows) ?? EMPTY_ROWS) : EMPTY_ROWS),
     [read.status, read.rows],
   );
-  const [rows, setRows] = useState<RiskRow[]>(EMPTY_ROWS);
-  const [sel, setSel] = useState<string>('');
+  const [rows, setRows] = useRiskOwnedState<RiskRow[]>(owner, EMPTY_ROWS);
+  const [sel, setSel] = useRiskOwnedState<string>(owner, '');
   // Seed the optimistic-row store once the live risk file resolves; user-added
   // hazards before that are optimistic. `mapped` is a stable reference until
   // the read is ready, so this effect only fires on a real resolution.
@@ -664,17 +696,15 @@ export function useRiskRegister(opts: RiskRegisterOptions): RiskRegisterState {
       setRows(mapped);
       setSel(mapped[0]?.id ?? '');
     }
-  }, [mapped]);
-  const [view, setView] = useState<MatrixView>('initial');
-  const [form, setForm] = useState(false);
-  const [ctrlForm, setCtrlForm] = useState(false);
-  const [toast, fire] = useToast();
+  }, [mapped, setRows, setSel]);
+  const [view, setView] = useRiskOwnedState<MatrixView>(owner, 'initial');
+  const [form, setForm] = useRiskOwnedState(owner, false);
+  const [ctrlForm, setCtrlForm] = useRiskOwnedState(owner, false);
+  const { toast, fire } = useRiskToast(owner);
   const authUser = useAuthUser();
-  const canWrite = canGovernedWrite(authUser);
+  const canWrite = owner.current() && canGovernedWrite(authUser);
   /** The hazard whose signed residual-risk acceptance is open, if any. */
-  const [accepting, setAccepting] = useState<RiskRow | null>(null);
-  /* A form or the signature dialog opened under one project is closed when another opens. */
-  useEffect(() => { setForm(false); setCtrlForm(false); setAccepting(null); }, [opts.programId]);
+  const [accepting, setAccepting] = useRiskOwnedState<RiskRow | null>(owner, null);
 
   /* The selected hazard is the entity in context (window.C2C). */
   useEffect(() => {
@@ -724,19 +754,19 @@ export function useRiskRegister(opts: RiskRegisterOptions): RiskRegisterState {
      signature still binds the hazard and the controls it accepted, from GET
      /api/mdx/risk-items/:id `signedContent` (D5, 2026-10-29). Read for an
      accepted hazard only, the one the drawer shows with a signature. */
-  const signedId = row && row.dbId != null && isAccepted(row) && readable ? row.dbId : null;
-  const signedRead = useSignedRecord(signedId != null ? '/api/mdx/risk-items/' + signedId : null, signedId, [signedId, row?.status]);
-  const acceptanceSignature = signedId != null ? signedRead : null;
+  const detailId = row?.dbId != null && readable ? row.dbId : null;
+  const controlRead = useRiskRecordRead(detailId, opts.programId, owner, row?.status ?? '');
+  const acceptanceSignature = row && isAccepted(row) && detailId !== null ? controlRead.signature : null;
   const anaContext = useMemo(
-    () => riskAnaContext({ status: read.status, summary, view, row, riskState, canWrite, signature: acceptanceSignature }),
-    [read.status, summary, view, row, riskState, canWrite, acceptanceSignature],
+    () => riskAnaContext({ status: read.status, summary, view, row, riskState, canWrite, signature: acceptanceSignature, controls: controlRead }),
+    [read.status, summary, view, row, riskState, canWrite, acceptanceSignature, controlRead],
   );
-  const writes = riskWrites({ programId: opts.programId, row, setRows, setSel, setForm, setCtrlForm, setAccepting, fire });
+  const writes = riskWrites({ owner, programId: opts.programId, row, setRows, setSel, setForm, setCtrlForm, setAccepting, fire });
   const mayAdd = canWrite && readable;
 
   return {
     programId: opts.programId, read, rows, row, sel, setSel, view, setView, summary, riskState, residualClear,
-    canWrite, mayAdd, form, setForm, ctrlForm, setCtrlForm, accepting, setAccepting, acceptanceSignature, writes, toast, authUser, anaContext,
+    canWrite, mayAdd, form, setForm, ctrlForm, setCtrlForm, accepting, setAccepting, acceptanceSignature, controlRead, writes, toast, authUser, anaContext,
   };
 }
 
@@ -828,7 +858,7 @@ function RiskLead({ r, onAsk }: { r: RiskRegisterState; onAsk: Ask }) {
            identical figure twice and calls it a reduction. The control-chain
            clause was flatly untrue: this screen reads the hazard register,
            which carries neither control lists nor verification evidence. */
-        <>Mean risk score is <b>{summary.avgInitial}</b> initial and <b>{summary.avgResidual}</b> residual across {summary.total} hazard{summary.total === 1 ? '' : 's'}; {summary.accepted} carr{summary.accepted === 1 ? 'ies' : 'y'} a recorded acceptance. Control chains and verification evidence are not read on this screen.</>
+        <>Mean risk score is <b>{summary.avgInitial}</b> initial and <b>{summary.avgResidual}</b> residual across {summary.total} hazard{summary.total === 1 ? '' : 's'}; {summary.accepted} carr{summary.accepted === 1 ? 'ies' : 'y'} a recorded acceptance. Controls are read for the selected hazard; DHF verification evidence is not read here.</>
       }
       reassure={
         /* "…from the controlled residual risks" presumed the controls this
@@ -948,8 +978,8 @@ function HazardChain({ row }: { row: RiskRow }) {
   );
 }
 
-function HazardControls({ row }: { row: RiskRow }) {
-  const controls = row.controls || [];
+function HazardControls({ row, read }: { row: RiskRow; read: RiskRecordRead }) {
+  const controls = [...new Map([...read.controls, ...(row.controls || [])].map(c => [c.id, c])).values()];
   return (
     <div className="risk-ctrls">
       {controls.map(c => (
@@ -958,24 +988,11 @@ function HazardControls({ row }: { row: RiskRow }) {
           <span className="risk-ctrl-m"><span className="mono">{enumLabel(EN.ctrlType, c.type)}</span><span className={`rd-chip tone-${ctrlTone[c.status] || 'idle'}`}>{enumLabel(EN.ctrlStatus, c.status)}</span></span>
         </div>
       ))}
-      {/* USED TO READ: "No controls yet — add the first risk control." on
-          every hazard with an empty control list. The hazard-register
-          read does not carry control lists — the mapper sets
-          `controls: []` on every row it maps — so that sentence appeared
-          against a hazard carrying a full, verified control chain just as
-          readily as against one carrying none. On an ISO 14971 surface
-          that is a claim that a hazard is unmitigated, made from data the
-          screen never read.
-
-          Two rows have a control list this screen can vouch for: one
-          created here this session (the server had just written it, so
-          there genuinely are no controls yet) and one a control was added
-          to here (non-empty, so it renders the list above). */}
-      {controls.length === 0 && (
-        row._new
-          ? <div className="sp-q-s" style={{ padding: '6px 0' }}>No controls yet — add the first risk control.</div>
-          : <div className="sp-q-s" style={{ padding: '6px 0' }}>Risk controls for this hazard are not read on this screen. An empty list here is not a record that none exist.</div>
-      )}
+      {read.loading && <p role="status" className="sp-q-s">Loading risk controls…</p>}
+      {read.refusal ? <ReadRefused refusal={read.refusal} what="risk controls" retry={read.retry} testId="risk-controls-refused" />
+        : read.error && <div role="status" className="sp-q-s">Couldn't load the risk controls. Their absence here is not a record that none exist.
+          <button type="button" className="btn ghost small" onClick={read.retry}>Try controls again</button></div>}
+      {read.ready && controls.length === 0 && <p className="sp-q-s">No controls yet — add the first risk control.</p>}
     </div>
   );
 }
@@ -995,7 +1012,7 @@ function HazardDrawer({ r, row, onAsk }: { r: RiskRegisterState; row: RiskRow; o
       )}
 
       <div className="pj-seclbl" style={{ margin: '14px 0 8px' }}>Risk controls <span className="s">/ ISO 14971 section 7</span></div>
-      <HazardControls row={row} />
+      <HazardControls row={row} read={r.controlRead} />
       {r.canWrite && <button className="btn ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={() => r.setCtrlForm(true)}>{I.plus} Add risk control</button>}
 
       {row.open && <div className="risk-flag" style={{ marginTop: 10 }}>{I.alertTriangle} Open evaluation — residual risk not yet accepted. Benefit-risk justification required before section 2.3.</div>}

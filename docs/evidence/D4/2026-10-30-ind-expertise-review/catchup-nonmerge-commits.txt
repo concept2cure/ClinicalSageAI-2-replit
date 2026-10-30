@@ -1,0 +1,468 @@
+5df0efd37 fix(D5): a CSR whose scientific reviewer no longer stands says so at release
+24f342692 CSR: record the unverified STF file-tag and the lead against it
+da57fe805 fix(D5): the Vault carry-over judges independence against every author of the document
+c91ab2705 OQ-003 v0.5: revise the Authoring OQ protocol for RR5's review route, run red then green
+86e099f18 fix(review-board): the project switch names a linked project, never by its id (RR5 acceptance, D2)
+508b2b7a8 P-39 step 4: Agency Meetings retires into Communication; its store is read-only
+26bd6cacc Veeva gap 7: a manifest (CSV) describes the files in the Vault upload list
+769e43f09 fix(D5): an approval asks whether the document is settled, as Freeze does
+a39ebbdd4 fix(review-board): a reviewer who signed REVIEWER on the route is no longer shown as awaiting review (RR5, D2)
+1ccaa1ce9 MR-02 Stage 3: Test in eight shards with one verdict; the suite no longer runs three times a push
+345d62856 Own the product, batch 3: the CSR scientific-review guard builds again (my batch-1 regression)
+aac4eb57c eTMF design and P-75: one TMF store, the protocol-design study, inside Vault, professional tier; lane claimed (D2, P-74 item 1)
+4ace6a92b The training reader reads both versions; a document under revision opens again (MR-12 Stage 4 slice 3b client; D2, P-49)
+0f4bc4f2c CSR drafting: revise by instruction, and alternatives for a selected passage (D2, W1)
+ae12195a5 P-72 slice 1a: the non-superuser deploy runs to the end; the platform role string is refused (D1, D6)
+51391d195 Own the product, batch 2: the live-schema gate stops reading prose as SQL; the environment gates pass
+d5d168f82 D2-CSR: the CSR card's import dialog names the target project
+f818032b3 Board: CSR lane, one build path
+ef84eb091 CSR: one build path; the synchronous launchCSRBuild is deleted
+3a99ae2df Training opens at approval; a version approved for a later day cannot be revised (MR-12 Stage 4 slice 3b server; D2, P-49, P-50)
+4ab17fe06 fix(review-route): RR5 phone acceptance passes at 390x844; seven phone defects on its flow fixed (D2)
+0bf201133 MR-08 Stage 6 step 2: each Vault upload row says how far its file has got
+f9b25e4e5 test(D5): the in-context figure test passes the snapshot shape the receipt takes
+6a99d6afd P-74: the founder admits eTMF, nonclinical/IB authoring, registrations, NDA/BLA, QC/LIMS and study start-up, in that order (D2)
+c5553b81d fix(D5): the scientific review verifies a mapped figure where it stands in the saved text
+bc2fa3b8c fix(D5): an assembled CSR file is not released until an approved, signed CSR covers it
+19263f962 MR-02 Stage 3: CI usage measured; c2c-agent's duplicate typecheck removed
+fa69eaaad Own the product, batch 1: nine failing CI gates fixed; the CSR cortex suites run
+c862373aa fix(D5): Rule 2 — AnA's dispatch QC reads its verdict from the stored sequence, never from typed counts
+d8d94a916 Board: CSR lane, section review on the CSR card
+8cc31a7e0 D2-CSR: a CSR built in production is reviewed, approved and imported from the CSR card
+4f5972e64 Training compliance counts the people assigned; training person by person is QA's (MR-12 Stage 4 slice 3a; D2, P-49, P-50)
+4f352d9a2 D1: the production image boot is proven in CI; row done
+56684adfe Evidence: competitive gap analysis against Weave Bio and Veeva Vault Basics, with what already exists and the catalog decisions for the founder (D2)
+126bc339f fix(D7): the drug NDA golden journey applies the filed-baseline migration it now reads
+7887e8849 fix(D5): on POST /docs/:id/sign, only an APPROVER signature approves
+dee4cb686 fix(D5): a CSR made from a CSR template needs its scientific review, whatever its title says
+2a172833d P-39 step 4c: a meeting names the inbox letter that holds its minutes
+de88a4efd Work orders: Veeva gap 4 row records RR1a-RR5 landed and what is open (D2)
+265198d82 Quality: job roles and who must train on a document, reached from the register (MR-12 Stage 4 slices 1-2 client; D2, P-49, P-50)
+7a62ea3c4 chore(repo-health): auto-refresh baseline after merge [skip ci]
+788624107 P-73 slice 2: the editor's Draft from sources drafts against the application the project records
+5b4431183 Training assigned per controlled document, by role and by name (MR-12 Stage 4 slice 2; D2, P-49, P-50)
+bdde73939 Board: CSR end-to-end lane, reach from the CSR card and §14.3.3 by reference
+26917b0f2 D2-CSR: a CSR built in production gets narratives, assembly and placement from the CSR card
+ba05a73be Trunk green: five CSR-lane tests pinned shapes the product changed on purpose
+94e0efb46 Trunk green: authoringFromDraft runs with the request's database client
+ab5fc86de A meeting's questions and readiness are admitted by its project too
+e05dcdc57 D2-CSR: the server refuses a save over §14.3.3 held by reference
+cb88c89c0 Vault saved views: the find view's "Saved views" control (D2, P-46, R2 client)
+02e50803f Communication records and moves agency meetings, only where the person may act
+5b9dabb63 P-73 slice 1: a trial program resolves to its own region's trial application
+3b1d8c782 MR-08 Stage 6 step 3: export a Vault folder, verified, with an index, SHA256SUMS and its audit trail
+c27368877 test(review-route): the earlier-round task fixture carries RR5's reviewRouteId (TS2345)
+6f73f0da3 Size ceiling: split two slice-0 captures; tighten one F5 route comment
+767f2ec58 Preserve two lanes stopped by the agent limit as patches, not product
+c72e1dd54 P-73: trial-application drafting covers every region, therapeutic area and modality; CMC composition stays put
+776d9da46 Fold F5 item 1: device filings are Submission Center's, over one store (D2, P-61)
+59cb0f54c P-58/P-59: a departing tenant's records leave with it, after export and custody
+d6aedbecc D2-CSR: import §14.3.3 by reference to the narrative store
+9e73fad98 P-39 step 4: the HAQ session store is retired onto the project inbox
+31e447716 docs(D5/D7): design for downloading a kept sent package above the 25 MiB limit
+f3236209f docs(review-route): RR5 evidence — results, DB tier, gates, and the open phone run (D2)
+99c9d972c feat(review-route): RR5 — Authoring's request-review writes its route and tasks in one transaction (D2)
+54b2929c5 board: claim MR-08 Stage 6 step 3, the Vault folder export
+2c9e8d077 Vault: a document on legal hold says so, to every reader (MR-08 Stage 5 step 5)
+c5bc4be22 board(D5): the CSR lane's three hand-ons are done; the board's reach and four red CSR tests go back to that lane
+5ab665f63 The old IND briefing-book assembler is retired; Agency Meetings opens the editor's meeting package
+806c4eb01 docs(D5): the CSR review records Fast Track, the 1571 box, named signers and the 25 MiB scope
+486d3af3c P-72 slice 0: what depends on the session's platform scope, measured
+30d18c79e board: claim MR-08 Stage 5 step 5, the on-document hold notice
+96ed2d7ec Board: CSR end-to-end lane, 2026-10-30 progress and the CDISC pilot result
+4ba9c2b04 The version history says which version is in force and what superseded the rest
+d966ddfab Two client suites mock authService the way the editor now imports it (trunk red)
+041880cbd Fold F5 item 2: no organization-wide blocker list; a blocker is its filing's readiness (D2, P-61)
+039cf9a8d test(D2): type the submission count in the document-class refusal test
+38d5345ea CSR: the patient narratives reach the assembled CSR as their own §14.3.3 leaf, verified against what was stored (D2/D4)
+4e0a3efa8 An artifact version is never rewritten; CAT2-20 closed at head
+d07ad0d8f Vault: a legal hold is placed once and lifted once (MR-08 Stage 5 step 4)
+7b4a16cf8 CSR drafting, slice 1: three alternatives, compared, taken whole or by the paragraph
+cefd62a86 fix(D5): Rule 2 — AnA's narration tools say their figures and facts are as given
+097fb216c fix(D5): one list of CSR table keys; vital-sign and con-med figures are reviewable against their cells
+e0498e0b3 The effective date is the one the approver signs: not inherited, not backdated
+73865b4c1 MR findings: CAT2-22 and CAT2-23 are fixed at head
+5b15c9a47 MR findings: CAT2-24, CAT2-25 and CAT2-26 are fixed at head
+769a43b68 Pre-push: the RLS-bypass refusal names P-70's rule, not the deleted helper
+7aded0397 P-72 design: platform scope as a role, and its five questions decided
+f2756897d evidence(D2): the wide run for the CSR filing-type rule
+d886d49bc Controlled copy: the 503 for a PDF that could not be rendered states its own sentence
+31877bd79 Quality issues a controlled copy of the version in force, signed and marked
+303f49012 Folds F1c and F2: risk and design controls into Engineering, IVD completeness into IVDR evidence
+9d8df3911 Vault restore: fix the security review's findings, and two gates left red
+9b6c73df0 P-62: a project's CMC data has one home, the CMC / Module 3 register
+ac904e8ac CSR on the CDISC pilot: all 95 narratives written honestly, the full demographics and population tables, and efficacy that may be absent (D2/D4)
+eb158c255 fix(D5): one CSR build path; the builder authenticated at its own mount
+f5b788867 Two dbtests caught up with the QMS rules they test against (trunk red)
+96192cca4 Agency letters are overdue by the response clock, not the typed date alone
+8871d90b3 evidence(d2): RR2 records, an interim approval as its own record and the Vault sign-off lines from the round (D2)
+b8f8aca1c Vault: a routed version's sign-off lines name every signer on its round
+dc666abba The response clock runs on the project inbox's letters
+6549fe2b5 Part 11: an interim approval is its own record; no reader calls it the approval
+0d94a1cb5 Vault: restore an earlier version as the next version (MR-08 Stage 5 step 2)
+1d9e01848 Composition-boundary callers contract: Module 2 QC asks through the run's Module 3 door
+dbcb13a69 P-72: platform scope is a role, not a session setting; P-70 amended
+08619d5cc P-70: no session setting lifts row-level security
+cef786a3f fix(vault): bind the classifier's filing UPDATE to the organization
+5ab138ed3 fix(D2): a CSR is built in its application's project, and a CSR project opens no IND submission
+230b6dfa0 P-60: a product's Engineering screen reads its own design history and design changes
+397982592 fix(D5): pivotal declarations are reachable in production, on the Submission Center's CSR card
+e3a2d0475 Device Correspondence tab reads the project inbox; letters are answered in Communication
+16791c326 P-67: the GAMP 5 validation package is reached on Settings, as it is
+bbe901816 Move the QMS training reads into the training router; mdx-qms.ts back under the size ceiling
+58b27d022 feat(D5): a CSR names the study's ClinicalTrials.gov registration from its approved source
+5109f594e Correspondence reads one project's letters, for a person who may open it
+5e7bcdd27 Change-control links name a real record, and a removed link is kept
+92bb29868 P-61 item 4: a grant of a folded module carries to the module it moved into
+4eb50d630 QMS register edit records what it changed, from and to; MR-12 Stage 5 done
+543e4e1a8 CSR on the public CDISC pilot (CDISCPILOT01): every engine table cell matches an independent reading, after the fixes real data needed (D2/D4)
+550e43d39 QMS job roles and their membership (MR-12 Stage 4 slice 1; D2, P-49, P-50)
+71aee7b1f P-70 and P-71: no session setting lifts RLS; the product ships no customer's analysis
+d965572b5 Signed content is not edited in place; a translation binds its source (D5; P-63, P-64)
+665873b2d Five tenant-isolation hardenings (D6; P-65, P-66, P-61 item 5)
+7f5a68c14 G3: the Agency inbox proposes the letter's numbered questions; a person records each
+7bc96a3e1 P-39 step 2: one commitment store; c2c_commitments is retired, read-only
+d140aefa5 Retire billing into Licensing; rate limits are the ones enforced (D2, fold billing part 2; P-68)
+0c0c20c82 evidence(d2): RR2, sequential reviewers, more than one approver, and adding a reviewer, on Vault and QMS routes: red/green, gates, OQ, acceptance (D2)
+33e8bff0b board: claim MR-08 Stage 5 step 2, Vault version restore
+5b7a6a79c QMS register shows who approved each in-force version, when (UTC) and as what
+30846b422 Deviations: one recorded in error is cancelled by signature and stays listed
+1709ff1a8 Deviations: the person who sent it for approval does not sign its close
+cd95dc9e6 P-51: a retirement is signed as a retirement, not an approval
+99675ac29 feat(review-route): RR2 client — reviewers in order, several approvers, and Add a reviewer, in the Vault and the Quality register (D2)
+4c211e590 feat(qms): Quality's Deviations tab; a CAPA may be raised from a deviation (P-57, client half)
+302d632db Fold ectd-publishing into eCTD compile (D2)
+271ea4579 P-61 amended: the rate-limit route returns the limits actually enforced, not an unenforced per-tier grid
+6c7c6c144 Decisions P-51 to P-62 for regulated clients and the product's longevity (launch definition of done)
+fc629866a Checkout and the billing portal are for billing administrators (D6, fold billing part 1b)
+24f28558f feat(review-route): RR2 server — reviewers one after another, more than one approver, and adding a reviewer to an open route (D2)
+cbcd32f58 P-50 and the training design: assigned, version-bound QMS training (MR-12 Stage 4, D2, D5)
+7887f88b4 Vault saved views R2 (server): save, list, rename, share and delete views on the one search's terms (D2, P-46)
+fcaf769db The one-signing-authority policy names the review-route member check (D5, trunk red)
+9c2fdec74 Invoices are for billing administrators, and live in Licensing (D2 / D6, fold billing part 1)
+1371823ee Vault: propose a scan's filing from the text the sweep read (MR-08 Stage 3 step 5)
+88229a87d feat(D7): declare the US sequences a submission filed outside the platform, signed
+7c464cf1b CSR: a revised CSR is filed as an eCTD replace of the study's earlier files; an earlier file it drops needs a decision (D2)
+e73459169 CSR: a build, assembly or narrative run stopped by a restart resumes after boot, as its requester (D2)
+f09dc11dd CSR: an edited section is re-checked, not blocked forever; AnA's writing review carries the evidence verdict (D2)
+477108aed feat(qms): deviations are their own record (P-49, server half)
+488b15e1e refactor(review-route): the round's rendering moves out of the Vault surfaces into v2/reviewRoute (D2, RR2 cleanup a)
+8e8bab76c fix(review-route): the member validator asks checkSigningAuthority, the one signing policy (D2, RR2 cleanup b)
+6fde87d0a docs(work-orders): the training-assignment lane moves to the Quality lane; the Weave-gap lane's decisions are taken (P-54, P-55)
+97a2077de docs(decisions): P-51 records the review-routing NEW-4 decision instead of contradicting it
+c7fccfbe6 docs(decisions): P-49 to P-56, decided under the founder's delegation of 2026-10-29
+577c5398c feat(qms): a supplier's signed approval names when it is next re-approved
+beede0408 Retire setup: administration's Settings is its one home (D2, fold setup part 2)
+e21338bce Vault saved views R1: the one saved-query store holds Vault views, on the deploy path (D2, P-46)
+4c696d5c5 P-49: training is assigned by role and by name, opens at approval, and reaches the people assigned (D2, D5)
+6e3918f45 fix(D7): an IND amendment on the Submission Center spine names its Original Application
+27e3906ac feat(qms): Quality names whose read-and-understood training has lapsed
+e188d3046 The QMS routers take the caller's organization from the one resolver (D6, trunk red)
+78877084f Fold ana-memory into the conversation (D2)
+f83fcce03 Administration's Settings carries the organization's setup (D2, fold setup part 1)
+1e63f5a59 fix(qms): AnA's supplier and nonconformance tools write the routes' audited records
+711fd7d7f fix(D5): a pivotal declaration needs the project's edit permission
+4e054413d evidence(d2): RR4, the QMS review route and QMS approvers — red/green, gates, OQ-006 v0.8, acceptance (D2)
+1446214b8 A viewer cannot write a project, and a private project's records stay with its members (D6)
+cd5dad32e MR-08 Stage 3 steps 1(b) and 4-6: OCR off the upload request
+3f46aa2a0 validation(oq-006): v0.8 — the QMS review route, and the controlled create the protocol had not followed (D2, RR4)
+2ff5332f0 test(qms): the signed-decisions route test's SQL double is a table, under the complexity limit
+e00873b6e refactor(qms): the quality-record routes move to their own router under the size ceiling
+66efa6179 Fold part11-console into Audit trail (D2)
+45f571e9a feat(D5): pivotal is the sponsor's declaration, per study, and Module 2 reads only that
+618059d34 fix(qms-route): the approver list says why an Approver is not offered; 44 px close in the register's sheets (D2, RR4)
+5746a8ace feat(qms): a supplier is approved, conditionally approved or revoked by a signature
+c5f8e1ac4 Training-lapse names are read only for the organization's members (D6, trunk red)
+06b7e840d feat(qms-route): RR4 client — the route form and round in the Quality register, and QMS approvers in Admin (D2)
+ae057a711 feat(qms): a nonconformance is dispositioned by an electronic signature
+5985619e5 feat(qms-route): RR4 server — QMS approvers (D-Q) and the review route on a QMS controlled document (D2)
+18ecfe003 Device folds plan: record F1 slices A/B, F3 done, Engineering panels (D2)
+b265d6fc0 CSR: assembly reaches a sequence, and the narrative build runs on the queue (D2)
+b9de04c62 Fold device-vault and the Artifacts center into Vault (D2, fold F3)
+cc05bd2fa docs(board): claim MR-08 Stage 3 steps 1(b) and 4-6 (OCR off the upload request)
+5c75de2ab feat(qms): Quality lists whose training lapses soon, read as coverage reads it (G10)
+c498c17b7 docs(D5): correct the CSR review's study-register row
+1780eef8e MR-08 Stage 3 step 3: the define.xml stylesheet and slide decks enter the Vault
+2a5c49aba fix(vault): the uploads lane names a file at a phone's width (D2)
+840ae527c fix(D7): reach the kept sent package: a recorded, project-scoped download in Gateway transmittals
+feb58f81e The tenant export returns six tables the purge erased without returning; the CSR narratives are purged (D6)
+0a2ee31fe CSR slice 5: a saved CSR gets a real number-to-source verdict, not 'not_assessed' (D2)
+18056bd01 fix(D7): the not-archived 503 answers a fixed sentence, and logs the detail
+3cab286e1 fix(D7): keep the exact bytes sent to an agency, before they are sent
+d9aab49db fix(qms): hand the write's row to the reminder planners without hiding SQL from the gate
+90a0ec9bc feat(qms): a CAPA, its actions, a supplier and an internal audit remind whoever owes them
+e2cf417ba A tenant purge reaches the end, and the export returns what it erases (D6, data erasure)
+11624b268 The project CMC and context routes check project access and the organization (D6, tenant isolation)
+c3d0312b4 docs(evidence): RR3 — reassign and hand back on the Vault review route: red, green, gates, OQ and browser acceptance (D2)
+2261f1d7c SEC-17: one archive limit before the server inflates any ZIP a caller sends
+58008b4ac The Vault's governed-artifact leaf reads its versions, audit report and governed DOCX (D2, fold F3 slice B)
+e1adaaff9 feat(qms): a supplier names its quality agreement from the controlled-document register
+18c718e3c feat(vault): RR3 client — Reassign, Hand back and the naming history on a version's route (D2)
+ccefb0dee feat(review-route): RR3 server — reassign a named member and hand back, with the naming history (D2)
+981e88c36 The labeling and risk screens say whether a signature still binds its record (D5, 21 CFR Part 11)
+35283b804 docs(board): claim MR-08 Stage 3 step 2 (SEC-17); record VR-20 part 2's open decision
+9579bd93a Board: CSR end-to-end lane, slices 3 and 6-9 landed; next and hand-ons
+792ebe834 fix(tasking): restore RR1a's assignTaskInTx and route guard, lost in merges (D2)
+6b70fd0a4 Regenerate the AnA capability manifest at head (D2)
+459ad5132 VR-20 part 1: a seal's closing archive, verified before a byte is sent
+ed3ed34c6 The sign-ceremony gate sees an approval recorded as a status (D5, 21 CFR Part 11)
+d1f04c379 A device screen says what a refusal is, not that the read failed (D2)
+de6b8c630 A tenant purge can call the Vault seal door after a deploy (D6, data erasure)
+3038bbe66 The project Vault lists every governed artifact of the project (D2, fold F3 slice A)
+b86433174 CSR slice 9: retire the CSR endpoints that asked a model for figures, and three dead CSR modules; the two long-red CSR tests follow the product (D2)
+dc5c1c59b CSR slice 8: an imported CSR assembles into separate Module 5.3.5.1 leaves, with linked contents, §14 tables and §16.2 listings (D2)
+3b576cab9 CSR slice 7: patient safety narratives built from the ADaM data, every fact sourced, at scale (D2/D4)
+84aada8f7 A labeling approval and a residual-risk acceptance sign the content they attest (D5, 21 CFR 11.70)
+d2a1ab000 chore(lint): RR1b acceptance script gains no ESLint warnings
+0e6be7802 test(validation): OQ-002 v0.15 — OQ-VAULT-13/14 send on a review route and approve by the routed sign (RR1b, D2)
+07d0116f9 Engineering's nonconformance and documents panels read the project; a purge no longer aborts on a hazard (D2 / D6)
+765f2b399 Vault: seal a project's Vault, an e-signed record nobody can alter, verifiable later (VR-19, D5)
+21a8685dc Trunk green: the Vault labels suite's search hit says it is current (D2)
+8b3ee4b57 The device vault admits the project; AnA on Engineering sees its panels (D2)
+22ea55f33 docs(evidence): RR1b — Vault review route, first visible slice: reds, greens, gates, acceptance at desktop and 390x844 (D2)
+66d688db9 A customer's own project record is not refused for lacking Submission Center (D2 / D6)
+79d00b348 F1 slice B: Engineering holds the project's risk file and design-control trace (D2)
+a86ed04ed The IVD readiness panel is readable under device-diagnostics; a refusal says why (D2)
+a64d77d2a chore(repo-health): auto-refresh baseline after merge [skip ci]
+dd23310f2 Trunk green: the commitment picker refuses a search hit without `current`, as the find view does (D2)
+7b209818a CSR slice 3: a user starts a CSR build from the retained run, follows it heading by heading, and triages each section before import (D2)
+735ac21cd CSR slice 6: subject-level ADaM becomes the CSR source; the disposition table stops printing 0 for what was never recorded (D4/D2)
+fde9bfae1 test(review-route): RR1b — two existing suites meet REVIEW_ROUTE_REQUIRED and the route columns (D2)
+1746fa6a8 F2 fold: blocked on the grant decision, recorded with its proof (D2)
+9975138ed Labeling approvals follow the QMS controlled-document rules (D5, 21 CFR Part 11)
+60881abe6 feat(review-route): RR1b client — the route form, the round on the version, withdraw/return/remind, and the inbox (D2)
+2dd186160 feat(review-route): RR1b server — route required to send, the picker's read, notices open the version, board and remind on the route (D2)
+1a6701ea6 F2: IVD readiness reads the project and lives in Diagnostics; the IVD assessment store deploys (D2)
+59b1482d2 F1 slice A: risk and design controls read the project, and accepting a residual risk is signed (D2 / D5)
+cc3b67078 feat(qms): AnA reads the Quality record register on screen, as read
+50ee45b25 Board: claim the CSR end-to-end lane beside the D5 CSR-path lane, with the boundary; MR-02 round of 2026-10-29 and the zod 4 hand-on
+e202f563c Vault: a same-bytes re-upload says when its filing was not applied (D5, Part 11 review F3, server half)
+a70d06377 Design-system smoke: UdiSurface is mounted with its required project (D2)
+b68318192 Engineering says why it shows nothing; the readiness card's home line opens its copy (D2)
+eb07bdcc7 Device folds: the plan for the remaining in-shell device apps (D2)
+09faf70d1 refactor(qms): split the quality-record registers along their seams
+31ebb4202 Vault: a filing says who decided it and when (D5, Part 11 review F4)
+2814408c8 Veeva gap 2: project_sections has a client reader again; the ownership decision is taken with the client-journey lane
+96537cfe0 Approving a labeling translation is a signed act (D5, 21 CFR Part 11)
+72acadcab feat(qms): each quality record shows the CAPAs raised from it
+3a6d31f6b F3 item 3, part C: a market's line on the readiness card opens its editing copy (D2)
+e944de496 Trunk green: three Vault search cases follow the search read's current flag and source-intake ownership (D2)
+ad0b119b9 Run history says when counts are the organization's; device engineering answers 503, not 500 (D2 / D3)
+83ec009ff project-bootstrap.ts back under the 1500-line ceiling: the US biotech task plans and the milestone builder move out
+97ff2b245 Tenant-isolation sweep runs again: its fixture creates the CRE source store (D3)
+59093d489 feat(qms): change control links to the records Quality holds, not free text
+43fb57cc3 Labeling writes need an editor; AnA's device tools' ownership check is pinned (D3)
+11a7d5ce2 Launch scope serves what device screens call, and refuses the rest again (D2 / D6)
+ad9c73eca Five lint warnings the US-filing and CSR slices added, removed without changing behaviour
+5894e1aaa feat(ind): the briefing book is the project's meeting-package document in the editor (G14, screen half)
+8658aa74e Human factors reads the open project's file, and Plan opens it (D2)
+43b6a3b00 D5: the CSR path review and the board record the five further fixes
+a61afe124 Reports say when their counts are the organization's, not the project's (D2)
+239bf4214 D5: an Authoring export record is kept
+5e7d81521 docs(evidence): RR1a — review routing server half, reds, greens, gates, replay and pg_policies (D2)
+7b388ee8d refactor(review-route): RR1a — split the routed sign-off, the act permission, the request parse, the send and the member read under the complexity ceiling (D2)
+36643c50b Trunk red: five more suites follow the product commits that tightened them (D2)
+6124120fa Evidence: the reviewers' red/green records for CSR slice 2 and the US filing resolver snapshot delta
+a2a91a87d CSR slice 4: AnA's E3 knowledge at senior medical-writer depth (D2)
+8cf9bd399 CSR slice 2: the job drafter writes the real ICH E3 tree, and run-bound results over engine tables (D2)
+b9dbaeff4 D5: an information amendment says what it contains
+3cb38d54f fix(rule2): Module 2 QC grades what a run would build from saved records, on the submission screen (G5, M2)
+3ecb4cda4 feat(review-route): RR1a-ii — Vault send, routed sign-off, withdraw and return on a named route (D2)
+8d37e8ad9 Device writes refuse a project the organization doesn't own (D3)
+9b0a63be0 D5: Module 2 never calls a planned size enrolled
+c3e5ec868 The editor no longer loops while a session adoption is pending (D2)
+bbe7971e5 A project reaches its reports: one door on the project header (D2)
+e2ac57f44 CSR slice 1: AnA reads a section's retained evidence and checks drafted figures against it (D2)
+0d05148bc Trunk green follow-up: the company-legal fixture lives in eCTD test support, not the harness (D7)
+cb14dfc51 D5: Module 2 reads a study's phase as it is written
+56504daea D5: an Authoring signature says what it means
+2168fd569 Fold device-tasks into Tasks, carrying the blocking flag (D2)
+eae6f6b66 Door names: retire "Check what stops sending", which no door draws now (D2)
+cd5fd2281 eCTD: each document on file says how it came to be there (gap 6.2, history half; D7)
+982ccf229 Trunk green: fifteen eCTD compile and packager suites fixed where each now stands (D7)
+02854f8d8 F10 / P-33: Submit holds each market's readiness; the separate door goes (D2)
+dc1f87a6e feat(vault): where-used names the sections that cite a version; a new version lists what still cites the old one (G7)
+ac7d76fa9 Three editor suites finish again: a stable signed-in account in their mock (D2)
+153952507 test(review-route): RR1a-i — the reds for every guarded writer, create path and trigger case (D2)
+5a2cd32e1 Trunk green (MR-02 15/n): tenant-stats states what it measured; the Drizzle scope gate can see its predicates
+fb562e764 ProjectMdxWorkflow: type a workstream's destination as WorkDestination (D2)
+d323fb360 fix(qms): the management-review action route stays under the complexity limit
+ee4e7d3c7 feat(review-route): RR1a-i — the route header, route columns, and one guard for every task writer (D2)
+ca88fa26b Pre-Sub, UDI and labeling read the open project, and Plan opens them (D2)
+c1d3a1589 fix(rule2): the consistency check compares the saved sections, not the text in the call (G4)
+3a47d8663 D5: the CSR path review for the LMN-201 / RePreve prospect
+7f9720d96 Submit holds a device project's filing: the pathway's assembly door (D2)
+d9e8b41db D5: keep the Bayesian efficacy table within the lint ratchet
+53ff084a1 feat(qms): a management review records its actions and closes them (G9)
+6b9e11799 navTargets gate: a creation kind is not a navigation target (D2)
+cc123a784 Trunk green (MR-02 14/n): the proof tier passes again (132 files, 1631 tests)
+a395292a9 The breadcrumb reads a device feature as a feature of the open project (D2)
+42bbb941e US biotech filings: the 16 identities the 2026-10-27 contract names, from registry to a created project (W1/D2)
+639a5c5bf Trunk red: fifteen more suites that render the document list mount a session (D2)
+c173d35f5 D5: a CSR can state a Bayesian primary result
+c1d46c86c fix(qms): review-overdue is judged against today; Raise CAPA from suppliers and management reviews; parity plan filed
+8b01885ab AdminFollow suite: one session mock after the merge with DT3 (D2)
+9cf764e57 Device features inside the project: map the 13 with no door, and pin it (D2)
+65f57f2d7 Vault ingest: a typed version under a document that has versions is refused; the Vault numbers it (D5, Part 11 review F1)
+b84f297ca D5: six more release-path suites pass, and an unreadable CSR identity says so
+316909f51 Trunk red: six ConversationThread suites mount a signed-in session (D2)
+d197623b8 Trunk red: the assembly-queue and Vault working-copy suites follow their product changes (D2)
+f80ec3b2e F3 item 3: part B's wide client run recorded; board row landed (D2)
+c74eb2dab Trunk red: Project home identity and team suites follow slice A2 (D2)
+77a206e8d Trunk green: the Quality workbench mock reads in the program's scope; the signing-policy allowance follows the act gates (MR-02, D2, D5)
+9acdf6f0e D5: every launch download is recorded before it is sent, or refused
+7d83530f6 F16 gate: the device filing door follows the launch scope the founder set (D2)
+ee828c24d feat(qms): a CAPA's action items move along the server lifecycle, with evidence
+eefcaf2c8 D5: the CSR release gate decides what a document is before framing it
+96ce37982 F3 item 3, part B: a module row opens the editing copy at that module (D2)
+0aa5bd294 QMS periodic review reminders: the next review is a task for the document's owner (gap 5.2, MR-12, D2)
+54ca90814 Trunk green (MR-02 13/n): ten Lint gates red at HEAD, fixed in the code they measure
+59c5e4cc4 CSR end to end: design, what already exists, decisions and nine slices (D2/D4)
+c9f14b5b9 feat(qms): raise a CAPA from a nonconformance or an internal audit
+86db0f920 D5: style the CSR scientific-review step
+f9f0dee12 feat(qms): Quality reaches the CAPA register (P-48)
+7a49539de docs(ana): DT3 — file the reds and DB tier for the closed review items
+91465a856 D5: a CSR can be approved through the product, with its scientific-review step in the review decision
+7d6f376e0 fix(ana): DT3 — close the open review items of 8fb897868
+9995d10e6 docs(design): review routing revised after Part 11 and product reviews; NEW-4 and D-Q decided
+dc9e22a1f feat(qms): Quality reaches its nonconformance, supplier, internal audit and management review records (P-48)
+7091309ab D5: an author may no longer approve their own Authoring document (CSR path, LMN-201 review)
+bbd793a05 Trunk green (MR-02 12/n): the full-history secret scan reads evidence digests and catalog keys as what they are
+d648da030 Trunk green (MR-02 11/n): insert-columns ratchet tightens (projects.submission_type now declared)
+33219c736 docs(design): Veeva gap 4 — assigned review and approval routing; claim the row (D2)
+556735798 F3 item 3, part A: a module row opens the editing copy of the filing it measures (D2)
+142c133dd Trunk typecheck: types for the public reference seed script, and the CSR review loader's narrowed run
+8ef6810e7 Board: claim F3 item 3, a module row opens the filing's editing copy at that module (D2)
+8b58354af feat(cortex): preserve CSR aggregates and ground AnA drafting in retained evidence
+d7f378a4c feat(cortex): add tenant-scoped CSR corpus indexing through existing CRE pipeline
+e3b4a916b fix(cortex): reject subject-level listing patterns in CSR evidence snippets
+b36240852 test(cortex): regression coverage for corrected identifier patterns
+366764abf fix(cortex): correct CSR identifier screening regex escapes
+3dd9d61df fix(cortex): exclude explicit personal identifiers from CSR summary retrieval
+f84aef110 test(cortex): cover CSR identifier screening and aggregate retrieval
+5c01d5dab fix(cortex): screen explicit subject identifiers before CSR atom indexing
+51042113f fix(csr): avoid structured patient-level retrieval and retain stable source identity
+4b391b1cb fix(csr): protect patient-level data and stabilize Cortex atom identity
+0385610a8 feat(csr): project structured CSR content into governed Cortex retrieval atoms
+07857e3e3 feat(csr): persist evidence-bound human review receipts and enforce governed release checks
+9a31d46be test(csr): distinguish arithmetic observed proportions from Bayesian model estimates
+ac0d0e960 fix(csr): reconcile observed proportions against source numerators and denominators
+6538907b8 test(csr): reject caller document-type downgrade of saved CSR review
+9942c3f6b fix(csr): saved CSR identity overrides caller-supplied critique document type
+fbab62501 test(csr): enforce document-global claim and evidence identity uniqueness
+5891367c9 fix(csr): reject cross-section claim collisions and duplicate fact ledger identities
+0d1a92aaf docs(csr): record document evidence gate and open validation work
+428babee5 test(csr): verify document-wide evidence completeness and integrity
+212f37baf feat(csr): fail-closed complete-document evidence manifest gate
+a9b96f3c4 docs(csr): record version-bound scientific review and remaining approval integration
+25100fb07 feat(csr): expose version-bound scientific preflight through existing AnA writing review
+6fe0dda05 test(csr): cover section version, AnA run, receipt coverage and source withdrawal
+3b1b5bfd9 feat(csr): bind scientific claim receipts to exact authoring section hash and AnA run
+a8989552f test(csr): invalid qualified source facts cannot validate draft claims
+b91d341fe fix(csr): independently validate qualified source numerical facts
+f448763e5 docs(csr): record saved-document critique wiring and remaining governed approval dependency
+ad2bae2fb test(csr): saved AnA document review must disclose missing qualified evidence
+637a98dbf fix(csr): expose unassessed scientific evidence status in saved-document critique response
+69b8f4d93 docs(csr): record AnA document critique integration and outstanding approval gates
+67d95a087 test(csr): prove AnA document critique refuses unsupported CSR claims
+aaa14efa4 feat(csr): wire evidence-bound claim reconciliation into existing AnA document critique
+d3d65db60 test(csr): verify AnA evidence-aware review remains human-governed and fail-closed
+2bc123508 feat(csr): expose evidence-bound claim review in existing AnA medical-writing review service
+9b601ae71 docs(csr): document numeric claim reconciliation and production integration gates
+dc7bd5186 test(ana): require claim receipts in CSR writing guidance
+3457f0031 feat(ana): require structured source-bound receipts for CSR numeric claims
+51ebd8b10 test(csr): verify fail-closed claim provenance, denominators and method fidelity
+d697eb350 feat(csr): add source-version-bound numeric claim reconciliation primitive
+42e1f7798 docs(csr): record source acquisition limits and exact AnA admission requirements
+0f7f17208 docs(csr): inspect retained 453-page NIH CSR for section, table and page-lineage learning
+185664567 test(ana): enforce CSR exemplar classification, statistical fidelity and error-detection guidance
+07c5b58f8 feat(ana): strengthen CSR exemplar intelligence, statistical fidelity and writing-error controls
+b996623a9 docs(csr): catalog seven additional full-report candidates with provenance and rights gates
+c72ab9bfb test(csr): assert actual E3 TLF cell values, denominators and missing inference
+6f3e7259e test(csr): reconcile synthetic serious and overall AE event counts
+a4a1d9b1b test(csr): connect synthetic 500-subject source to existing ICH E3 tabulation builder
+dab8a4245 docs(csr): record subject-level clinical-to-analysis reconciliation and test boundary
+d54a149f3 fix(csr): escape CSV row delimiters in value-drift regression test
+34ac78a9e test(csr): detect value-level drift between source and clinical analysis domains
+5f988707b fix(csr): reconcile clinical observations to analysis datasets subject by subject
+73943e50e docs(csr): distinguish executable synthetic negative tests from pending challenges
+ac6365610 test(csr): verify 25-domain reconciliation and detect corrupted subject/source
+43b06b357 feat(csr): cross-check generated clinical domains, efficacy and safety against source
+9f0748acb test(csr): execute eight real negative-data mutations against canonical 500-subject schema
+69e85686e test(csr): validate generated 500-subject fixture with canonical Zod source contract
+4b969976a docs(csr): define 500-subject 25-domain synthetic qualification and release gates
+ac46845b0 feat(csr): add 120 isolated negative test scenarios without corrupting clean evidence
+63b19e703 test(csr): verify 500-subject fixture reproducibility, counts, hashes and synthetic labels
+d1ce299dc feat(csr): generate deterministic 500-subject multi-domain synthetic qualification dataset
+a5c8b1f46 test(csr): add repeatable offline LMN-201 synthetic demo verification receipt
+d63e2479e test(csr): validate synthetic LMN-201 data against governed source contract
+2910fc941 docs(csr): add safe founder-owned LMN-201-like demo project runbook
+129d1963d test(csr): validate synthetic LMN-201-like demo fixture against existing source contract
+e95a77c7a testdata(csr): add clearly synthetic LMN-201-like source fixture for demo validation
+d48469b38 test(csr): verify complete target coverage and reject unrelated saved sections
+5bde5cb64 fix(csr): compare completed status against canonical requested E3 section coverage
+d2ff2ed17 fix(csr): reject completed job status when saved outputs are absent
+2f57e2e7f fix(csr): report only verified saved sections and fail closed on post-completion corruption
+adedff926 test(csr): cancelled job remains cancelled after late model exception
+03ab40027 fix(csr): prevent late worker failures from overwriting cancelled or completed jobs
+7347e8ea7 docs(csr): record integrity, cancellation and qualification boundaries for async runner
+1d5ce3661 fix(csr): clear stale failure when resumed report is verified complete
+543b031f0 test(csr): cancelled worker cannot persist a late section draft
+5763ee249 fix(csr): block late AI section writes after job cancellation
+cbd562aca test(csr): prove cancelled workers cannot complete and retained hashes must match
+28f0e3ac3 test(csr): update async runner double for real output hashes and conditional completion
+a9789287b fix(csr): prevent cancelled or superseded build from being marked complete
+730a5c099 fix(csr): refuse mismatched section identities before saving generated medical writing
+992664983 test(csr): cover final stored-output checksum and coverage gate
+c12d0503e fix(csr): verify final saved section hashes and tenant scope before completed status
+03f715342 fix(csr): add deterministic final integrity gate for retained section outputs
+f58bb268a fix(csr): type guard legacy saved sections before placeholder and hash checks
+9d6f22af8 fix(csr): fail closed on missing saved content or integrity hash during resume
+8830709f1 fix(csr): preserve corrupted saved section evidence instead of overwriting on resume
+46fe0e349 fix(csr): verify saved section hashes and placeholders before resuming
+ab07d05de refactor(csr): require project authorization unconditionally on job execution
+2eb3c0817 fix(csr): refuse legacy unanchored jobs before resuming regulated drafts
+11e365ae4 fix(csr): return actionable project selection error before job dispatch
+726b923f7 docs(csr): record nested E3 authoring fix, quota protection and validation boundary
+6f57de780 fix(csr): require resolved project anchor for regulated CSR build jobs
+cf1fd9e80 test(csr): invalid and duplicate sections cannot incur quota or usage
+9190991fa fix(csr): reject invalid section selections before quota charge or enqueue
+b7d2e5458 fix(csr): reject invalid or duplicate ICH E3 section selections before enqueue
+df6e21a21 test(csr): prove nested section selection and reject nonexistent E3 targets
+0db60ae5d fix(csr): draft selected nested E3 sections and reject invalid completion targets
+be0c3aa48 fix(csr): validate identity before claiming build and guard concurrent runners
+8a3519f7a fix(csr): fail closed on study identity drift during resumed drafting
+57ee384af docs(csr): document real AnA review packet flow and release boundary
+e9ecff69a test(csr): cover actual-response review packet and fail-closed scoring
+027ee83c2 feat(csr): prepare hash-bound AnA response packets for expert review without invented passes
+4e40857bd fix(csr): align resumed study snapshot with normalized job identity
+fc94f8ac2 test(csr): verify hash-bound model response receipts
+07ff9a1d5 fix(csr): bind expert evaluation to exact hashed AnA response text
+fa8a31f8e fix(csr): return actionable 400 for missing study protocol number
+bd2460b1e test(csr): cover critical severity threshold mismatch
+bf6c75fb4 fix(csr): reject inconsistent critical benchmark threshold
+15b2f896c fix(csr): correct critical-case benchmark threshold
+0178bbd25 fix(csr): reject missing protocol identity before database access and normalize recorded key
+6c0182e62 fix(csr): repair newline encoding in study identity guard
+ea06ea2d4 fix(csr): refuse synthetic study identifiers in governed build jobs
+48b6cbe02 test(csr): prevent self-declared passes without criterion-level evidence
+6b677ceef fix(csr): derive challenge verdict from individually reviewed expected criteria
+038f6ca1f test(csr): enforce complete expert-reviewed benchmark receipts
+320f3a393 feat(csr): deterministic review-receipt scorer for LMN-201 writing challenge set
+f5d3c607e testdata(csr): add LMN-201 medical-writing and biostatistics challenge cases
+20fc69084 test(csr): reject malformed public source manifests rather than silently omit
+4a40dd5f4 fix(csr): fail closed when public reference catalog contains malformed source metadata
+6f945ae25 docs(csr): reconcile retained GSK sources with canonical admission and rights gates
+e0619646c chore(repo-health): auto-refresh baseline after merge [skip ci]
+5cf64691c docs(csr): quarantine historical unadjudicated outcome labels from training
+2b0b08752 docs(csr): record two rights-restricted GSK CSR derivatives and source hashes
+7b68a4d50 docs(csr): receipt for NIH reference derivatives, rights and remaining admission gates
+d3d209275 test(csr): cover unreviewed and adjudicated outcome labeling
+3125be89d fix(csr): require reviewed evidence before labeling trial success
+851753acf docs(csr): record acquired reports and Lumen readiness evidence
+2245c239b Remove obsolete CI exemption and record CSR activation evidence
+0a07f49d7 Prepare AnA CSR reference ingestion and agency discovery for verification
+5a2f07b39 Retain public CSR reference originals and source catalog
+98da0f415 Record preclinical publication and incomplete compiler validation
+85b42e527 Fix preclinical extraction, registration, and dose input boundaries
+1c846bdf6 Define completion contracts for US biotech filing and company-format gaps

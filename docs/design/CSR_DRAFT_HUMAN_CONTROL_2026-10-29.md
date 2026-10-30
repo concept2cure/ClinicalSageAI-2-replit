@@ -246,3 +246,18 @@ Each slice is red first against the existing surface. It then goes green, its mu
 6. **Results sections (§2, §10–13).** Slice 2's per-candidate figure gate must land before the CSR-drafting PQ is executed, because production drafting is PQ-gated today. Until then, a non-engine figure is caught by the saved-CSR verdict at critique and release. If the PQ is scheduled first, alternatives and the paragraph path are withheld in those sections.
 7. **Keys** are as proposed, after an accessibility review for operating-system, browser and screen-reader conflicts. The review comes before slice 5 ships.
 8. **Adding a paragraph after an existing one** waits for the `suggestions.ts` change, in slice 4.
+
+## Slices 3 and 4: status and decisions (the lead, 2026-10-30, under the founder's delegation)
+
+Both slices landed on 2026-10-30. Evidence is in `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-10-29/slice-3-4/`: 69 new tests, 133 of 133 green, and 41 of 41 mutations killed.
+
+- **Slice 3, revise by instruction.** `POST …/ai/draft` takes `revise: { fromDraftId, instruction }`. The base is read with `readDraftCandidate` and never consumed. The new candidate records `derivedFrom: { draftId, contentSha256, instruction }`, and accepting it writes that to the audit row. The panel shows revision N against N−1 as a redline, and every earlier revision stays reachable.
+- **Slice 4, alternatives for a selected passage.** The editor offers "Offer alternatives" for a selection that the proposal door will resolve to exactly one place. The server admits the passage only from the saved section. The chosen alternative lands as AnA's tracked replacement of exactly the selection, through `EditorBridge.propose`.
+
+Decisions:
+
+1. **Passage alternatives are not parked as candidates.** This departs from this design's slice 4 text, and the departure is accepted. A candidate's only consumer is the whole-section accept, which would replace the whole section with the passage. Each passage alternative keeps its own check and turn record, and lands through the proposal door under its saved-base check and quote resolution.
+2. **Decision 6 covers every path that puts model words into a CSR results section**: alternatives, the paragraph path, revisions and passage alternatives. If the drafting PQ is scheduled before slice 2's figure gate, all four are withheld in §2 and §10–13.
+3. **Decision 8 (adding a paragraph after an existing one)** was not taken in slice 4. It becomes slice 4b, after slice 2: the block-boundary insert in `suggestions.ts`, pinned by tests.
+4. **The assembly "Review" edge is fixed in the next CSR lane.** If the passage view is open on a section and the person presses the assembly list's "Review" for that section, the panel stays on the passage. That is a stale state over a section the person asked to review. `onReviewSection` will clear the passage, with an assembly-flow test.
+

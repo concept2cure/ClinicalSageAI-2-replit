@@ -1,0 +1,271 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:26:46.468Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:26:46.578Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:26:46.579Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:26:46.579Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns only saved profile facts bound to current actor/program/anchor/workspace, without global DB fallback 28ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > allows an admitted current reader without conferring a write or creating records 6ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns authoritative null without creating a missing profile 5ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses profile-failure instead of reporting an empty profile 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses memory-failure instead of reporting an empty profile 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses duplicate profiles rather than selecting an arbitrary first row 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded risk_factors rather than filtering it into absence 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded open_questions rather than filtering it into absence 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded key_decisions rather than filtering it into absence 14ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded learned_insights rather than filtering it into absence 5ms
+   → expected 404 to be 503 // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after role-change during profile SQL 4ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after revocation during profile SQL 2ms
+ ✓ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > discards the read after workspace-change during profile SQL 3ms
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses a revoked private share, inactive actor, foreign UUID and missing anchor 8ms
+   → expected 404 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 0 4ms
+   → expected [ 400, 409 ] to include 404
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 01 4ms
+   → expected [ 400, 409 ] to include 404
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2147483648 9ms
+   → expected [ 400, 409 ] to include 404
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2 3ms
+   → expected [ 400, 409 ] to include 404
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 3 2ms
+   → expected [ 400, 409 ] to include 404
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > requires actual request ALS and request database with no fallback 2ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical intelligence summary caller compatibility > scopes the existing count by profile/project/org and preserves the two-argument default caller 10ms
+   → Global fallback forbidden
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns only saved profile facts bound to current actor/program/anchor/workspace, without global DB fallback
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:106:82
+    104| describe('recorded profile read on the actual Projects route', () => {
+    105|   it('returns only saved profile facts bound to current actor/program/…
+    106|     const res = await get(11, '1'); expect(res.status, JSON.stringify(…
+       |                                                                                  ^
+    107|     expect(res.body.data).toMatchObject({ programId: PROGRAM, projectI…
+    108|       profile: { profileId: 41, regulatoryStrategy: 'Recorded strategy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > allows an admitted current reader without conferring a write or creating records
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:118:51
+    116|
+    117|   it('allows an admitted current reader without conferring a write or …
+    118|     const res = await get(12); expect(res.status).toBe(200); expect(re…
+       |                                                   ^
+    119|     expect(res.body.meta).toBeUndefined();
+    120|     expect((await jdb.pool.query('SELECT count(*)::int AS n FROM proje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > returns authoritative null without creating a missing profile
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:125:49
+    123|   it('returns authoritative null without creating a missing profile', …
+    124|     await jdb.pool.query('DELETE FROM project_intelligence_profiles');
+    125|     const res = await get(); expect(res.status).toBe(200); expect(res.…
+       |                                                 ^
+    126|     expect((await jdb.pool.query('SELECT count(*)::int AS n FROM proje…
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses profile-failure instead of reporting an empty profile
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses memory-failure instead of reporting an empty profile
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:130:65
+    128|
+    129|   it.each(['profile-failure', 'memory-failure'] as const)('refuses %s …
+    130|     mode = failure; const res = await get(); expect(res.status).toBe(5…
+       |                                                                 ^
+    131|     expect(JSON.stringify(res.body)).not.toContain('synthetic storage'…
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses duplicate profiles rather than selecting an arbitrary first row
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:136:49
+    134|   it('refuses duplicate profiles rather than selecting an arbitrary fi…
+    135|     await jdb.pool.query('INSERT INTO project_intelligence_profiles(id…
+    136|     const res = await get(); expect(res.status).toBe(503); expect(res.…
+       |                                                 ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded risk_factors rather than filtering it into absence
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded open_questions rather than filtering it into absence
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded key_decisions rather than filtering it into absence
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > recorded profile read on the actual Projects route > refuses malformed recorded learned_insights rather than filtering it into absence
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:144:49
+    142|   ])('refuses malformed recorded %s rather than filtering it into abse…
+    143|     await jdb.pool.query(`UPDATE project_intelligence_profiles SET ${c…
+    144|     const res = await get(); expect(res.status).toBe(503); expect(res.…
+       |                                                 ^
+    145|   });
+    146| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses a revoked private share, inactive actor, foreign UUID and missing anchor
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:160:34
+    158|     expect((await request(app).get(`/api/c2c/projects/${FOREIGN}/intel…
+    159|     await jdb.pool.query('UPDATE projects SET regulatory_program_id=NU…
+    160|     expect((await get()).status).toBe(409); expect(profileSql).toHaveL…
+       |                                  ^
+    161|   });
+    162|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 0
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 01
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2147483648
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 2
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > refuses invalid or contradictory client consistency claim 3
+AssertionError: expected [ 400, 409 ] to include 404
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:164:57
+    162|
+    163|   it.each(['0','01','2147483648','2','3'])('refuses invalid or contrad…
+    164|     const res = await get(11, claim); expect([400,409]).toContain(res.…
+       |                                                         ^
+    165|     expect(profileSql).toHaveLength(0);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical access and current read provenance > requires actual request ALS and request database with no fallback
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:169:56
+    167|
+    168|   it('requires actual request ALS and request database with no fallbac…
+    169|     expect((await get().set('x-no-scope','1')).status).toBe(503);
+       |                                                        ^
+    170|     expect((await get().set('x-no-request-db','1')).status).toBe(503);
+    171|     expect(h.globalReads).toBe(0); expect(profileSql).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts > canonical intelligence summary caller compatibility > scopes the existing count by profile/project/org and preserves the two-argument default caller
+Error: Global fallback forbidden
+ ❯ Object.select server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:12:112
+     10|
+     11| const h = vi.hoisted(() => ({ pool: null as unknown, globalReads: 0 })…
+     12| vi.mock('../../../db.js', () => ({ get pool() { return h.pool; }, db: …
+       |                                                                                                                ^
+     13| const PROGRAM = '11111111-1111-4111-8111-111111111111';
+     14| const FOREIGN = '22222222-2222-4222-8222-222222222222';
+ ❯ getProjectIntelligence server/services/intelligence/project-intelligence-service.ts:136:6
+ ❯ server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts:178:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 3 passed (21)
+   Start at  16:26:42
+   Duration  7.14s (transform 2.80s, setup 80ms, import 1.37s, tests 5.39s, environment 0ms)

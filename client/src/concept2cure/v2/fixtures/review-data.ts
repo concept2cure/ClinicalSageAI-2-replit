@@ -31,8 +31,13 @@ export interface ReviewRequest {
   standing?: AuthoringReviewStanding;
   comments: string | null;
   requestedBy: string | null;
+  /** Who asked, by name; requestedBy is an account id. */
+  requestedByName?: string | null;
   requestedAt: string | null;
   reviewedAt: string | null;
+  /** When the reviewer signed REVIEWER on the document's review route over
+   *  today's sections: that signature is their review (RR5). */
+  routeSignedAt?: string | null;
 }
 
 export interface ReviewItem {
@@ -55,6 +60,8 @@ export interface ReviewItem {
   myReviewId: string | null;
   myReviewStatus: string | null;
   myReviewStanding?: AuthoringReviewStanding | null;
+  /** The caller's own routeSignedAt. */
+  myReviewSignedAt?: string | null;
   /** Server-decided ownership, per row. */
   awaitingMyReview: boolean;
   requestedByMe: boolean;

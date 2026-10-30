@@ -1,0 +1,166 @@
+{
+  "seams": "Actual hook, canonical authService refresh/session ownership, real XMLHttpRequest and staging component. Synthetic JWT/files and intercepted HTTP replies; navigation controls exercise hook project ownership, not a hosted full-app navigation claim.",
+  "flows": 16,
+  "results": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "kind": "project",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "kind": "account",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "kind": "refresh",
+      "writes": 2,
+      "refreshes": 1,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "kind": "duplicate",
+      "writes": 2,
+      "refreshes": 0,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "kind": "project",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "kind": "account",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "kind": "refresh",
+      "writes": 2,
+      "refreshes": 1,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "kind": "duplicate",
+      "writes": 2,
+      "refreshes": 0,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "kind": "project",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "kind": "account",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "kind": "refresh",
+      "writes": 2,
+      "refreshes": 1,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "kind": "duplicate",
+      "writes": 2,
+      "refreshes": 0,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "kind": "project",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "kind": "account",
+      "writes": 1,
+      "refreshes": 0,
+      "confirmed": 0,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "kind": "refresh",
+      "writes": 2,
+      "refreshes": 1,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "kind": "duplicate",
+      "writes": 2,
+      "refreshes": 0,
+      "confirmed": 2,
+      "privateHeadersVerified": true,
+      "pageErrors": []
+    }
+  ]
+}

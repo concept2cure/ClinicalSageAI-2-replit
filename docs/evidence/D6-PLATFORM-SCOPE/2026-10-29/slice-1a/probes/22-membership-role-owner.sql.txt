@@ -1,0 +1,11 @@
+-- P-72 slice 1a, part 2: the table owner (and a superuser) writing app_super_admin onto a membership. Rolled back.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS a_id FROM organizations WHERE slug = 'p72-a' \gset
+SELECT min(user_id) AS a_admin FROM organization_users WHERE organization_id = :a_id \gset
+SELECT current_user AS who, (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS superuser;
+BEGIN;
+UPDATE organization_users SET role = 'app_super_admin' WHERE organization_id = :a_id AND user_id = :a_admin;
+ROLLBACK;
+\echo '== distinct roles held today, every organization'
+SELECT role, count(*) FROM organization_users GROUP BY 1 ORDER BY 1;

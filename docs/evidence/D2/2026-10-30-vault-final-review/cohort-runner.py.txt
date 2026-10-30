@@ -1,0 +1,27 @@
+import os, pathlib, subprocess, json, sys, time
+
+ROOT = pathlib.Path('/workspace/ClinicalSageAI')
+OUT = pathlib.Path('/workspace/shared/vault-final-cohorts')
+OUT.mkdir(exist_ok=True)
+manifest = OUT / 'manifest.json'
+if not manifest.exists():
+    paths = subprocess.check_output(['rg', '--files', 'client/src/concept2cure/v2', 'client/src/concept2cure/mdx', 'server/services/vault/__tests__'], cwd=ROOT, text=True).splitlines()
+    files = sorted(p for p in paths if p.endswith(('.test.ts', '.test.tsx', '.test.jsx')) and not p.endswith('/hostilePayloadProbe.test.tsx'))
+    batches = [files[i:i+16] for i in range(0, len(files), 16)]
+    manifest.write_text(json.dumps({'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(), 'files':len(files), 'batches':batches}, indent=2)+'\n')
+data = json.loads(manifest.read_text())
+part = int(sys.argv[1]); total = int(sys.argv[2])
+env = os.environ.copy(); env['PATH']='/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:'+env['PATH']
+for index, batch in enumerate(data['batches']):
+    if index % total != part: continue
+    receipt = OUT / f'{index:02}.receipt.json'
+    if receipt.exists(): continue
+    log = OUT / f'{index:02}.log'; report = OUT / f'{index:02}.json'
+    started = time.time()
+    with log.open('w') as output:
+        result = subprocess.run(['node', 'node_modules/vitest/vitest.mjs', 'run', '--reporter=json', '--outputFile='+str(report), *batch], cwd=ROOT, env=env, stdout=output, stderr=subprocess.STDOUT)
+    summary = json.loads(report.read_text()) if report.exists() else {}
+    failed = [{'file':suite.get('name'), 'case':case.get('fullName'), 'message':case.get('failureMessages',[])} for suite in summary.get('testResults',[]) for case in suite.get('assertionResults',[]) if case.get('status')=='failed']
+    value = {'batch':index,'files':batch,'exit':result.returncode,'seconds':round(time.time()-started,2),'passed':summary.get('numPassedTests'),'failed':summary.get('numFailedTests'),'success':summary.get('success',False),'failures':failed}
+    receipt.write_text(json.dumps(value,indent=2)+'\n')
+    print(json.dumps({k:value[k] for k in ['batch','exit','seconds','passed','failed','success']}),flush=True)

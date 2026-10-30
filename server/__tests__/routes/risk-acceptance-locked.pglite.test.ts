@@ -73,6 +73,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: SIGNER, organizationId: ORG, role: h.role };
+    Object.assign(req, { dbClient: conn });
     next();
   });
   a.use('/api/mdx', riskRouter);
@@ -101,6 +102,19 @@ beforeAll(async () => {
   const pg = new PGlite();
   h.pg = pg as unknown as Db;
   await createSignedRecordTables(pg as unknown as Parameters<typeof createSignedRecordTables>[0]);
+  // Current actor and canonical shared-project admission now run on the same
+  // request transaction as the signed act; the content/signature SQL stays real.
+  await pg.exec(`ALTER TABLE organizations ADD COLUMN status text DEFAULT 'active';
+    ALTER TABLE users ADD COLUMN status text DEFAULT 'active';
+    ALTER TABLE organization_users ADD COLUMN role text DEFAULT 'member';
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
+      owner_id integer, created_by_id integer, settings jsonb, status text, client_workspace_id integer);
+    CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
+    CREATE TABLE project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
+    ALTER TABLE concept2cure_artifacts ADD COLUMN project_id integer;
+    CREATE TABLE concept2cure_review_assignments (artifact_id integer, reviewer_id integer, organization_id integer, status text);
+    INSERT INTO projects VALUES (11,${ORG},'${PROGRAM}',${SIGNER},${SIGNER},'{}','active',71);
+    INSERT INTO project_visibility_settings VALUES (11,${ORG},'private');`);
 }, 60_000);
 afterAll(async () => { await (h.pg as unknown as PGlite)?.close(); });
 beforeEach(async () => {

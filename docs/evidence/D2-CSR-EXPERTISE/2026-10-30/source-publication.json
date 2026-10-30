@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "6747c44709702ed016afa446ef52d2c99710614d",
+  "sourceCommits": [
+    "256c794ebe5280e511ecfa048cbe9bd32d38edfb",
+    "8c2d428096ea88423b98709abf571e9b938f746d"
+  ],
+  "qualifiedInputs": "publication-qualified-inputs.json",
+  "branch": "concept2cure-v2",
+  "status": "Accepted on canonical through normal push; all hooks passed",
+  "qualification": "reconciled-qualification-bridge.json and publication-editor-bridge.json; overlapping suites not summed",
+  "localOnly": true,
+  "providerCalls": false,
+  "humanAcceptance": "Not run",
+  "sourcePushReceipt": "source-push.json",
+  "compilerErrors": 0,
+  "compilerBaseline": 0,
+  "sourceInputDrift": [],
+  "acceptedRemoteCommit": "6747c44709702ed016afa446ef52d2c99710614d"
+}

@@ -1,0 +1,20 @@
+{
+  "qualifiedSourceCommit": "5b16dc2c146022e4560e383ff4ffc79c82fa517c",
+  "sourceCommit": "3c17cb40e",
+  "cssSuccessor": "80156568e",
+  "testFixtureSuccessor": "fa036e6e2",
+  "incomingCanonical": "9e6ee17ba1de7d60f35b8ddbf68338385341f9b9",
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": "563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
+    "client/src/concept2cure/v2/styles/workflows-v2.css": "1be535d55d7d6a2be52563097ae7e0c88899eddb10ebd544c31cfae8633d08fe",
+    "client/src/concept2cure/v2/styles/app-v2.css": "0e4308db0a3f210356afd5db1f9a9bbc5063eada860611d92f8144124102e3b5",
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx": "9da51cc87c3dc754d5f20454c2d615ef8e8040345f62a971c06afa5a09a156b3",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e",
+    "client/src/concept2cure/v2/surfaceActions.ts": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
+    "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "client/src/lib/queryClient.ts": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+  },
+  "sharedReadVisibilitySuccessor": "162f2845e"
+}

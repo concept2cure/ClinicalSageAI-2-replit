@@ -80,12 +80,12 @@ describe('Builder study metadata reaches the existing FDA package', () => {
 
   it('persists explicit tags through the real route and emits the exact study STF', async () => {
     const response = await request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`).send({
-      sectionCode: '5.3.5.1', title: 'Synthetic tagged clinical report', studyId: 'STUDY-101', stfFileTag: 'study-report',
+      sectionCode: '5.3.5.1', title: 'Synthetic tagged clinical report', studyId: 'STUDY-101', stfFileTag: 'study-report-body',
       reason: 'Record the human-selected study and file tag for qualification',
     });
     expect(response.status).toBe(200);
     const [stored] = await harness.db.select().from(submissionLeaves).where(eq(submissionLeaves.id, response.body.id));
-    expect(stored).toMatchObject({ studyId: 'STUDY-101', stfFileTag: 'study-report' });
+    expect(stored).toMatchObject({ studyId: 'STUDY-101', stfFileTag: 'study-report-body' });
     const bundle = await packageStoredLeaf(stored!);
     expect(bundle.stf).toEqual({ studies: 1, leaves: 1, untagged: 0 });
     const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
@@ -94,7 +94,7 @@ describe('Builder study metadata reaches the existing FDA package', () => {
     expect(studyFiles[0]).toMatch(/^m5\//);
     const xml = await zip.file(studyFiles[0])!.async('string');
     expect(xml).toContain('STUDY-101');
-    expect(xml).toContain('name="study-report"');
+    expect(xml).toContain('name="study-report-body"');
     expect(xml).toContain('index.xml#');
   }, 30_000);
 });

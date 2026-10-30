@@ -72,8 +72,10 @@ describe('drafting', () => {
 
   it('the prompt states the registration, and the §1 and §2 templates print it', async () => {
     const one = await draftCSRSection('1', { ...INFO, nctNumber: NCT });
-    const system = JSON.stringify(chatMock.mock.calls[0]?.[0]);
-    expect(system).toContain(`ClinicalTrials.gov: ${NCT}`);
+    const messages = chatMock.mock.calls[0]?.[0] as Array<{ role: string; content: string }>;
+    const userData = messages.filter(message => message.role === 'user').map(message => message.content).join('\n');
+    expect(userData).toContain(`"nctNumber":"${NCT}"`);
+    expect(messages.filter(message => message.role === 'system').map(message => message.content).join('\n')).not.toContain(NCT);
     expect(one).toMatchObject({ isAI: false });
     expect(one.content).toContain(`ClinicalTrials.gov Identifier: ${NCT}`);
     expect((await draftCSRSection('2', { ...INFO, nctNumber: NCT })).content).toContain(`ClinicalTrials.gov Identifier: ${NCT}`);

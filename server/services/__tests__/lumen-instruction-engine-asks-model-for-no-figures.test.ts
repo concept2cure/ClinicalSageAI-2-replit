@@ -21,8 +21,8 @@ import { describe, expect, it } from 'vitest';
 
 import { assembleInstructionEnginePrompt } from '../lumen-instruction-engine.js';
 
-// enabledModules [] includes every section of the instruction engine.
-const prompt = assembleInstructionEnginePrompt([]);
+// Explicit canonical owners select every inherited section; empty is generic core.
+const prompt = assembleInstructionEnginePrompt(['submission-center', 'document-authoring']);
 
 describe('instruction engine — the model is asked for no figure, date or verdict', () => {
   it.each([

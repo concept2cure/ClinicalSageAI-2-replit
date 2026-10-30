@@ -1,0 +1,11 @@
+{
+  "incoming_commit": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "integration_commit": "e256b25dc846763388c0c8eb2c84f8b62d121e05",
+  "previous_selected_inputs": 144,
+  "current_selected_inputs": 148,
+  "previous_selected_inputs_changed": [
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx"
+  ],
+  "review": "Keep project risk/design-control doors inside existing MDX Engineering. Two prior bindings change (ProjectMdxWorkflow and its test); add shared projectScopedRead, its existing-owner forwarding, engineeringPanelTarget plus its five actual unit cases, and shared navigation. Optional DataReadOwner reaches the same useLiveData; settings/recorded-context/AnA/blocker owners are unchanged. Current actor/private-share/write scope and real signGovernedAct/content locks remain owned by existing MDX services. Requalified81 core,121 retained,22 ownership/action and5 panel-target cases. These replace earlier observations; combined qualification590 distinct tests/41files plus native settings8. Actual card browsers and combined build pass. UpstreamMDX native PG concurrency/live signing are explicitly unqualified; do not attach settings native8 to MDX signing."
+}

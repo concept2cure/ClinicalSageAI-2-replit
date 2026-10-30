@@ -106,6 +106,37 @@ describe('reading a verified personal training context', () => {
     expect((await readPersonalTraining(SCOPE)).acknowledgement).toEqual(RECEIPT);
   });
 
+  /* The row is the newest version; training reads the version in force while the
+     row is its successor (in-force-release.ts; P-49). */
+  const SUCCESSOR = { ...CONTEXT, documentVersion: '3.0', contentDigest: 'b'.repeat(64), inForce: false, effectiveDate: '2026-11-16' };
+  const IN_FORCE = { ...CONTEXT, inForce: true, effectiveDate: '2026-09-01' };
+  const rowOf = (context: unknown, data: Record<string, unknown>) => ({ ...envelope(context), data: { ...envelope().data, ...data } });
+
+  it.each([
+    ['a revision being drafted', 'draft'],
+    ['a revision under review', 'in_review'],
+  ])('reads the version in force while the row is %s', async (_case, status) => {
+    request.mockResolvedValue(response(rowOf(IN_FORCE, { version: '3.0', status })));
+    expect(await readPersonalTraining(SCOPE)).toEqual(IN_FORCE);
+  });
+
+  it('reads the version in force and its successor when the row is the version approved for a later day', async () => {
+    const context = { ...IN_FORCE, successor: { ...SUCCESSOR, acknowledgement: { ...RECEIPT, documentVersion: '3.0', contentDigest: 'b'.repeat(64) } } };
+    request.mockResolvedValue(response(rowOf(context, { version: '3.0', status: 'effective' })));
+    expect((await readPersonalTraining(SCOPE)).successor?.acknowledgement?.documentVersion).toBe('3.0');
+  });
+
+  it.each([
+    ['a draft row beside a version not said to be in force', CONTEXT, { version: '3.0', status: 'draft' }],
+    ['a later effective row with no successor read', IN_FORCE, { version: '3.0', status: 'effective' }],
+    ['a successor that is not the row', { ...IN_FORCE, successor: { ...SUCCESSOR, documentVersion: '4.0' } }, { version: '3.0', status: 'effective' }],
+    ['a successor of another document', { ...IN_FORCE, successor: { ...SUCCESSOR, documentId: 32 } }, { version: '3.0', status: 'effective' }],
+    ['another person’s receipt on the successor', { ...IN_FORCE, successor: { ...SUCCESSOR, acknowledgement: { ...RECEIPT, userId: 8, documentVersion: '3.0', contentDigest: 'b'.repeat(64) } } }, { version: '3.0', status: 'effective' }],
+  ])('rejects %s', async (_case, context, data) => {
+    request.mockResolvedValue(response(rowOf(context, data)));
+    await expect(readPersonalTraining(SCOPE)).rejects.toMatchObject({ unconfirmed: false, message: expect.stringMatching(/could not be verified/i) });
+  });
+
   it('treats the canonical transport’s resolved 401 as a failed read', async () => {
     request.mockResolvedValue(response({ error: 'UNAUTHENTICATED', message: 'Sign in to read this record.' }, 401));
     await expect(readPersonalTraining(SCOPE)).rejects.toMatchObject({ name: 'PersonalTrainingError', unconfirmed: false, message: 'Sign in to read this record.' });

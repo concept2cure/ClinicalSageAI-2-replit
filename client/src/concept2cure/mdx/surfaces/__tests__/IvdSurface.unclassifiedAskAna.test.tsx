@@ -16,7 +16,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { IvdSurface } from '../IvdSurface';
 import type { Program } from '../../data/programs';
 
-vi.mock('@/utils/authToken', () => ({
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(),
   getAuthToken: () => 'test-token',
   getOrgId: () => '7',
 }));

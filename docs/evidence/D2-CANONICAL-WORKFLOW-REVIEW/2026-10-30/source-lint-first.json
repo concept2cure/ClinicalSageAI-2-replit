@@ -1,0 +1,67 @@
+[
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/dataConnect.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'ProjectFilesForProgram' has a complexity of 20. Maximum allowed is 15.",
+        "line": 468,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 468,
+        "endColumn": 32
+      }
+    ]
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/citationAdmission.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  }
+]

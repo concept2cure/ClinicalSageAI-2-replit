@@ -60,6 +60,8 @@ export interface VendoredDtd {
 export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
 /** Grammar referenced by generated Study Tagging Files, when any are shipped. */
 export const STF_DTD = 'ich-stf-v2-2.dtd';
+/** STF stylesheet 2.3 named by FDA's current eCTD standards table (2026-10-30). */
+export const STF_STYLESHEET = 'ich-stf-stylesheet-2-3.xsl';
 
 /** The ICH stylesheet index.xml references via <?xml-stylesheet?> (util/style/). */
 export const ICH_BACKBONE_STYLESHEET = 'ectd-2-0.xsl';
@@ -115,10 +117,11 @@ export function requiredDtdsForRegion(region: DtdRegion, hasStudyTaggingFiles = 
 }
 
 /** The stylesheet filenames a region's package must contain under util/style/
- *  for every <?xml-stylesheet?> its backbones emit to resolve. */
-export function requiredStylesheetsForRegion(region: DtdRegion): string[] {
+ *  for every backbone and generated STF processing instruction to resolve. */
+export function requiredStylesheetsForRegion(region: DtdRegion, hasStudyTaggingFiles = false): string[] {
   const regional = REGIONAL_STYLESHEET[region];
-  return regional ? [ICH_BACKBONE_STYLESHEET, regional] : [ICH_BACKBONE_STYLESHEET];
+  const required = regional ? [ICH_BACKBONE_STYLESHEET, regional] : [ICH_BACKBONE_STYLESHEET];
+  return hasStudyTaggingFiles ? [...required, STF_STYLESHEET] : required;
 }
 
 /**
@@ -202,7 +205,7 @@ export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult
   const presentSet = new Set(input.present);
   const missing = required.filter((r) => !presentSet.has(r));
 
-  const requiredStylesheets = requiredStylesheetsForRegion(input.region);
+  const requiredStylesheets = requiredStylesheetsForRegion(input.region, input.hasStudyTaggingFiles);
   const presentStylesheets = input.presentStylesheets ?? [];
   const presentStyleSet = new Set(presentStylesheets);
   const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r));
@@ -293,6 +296,9 @@ export function hasPassedPackageDtdValidation(value: unknown, expectedStudyFiles
   const proof = value.validation;
   if (![...required, ...requiredStylesheets].every(name => proof.integrity.verified.includes(name))) return false;
   const studyFiles = proof.expectedFiles.filter(name => /(?:^|\/)stf-[^/]+\.xml$/.test(name));
+  // Retained inventories cannot omit support now required by their actual STF
+  // coverage and keep an earlier selfContained/passed assertion authoritative.
+  if (studyFiles.length > 0 && (!required.includes(STF_DTD) || !requiredStylesheets.includes(STF_STYLESHEET))) return false;
   if (required.includes(STF_DTD) && studyFiles.length === 0) return false;
   return expectedStudyFiles === undefined || (Number.isSafeInteger(expectedStudyFiles) && expectedStudyFiles >= 0 && studyFiles.length === expectedStudyFiles);
 }

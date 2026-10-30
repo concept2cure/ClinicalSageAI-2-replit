@@ -1,0 +1,139 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing 412ms
+   → expected 'analytical-procedures.pdfRecorded as …' to contain 'Not known whether it was recorded:'
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry 562ms
+   → expected null to be <button class="sp-ask" disabled></button> // Object.is equality
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown 175ms
+   → expected 'protocol.pdfRecorded as v1.0 · Unfile…' to contain 'Not known whether it was recorded:'
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt 194ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt 196ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+AssertionError: expected 'analytical-procedures.pdfRecorded as …' to contain 'Not known whether it was recorded:'
+
+Expected: "Not known whether it was recorded:"
+Received: "analytical-procedures.pdfRecorded as v1.0 · Unfiled, needs a folderTitleDocument typeClinical study reportProtocolClinical evaluation reportInvestigator's brochureDevelopment safety update reportPeriodic safety update reportStatistical analysis planStatistical analysis reportModule 2 · summariesModule 3 · qualityModule 4 · nonclinicalModule 5 · clinicalStandard operating procedureReportAgency correspondenceOtherClassificationInternal (default)ConfidentialControlledPublicFolderNo folder chosen: the Vault suggests one, or leaves it UnfiledModule 3 · QualityAgency correspondence"
+
+ ❯ expectUnknownRow client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx:105:27
+    103| function expectUnknownRow(name: string) {
+    104|   const row = screen.getByRole('group', { name });
+    105|   expect(row.textContent).toContain('Not known whether it was recorded…
+       |                           ^
+    106|   expect(row.textContent).toContain('Reload the Vault and check before…
+    107|   expect(row.textContent).not.toContain('Recorded as');
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx:138:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+AssertionError: expected null to be <button class="sp-ask" disabled></button> // Object.is equality
+
+- Expected:
+<button
+  class="sp-ask"
+  disabled=""
+>
+  Upload as a new version of 
+  stability-summary-24m
+</button>
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx:176:50
+    174|   await settled();
+    175|
+    176|   expect(screen.queryByRole('button', { name })).toBe(offer);
+       |                                                  ^
+    177|   expect((offer as HTMLButtonElement).disabled).toBe(false);
+    178|   expect(screen.getByText(/It is not known whether these files were re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+AssertionError: expected 'protocol.pdfRecorded as v1.0 · Unfile…' to contain 'Not known whether it was recorded:'
+
+Expected: "Not known whether it was recorded:"
+Received: "protocol.pdfRecorded as v1.0 · Unfiled, needs a folderTitleDocument typeClinical study reportProtocolClinical evaluation reportInvestigator's brochureDevelopment safety update reportPeriodic safety update reportStatistical analysis planStatistical analysis reportModule 2 · summariesModule 3 · qualityModule 4 · nonclinicalModule 5 · clinicalStandard operating procedureReportAgency correspondenceOtherClassificationInternal (default)ConfidentialControlledPublicFolderNo folder chosen: the Vault suggests one, or leaves it UnfiledModule 3 · QualityAgency correspondence"
+
+ ❯ expectUnknownRow client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx:105:27
+    103| function expectUnknownRow(name: string) {
+    104|   const row = screen.getByRole('group', { name });
+    105|   expect(row.textContent).toContain('Not known whether it was recorded…
+       |                           ^
+    106|   expect(row.textContent).toContain('Reload the Vault and check before…
+    107|   expect(row.textContent).not.toContain('Recorded as');
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx:207:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  17:22:22
+   Duration  4.78s (transform 2.08s, setup 149ms, import 2.47s, tests 1.54s, environment 479ms)
+

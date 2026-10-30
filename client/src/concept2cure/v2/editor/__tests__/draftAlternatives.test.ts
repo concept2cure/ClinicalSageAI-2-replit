@@ -2,8 +2,9 @@
 /** The pure half of slice 1 (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md): paragraphs, pairing, the proposals and the review state. */
 import { describe, expect, it } from 'vitest';
 import {
-  arrivedAlternative, defaultPairing, draftParagraphAuthor, draftParagraphs, draftShape, NO_ALTERNATIVES, paragraphProposals,
-  paragraphRefusal, savedParagraphs, showAlternative,
+  alternativeDescription, alternativeLabel, alternativeName, alternativeWording, arrivedAlternative, defaultPairing, draftParagraphAuthor,
+  draftParagraphs, draftShape, NO_ALTERNATIVES, paragraphProposals, paragraphRefusal, revisedAlternative, revisionRefusal, revisionTarget,
+  savedParagraphs, showAlternative,
 } from '../draftAlternatives';
 import { createEmptyAiDraftReviewState, type PendingAiDraft } from '../authoringDraftTransport';
 
@@ -85,5 +86,48 @@ describe('review state', () => {
     expect(showAlternative({ ...state, acceptUnknown: true }, 1)).toBeNull();
     expect(showAlternative(state, 5)).toBeNull();
     expect(NO_ALTERNATIVES).toEqual({ alternatives: undefined, shownAlternative: undefined, pendingApproaches: undefined });
+  });
+});
+
+describe('revise by instruction (slice 3)', () => {
+  const two = () => {
+    let state = { ...createEmptyAiDraftReviewState(), ...arrivedAlternative(createEmptyAiDraftReviewState(), 'professional', draft('P.', 'DC-P'), ['concise'], true) };
+    state = { ...state, ...arrivedAlternative(state, 'concise', draft('C.', 'DC-C'), [], false) };
+    return { ...state, ...showAlternative(state, 1)! };
+  };
+  it('targets the entry shown, its candidate and its approach, and nothing while an accept is unresolved', () => {
+    const state = two();
+    expect(revisionTarget(state, 'detailed')).toEqual({ from: 1, fromDraftId: 'DC-C', approach: 'concise' });
+    expect(revisionTarget({ ...state, acceptUnknown: true }, 'detailed')).toBeNull();
+    expect(revisionTarget({ ...state, baseChanged: true }, 'detailed')).toBeNull();
+    const lone = { ...createEmptyAiDraftReviewState(), draft: { ...draft('L.', 'DC-L'), metadata: { tone: 'detailed' } }, body: 'L.' };
+    expect(revisionTarget(lone, 'professional')).toEqual({ from: 0, fromDraftId: 'DC-L', approach: 'detailed' });
+    expect(revisionTarget({ ...lone, draft: { ...lone.draft, draftId: null } }, 'professional')).toBeNull();
+  });
+  it('joins the list as a new entry derived from the one named, shown, with nothing it revises replaced', () => {
+    const state = { ...two(), body: 'C, edited.' };
+    const next = { ...state, ...revisedAlternative(state, { from: 1, fromDraftId: 'DC-C', approach: 'concise' }, draft('R.', 'DC-R'), 'Shorter') };
+    expect(next.alternatives?.map(a => a.draft.draftId)).toEqual(['DC-P', 'DC-C', 'DC-R']);
+    expect(next.alternatives?.[1].body).toBe('C, edited.');
+    expect(next.alternatives?.[2]).toMatchObject({ approach: 'concise', body: 'R.', revision: { from: 1, instruction: 'Shorter' } });
+    expect(next).toMatchObject({ shownAlternative: 2, body: 'R.' });
+    expect(next.draft?.draftId).toBe('DC-R');
+    expect(alternativeLabel(next.alternatives![2])).toBe('Revised: Shorter');
+    expect(alternativeDescription(next.alternatives!, 2)).toBe('Revises the concise alternative · 1 paragraph · 1 word');
+    expect(alternativeWording(next, false)).toMatchObject({ set: true, paragraphLabel: 'the revision “Shorter”', accept: 'Accept the whole revision and record citations' });
+  });
+  it('lists a lone draft first, so the person can go back to it, and keeps “Draft again” a single draft', () => {
+    const lone = { ...createEmptyAiDraftReviewState(), draft: draft('L.', 'DC-L'), body: 'L, edited.' };
+    const next = { ...lone, ...revisedAlternative(lone, { from: 0, fromDraftId: 'DC-L', approach: 'professional' }, draft('R.', 'DC-R'), 'x'.repeat(60)) };
+    expect(next.alternatives?.map(a => [a.draft.draftId, a.body, !!a.single])).toEqual([['DC-L', 'L, edited.', true], ['DC-R', 'R.', false]]);
+    expect(alternativeName(next.alternatives!, 0)).toBe('the draft');
+    expect(alternativeLabel(next.alternatives![1])).toBe(`Revised: ${'x'.repeat(48)}…`);
+    expect(alternativeWording(next, false)).toMatchObject({ set: false, again: 'Draft again', accept: 'Accept the whole revision and record citations' });
+  });
+  it('names why the text shown cannot be revised', () => {
+    expect(revisionRefusal(two(), true)).toMatch(/frozen/);
+    expect(revisionRefusal({ ...two(), draft: { ...draft('P.'), draftId: null } }, false)).toMatch(/not retained on the server/);
+    expect(revisionRefusal({ ...two(), baseChanged: true }, false)).toMatch(/saved section changed/);
+    expect(revisionRefusal(two(), false)).toBeNull();
   });
 });

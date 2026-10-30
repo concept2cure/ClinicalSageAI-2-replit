@@ -35,6 +35,8 @@ const h = vi.hoisted(() => {
     },
     /** One /submit workflow step, the signer's, which this signature clears. */
     workflow: false,
+    /** Open review comments on the document (the settle census). */
+    openComments: 0,
   };
 });
 
@@ -106,8 +108,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.authorship = { creator: 9, revisionAuthors: [], lookupFails: false };
   h.workflow = false;
+  h.openComments = 0;
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: () => undefined }));
-  h.clientQuery.mockImplementation(async (text: string, params?: unknown[]) => workflowAnswer(String(text)) ?? clientAnswer(text, params));
+  h.clientQuery.mockImplementation(async (text: string, params?: unknown[]) =>
+    workflowAnswer(String(text)) ?? commentAnswer(String(text)) ?? clientAnswer(text, params));
   h.poolQuery.mockImplementation(async (text: string) => {
     const s = String(text);
     if (s.includes('organization_users')) return { rowCount: 1, rows: [{ role: 'approver', organization_id: 3, user_id: SIGNER }] };
@@ -124,6 +128,11 @@ function workflowAnswer(s: string) {
   if (!h.workflow) return null;
   if (/UPDATE authoring_workflow_steps/i.test(s)) return { rowCount: 1, rows: [{ id: 1 }] };
   return /COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s) ? { rowCount: 1, rows: [{ pending: 0, total: 1 }] } : null;
+}
+
+/** The settle census's open-comment count. */
+function commentAnswer(s: string) {
+  return /FROM authoring_comments/i.test(s) && /status = 'open'/.test(s) ? { rowCount: 1, rows: [{ n: String(h.openComments) }] } : null;
 }
 
 async function clientAnswer(text: string, params?: unknown[]) {
@@ -267,5 +276,52 @@ describe('POST /docs/:docId/sign approves only on an APPROVER signature', () => 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(documentApproved()).toBe(true);
     expect(wrote(/INSERT INTO frozen_documents/i)).toBe(true);
+  });
+});
+
+/**
+ * 2026-10-30 (the CSR path sweep): an approval asks the settle question Freeze
+ * asks. An APPROVER e-signature approves and freezes the document, and it never
+ * ran the census, so an approved CSR could carry open review comments and
+ * undecided tracked changes inside the signed text. It now refuses while either
+ * is outstanding, before the credential, unless the approver states they
+ * approve it as it stands, which is recorded.
+ */
+describe('POST /docs/:docId/e-sign APPROVER asks whether the document is settled', () => {
+  const audited = (op: string) => h.clientQuery.mock.calls.some(c => /INSERT INTO authoring_audit_trail/i.test(String(c[0])) && JSON.stringify(c[1] ?? []).includes(op));
+
+  it('refuses an approval while review comments are open, before the credential, and signs nothing', async () => {
+    h.openComments = 2;
+    const res = await eSign('APPROVER');
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('DOCUMENT_NOT_SETTLED');
+    expect(res.body.error.message).toMatch(/^Not approved — this document still has 2 unresolved comments\..*Nothing was signed\.$/);
+    expect(res.body.unresolved).toEqual({ openComments: 2, pendingEdits: 0 });
+    expect(h.comparePassword).not.toHaveBeenCalled();
+    expect(wrote(/INSERT INTO authoring_signatures/i)).toBe(false);
+    expect(wrote(/UPDATE authoring_documents\s+SET status = \$1/i)).toBe(false);
+  });
+
+  it('approves it as it stands when the approver says so, and records what was approved over', async () => {
+    h.openComments = 2;
+    const res = await request(makeApp())
+      .post(`/api/authoring/docs/${DOC}/e-sign`)
+      .set('Authorization', await bearer())
+      .send({ password: 'right-password', meaning: 'APPROVER', intent: 'I approve this document as written', acknowledgeUnresolved: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(wrote(/INSERT INTO authoring_signatures/i)).toBe(true);
+    expect(audited('APPROVAL_UNRESOLVED_ACKNOWLEDGED')).toBe(true);
+  });
+
+  it('a settled document approves as before, with nothing to acknowledge (control)', async () => {
+    const res = await eSign('APPROVER');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(audited('APPROVAL_UNRESOLVED_ACKNOWLEDGED')).toBe(false);
+  });
+
+  it('a review signature is not an approval and is not asked (control)', async () => {
+    h.openComments = 2;
+    const res = await eSign('REVIEWER');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 });

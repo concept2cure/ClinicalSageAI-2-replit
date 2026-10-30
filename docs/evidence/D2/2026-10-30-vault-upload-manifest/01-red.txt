@@ -1,0 +1,13 @@
+# 01-red: the manifest tests, before the change: no manifest module, no manifest controls in the upload list
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > gives each named file its fields, sends nothing until Upload, and the upload sends them
+   → Unable to find an element by: [data-testid="vault-stage-manifest-file"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > applies no part of a line the Vault cannot take, and names it
+   → Unable to find an element by: [data-testid="vault-stage-manifest-file"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > changes nothing when the manifest has a column the Vault does not record
+   → Unable to find an element by: [data-testid="vault-stage-manifest-file"]
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > downloads the list as a manifest to fill in
+   → Unable to find an accessible element with the role "button" and name `/Download this list as a manifest/`
+Error: Cannot find module '../surfaces/vaultUploadManifest' imported from /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts
+ Test Files  2 failed (2)
+      Tests  4 failed (4)

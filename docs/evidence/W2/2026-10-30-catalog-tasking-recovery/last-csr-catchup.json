@@ -1,0 +1,20 @@
+{
+  "inputCommit": "0d546d4daf22ee938130ad291b84df53bf7462c2",
+  "incomingCanonical": "669aa223633e9dece0578cbcd57ae1772ffc8833",
+  "tests": {
+    "passed": 142,
+    "suites": 7,
+    "failed": 0,
+    "countsOverlapEarlierCohorts": true
+  },
+  "build": {
+    "passed": true,
+    "clientAssets": [
+      "index-B8k6mSWE.js"
+    ],
+    "serverCommitMatches": true
+  },
+  "review": "No blocking finding. Own recovery files unchanged; text ramp changes only the QMS training selector. Startup/shared transport/board reader unchanged.",
+  "priorGate": "All normal gates passed, including0TypeScript errors, but prepublication expected-head check discovered new CSR source. No ref was updated; new source is preserved here.",
+  "finalGate": "Same complete pre-push script required on this final merged candidate before exact-tree connected GitHub publication."
+}

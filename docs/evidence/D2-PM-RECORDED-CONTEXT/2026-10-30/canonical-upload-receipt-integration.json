@@ -1,0 +1,6 @@
+{
+  "incoming_commit": "1ce6adc681c984f1669715d37fda774f11203059",
+  "integration_commit": "6b061249046f9e207e46485a6e4bb0bd319a6edb",
+  "all_selected_pm_inputs_unchanged": 137,
+  "review": "Canonical Vault upload receipt validation and fixtures only, outside all137 selected PM inputs. Preserve all incoming changes. PM transaction/context/browser cohorts are not repeated or inflated. A fresh combined production build and unchanged full pre-push hook qualify the integrated tree before publication."
+}

@@ -1,0 +1,6 @@
+-- P-72 slice 1a: on the green copy, hand the two sign-in lookups back to the RDS master (what removing the SET
+-- clause WITHOUT the hand-off would leave on RDS), as the superuser. The pre-auth probe then runs unchanged.
+ALTER FUNCTION public.user_id_for_email(text) OWNER TO c2c_rds_master;
+ALTER FUNCTION public.user_id_for_reset_token(text) OWNER TO c2c_rds_master;
+SELECT p.oid::regprocedure AS fn, pg_get_userbyid(p.proowner) AS owner, p.proconfig FROM pg_proc p
+ WHERE p.proname IN ('user_id_for_email', 'user_id_for_reset_token') ORDER BY 1;

@@ -130,28 +130,28 @@ describe('draftCSRSectionWithProvenance', () => {
 
   // Since 2026-10-29 the builder drafts E3's own headings: §11.4 through
   // §11.4.1–11.4.7, ethics through §5.1–5.3, §9.7 through §9.7.1–9.7.2.
-  it('does not store a §11.4 model draft that states results nobody supplied', async () => {
+  it('does not store a statistical-plan model draft that states figures nobody supplied', async () => {
     completeMock.mockResolvedValueOnce(
-      'EFFICACY RESULTS\nThe primary endpoint was met: Drug X reduced the score by 4.2 points versus placebo (p<0.001; 95% CI 2.9 to 5.5).',
+      'STATISTICAL PLAN\nThe plan assumed a mean difference of 4.2 points, alpha=0.05 and 80% power.',
     );
-    const drafted = await draftCSRSectionWithProvenance(section('11.4.1'), request);
+    const drafted = await draftCSRSectionWithProvenance(section('9.7.1'), request);
 
     expect(drafted.source).toBe('template');
-    expect(drafted.content).toContain('[DATA TO BE INSERTED]');
+    expect(drafted.content).toContain('[DATA TO BE INSERTED FROM THE SAP]');
     expect(drafted.content).not.toContain('4.2');
     expect(drafted.lineage?.rejectedModelDraft).toMatchObject({ reason: 'unsupplied_statistics' });
   });
 
-  it('keeps a model draft of a statistical section that states nothing unsupplied', async () => {
-    completeMock.mockResolvedValueOnce('EFFICACY RESULTS\n[DATA TO BE INSERTED] for the primary endpoint in the 300 planned subjects.');
-    const drafted = await draftCSRSectionWithProvenance(section('11.4.1'), request);
+  it('keeps a statistical-plan draft that states only the supplied planned sample size', async () => {
+    completeMock.mockResolvedValueOnce('STATISTICAL PLAN\n[DATA TO BE INSERTED FROM THE SAP] for the primary endpoint in the 300 planned subjects.');
+    const drafted = await draftCSRSectionWithProvenance(section('9.7.1'), request);
     expect(drafted.source).toBe('ai');
     // The served model and token cost are the gateway's, not null and 0.
     expect(drafted).toMatchObject({ model: 'test-model', tokenCost: 7 });
   });
 
-  it('does not apply the guard to a non-statistical section', async () => {
-    completeMock.mockResolvedValueOnce('ETHICS\nThe study was approved by 12 IRBs.');
+  it('retains non-statistical source-limited narrative drafting', async () => {
+    completeMock.mockResolvedValueOnce('ETHICS\n[DATA TO BE INSERTED FROM APPROVAL RECORDS].');
     const drafted = await draftCSRSectionWithProvenance(section('5.1'), request);
     expect(drafted.source).toBe('ai');
   });

@@ -1,0 +1,19 @@
+{
+  "failedReceipt": "editor-gates.json",
+  "corrections": [
+    {
+      "gate": "audit:repo-health:ceiling",
+      "beforeBytes": 100779,
+      "afterBytes": 96762,
+      "extractedOwner": "server/services/ana/intelligence-questions/flows/csr-report-robustness.ts",
+      "operation": "Move the existing robustness node unchanged into a fresh-node factory, following existing CMC/SOP flow composition. No second registered flow or duplicate definition.",
+      "normalizedOriginalNodeSha256": "58107acb7604a3e9c4ac5372f85e3651bec17b3b01d16120eaad2cbe926c7f40",
+      "extractedNodeBytesMatchOriginal": true
+    },
+    {
+      "gate": "ci:surface-text-ramp",
+      "operation": "Run the existing generator. Only v2 output changes, adding existing .qms-training-successor to its derived contrast selectors; no token values or design principles changed."
+    }
+  ],
+  "baselineChanged": false
+}

@@ -1,0 +1,23 @@
+# Green: server
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > refuses an approval while review comments are open, before the credential, and signs nothing 6ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > approves it as it stands when the approver says so, and records what was approved over 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > a settled document approves as before, with nothing to acknowledge (control) 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > a review signature is not an approval and is not asked (control) 5ms
+      Tests  14 passed (14)
+
+# Green: client (filing bar and the e-sign transport)
+      Tests  34 passed (34)
+
+# Every suite reaching /e-sign, the census or the filing bar (52 files)
+      1       Tests  13 failed | 803 passed (816)
+      3  FAIL  client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx
+      1  FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+      9  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+      1  Test Files  3 failed | 49 passed (52)
+
+# The three failing files, on the committed router and filing bar: the same 13 failures (not this change's)
+      1       Tests  13 failed | 23 passed (36)
+      3  FAIL  client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx
+      1  FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+      9  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+      1  Test Files  3 failed (3)

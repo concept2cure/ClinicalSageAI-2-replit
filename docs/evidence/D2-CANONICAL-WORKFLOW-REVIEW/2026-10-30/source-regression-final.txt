@@ -1,0 +1,2329 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > refuses the task drawer exit without saving or unmounting the dirty canvas
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > refuses the task drawer exit without saving or unmounting the dirty canvas 447ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > holds embedded Back to Quality for the existing unsaved-work decision 992ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > keeps embedded Back in place until an ordinary header save finishes 377ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > renders controlled QMS content read only using its server refusal 177ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > renders a current read-only organization member read only using its server refusal 167ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty 243ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere once the work is saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere once the work is saved 266ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere on a clean canvas 155ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > holds the switch and names what is at stake
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > holds the switch and names what is at stake 396ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Cancel" leaves the author exactly where they were
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Cancel" leaves the author exactly where they were 376ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Save and continue" records the revision first, then moves
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Save and continue" records the revision first, then moves 502ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit 500ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Leave without saving" writes nothing, and the work comes back on return
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Leave without saving" writes nothing, and the work comes back on return 970ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a clean section switches straight through — no guard on work that is safe 378ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own 187ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > says the work is on this device only, not merely "unsaved"
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > says the work is on this device only, not merely "unsaved" 220ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision 921ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded 987ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count 1024ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > holds a status filter until the author cancels or deliberately leaves the unsaved section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > saves through the existing governed path before applying a held status filter
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > holds a status filter until the author cancels or deliberately leaves the unsaved section 381ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > saves through the existing governed path before applying a held status filter 296ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope 431ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > ignores a prior program list that finishes after the new scoped list 181ms
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision 455ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late workflow preview after account replacement 195ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late workflow preview after session replacement 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late workflow preview after bearer replacement 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late workflow preview after project replacement 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late saved receipt after account replacement 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late saved receipt after session replacement 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late saved receipt after bearer replacement 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > discards a late saved receipt after project replacement 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > checks ownership again after a successful response body is delayed 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > keeps the original request headers and accepts a canonical refreshed response 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > keeps a preview and reason through canonical refresh, then uses the adopted bearer for the next create 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > refuses Open for an earlier saved receipt after account replacement 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > refuses Open for an earlier saved receipt after session replacement 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > refuses Open for an earlier saved receipt after bearer replacement 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > refuses Open for an earlier saved receipt after project replacement 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > consults the latest dirty-work hold before opening and preserves the saved copy 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > does not deliver an old pending create after source 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source intake owns one signed-in source/project visit > does not deliver an old pending create after unmount 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > holds another binary write and preview replacement after a lost create response 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > holds another workflow write and preview replacement after a lost create response 59ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > reads generic inventory without inferring a saved receipt or automatically repeating creation 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > recovers an identified import through exact current records and offers a separate Open 65ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > keeps a recognized but foreign/malformed recovery identity held: {"recovery":{"documentId":"22222222-2222-4222-8222-222222222781","organizationId":99,"programId":"11111111-1111-4111-8111-111111111781"}} 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > keeps a recognized but foreign/malformed recovery identity held: {"recovery":{"documentId":"not-a-uuid","organizationId":12,"programId":"11111111-1111-4111-8111-111111111781"}} 60ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > keeps a recognized but foreign/malformed recovery identity held: {"recovery":{"documentId":"22222222-2222-4222-8222-222222222781","organizationId":12,"programId":"11111111-1111-4111-8111-111111111782"}} 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > uncertain source creation stays held until an explicit scoped check > leaves a failed preview retryable without creating a document 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source dispatch requires the admitted live owner > does not dispatch binary intake anonymously or through storage-only credentials 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source dispatch requires the admitted live owner > does not dispatch workflow intake anonymously or through storage-only credentials 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source dispatch requires the admitted live owner > rejects a selected source mutated in place before Create 15ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source dispatch requires the admitted live owner > preserves pending preview work through same-project metadata and canonical refresh 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > refuses retained fields and actions after account replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > refuses retained fields and actions after session replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > refuses retained fields and actions after bearer replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > refuses retained fields and actions after project replacement 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > retires retained source A callbacks across a rendered source A-B-A visit 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > refuses retained actions after their mounted intake closes 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > allows current retained actions after canonical refresh and uses the newly adopted bearer 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > retained intake callbacks preserve their original visit > rechecks the original owner after the host closes the dialog and before navigation 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > holds HTTP 408 creation failures instead of treating them as retryable preview failures 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > holds HTTP 500 creation failures instead of treating them as retryable preview failures 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > holds an affirmative malformed save receipt for checking instead of opening or retrying 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > requires a fresh explicit workflow preview after checking generic uncertainty 62ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > refuses identified recovery with unverified tenant ownership 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > refuses identified recovery with unverified creator ownership 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > refuses identified recovery with unverified source ownership 47ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > refuses identified recovery with unverified projection ownership 53ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > refuses identified recovery with unverified metadata ownership 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > opens an identified workflow copy using its actual retained edited section code 78ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > source recovery uses the original saved import and read owner > pins every recovery hop to the dispatched bearer while accepting a canonical refresh 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > delayed working-document checks remain owned reads > does not continue recovery hops after a delayed inventory body and account replacement 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > delayed working-document checks remain owned reads > does not continue recovery hops after a delayed inventory body and session replacement 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > delayed working-document checks remain owned reads > does not continue recovery hops after a delayed inventory body and bearer replacement 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > delayed working-document checks remain owned reads > does not continue recovery hops after a delayed inventory body and project replacement 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > delayed working-document checks remain owned reads > retains the hold after a failed inventory check and releases generic uncertainty only after a later valid explicit read 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > review regressions preserve latest host and actual saved structure > rechecks a synchronous host hold update during explicit Open 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > review regressions preserve latest host and actual saved structure > rechecks a synchronous host callback update during explicit Open 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > review regressions preserve latest host and actual saved structure > opens a verified reused binary working copy after its sections were legitimately removed 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx > review regressions preserve latest host and actual saved structure > opens a verified reused workflow working copy after its sections were legitimately removed 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads retain the server edit decision > retains the current server edit refusal for a document projection 286ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads retain the server edit decision > retains the current server edit refusal for a sections projection 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring lists retain their canonical session owner > rejects an old deferred list body after the same actor replaces the canonical session 255ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring lists retain their canonical session owner > retains a current deferred document list during ordinary canonical token refresh 272ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads restrict whole-document ceremonies > withdraws metadata and whole-source controls when a sections refresh confirms an access change 838ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads restrict whole-document ceremonies > keeps partial section editing/navigation while refusing optimistic whole-document hints 528ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > refuses deferred old bodies for the same document after changing programme 238ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > masks old prose immediately across a same-actor session replacement and ignores its deferred sections 196ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > retains a current deferred body across ordinary canonical bearer refresh 219ms
+stderr | client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > document access is reachable from the canonical authoring editor > opens the current document access rail and uses its verified roster and outline choices
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > document access is reachable from the canonical authoring editor > opens the current document access rail and uses its verified roster and outline choices 368ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > sends only the pinned saved-source intent from the existing toolbar, without an editor change 386ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer unbound source text as a re-filing write 276ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer partial source text as a re-filing write 199ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer sealed source text as a re-filing write 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer approved source text as a re-filing write 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer read-only source text as a re-filing write 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer unversioned source text as a re-filing write 171ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > requires deliberate save or discard when the actual editor is dirty 266ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses a source timestamp changed by a current saved-section refresh 466ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses after the current read confirms access withdrawal 331ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses to replay an old confirmation after its session changes 293ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses to replay an old confirmation after its programme changes 266ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after access changes 344ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after session changes 336ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after programme changes 348ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > blocks a source-first structure action when the current detail read admits only sections 885ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > blocks a source-first structure action when the current sections read admits only sections 552ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains FDA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=false) 1499ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains EMA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=true) 1419ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains PMDA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=false) 1421ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains Health Canada drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=true) 1548ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > does not bind sources after cancelling the actual dirty-work navigation 812ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > refuses source binding while a governed ceremony owns the current editor 361ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not generate through an old open review after a new explicit source handoff 1078ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not adopt a delayed old-selection regeneration into a new selection 1087ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source changes preserve unresolved structural writes > keeps a lost commit held after another source handoff and an explicit clear 1312ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > deferred source navigation retains its original scope > preserves dirty text when the project is left and revisited before the leave decision 354ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a pinned canvas hands a different selected target to the full existing editor > retains dirty work on Stay and preserves exact source intent after an accepted handoff 1403ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > offers Build in editor on the selected real Vault upload beside the actual document 727ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=false) 1151ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files source assembly reaches the one editor > keeps the exact Vault identity through read-only selection and explicit build (AnA=true) 1234ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > preserves current source selection and dirty text on Stay, then adopts only after an explicit guarded leave 1630ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > honors the existing ceremony guard without disturbing the current canvas 786ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not publish a delayed chooser result after the project is left and revisited 701ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > holds the current canvas when its rail project differs from the current shell project 358ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > does not bind an old pending source choice after the selected Vault upload changes 643ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx > Project files handoff reuses the actual editor guards > carries a later search page UUID through the same chooser without inventing a checksum or Data Room identity 922ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > retains a valid exact saved document and section receipt 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh document-id instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh section-id instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh missing-program instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh missing-tenant instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh section-parent instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh section-tenant instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh content instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh order instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > fresh source intake receipts require actual saved row identity > refuses malformed fresh provenance instead of offering an unrelated or incomplete working copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > admits actual Data Room and Vault source versions 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > retains an empty edited copy only as an authenticated reused structure (workflow false) 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > retains an empty edited copy only as an authenticated reused structure (workflow true) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary nonuuid receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary parent receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary tenant receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary duplicate receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary code receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary content receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary order receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary provenance receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > binary receipts share the canonical strict saved-copy decoder > rejects a binary version receipt without accepting the title as identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > uses the existing POST with captured actor headers for a binary source 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > previews without a write and creates only the exact retained workflow fingerprint 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > snapshots headers, actor and source/preview objects before the first await 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > refuses a well-shaped receipt from another captured organization 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > refuses a well-shaped receipt from another captured actor 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > does not dispatch with missing captured headers or a retired owner 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > one existing source import transport pins actor, selection and preview > cannot use the binary create path for a workflow without its preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 400 with an invalid receipt as refused 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 403 with an invalid receipt as refused 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 408 with an invalid receipt as unknown 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 500 with an invalid receipt as unknown 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 503 with an invalid receipt as unknown 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > classifies HTTP 201 with an invalid receipt as unknown 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds a lost response without another import write 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > preserves typed recovery in a response envelope 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > preserves typed recovery in a exception envelope 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds recognized outcomes with malformed organization identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds recognized outcomes with malformed project identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds recognized outcomes with malformed uuid identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds recognized outcomes with malformed absent identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > holds a typed ApiRequestError code even when its payload has been lost 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > leaves a network preview read retryable 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > leaves a server preview read retryable 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > create uncertainty never becomes permission to repeat a write > leaves a malformed preview read retryable 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > retired transport owners stop before response-body and state delivery > does not read a body after retirement at the response await 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > retired transport owners stop before response-body and state delivery > rejects retirement while a successful body is being decoded 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > returns only scoped inventory for generic uncertainty, even if a title and source appear to match 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > restores the exact identified binary copy through three scoped GETs only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > restores the exact identified workflow copy through three scoped GETs only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > rejects a foreign-program inventory before reading an exact document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > rejects a duplicate inventory before reading an exact document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > rejects a nonuuid inventory before reading an exact document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > rejects a missing-scope inventory before reading an exact document 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed section-only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed metadata 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed tenant 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed actor 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed provenance 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed section-parent 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > refuses exact readback with changed section-scope 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > does not fall back to generic inventory for a recognized malformed identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > requires the retained workflow fingerprint during recovery and preserves edited structure when it matches 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > checks the captured owner after recovery read hop 0 without dispatching later hops 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > checks the captured owner after recovery read hop 1 without dispatching later hops 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts > explicit read-only source import inspection > checks the captured owner after recovery read hop 2 without dispatching later hops 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > reads saved context and applies an attributed pending replacement without saving or approving 1730ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > refuses a stale saved base, leaving the current section intact 621ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > shows the model refusal and never offers an unqualified answer as a fix 585ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > offers the same proposal door when the editor is embedded in a conversation 921ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > opens a known other section for a fix without applying it to the section currently open 15ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > holds a pulled working copy behind the existing unsaved guard in a pinned conversation editor 743ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > tracked remedy review lifecycle > offers the same guarded remedy again after every tracked part is rejected 1553ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > tracked remedy review lifecycle > keeps accept all settled without allowing another application 1401ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > tracked remedy review lifecycle > keeps accept part then reject rest settled without allowing another application 1586ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > applies 'insert-before' without striking the anchor, and permits a new receipt only after rejection 1397ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > applies 'insert-after' without striking the anchor, and permits a new receipt only after rejection 1350ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > applies 'insert-empty' without striking the anchor, and permits a new receipt only after rejection 1443ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > refuses an empty-section addition after unsaved local text appears 616ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > uses the existing saved-base refusal for a stale anchored addition 552ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > versioned AnA additions use the same actual conversation and editor > keeps an unqualified insertion answer behind the same model gate 563ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > refuses an anonymous read before dispatch 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > refuses an storage-only read before dispatch 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > masks a delayed inventory after account replacement 143ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > masks a delayed inventory after session replacement 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > masks a delayed inventory after bearer replacement 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > masks a delayed inventory after project replacement 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > checks adopted credentials again after an inventory body is delayed 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > pins initial read headers through refresh and uses the adopted bearer for revalidation 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > refuses a missing inventory projection instead of admitting a whole-document target 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > refuses a unknown inventory projection instead of admitting a whole-document target 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > selected-source reads belong to an adopted account and one project visit > filters an explicit section-only record and keeps a read failure retryable 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not open an existing document after Close changes account 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not open an existing document after Close changes session 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not open an existing document after Close changes project 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not open an existing document after Close changes ceremony 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not open an existing document after Close changes predicate 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not start a document after Close changes ceremony 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > does not start a document after Close changes predicate 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > uses the latest navigation callback after an intentional open Close 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > uses the latest navigation callback after an intentional new Close 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > keeps an intentional close/unmount handoff current without any write 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > checks project changes raised by target publication before navigation 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > checks ceremony changes raised by target publication before navigation 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > both editor continuations recheck the original owner after Close > checks predicate changes raised by target publication before navigation 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > published assembly source intent retains its original sender > retires a source handoff when its sender predicate becomes false 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > published assembly source intent retains its original sender > does not replace an unrelated valid target when its sender is already retired 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > published assembly source intent retains its original sender > rechecks sender ownership before delivering source intent to synchronous event readers 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > published assembly source intent retains its original sender > refuses mutation of an already-published raw source payload 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > refuses retained choose/reload/open after account replacement 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > refuses retained choose/reload/open after session replacement 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > refuses retained choose/reload/open after bearer replacement 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > refuses retained choose/reload/open after project replacement 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > does not revalidate an obsolete selected document after the selection is cleared 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > serializes duplicate revalidation without choosing another document 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > retires a pending handoff when a source payload changes in place 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > does not deliver a delayed open after its mounted chooser unmounts 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > does not revive retained actions after source A→B→A 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > cannot launch a replacement chooser after source changes 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > cannot launch a replacement chooser after disabled changes 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > cannot launch a replacement chooser after project changes 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > refuses a retained launch after account replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > refuses a retained launch after session replacement 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > refuses a retained launch after bearer replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > refuses a retained launch after project replacement 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > keeps a current deliberate launch reachable through the same action 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained launch callbacks keep their original rendered source scope > does not revive a retained source-A launch after rendering source B then A 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > offers assembly for retained readable data without requiring original bytes 233ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > hands only the explicitly pinned ProjectHome sources to the shared chooser 264ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > refuses a sixth explicit pin without silently dropping a source 246ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > retains the selected Vault UUID namespace instead of converting it into a Data Room id 455ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not offer an explicit section-only read as a whole-document build target 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > withdraws a whole-document build target when the fresh list confirms section-only access 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > opens the exact project/document with selected identities and no write or generation 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > holds an unavailable target after the fresh read instead of opening another document 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > refuses a foreign scoped document list rather than presenting it as empty 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > retains sources for the existing-editor creation remedy without dispatching a pre-mount creator or writing 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not publish while another governed form is open 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after project round trip 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after account change 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after organization change 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after unmount 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > discards a late target list when the selected source changes 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > deep-copies at publication and at every read 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'empty selection' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Data Room id' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Vault id' 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'duplicate source' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'six selected sources' 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > requires the exact document/project and does not manufacture source intent from copied URLs 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after project round trip before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after account change before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after organization change before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after session replacement before the editor mounts 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > keeps a legitimate handoff after the chooser closes and its component unmounts 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > registers ownership before the existing editor-target event is delivered 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > refuses an unregistered raw source-target copy 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > preserves ordinary target behavior across project visits 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > lists what the section is drafted from 647ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > reports a changed source without rewriting anything 364ms
+stderr | client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed in the canonical conversation without redrafting on the spot
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed in the canonical conversation without redrafting on the spot 641ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > makes no claim about a citation with no recorded checksum 338ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > says a source is gone instead of dropping the citation 312ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > distinguishes a failed read from a section that cites nothing 310ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > renders an honest empty state for a section with no recorded sources 304ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > offers the project data room, and refuses an unreadable document 320ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > posts the chosen source id and reloads the rail 345ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says so when there is no project data room to pick from 400ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says the data room could not be read, rather than that it is empty (GE-H-1, 2026-09-28) 455ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > surfaces the server’s refusal instead of reporting success 365ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > asks the server to re-resolve, and reports what it says 338ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > reports a refusal from the server verbatim 317ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench sources require readable document membership > does not read the previous document section or publish its evidence while the next pinned document sections are pending 858ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs 318ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session 710ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session 495ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session 533ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement 596ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=false) 409ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true) 670ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'PDF' body on same-program session replacement and opens for the current owner 329ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'non-PDF' body on same-program session replacement and opens for the current owner 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed refusal json body without a toast in the replacement session 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires an in-flight file immediately when the supplied owner becomes invalid 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not revive a retired in-flight file when the same owner key becomes valid again 130ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not give the first A visit authority after an A to B to A session visit 129ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > keeps selection, an in-flight open and its viewer through equivalent owner and section rerenders 100ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > releases an open PDF URL on same-program session replacement before another file opens 80ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > still reports a refusal that belongs to the current session 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks the prior complete catalog in the replacement-owner render before passive effects 72ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks old associations before passive effects and keeps authoritative withheld details withheld 59ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > a retained catalog retry cannot restart or invalidate the replacement owner’s in-flight read 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > old admission retry and admit callbacks cannot erase or extend replacement-session associations 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > does not resurrect old callbacks after A → B → A even when the original owner key is valid again 162ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: true) 105ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: false) 106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: true) 105ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: false) 106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > never treats partial old-owner pages as complete citation authority for a replacement owner 108ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > keeps rows, associations, callbacks and read counts when the same valid owner is recreated 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > an invalid supplied owner exposes no source authority and cannot retry or admit into its retired visit 54ms
+stderr | client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > refuses an incoming target while a save is pending without starting another section read
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > refuses an incoming target while a save is pending without starting another section read 460ms
+stderr | client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > rechecks the current busy state after the exact document read finishes
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > rechecks the current busy state after the exact document read finishes 306ms
+stderr | client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > rechecks the current busy state after the section search read finishes
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > rechecks the current busy state after the section search read finishes 245ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > keeps a document target waiting for the list from replacing an editor whose save has started 305ms
+stderr | client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > uses the existing unsaved-work decision for a section-only target and preserves Cancel
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx > same-surface editor targets respect the current native write > uses the existing unsaved-work decision for a section-only target and preserves Cancel 426ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a local host 321ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > opens the shared chooser from a retained upload in a external host 114ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > hands off an exact upload from a later search page without inventing a checksum 874ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {"disposition":"remove_data"} 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {"disposition":"supersede"} 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses an upload excluded from active data use: {"earlierVersion":true} 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses malformed source identity without coercion: {"docId":"up-33333333-3333-4333-8333-333333333481"} 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > refuses malformed source identity without coercion: {"hash":"not-a-checksum"} 33ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no upload build for a row without the exact upload identity: {"src":"authored"} 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no upload build for a row without the exact upload identity: {} 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > offers no source build without an explicit effective project 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > Project files Vault assembly entry > does not substitute the new shell project for a held effective project 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across availability ABA 87ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > retires a pending chooser across disabled ABA 81ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the project visit changes 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the account session changes 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx > source launch eligibility ownership > refuses a delayed target read after the selected source changes 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > all matching Vault sources remain reachable in the existing editor > loads later matches and imports the exact selected source through the existing working-copy dialog 1276ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > all matching Vault sources remain reachable in the existing editor > retains loaded matches after a later-page failure and retries that same page 717ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > all matching Vault sources remain reachable in the existing editor > refreshes a changed result set instead of silently consuming an overlapping final page 970ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > all matching Vault sources remain reachable in the existing editor > holds duplicate page requests until the pending read completes 445ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > unconfirmed search responses remain failures > offers retry rather than claiming an empty or complete search for {"results":[]} 268ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > unconfirmed search responses remain failures > offers retry rather than claiming an empty or complete search for {"results":[],"total":2} 267ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > unconfirmed search responses remain failures > offers retry rather than claiming an empty or complete search for {"results":[{"id":"00000000-0000-4000-8000-000000000001","title":"Protocol source 1","fileName":"protocol-1.docx","documentType":"Protocol","size":null,"folderId":null,"ctdSection":null,"placementStatus":"unfiled","snippet":null,"originalFileAvailable":true,"current":true,"disposition":"keep_data"},{"id":"00000000-0000-4000-8000-000000000001","title":"Protocol source 1","fileName":"protocol-1.docx","documentType":"Protocol","size":null,"folderId":null,"ctdSection":null,"placementStatus":"unfiled","snippet":null,"originalFileAvailable":true,"current":true,"disposition":"keep_data"}],"total":2} 269ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > search results stay with their current query and recorded eligibility > hides the earlier query while a new search is pending 266ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > search results stay with their current query and recorded eligibility > ignores a later page that completes after the search query changes 651ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx > search results stay with their current query and recorded eligibility > uses newer search availability when the same file is also in the earlier Vault tree 279ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > loads only the requested record and renders its saved fields without lifecycle actions 242ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > shows unknown saved statuses verbatim and does not fabricate missing bindings, dates or notes 33ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 401 response from a missing or empty record 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 403 response from a missing or empty record 15ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 404 response from a missing or empty record 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 503 response from a missing or empty record 13ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 500 response from a missing or empty record 12ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 403 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 404 10ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 503 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > reports network failure and retries the exact record 32ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: missing data 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: false success 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: wrong native row 8ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: wrong home source 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: missing field 8ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: invalid date 6ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > reports an unreadable JSON response explicitly 12ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > removes the previous record immediately on ID change while the next record loads 34ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > ignores a stale old-target success after the new target resolves 22ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > ignores a stale old-target failure after the new target resolves 20ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > clears the previous record failure on ID change 28ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > survives StrictMode cleanup without publishing programme or navigation events 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > prefills the document’s own code — the parent of its sections — not the open section’s 166ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > refuses one of the document’s own section codes — the leaf would hold the other sections too — and writes nothing 66ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a one-section document is filed at that section’s code 37ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested 50ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an unchanged re-placement says nothing was written 48ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written 48ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > lists the vault read model the Vault surface renders, under the program name 415ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > searches through the vault search route and shows the total 498ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > Cite in this section inserts a citation node through the editor and records the source link 329ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a file that is not a data-room source cannot be cited; a reference inserts as text and says it is not a citation 280ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a failed vault read is an error with a retry, never an empty vault 191ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > with no program open the rail says the document is not filed under a program 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > processing recovery in the existing editor > shows a durable processing failure and refuses AnA grounding without persisted text 196ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > processing recovery in the existing editor > refreshes the same captured identity after readable recovery without issuing repair writes 67ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > searches and pages the whole data room instead of an initial capped list 716ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > keeps withdrawn sources visible while refusing work or grounding from them 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > never promotes a stored source title into AnA instructions 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > a catalogue failure is reported with recovery rather than an empty room 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > an IND deliverable from a later phase opens the exact existing working document 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > routes official form preparation to AnA without promising to generate the form 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > offers recovery when existing documents cannot be checked 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > offers a clear-filter action when the IND search has no matches 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx > same-mounted Workbench source reads retain their canonical session owner > rejects a prior-session catalog body after replacement prose for the same document and section has settled 1194ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx > same-mounted Workbench source reads retain their canonical session owner > retains the pending current catalog and editor across ordinary canonical bearer refresh 584ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > refreshes current catalogue and association facts when the existing Sources rail is reopened 1008ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > keeps eligible historical numbering without admitting that reference in an unregistered current section 479ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > reads the second page so a registered source in a prior section gives the current marker its correct number 318ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > does not offer superseded, withdrawn or unreadable project sources as new citation choices 391ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > ignores a prior project source read that finishes after switching to another project 291ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > discards a completed result and reason when the selected source changes 248ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > ignores a late import result after a program change and allows a new request 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > clears a source intake and selection when the files rail changes program 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > does not download or announce a file that finishes after the files rail changes program 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 307ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 38ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders when the payload is a real array 27ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a null-payload success 11ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a 204 No Content 5ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > a consumer effect keyed on rows settles instead of looping 116ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesRecovery.test.tsx > project files recovery and availability > retries a failed vault search without changing its query 602ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesRecovery.test.tsx > project files recovery and availability > disables working-copy intake from unavailable search metadata {"originalFileAvailable":false} 305ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesRecovery.test.tsx > project files recovery and availability > disables working-copy intake from unavailable search metadata {"disposition":"remove_data"} 292ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesRecovery.test.tsx > project files recovery and availability > disables working-copy intake from unavailable search metadata {"current":false} 287ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why 240ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html 63ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > still opens a real PDF in the viewer, with the served hash 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > downloads a file that is not a PDF and does not claim to be, as before 38ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > governed source intake rules > explains the reason rule and refuses a short or overlong reason before sending 162ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > shows exclusion before expansion and explains the disabled work and AnA actions 104ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > keeps retained readable text available to AnA when the original file is unavailable 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > recovers from no search matches by clearing the search rather than hiding project sources 289ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > requires a stated reason, shows server conversion warnings, and opens only the exact confirmed id 243ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > shows an explicit refusal and never navigates 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > holds double-clicks while the server saves the working copy 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > does not treat an error envelope as success even when it contains data 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > the source surface handoff uses the returned document and project identity 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > does not admit an unregistered raw target by minting a new receiver owner 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > refuses a copied genuine receiver instead of assigning the copied payload new authority 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > keeps the original sender predicate after the channel is consumed 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > retires a consumed source intent if its admitted receiver is replaced 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > refuses source mutation through an admitted intent 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > the existing assembly receiver retains the admitted sender > does not revive an expired target as a new received source command 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a assembly intent after mutated selectors are restored 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a start intent after mutated selectors are restored 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a assembly intent after its sender returns 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a start intent after its sender returns 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a assembly intent after its admitted receiver returns 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > does not revive a start intent after its admitted receiver returns 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > retires a assembly intent when its receiver predicate throws 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx > observed receiver retirement is one way for both existing source commands > retires a start intent when its receiver predicate throws 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > hides earlier actionable sources immediately while a different search is pending 186ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"22222222-2222-4222-8222-222222222222","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","textAvailable":true,"extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","textAvailable":true,"extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","textAvailable":true,"extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":50},"window":{"shown":1,"truncated":false}}) 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","textAvailable":true,"extractionMethod":"text","isCurrent":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > resets search, page and selected import when the project changes 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > ignores an old project completion after a switch 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 71ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"textAvailable":"true"}) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"completed","retryable":false,"reasonCode":null,"leaseExpiresAt":"not-a-date","nextRetryAt":null}}) 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"future_state","retryable":false,"reasonCode":null,"leaseExpiresAt":null,"nextRetryAt":null}}) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > withholds drafting while the refreshed source admission is unknown, then adopts withdrawal 566ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > retires local and handoff pins on programme change before the new source read resolves 364ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > waits for confirmation and holds repeated clicks 250ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > reports a refused insertion without claiming a citation 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > does not report an old citation outcome after the rail is unmounted 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationAdmission.test.tsx > recorded citation metadata and recovery > preserves an admitted organization-wide historical reference outside the project catalogue 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationAdmission.test.tsx > recorded citation metadata and recovery > an authoritative unresolved citation never falls back to a catalogue title 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationAdmission.test.tsx > recorded citation metadata and recovery > retries the same document associations after a read failure 120ms
+
+ Test Files  35 passed (35)
+      Tests  489 passed (489)
+   Start at  16:48:23
+   Duration  138.37s (transform 6.87s, setup 2.63s, import 19.07s, tests 96.85s, environment 15.55s)
+

@@ -1,0 +1,14 @@
+{
+  "publishedSource": "fc1ece8d961c33f7f00c16367b30f7aa95d05b71",
+  "branch": "concept2cure-v2",
+  "acceptedAtUtc": "2026-10-30 16:24:50",
+  "normalHooksPassed": true,
+  "typecheckErrors": 0,
+  "lintWarningGrowth": 0,
+  "buildPassed": true,
+  "qualifiedSourceBase": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "laterIncomingChanges": "47ce1d3d9 and4c4a27daf are documentation only; qualified source hashes unchanged",
+  "providerCalls": 0,
+  "formalOq": "not executed",
+  "deployment": "not performed"
+}

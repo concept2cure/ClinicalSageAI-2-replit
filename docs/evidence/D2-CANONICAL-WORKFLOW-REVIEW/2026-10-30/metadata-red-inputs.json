@@ -1,0 +1,6 @@
+{
+  "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+  "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": "d6a89cf30ad47e0bcaf1b05bb098a869b5c6b3d0cb38e923283848485f5cb807",
+  "client/src/concept2cure/v2/editor/citationAdmission.ts": "58d88401f947d63a0c7c61954dda8a9076d7f3199c33d7cd8bf0992ed82200c4",
+  "client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx": "d5197f69e1808c8f71ba819fa5bc8d78f38e96e34a902eac63cf421c91cbf730"
+}

@@ -24,6 +24,7 @@ import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
 import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
 import { nativeCatalogRunId } from './catalog-native-fixture';
+import { readVaultIngestReceipt } from '../../client/src/concept2cure/v2/vaultIngestReceipt';
 
 const RUN = nativeCatalogRunId();
 const PROBE_PREFIX = `dbtest-vr05-${RUN} `;
@@ -205,4 +206,40 @@ describe('a same-bytes re-upload to the Vault (VR-05, D5)', () => {
       expect(d.requested).not.toBe(d.recorded);
     }
   });
+});
+
+describe('the upload client accepts the actual committed ingest receipts', () => {
+  it('accepts client-shaped new, same-bytes and check-in replies with their recorded identities', async () => {
+    const fileName = `receipt-${RUN}.txt`;
+    const title = fileName.replace(/\.txt$/, '');
+    const bytes = Buffer.from(`Client-shaped receipt contract ${RUN}.`, 'utf8');
+    const created = await request(app).post('/api/vault/ingest')
+      .field('programId', programId).field('documentCode', fileName)
+      .field('documentTitle', title).field('documentType', 'OTHER')
+      .attach('file', bytes, { filename: fileName, contentType: 'text/plain' });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const first = readVaultIngestReceipt(created.body, created.status, { programId, fileName });
+    expect(first).toMatchObject({ success: true, document: { programId, documentCode: fileName, version: '1.0' } });
+    const documentId = String(created.body.document.id);
+
+    const retried = await request(app).post('/api/vault/ingest')
+      .field('programId', programId).field('documentCode', fileName)
+      .field('documentTitle', title).field('documentType', 'OTHER')
+      .attach('file', bytes, { filename: fileName, contentType: 'text/plain' });
+    expect(retried.status, JSON.stringify(retried.body)).toBe(200);
+    expect(readVaultIngestReceipt(retried.body, retried.status, { programId, fileName })).toMatchObject({
+      document: { id: documentId }, reupload: { unchanged: true, changes: [], differs: [] },
+    });
+
+    const nextFile = `receipt-${RUN}-v2.txt`;
+    const checkedIn = await request(app).post('/api/vault/ingest')
+      .field('programId', programId).field('supersedesDocumentId', documentId)
+      .field('documentTitle', title).field('documentType', 'OTHER')
+      .attach('file', Buffer.from(`The revised receipt contract ${RUN}.`, 'utf8'), { filename: nextFile, contentType: 'text/plain' });
+    expect(checkedIn.status, JSON.stringify(checkedIn.body)).toBe(201);
+    const next = readVaultIngestReceipt(checkedIn.body, checkedIn.status, { programId, fileName: nextFile, supersedesDocumentId: documentId });
+    expect(next).toMatchObject({ document: { programId, documentCode: fileName, version: '2.0' } });
+    expect(next?.document.id).not.toBe(documentId);
+  });
+
 });

@@ -1,0 +1,24 @@
+{
+  "reviewer": "project_scope_red_tests",
+  "date": "2026-10-30",
+  "verdict": "source-approved-runtime-qualification-pending",
+  "resolvedFinding": "WBS-1",
+  "history": {
+    "blockedWorkbenchSha256": "b1a6e5d61ffd926f1d7e24b7cb77d3d48e61ad64362b206aa45bfbf158d8d6d0",
+    "receiptTestBeforeMembershipCaseSha256": "e4bbb98f9b741c0dc8f894f6588411949e4b0ddc196b445181f462c162bb54da",
+    "actualMembershipRed": "1 failed / 7 skipped; initial no-selected-test run is not proof"
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "e057fa9661a3308dbb9f0cf31335fb03286279727d8435c239c5f9ee4f854bc6",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx": "f4d80c505b74bdefd6d9e2e0361cb1391d959ea83f7297d6de6032401f290a89",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx": "b82c4b7c983a327242bf99f0f10fe765a316e2d8ebb9294d47cd16a965dd8fea",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-scope-contract.md": "c4da2556f33b78163890c4860726c7e1fdfa56e5bbcf8a86ccf6806c1c1af1ca",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-contract-review.md": "324ad2deb65fb50c683b252ff6baae75457467b4e3d72102044cd7b5988e8ea0",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-files-green-first.txt": "7153e07de4d8d08fe3eb486204d6a0115aa573d72e1801df993c32aeba7e9e51",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-session-red-corrected.txt": "97043a1f83ff669e8e08bd68423698d5117bbb43f831778a1c759d7e4ca326b7",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-red-corrected-inputs.json": "033769bd06de17d11fa38a6a679834aafcf8c57da9aebfbfb0521353a67edd78",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-membership-red-executed.txt": "0443bb22c77a0502b1deb79cd656f34ae1acd8238ca19fdd14842450fd70b341",
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/membership-red-inputs.json": "dccd30b204370665e26b91d33c54f7ad8ead8d7b7a44ac068a3a50cc9c25b86e"
+  }
+}

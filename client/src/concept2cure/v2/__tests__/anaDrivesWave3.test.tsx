@@ -24,7 +24,7 @@ vi.mock('@/utils/authToken', () => ({
   getAuthHeaders: () => ({ Authorization: 'Bearer t', 'x-organization-id': '1' }),
 }));
 
-import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
+import { EngineeringRiskPanel, PANEL_PROGRAM_ID, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 import { TemplateLibrary } from '../surfaces/TemplateLibrary';
 import {
   __resetSurfaceActionBus,
@@ -53,13 +53,13 @@ afterEach(() => {
 
 const RISK_ROWS = [
   {
-    id: 1, ref_code: 'HZ-01', hazard: 'Electrical shock', hazardous_situation: 'Damaged insulation',
+    id: 1, program_id: PANEL_PROGRAM_ID, ref_code: 'HZ-01', hazard: 'Electrical shock', hazardous_situation: 'Damaged insulation',
     harm: 'Burn injury', sequence_of_events: null, severity: 4, probability: 3,
     detectability: 2, residual_probability: 1, control_strategy: 'design_reduce',
     source: 'fmea', status: 'open', acceptable: null,
   },
   {
-    id: 2, ref_code: 'HZ-02', hazard: 'Software freeze mid-procedure', hazardous_situation: null,
+    id: 2, program_id: PANEL_PROGRAM_ID, ref_code: 'HZ-02', hazard: 'Software freeze mid-procedure', hazardous_situation: null,
     harm: 'Delayed therapy', sequence_of_events: null, severity: 3, probability: 2,
     detectability: 3, residual_probability: 2, control_strategy: 'protective_measure',
     source: 'complaint', status: 'mitigating', acceptable: null,

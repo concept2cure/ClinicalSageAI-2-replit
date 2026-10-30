@@ -4,9 +4,9 @@
  * Enterprise bar: EVERY therapeutic area in the canonical product vocabulary
  * (shared/constants/domain/therapeutic-areas) must resolve to a real, complete
  * regulatory profile — not just the four originally hand-authored. A profile is
- * "complete" when it carries genuine context rules, guidance references,
- * reviewer expectations, and endpoint/statistical considerations a sponsor can
- * rely on when authoring in that area.
+ * structurally populated when it carries context rules, guidance references,
+ * reviewer expectations and endpoint/statistical considerations. These checks
+ * do not establish regulatory currency, scientific correctness or SME review.
  */
 import { describe, it, expect } from 'vitest';
 import { THERAPEUTIC_AREAS } from '../../shared/constants/domain/therapeutic-areas';

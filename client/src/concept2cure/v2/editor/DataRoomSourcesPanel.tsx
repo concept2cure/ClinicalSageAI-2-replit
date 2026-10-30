@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useState } from 'react';
-import { EmptyState, useLiveData, type DataState } from '../dataConnect';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { EmptyState, useDataReadVisit, useLiveData, type DataReadOwner, type DataState } from '../dataConnect';
 import { SourceCatalogLine, SourceSnippet } from './SourceCatalogLine';
 import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImportDialog';
 import { I } from '../icons';
@@ -10,6 +10,11 @@ import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from './SourceA
 type SourceRow = ProjectSourceRecord;
 type SourcesPage = ProjectSourcePage;
 const PAGE_SIZE = 50;
+
+interface DataRoomSourcesPanelProps {
+  programId: string; readOwner?: DataReadOwner; onOpenDocument?: (docId: string) => void;
+  onAsk?: (text: string) => void; onNav?: (id: string) => void;
+}
 
 function sourceReadLabel(source: SourceRow): string {
   return sourceReadView(source, 'Readable').label;
@@ -82,18 +87,21 @@ function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull,
 }
 
 /** The same paged data-room read used by Projects, beside the existing editor. */
-export function DataRoomSourcesPanel(props: {
-  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
-}) {
-  return <DataRoomForProgram key={props.programId} {...props} />;
+export function DataRoomSourcesPanel(props: DataRoomSourcesPanelProps) {
+  const owned = useDataReadVisit(props.programId, props.readOwner);
+  // Key the inner view by the canonical visit, including same-key recurrence.
+  const scope = useRef({ visit: owned.visit, epoch: 0 });
+  if (scope.current.visit !== owned.visit) scope.current = { visit: owned.visit, epoch: scope.current.epoch + 1 };
+  if (!owned.current()) return null;
+  return <DataRoomForProgram key={`${props.programId}:${scope.current.epoch}`} {...props} ownerCurrent={owned.current} />;
 }
 
-function DataRoomPage({ programId, offset, term, ...actions }: {
-  programId: string; offset: number; term: string; onRetry: () => void; onClear: () => void;
+function DataRoomPage({ programId, offset, term, readOwner, ...actions }: {
+  programId: string; offset: number; term: string; readOwner?: DataReadOwner; onRetry: () => void; onClear: () => void;
   onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
 }) {
   const url = projectSourceCatalogUrl(programId, { limit: PAGE_SIZE, offset, query: term });
-  const read = useLiveData<unknown>(url, [url]);
+  const read = useLiveData<unknown>(url, [url], undefined, readOwner);
   const parsed = parseProjectSourcePage(read.data, { programId, limit: PAGE_SIZE, offset });
   const state: DataState<SourcesPage> = {
     ...read, data: parsed.ok ? parsed.page : null,
@@ -104,9 +112,12 @@ function DataRoomPage({ programId, offset, term, ...actions }: {
   </div>;
 }
 
-function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav }: {
-  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
-}) {
+function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner, ownerCurrent }: DataRoomSourcesPanelProps & { ownerCurrent: () => boolean }) {
+  // Retained controls and receipts must keep the visit that created them.
+  const capturedCurrent = useRef(ownerCurrent).current;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = useCallback(() => mounted.current && capturedCurrent(), [capturedCurrent]);
   const searchId = useId();
   const [query, setQuery] = useState('');
   const [term, setTerm] = useState('');
@@ -114,22 +125,32 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav }: {
   const [epoch, setEpoch] = useState(0);
   const [pullSource, setPullSource] = useState<SourceRow | null>(null);
   useEffect(() => {
-    const timer = setTimeout(() => { setTerm(query.trim()); setOffset(0); }, 250);
+    const timer = setTimeout(() => {
+      if (!current()) return;
+      setTerm(previous => current() ? query.trim() : previous);
+      setOffset(previous => current() ? 0 : previous);
+    }, 250);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, current]);
   const searchPending = query.trim() !== term;
+  const ask = onAsk && ((text: string) => { if (current()) onAsk(text); });
+  const navigate = onNav && ((id: string) => { if (current()) onNav(id); });
+  const openDocument = onOpenDocument && ((id: string) => { if (current()) onOpenDocument(id); });
+  if (!current()) return null;
   return <div className="pf-library" data-testid="editor-data-room">
     <div className="pf-search pf-library-head">
       <p className="pf-sel-m">Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it.</p>
-      <button type="button" className="btn ghost" title="Refresh only reads status; it does not retry processing" onClick={() => setEpoch(v => v + 1)}>Refresh sources</button>
+      <button type="button" className="btn ghost" title="Refresh only reads status; it does not retry processing" onClick={() => { if (current()) setEpoch(v => current() ? v + 1 : v); }}>Refresh sources</button>
       <label className="sr-only" htmlFor={searchId}>Search the data room catalogue</label>
-      <input id={searchId} className="c2c-input" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Find source documents and data…" />
+      <input id={searchId} className="c2c-input" type="search" value={query} onChange={e => { const value = e.target.value; if (current()) setQuery(previous => current() ? value : previous); }} placeholder="Find source documents and data…" />
     </div>
     {searchPending ? <div className="pf-list" aria-busy="true"><EmptyState busy icon={I.fileText} title="Loading project sources…" /></div>
-      : <DataRoomPage key={`${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term}
-        onRetry={() => { setOffset(0); setEpoch(v => v + 1); }} onClear={() => { setQuery(''); setTerm(''); setOffset(0); }}
-        onPage={setOffset} onPull={setPullSource} onAsk={onAsk} onNav={onNav} />}
+      : <DataRoomPage key={`${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term} readOwner={readOwner ? { key: readOwner.key, current } : undefined}
+        onRetry={() => { if (current()) { setOffset(previous => current() ? 0 : previous); setEpoch(v => current() ? v + 1 : v); } }}
+        onClear={() => { if (current()) { setQuery(previous => current() ? '' : previous); setTerm(previous => current() ? '' : previous); setOffset(previous => current() ? 0 : previous); } }}
+        onPage={value => { if (current()) setOffset(previous => current() ? value : previous); }}
+        onPull={source => { if (current()) setPullSource(previous => current() ? source : previous); }} onAsk={ask} onNav={navigate} />}
     {pullSource && <SourceImportDialog programId={programId} source={{ kind: 'data-room', sourceId: pullSource.id }}
-      title={pullSource.title || `Source ${pullSource.id}`} onClose={() => setPullSource(null)} onOpenDocument={onOpenDocument} />}
+      title={pullSource.title || `Source ${pullSource.id}`} onClose={() => { if (current()) setPullSource(previous => current() ? null : previous); }} onOpenDocument={openDocument} />}
   </div>;
 }

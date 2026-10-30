@@ -17,10 +17,15 @@ beforeAll(async () => {
   database = new PGlite();
   state.database = drizzle(database);
   await database.exec(`
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(6),(7),(8),(9);
+    INSERT INTO organizations (id) VALUES (7),(8);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer, status text, regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}'::jsonb);
     CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer);
     INSERT INTO client_workspaces VALUES (71,7),(72,7),(81,8);
     INSERT INTO projects (id,organization_id,client_workspace_id,status,regulatory_program_id) VALUES (11,7,71,'active','${PROGRAM}'),(12,7,72,'active',NULL),(13,7,71,'archived',NULL),(21,8,81,'active','${FOREIGN}');
+    UPDATE projects SET owner_id=5, created_by_id=5 WHERE organization_id=7;
     CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
     INSERT INTO organization_users VALUES (7,5,'member');
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);

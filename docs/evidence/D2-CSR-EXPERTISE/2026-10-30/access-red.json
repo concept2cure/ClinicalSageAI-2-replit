@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-10-30T16:10:58.216084+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 7.849,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "access-red-source-freeze.json",
+  "sourcesBefore": {
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "7960b883b8e6d74541ccb7f8a7e6281540edca70c9ced97d6c2574867917734b",
+    "server/services/csr/project-scope.ts": "515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/db/drizzle-queryable.ts": "0e2ac9713c4326739921c88beb832737e2350e210a0c92e926789acbeda13399"
+  },
+  "sourcesAfter": {
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "7960b883b8e6d74541ccb7f8a7e6281540edca70c9ced97d6c2574867917734b",
+    "server/services/csr/project-scope.ts": "515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/db/drizzle-queryable.ts": "0e2ac9713c4326739921c88beb832737e2350e210a0c92e926789acbeda13399"
+  },
+  "sourceDrift": [],
+  "rawOutput": "access-red.log.gz",
+  "rawGzipSha256": "3efdab9396d7d903c938737db97bc4bd6944a77c90b4bb76476850a803ed6fcd",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  10 failed | 2 passed (12)",
+    "Duration  6.57s (transform 1.20s, setup 187ms, import 2.09s, tests 2.84s, environment 0ms)"
+  ]
+}

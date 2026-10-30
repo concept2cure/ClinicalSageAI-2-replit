@@ -1,0 +1,383 @@
+{
+  "passed": true,
+  "syntheticInterceptedRecords": true,
+  "actualComponents": [
+    "ProjectMdxWorkflow",
+    "MdxSurfaceHost",
+    "EngineeringSurface",
+    "RiskRegister"
+  ],
+  "authenticatedClientAcceptance": false,
+  "deployedApplicationTested": false,
+  "productionWriteExecuted": false,
+  "liveSignatureExecuted": false,
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+      "sha256": "1f49ca6b760a6f2cc5f13b810e0bb7d642fcd828cc86b4f8cab78895edda4adc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/RiskRegister.tsx",
+      "sha256": "48a66bb26b8d2426781d42df9eb2f11b51f6684484fd23ee83b570f56f283a2e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/riskRecordRead.ts",
+      "sha256": "31e92c9cd5b484d7e99c6c394f42f16f8d9aec3c973369b440c41898a64f402d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/projectScopedRead.tsx",
+      "sha256": "9dcd711a081a9fece7b2952216858a421a627d72c5be6861181363a0184d3f99"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/SignedContentState.tsx",
+      "sha256": "9b9db26815aa651817d55e5b405634f4de6d017cc02150ff0a8a63fbfa714171"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceContext.ts",
+      "sha256": "34c1c9de2db15bfefe23a63ac6197b5412657a1e317e8f00db71e9e533287bf5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceActions.ts",
+      "sha256": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+      "sha256": "3e0506be983f5407732db2b365a9e8565f30abe491d15872be83d87f8ad24c54"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx",
+      "sha256": "b4136ca73086117f26b53659787f7eecc185123f4a45e51c097e9295672c2e7e"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts",
+      "sha256": "df13aa1545e1fbd99219afa2cb83faf22563103f65eeb08209afa7561690e455"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/engineeringPanelsContext.ts",
+      "sha256": "4e92eeae766f58385da616650c0db7d6fbccb3ae33effeb38ebc95c102b5df51"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/hostContextReport.ts",
+      "sha256": "a81dd0a12a662366b269a67fc42c02d609756d4503089e63cc50ee59e38d7e17"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useMdxPrograms.ts",
+      "sha256": "1d0c829885a9e5d09593d7bbb552aaf1a6d3bcea264514aadf8c17f11882c98b"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useEngineering.ts",
+      "sha256": "6fe2702ca5826f6adf6396eafb4e3f7fc5862dcc745a1548f4f9ff43df79612b"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/useFetchJson.ts",
+      "sha256": "cf315ff2c81dc0a3a5f565af9aad728cf4a4a3edf752dad7c71d40ca566b5b37"
+    },
+    {
+      "path": "shared/navigation/index.ts",
+      "sha256": "5844fa1bca83f041b02206193a780608af4936feb67de80f821ce1522ce9e46e"
+    },
+    {
+      "path": "shared/regulatory/work-packages.ts",
+      "sha256": "959830cf449e49446be6a667c8392f33512f78fc4341cccd05b712369da2c454"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a"
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "sha256": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c"
+    },
+    {
+      "path": "client/src/index.css",
+      "sha256": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b"
+    },
+    {
+      "path": "design-system/colors_and_type.css",
+      "sha256": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "83409a950412bf267f232e6ad333c7cf6f9c63ba7ece242f154b4c3554dd1270"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surfaces-v2.css",
+      "sha256": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "sha256": "8e5341cb1be8062c3c696d4645d1b2df5a01b93e9c5d89aff0c73f9da2f467ce"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "sha256": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "sha256": "e51c1f78075f4fb168459f9ddcf3efc9df16add9cb10fbcc49acd9a384cb0aec"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/project-home-v2.css",
+      "sha256": "da717168f6787e3afba4fb8078bc1c4a634e33607c8b51199aea1784ac2e6940"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/mdx-project-workflow.css",
+      "sha256": "209ef1eabdf2f831226e31383371207f8d6f3458ca5ce029c22ac41dfa7ea0ce"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/app.css",
+      "sha256": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/pathway-tabs.css",
+      "sha256": "657e6ab14dac9e651f6dc0f3b72b8845a83ba4df27b2a43940b3b8eac173c8be"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/files-tree.css",
+      "sha256": "bf88a574b92a34ab8f485f3df810c7c561a57000e292a0a90103c6ca1ee75d2d"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surface-text-ramp.css",
+      "sha256": "5f2cdb1df8f97b9d981c1544be940ceb5e02e212a07a27aec69023a1a302b931"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-check.mjs",
+      "sha256": "1d70703125832eafb0ce785daf246f6026dd5bc93b6a3a769148da7f83b853b5"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-probe.tsx",
+      "sha256": "b04260b0493a796d7f079842832e195c575f7936a17507df551fb6d2199bfcd7"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-fixtures.mjs",
+      "sha256": "3c9a7affac33c2ac9cc403d28cdc257dc71c2a3190caca9b210b6a448d558417"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-index.html",
+      "sha256": "e3f2ad8a59233fe3d11441d94186b00436b1ac5793948479dd22f842be199b82"
+    },
+    {
+      "path": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-server.mjs",
+      "sha256": "d492b9220734d6625e663e70c2407edbaa52a431bbd8f4582fa025023e45d428"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-server.mjs",
+      "sha256": "9bfdd621b0bd97ba9323abcd341855a598b7b300d7a813acab0ccb0ed45e68d8"
+    },
+    {
+      "path": "scripts/visual-qa/playwright.mjs",
+      "sha256": "365bc31bba210b40fc103c71dee1467003503b3053fbc67530c9e5c0a7932a04"
+    }
+  ],
+  "checks": [
+    {
+      "check": "Keyboard workstream action focuses the existing project risk file; persisted control and selected project survive the handoff",
+      "passed": true
+    },
+    {
+      "check": "AnA retains the MDX host’s composed project and risk context without inferred acceptance",
+      "passed": true
+    },
+    {
+      "check": "Design-control work targets the existing trace in the same engineering feature",
+      "passed": true
+    },
+    {
+      "check": "A successfully read empty control chain is stated as recorded empty",
+      "passed": true
+    },
+    {
+      "check": "An unavailable detail read keeps the hazard visible and does not assert an empty control chain",
+      "passed": true
+    },
+    {
+      "check": "A refused risk-register read shows the refusal and no register risk or control record",
+      "passed": true
+    },
+    {
+      "check": "A refused engineering project read mounts no risk register or aggregate record",
+      "passed": true
+    },
+    {
+      "check": "The risk matrix and hazard drawer stack in a readable 390px project view",
+      "passed": true,
+      "viewport": 390,
+      "scroll": 390,
+      "columns": "262px"
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items/1",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items/1",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items/1",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/regulatory-programs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/engineering/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/design-controls",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mdx/risk-items/1",
+      "query": "?program_id=11111111-1111-4111-8111-111111111111"
+    }
+  ],
+  "browserErrors": [],
+  "unexpectedRequests": []
+}

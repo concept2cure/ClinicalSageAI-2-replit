@@ -68,9 +68,10 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import type { QueryResultRow } from 'pg';
-import { pool } from '../db';
+import { requestPgClient, MissingRequestDbContextError, type RequestSqlClient } from '../db/requestDb';
+import { governedActorId } from '../middleware/orgMembership';
 import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
-import { admitProject } from '../lib/admit-project';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../services/c2c/current-program-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-engineering');
@@ -92,15 +93,16 @@ type Scope = 'program' | 'organization';
  * into this deployment yet. One missing optional table must not take
  * down the four panels that do have data.
  */
-async function panel<T extends QueryResultRow>(
+async function readPanel<T extends QueryResultRow>(
+  q: RequestSqlClient,
   name: string,
   sql: string,
   params: unknown[],
   unavailable: string[],
 ): Promise<T[]> {
   try {
-    const { rows } = await pool.query<T>(sql, params);
-    return rows;
+    const { rows } = await q.query(sql, params);
+    return rows as T[];
   } catch (err) {
     /* 42P01 = undefined_table: the table has not been migrated in this
        tenant yet. That is a deployment state, not a fault, and an empty
@@ -186,13 +188,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
   }
 
   try {
-    /* Verify tenancy before reading anything, through the shared refusal
-       (server/lib/admit-project.ts), as q-sub, mdx-udi, mdx-labeling and
-       human-factors do. A valid UUID from another org and a non-existent UUID
-       both 404, so neither leaks. A check that could not run is 503
-       VERIFICATION_UNAVAILABLE: it reached the catch below as a 500 before
-       (D2, 2026-10-29). Either way nothing is read. */
-    if (!(await admitProject(res, log, programId, orgId))) return;
+    // The aggregate is the first read on Engineering. Its prose and counts
+    // require the same current project-sharing admission as the risk register.
+    const q = requestPgClient(req);
+    const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined, programId };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    const panel = <T extends QueryResultRow>(name: string, sql: string, params: unknown[], unavailable: string[]) =>
+      readPanel<T>(q, name, sql, params, unavailable);
 
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the
@@ -226,7 +228,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
               ARRAY_REMOVE(ARRAY_AGG(c.description ORDER BY c.id), NULL)            AS controls,
               ARRAY_REMOVE(ARRAY_AGG(c.verification_evidence ORDER BY c.id), NULL)  AS verification
          FROM risk_items r
-         LEFT JOIN risk_controls c ON c.risk_item_id = r.id
+         LEFT JOIN risk_controls c ON c.risk_item_id = r.id AND c.organization_id = r.organization_id
          -- The owner's name is shown only when the assignee belongs to the risk's
          -- organization: public.users has no RLS, and assigned_to was accepted
          -- unchecked before mdx-risk-management.ts began refusing non-members.
@@ -623,6 +625,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       documents: 'program',
     };
 
+    await requireProgramScopeStillCurrent(q, identity, scope);
     return ok(
       res,
       { summary, dhf, trace, risks, ecrs, issues, documents },
@@ -633,6 +636,10 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       { scopes, unavailable: [...new Set(unavailable)] },
     );
   } catch (err) {
+    if (err instanceof ProgramReadAccessError) return res.status(err.status).json({ error: err.code, message: err.message });
+    if (err instanceof MissingRequestDbContextError) return res.status(503).json({
+      error: 'PROJECT_ACCESS_UNAVAILABLE', message: 'Current project access could not be verified. No engineering data was supplied.',
+    });
     return serverError(res, log, 'engineering', err);
   }
 });

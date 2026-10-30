@@ -39,7 +39,7 @@ describe('a landed §14.3.3 is filed as its own leaf', () => {
     const result = await assembleCsr(await assemblyInput(out, { sections: [...SECTIONS, ...landed.sections], narratives: landed.store }));
     expect(result.unresolvedReferences).toEqual([]);
     const leaf = result.leaves.find(l => l.appendix === '14.3.3');
-    expect(leaf).toMatchObject({ fileName: NARRATIVES_FILE, stfFileTag: 'study-report', ctdSection: '5.3.5.1', origin: 'generated', studyId: 'SYN-LMN201-B' });
+    expect(leaf).toMatchObject({ fileName: NARRATIVES_FILE, stfFileTag: 'study-report-body', ctdSection: '5.3.5.1', origin: 'generated', studyId: 'SYN-LMN201-B' });
     expect(result.status).toBe('complete');
     expect(result.structure.ok).toBe(true);
     expect(result.crossReferences.map(x => x.target)).toContain(NARRATIVES_FILE);

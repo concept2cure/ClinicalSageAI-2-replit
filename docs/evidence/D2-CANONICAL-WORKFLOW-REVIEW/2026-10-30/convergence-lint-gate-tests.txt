@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: historical source does not enter the source tree while the gate runs
+ok 1 - historical source does not enter the source tree while the gate runs
+  ---
+  duration_ms: 480.168589
+  type: 'test'
+  ...
+# Subtest: the original basename controls both historical and current warning counts
+ok 2 - the original basename controls both historical and current warning counts
+  ---
+  duration_ms: 551.537079
+  type: 'test'
+  ...
+# Subtest: an invalid real ESLint configuration remains a gate failure
+ok 3 - an invalid real ESLint configuration remains a gate failure
+  ---
+  duration_ms: 456.063871
+  type: 'test'
+  ...
+# Subtest: historical JSX, test suffixes, ignored names and deleted directories keep the original configuration
+ok 4 - historical JSX, test suffixes, ignored names and deleted directories keep the original configuration
+  ---
+  duration_ms: 178.077689
+  type: 'test'
+  ...
+# Subtest: historical-source configuration errors propagate instead of returning an empty report
+ok 5 - historical-source configuration errors propagate instead of returning an empty report
+  ---
+  duration_ms: 16.152926
+  type: 'test'
+  ...
+# Subtest: the real --gate still refuses current warning growth
+ok 6 - the real --gate still refuses current warning growth
+  ---
+  duration_ms: 710.45734
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2486.929903

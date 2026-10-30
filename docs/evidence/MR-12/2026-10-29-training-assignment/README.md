@@ -519,3 +519,31 @@ Design §1.2, §3.4, §3.5, D6; P-49, P-50 Q2. The client half (the reader's suc
 
 **Not done:** the training read's successor in the client (`PersonalTrainingReader.tsx`), the approve dialog's count of people assigned, and a periodic-review refusal on a pending version (design `QMS_REVIEW_PENDING_EFFECT`).
 
+
+## Slice 3b, client: the reader reads both versions; the approve dialog says who it reaches (2026-10-30)
+
+Design §3.12 (`PersonalTrainingReader.tsx`, the approve dialog's `targetMeta`); P-49.
+
+**What already existed** (re-read at `12ab1bdd01`): the reader (`PersonalTrainingReader.tsx`, `usePersonalTraining.ts`, `qmsPersonalTraining.ts`) read one context and acknowledged it. The approve dialog already took the signed effective date (`SopRegister.tsx`, `renderMeaningDetails`; CAT2-19), and `useTrainingAssignments` already returned `peopleCount` for any reader. **A defect found while reading:** `readPersonalTrainingRecord` refused any read where the document row's version was not the version read. Since `1efe41ea43` (2026-10-22), training reads the version in force while the next one is drafted, so **every document under revision opened as "The released revision could not be verified"**, and so would every document with a version approved for a later day. The server had been right for eight days; the client refused it (`slice3b-client-red.txt`, the "being drafted" case).
+
+**What changed:**
+- `qmsPersonalTraining.ts` `readsRow`: the row is the version read; or the version read is in force (`inForce: true`, effective) and the row is its successor, either a draft or review row, or exactly the `successor` the read offers (same document, version and status). Anything else is still unverifiable. The successor's receipt is checked against this person and its own version, as the primary's is.
+- `usePersonalTraining.ts`: the record holds which version is read (`reading`, opening on the version in force) and derives `selected` and its `receipt`. There is one source for the receipt: the separate receipt state is gone. Choosing the other version withdraws an unsent declaration. The acknowledgement posts the selected version. The confirmed receipt goes onto that version only, and the reread finds it wherever it now stands. If v2.0 took effect meanwhile, it is the version in force and the reader follows it.
+- `PersonalTrainingReader.tsx`: while a successor waits, "v2.0 is approved and takes effect on D." and a two-option choice, "In force: v1.0" / "Takes effect D: v2.0". The header names the version read ("Approved · takes effect D" for the successor). For a version not yet in force, the declaration says "Your acknowledgement is recorded now and counts from D", and the receipt adds "Counts from D". A successor the reader may not read shows the server's reason, with none of its text and no declaration.
+- `TrainingCoverage.tsx` `ApprovalTrainingReach`, under the approve dialog's date: "N people are assigned to train on this document." It then says either "Effective today leaves them no training period: it is in force when you sign" or "They can read and acknowledge it from approval until it takes effect on D". Otherwise it shows one of three sentences: "No one is assigned…", "No one assigned … is an active member", or "… could not be read". None of them shows a count it does not have. It does not promise a task: tasks are slice 4.
+
+**Tests:** red first (`slice3b-client-red.txt`):
+- 5 of 8 new reader cases (all five positive cases; the three refusal guards pass at trunk and stay);
+- 3 of 8 new transport cases;
+- 5 of 5 approve-dialog cases.
+
+Green (`slice3b-client-green.txt`): 309/309 Quality client tests.
+
+Fifteen mutants, all killed (`slice3b-client-mutations.txt`). Two guards were added before the run because a mutant would otherwise have survived:
+- a v2.0 receipt kept, and only on v2.0, when the reread fails;
+- no "has changed" notice after a confirmed v2.0 acknowledgement.
+
+**Not done:**
+- Opening the reader on the successor from a training notice (`qmsIntent: 'read'`) is slice 4.
+- The periodic-review refusal on a pending version.
+- Editing the controlled text of a revision draft from this reader: the editor still binds to the context read, which is now the version in force. So "Edit controlled text" is offered only for a first version. That was already true before this change; it was hidden behind the refusal above.

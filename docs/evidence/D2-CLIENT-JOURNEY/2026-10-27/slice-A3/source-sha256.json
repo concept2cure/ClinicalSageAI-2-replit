@@ -1,0 +1,21 @@
+{
+  "qualifiedBase": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "scope": "A3 qualified source; later47ce1d3d integration is documentation only",
+  "sha256": {
+    "server/routes/__tests__/cortex-chat-context-reports-what-was-read.test.ts": "11b5d65e42549e4f497de84c4e548a3295bac909f306aabcd032f734ae413f54",
+    "server/services/__tests__/instruction-engine-core-owners.test.ts": "16889db95e64b76caf9b5de50e1820b286ba2b774cad7f098e32bc0eca169934",
+    "server/services/__tests__/lumen-context-required-blocks.test.ts": "f43c02014e157dd261600d39b61723a12a132b95a8fe226d206191b86c8c8574",
+    "server/services/__tests__/lumen-instruction-engine-asks-model-for-no-figures.test.ts": "38189c756414eb8611d49ccc52d004c4e34bbe8535b51b4b5c901b92533df6e6",
+    "server/services/__tests__/module-intelligence-assumes-no-project-facts.test.ts": "2b9354efa3aa3c5768be9431ddaddee7c2fa482b16f0f9a32b77122d5088f6d9",
+    "server/services/__tests__/module-intelligence-canonical-owners.test.ts": "b5972d7b56317545acd3301399661add71c498998c8127cb9d66d119329ee32e",
+    "server/services/__tests__/user-intelligence-reads-only-what-is-recorded.test.ts": "7ddb012fa585599bb939c71c7c2a57b9b64fba2b34b3cbf60cc58da12b988054",
+    "server/services/lumen-context-builder.ts": "e1d54173a37e03ee5ccba42a31170556f345d5cc4e8436c34e43cb429e9f74a9",
+    "server/services/lumen-context/prompt-budget.ts": "c9fbcf7df0a9232848bcb1afc3335b77c3269f90ff557903a1b96a4087c47f46",
+    "server/services/lumen-instruction-engine.ts": "e2e7dcf856703b72202f6610cb8af00beb4a890b1d280f0ba74440a84fbba0f7",
+    "server/services/module-intelligence.ts": "0be6ab3209c4b1745be6e66d5e5099edd7d537163076bd586697334bd3608b31",
+    "server/services/regulatory/__tests__/workspace-config-canonical-modules.test.ts": "2a73e8e696e4708c28dd03987549b79fb6823fdcac83df8ed45a6b6286cbea3d",
+    "server/services/regulatory/workspace-config-enrichment.ts": "f65fda2f0ba147c734e7ca9565494929c0d457bfcbd31802341643c2ae220d50",
+    "shared/regulatory/app-registry.ts": "79552bd7f2491672915ea15b8907568c9708cfe2d02cfcd147c7ad90786a6b22",
+    "tests/regulatory/app-registry.test.ts": "b955f5e5e81c9e956b3573d3b84594b6637e16d7e33277b4e205fcce9d17ab92"
+  }
+}

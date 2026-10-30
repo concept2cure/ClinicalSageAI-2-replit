@@ -96,4 +96,27 @@ describe('the retained study the CSR assembler composes from', () => {
     f.row.input_seal = 'forged';
     await expect(readRetainedStudyForAssembly({ query: current(f) }, scope, RUN, 'SYN-001')).rejects.toMatchObject({ code: 'CSR_RUN_INPUTS_INVALID' });
   });
+
+  it('a current-source drafting read uses the same approval checks without locking throughout a model call', async () => {
+    const f = fixture(); const query = current(f);
+    const result = await readSavedClinicalTables({ query }, scope, RUN, { requireCurrent: true });
+    expect(result.studies).toHaveLength(1);
+    expect(result.releaseEligibilityVerified).toBe(false);
+    expect(query.mock.calls.some(([sql]) => sql.includes('AS current'))).toBe(true);
+    expect(query.mock.calls.some(([sql]) => sql.includes('FROM canonical_documents'))).toBe(true);
+    expect(query.mock.calls.some(([sql]) => /FOR SHARE|pg_advisory/.test(sql))).toBe(false);
+  });
+
+  it.each(['superseded', 'unapproved'])('a current-source drafting read refuses a %s receipt while historical reads stay readable', async reason => {
+    const f = fixture();
+    const query = vi.fn(async (sql: string, values?: unknown[]) => {
+      if (sql.includes('AS current')) return { rows: [{ current: reason !== 'superseded' }] };
+      if (sql.includes('FROM canonical_documents')) return { rows: [] };
+      return f.query(sql, values);
+    });
+    await expect(readSavedClinicalTables({ query }, scope, RUN, { requireCurrent: true })).rejects.toMatchObject({
+      code: reason === 'superseded' ? 'CSR_SOURCE_CHANGED' : 'CSR_SOURCE_APPROVAL_REQUIRED',
+    });
+    expect((await readSavedClinicalTables({ query }, scope, RUN)).studies).toHaveLength(1);
+  });
 });

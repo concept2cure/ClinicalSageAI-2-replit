@@ -223,6 +223,10 @@
 .qms-training-error { color: var(--error); border: 1px solid var(--error); padding: var(--space-3); border-radius: var(--radius-md); }
 .qms-notice, .qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
 .qms-training-receipt { margin-top: var(--space-6); }
+.qms-training-successor { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: 0 0 var(--space-5); background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
+.qms-training-successor legend { float: left; width: 100%; padding: 0; margin-bottom: var(--space-2); }
+.qms-training-successor label { display: flex; align-items: center; gap: var(--space-2); }
+.qms-training-successor input { accent-color: var(--accent-main-100); margin: 0; }
 .qms-training-receipt p { color: var(--text-200); }
 .qms-training-receipt dl { margin-bottom: 0; display: grid; gap: var(--space-3); }
 .qms-training-receipt dl > div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-3); }
@@ -378,6 +382,7 @@
    itself is the shared drawer (journey-v2.css .de-bd / .de-sheet), as the Vault's is. */
 .qms-effective-date { display: grid; gap: 4px; margin-top: 10px; font-size: 12.5px; color: var(--text-200); }
 .qms-effective-date span { font-size: 11.5px; color: var(--text-300); }
+.qms-effective-reach { margin: 8px 0 0; font-size: 12.5px; color: var(--text-200); }
 .qms-route-line, .qms-signature-line { display: block; margin-top: 4px; font-size: 11.5px; color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
 .qms-route-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .qms-route-acts .de-btn { min-height: 44px; }

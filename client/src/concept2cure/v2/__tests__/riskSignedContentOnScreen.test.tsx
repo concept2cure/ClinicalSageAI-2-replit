@@ -31,7 +31,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: 5, name: 'Sam Signer', mfaEnabled: false }) }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => ({ id: 5, name: 'Sam Signer', mfaEnabled: false }) }));
 vi.mock('../../_shared/components/EsignModal', () => ({
   esignSignerOf: () => undefined,
   EsignModal: (p: { action: string; onSign: (i: Record<string, string>) => Promise<unknown> }) => (
@@ -41,10 +41,10 @@ vi.mock('../../_shared/components/EsignModal', () => ({
   ),
 }));
 
-import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
+import { EngineeringRiskPanel, PANEL_PROGRAM_ID, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 const hazard = (id: number, over: Record<string, unknown> = {}) => ({
-  id, ref_code: 'HZ-' + id, hazard: 'Hazard ' + id, hazardous_situation: 'Situation', harm: 'Mis-dosing of insulin',
+  id, program_id: PANEL_PROGRAM_ID, ref_code: 'HZ-' + id, hazard: 'Hazard ' + id, hazardous_situation: 'Situation', harm: 'Mis-dosing of insulin',
   sequence_of_events: '', severity: 4, probability: 3, detectability: 3, residual_probability: 1,
   control_strategy: 'design_reduce', source: 'fmea', status: 'verified', acceptable: null, ...over,
 });
@@ -74,7 +74,7 @@ beforeEach(() => {
     H.calls.push({ method, path });
     if (method === 'PATCH') return patchAnswer();
     if (path === RISK_READ) return answer(200, keyedToPanelProject(list));
-    const id = Number(path.replace('/api/mdx/risk-items/', ''));
+    const id = Number(path.replace('/api/mdx/risk-items/', '').split('?')[0]);
     if (details[id]) return details[id]();
     return answer(200, { data: null });
   });
@@ -89,7 +89,7 @@ async function mount() {
 }
 const drawer = () => document.querySelector('.risk-drawer') as HTMLElement;
 const line = () => within(drawer()).queryByTestId('risk-acceptance-signature');
-const detailReads = (id: number) => H.calls.filter((c) => c.method === 'GET' && c.path === '/api/mdx/risk-items/' + id).length;
+const detailReads = (id: number) => H.calls.filter((c) => c.method === 'GET' && c.path === `/api/mdx/risk-items/${id}?program_id=${PANEL_PROGRAM_ID}`).length;
 const select = (id: number) => fireEvent.click(document.querySelector(`.riskmx-dot[title^="HZ-${id} /"]`) as HTMLElement);
 
 describe("an accepted hazard's acceptance signature, in words", () => {
@@ -104,13 +104,13 @@ describe("an accepted hazard's acceptance signature, in words", () => {
   });
 
   it('a hazard unchanged since its acceptance says "Signed content unchanged"', async () => {
-    details[41] = async () => answer(200, { data: { ...ACCEPTED, signedContent: facet('matches', { currentDigest: 'a'.repeat(64) }) } });
+    details[41] = async () => answer(200, { data: { ...ACCEPTED, controls: [], signedContent: facet('matches', { currentDigest: 'a'.repeat(64) }) } });
     await mount();
     expect(line()?.querySelector('.rd-chip')?.textContent).toBe('Signed content unchanged');
   });
 
   it('an acceptance signed before content binding says it cannot be verified', async () => {
-    details[41] = async () => answer(200, { data: { ...ACCEPTED, signedContent: facet('unverified', { bindingBasis: 'governed-action-sha256-chain' }) } });
+    details[41] = async () => answer(200, { data: { ...ACCEPTED, controls: [], signedContent: facet('unverified', { bindingBasis: 'governed-action-sha256-chain' }) } });
     await mount();
     expect(line()?.querySelector('.rd-chip')?.textContent).toBe('Signed before content binding; not verifiable');
   });
@@ -124,31 +124,31 @@ describe("an accepted hazard's acceptance signature, in words", () => {
   });
 
   it("an answer for another hazard is not this hazard's state", async () => {
-    details[41] = async () => answer(200, { data: { ...OPEN, signedContent: facet('matches') } });
+    details[41] = async () => answer(200, { data: { ...OPEN, controls: [], signedContent: facet('matches') } });
     await mount();
     expect(line()?.getAttribute('data-state')).toBe('unavailable');
   });
 });
 
-describe('only an accepted hazard is read for it', () => {
-  it('a hazard not accepted reads nothing more and shows no acceptance signature', async () => {
+describe('only accepted hazards show an acceptance signature', () => {
+  it('a hazard not accepted reads its controls and shows no acceptance signature', async () => {
     await mount();
     select(42);
     await settle();
-    expect(detailReads(42)).toBe(0);
+    expect(detailReads(42)).toBe(1);
     expect(line()).toBeNull();
   });
 
   it('a hazard accepted here is read once the signature is confirmed', async () => {
     list = [OPEN];
-    details[42] = async () => answer(200, { data: { ...OPEN, status: 'accepted', acceptable: true, signedContent: facet('matches') } });
+    details[42] = async () => answer(200, { data: { ...OPEN, status: 'accepted', acceptable: true, controls: [], signedContent: facet('matches') } });
     render(<EngineeringRiskPanel onContext={(ctx) => { H.published = ctx; }} />);
     await screen.findAllByText('Hazard 42');
-    expect(detailReads(42)).toBe(0);
+    expect(detailReads(42)).toBe(1);
     fireEvent.click(within(drawer()).getByRole('button', { name: /Accept residual/ }));
     fireEvent.click(screen.getByText('stub-sign'));
     await waitFor(() => expect(line()?.getAttribute('data-state')).toBe('matches'));
-    expect(detailReads(42)).toBe(1);
+    expect(detailReads(42)).toBe(2);
   });
 });
 

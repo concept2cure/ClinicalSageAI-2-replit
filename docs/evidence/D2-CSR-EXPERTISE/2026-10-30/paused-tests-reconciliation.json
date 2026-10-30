@@ -1,0 +1,7 @@
+{
+  "patchAppliesCleanly": true,
+  "applied": true,
+  "output": "",
+  "preservedOriginal": "paused-project-tests.tsx.gz",
+  "remainingFilingWork": "The paused filing-completion RED tests and unintegrated helpers remain pending; none is asserted completed by CSR work."
+}

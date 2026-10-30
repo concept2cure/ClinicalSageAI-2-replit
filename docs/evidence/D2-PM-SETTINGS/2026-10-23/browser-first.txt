@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "width": 1280,
+      "recordedScopeAndReason": true,
+      "savedValues": true,
+      "pendingCloseAndEscapeBlocked": true,
+      "unknownStaleAndForeignReceiptRequireExplicitReload": true,
+      "collapseDoesNotReplay": true,
+      "readOnlyAndUnavailableHonest": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "recordedScopeAndReason": true,
+      "savedValues": true,
+      "pendingCloseAndEscapeBlocked": true,
+      "unknownStaleAndForeignReceiptRequireExplicitReload": true,
+      "collapseDoesNotReplay": true,
+      "readOnlyAndUnavailableHonest": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "writes": 10
+}

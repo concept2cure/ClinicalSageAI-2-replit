@@ -188,3 +188,12 @@ export const cfr201_57 = (para: string): RegulatoryBasis => ({
   url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-201/subpart-B/section-201.57',
   note: searchExtract(SEARCHED),
 });
+
+/** Checked CSR document-role values; this does not qualify the complete STF or regional dataset rules. */
+export const ICH_STF_SPEC_261: RegulatoryBasis = {
+  ref: 'ICH eCTD STF Specification v2.6.1, §III.B pp7–9',
+  confidence: 'regulator-text',
+  url: 'https://www.fda.gov/media/159383/download',
+  checked: '2026-10-30',
+  note: 'CSR body and appendix roles read from the official 3 June 2008 specification; PDF SHA-256 63132c3751682193f6f13db125ee03583b740680851c0f0e6412561438b482da. Scope excludes current regional/dataset refinements and full XML/DTD qualification.',
+};

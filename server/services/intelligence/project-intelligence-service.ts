@@ -15,6 +15,7 @@
 
 import { db } from '../../db.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
+import type { RequestDb } from '../../db/requestDb';
 import {
   projectIntelligenceProfiles,
   projectMemoryEntries,
@@ -31,6 +32,8 @@ export interface ProjectIntelligenceSummary {
   readonly regulatoryStrategy: string | null;
   readonly targetIndication: string | null;
   readonly targetPopulation: string | null;
+  /** Only an explicitly scoped caller requests this additional profile field. */
+  readonly customInstructions?: string | null;
   readonly riskFactors: readonly RiskFactor[];
   readonly openQuestions: readonly OpenQuestion[];
   readonly keyDecisions: readonly KeyDecision[];
@@ -125,37 +128,48 @@ export async function getOrCreateProfile(
   return created.id;
 }
 
-/**
- * Get the full intelligence summary for a project.
- */
+/** Nullable persisted JSON predates populated lists; malformed data is unread. */
+function recordedArray<T>(value: unknown): T[] {
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw new Error('Recorded project intelligence array could not be verified');
+  return value as T[];
+}
+
+/** Get the existing intelligence summary, optionally on the request's database. */
 export async function getProjectIntelligence(
   projectId: number,
   organizationId: number,
+  database: Pick<RequestDb, 'select'> = db,
+  options: { includeProfileInstructions?: boolean } = {},
 ): Promise<ProjectIntelligenceSummary | null> {
-  const [profile] = await db
+  const profiles = await database
     .select()
     .from(projectIntelligenceProfiles)
     .where(and(
       eq(projectIntelligenceProfiles.projectId, projectId),
       eq(projectIntelligenceProfiles.organizationId, organizationId),
     ))
-    .limit(1);
+    .limit(2);
 
+  if (profiles.length > 1) throw new Error('Recorded project intelligence profile is ambiguous');
+  const profile = profiles[0];
   if (!profile) return null;
 
   // Count memory entries
-  const [memCount] = await db
+  const [memCount] = await database
     .select({ count: sql<number>`COUNT(*)` })
     .from(projectMemoryEntries)
     .where(and(
       eq(projectMemoryEntries.projectProfileId, profile.id),
+      eq(projectMemoryEntries.projectId, projectId),
+      eq(projectMemoryEntries.organizationId, organizationId),
       sql`${projectMemoryEntries.sourceDocumentType} IS DISTINCT FROM 'report_os_state'`,
     ));
 
-  const risks = Array.isArray(profile.riskFactors) ? profile.riskFactors as unknown as RiskFactor[] : [];
-  const questions = Array.isArray(profile.openQuestions) ? profile.openQuestions as unknown as OpenQuestion[] : [];
-  const decisions = Array.isArray(profile.keyDecisions) ? profile.keyDecisions as unknown as KeyDecision[] : [];
-  const insights = Array.isArray(profile.learnedInsights) ? profile.learnedInsights as unknown as LearnedInsight[] : [];
+  const risks = recordedArray<RiskFactor>(profile.riskFactors);
+  const questions = recordedArray<OpenQuestion>(profile.openQuestions);
+  const decisions = recordedArray<KeyDecision>(profile.keyDecisions);
+  const insights = recordedArray<LearnedInsight>(profile.learnedInsights);
 
   return {
     profileId: profile.id,
@@ -164,6 +178,7 @@ export async function getProjectIntelligence(
     regulatoryStrategy: profile.regulatoryStrategy,
     targetIndication: profile.targetIndication,
     targetPopulation: profile.targetPopulation,
+    ...(options.includeProfileInstructions === true ? { customInstructions: profile.customInstructions } : {}),
     riskFactors: risks,
     openQuestions: questions,
     keyDecisions: decisions,

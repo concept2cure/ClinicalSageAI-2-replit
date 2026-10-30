@@ -1,0 +1,20 @@
+{
+  "inputCommit": "13d912b938b5fedb157e44da8aad5c93cb81a46e",
+  "incomingCanonical": "be078603b",
+  "sharedReadChange": "Exports existing DataReadVisit/useDataReadVisit for current editor source callers; function bodies unchanged.",
+  "tests": {
+    "passed": 148,
+    "suites": 11,
+    "failed": 0,
+    "countsOverlapPreviousCohorts": true
+  },
+  "build": {
+    "passed": true,
+    "clientCommitAssets": [
+      "index-kO7JpET9.js"
+    ],
+    "serverCommitMatches": true
+  },
+  "normalFinalGate": "Required on exact final candidate; prior complete compiler on542b23a13 passed0 with unchanged baseline.",
+  "transport": "CLI token expired; public reads use anonymous Git, authenticated GitHub connector remains available. Reuse existing canonical Git Data publication workflow, same pre-push validators, exact tree equality and expected-head fast-forward. No PR/force/gate bypass."
+}

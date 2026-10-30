@@ -1,0 +1,53 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[database] Database connection successful
+✅ Template tables initialized
+(node:3277) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+ × tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked 461ms
+   → expected { …(27) } to match object { awaitingMyReview: false, …(3) }
+(24 matching properties omitted from actual)
+ × tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a signature over content the document no longer has is not a review of it: the reviewer is awaiting again 265ms
+   → expected { …(27) } to match object { awaitingMyReview: true, …(1) }
+(26 matching properties omitted from actual)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked
+AssertionError: expected { …(27) } to match object { awaitingMyReview: false, …(3) }
+(24 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "awaitingMyReview": false,
+-   "mine": false,
+-   "myReviewSignedAt": Any<String>,
++   "awaitingMyReview": true,
++   "mine": true,
+    "state": "in-review",
+  }
+ ❯ tests/db/review-route-authoring-rr5.dbtest.ts:454:16
+    452|     expect(signed.status, JSON.stringify(signed.body)).toBe(200);
+    453|     const r1 = await boardRow('r1', docId);
+    454|     expect(r1).toMatchObject({ awaitingMyReview: false, mine: false, s…
+       |                ^
+    455|     expect(reviewOf(r1, 'r1')).toMatchObject({ status: 'pending', rout…
+    456|     expect(reviewOf(r1, 'r2')).toMatchObject({ status: 'pending', rout…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a signature over content the document no longer has is not a review of it: the reviewer is awaiting again
+AssertionError: expected { …(27) } to match object { awaitingMyReview: true, …(1) }
+(26 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "awaitingMyReview": true,
+-   "myReviewSignedAt": null,
+  }
+ ❯ tests/db/review-route-authoring-rr5.dbtest.ts:473:16
+    471|     await owner.query(`UPDATE authoring_sections SET content = '<p>Cha…
+    472|     const r1 = await boardRow('r1', docId);
+    473|     expect(r1).toMatchObject({ awaitingMyReview: true, myReviewSignedA…
+       |                ^
+    474|     expect(reviewOf(r1, 'r1')).toMatchObject({ routeSignedAt: null });
+    475|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 skipped (18)
+   Start at  14:03:07
+   Duration  9.13s (transform 5.31s, setup 83ms, import 247ms, tests 8.45s, environment 0ms)

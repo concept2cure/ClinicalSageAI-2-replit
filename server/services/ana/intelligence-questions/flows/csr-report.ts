@@ -16,6 +16,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { createCsrRobustnessNode } from './csr-report-robustness.js';
 
 export function createCsrReportFlow(): FlowDefinition {
   return {
@@ -54,7 +55,7 @@ export function createCsrReportFlow(): FlowDefinition {
       {
         id: 'efficacy_results',
         label: 'Efficacy Results',
-        nodeIds: ['primary_results', 'secondary_results', 'oncology_efficacy', 'vaccine_efficacy', 'sensitivity_analyses'],
+        nodeIds: ['primary_results', 'oncology_efficacy', 'vaccine_efficacy', 'sensitivity_analyses', 'secondary_results'],
       },
       {
         id: 'safety_results',
@@ -808,7 +809,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the primary efficacy results?',
         guidance:
-          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.1 (Prespecification of the Analysis), the primary analysis should be fully pre-specified in the protocol and statistical analysis plan (SAP).',
+          'Present the primary endpoint and actual prespecified analysis from the retained protocol, SAP and source outputs. Name the estimand, analysis set, effect estimate and appropriate uncertainty: a confidence interval for a frequentist analysis or a credible interval and named posterior hypothesis for a Bayesian analysis. Report p-values only when applicable to the recorded method; use the actual prespecified margins and decision criteria for noninferiority or equivalence, or the recorded Bayesian decision criterion. State whether the primary objective met its source-defined criterion; do not substitute a superiority p-value or invent a margin, threshold or conclusion.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -860,10 +861,6 @@ export function createCsrReportFlow(): FlowDefinition {
         ],
         branches: [
           {
-            when: { field: 'primary_endpoint_met', operator: 'eq', value: false },
-            goto: 'sensitivity_analyses',
-          },
-          {
             when: { field: 'therapeutic_area', operator: 'eq', value: 'oncology' },
             goto: 'oncology_efficacy',
           },
@@ -872,7 +869,7 @@ export function createCsrReportFlow(): FlowDefinition {
             goto: 'vaccine_efficacy',
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
         issueChecks: [
           {
             id: 'primary_endpoint_not_met',
@@ -884,7 +881,7 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'info',
             title: 'Primary Endpoint Not Met',
             message:
-              'The primary endpoint was not met. Per ICH E3 Section 11.4.1, the CSR must still provide a complete analysis of the primary endpoint results and discuss potential reasons for the failure. Consider sensitivity analyses, post-hoc analyses, and implications for the development program.',
+              'The supplied answer records that the primary endpoint was not met. Report the complete prespecified analysis and its uncertainty, with source-supported limitations and robustness analyses. Distinguish sensitivity analyses of the same estimand from supplementary analyses of another estimand; label post-hoc findings exploratory rather than use them to rescue an efficacy claim.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 11.4.1',
           },
           {
@@ -966,7 +963,7 @@ export function createCsrReportFlow(): FlowDefinition {
             validation: { min: 0 },
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
       },
 
       /* — Vaccine-specific efficacy (conditional branch) —————————— */
@@ -1020,60 +1017,12 @@ export function createCsrReportFlow(): FlowDefinition {
             placeholder: 'Describe persistence of antibody titers at 6 months, 12 months, etc.',
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
       },
 
-      /* — Sensitivity analyses (branch when primary endpoint not met) — */
+      /* — Robustness, irrespective of whether the primary objective was met — */
 
-      {
-        id: 'sensitivity_analyses',
-        section: 'efficacy_results',
-        question:
-          'Since the primary endpoint was not met, describe any sensitivity and post-hoc analyses performed.',
-        guidance:
-          'Per ICH E9 Section 5.2.3 and ICH E3 Section 11.4.2, when the primary endpoint is not met, the CSR must present pre-specified sensitivity analyses to assess the robustness of the primary result. Post-hoc analyses may be included but must be clearly identified as exploratory and not used to claim efficacy. FDA expects a thorough discussion of why the study failed and any supportive subgroup signals.',
-        provideExpertFeedback: true,
-        fields: [
-          {
-            id: 'sensitivity_analyses_performed',
-            label: 'Were Pre-Specified Sensitivity Analyses Performed?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'sensitivity_analysis_summary',
-            label: 'Sensitivity Analysis Results',
-            type: 'textarea',
-            placeholder: 'Summarize each sensitivity analysis (e.g., tipping point, per-protocol, MMRM vs. LOCF comparison) and whether the result was consistent with the primary analysis.',
-            required: true,
-            validation: { minLength: 50, maxLength: 5000 },
-          },
-          {
-            id: 'post_hoc_analyses_performed',
-            label: 'Were Post-Hoc Analyses Performed?',
-            type: 'yes_no',
-          },
-          {
-            id: 'post_hoc_analysis_summary',
-            label: 'Post-Hoc Analysis Summary',
-            type: 'textarea',
-            placeholder: 'Describe any post-hoc analyses, subgroup analyses, or responder analyses performed.',
-            visibleWhen: {
-              field: 'post_hoc_analyses_performed',
-              operator: 'eq',
-              value: true,
-            },
-          },
-          {
-            id: 'potential_reasons_for_failure',
-            label: 'Potential Reasons for Study Failure',
-            type: 'textarea',
-            placeholder: 'e.g., High placebo response rate, insufficient dose, study population not enriched, regional differences, etc.',
-            required: true,
-          },
-        ],
-        defaultNext: 'secondary_results',
-      },
+      createCsrRobustnessNode(),
 
       {
         id: 'secondary_results',
@@ -1226,12 +1175,12 @@ export function createCsrReportFlow(): FlowDefinition {
             condition: {
               field: 'discontinuations_due_to_aes',
               operator: 'gt',
-              value: 0, // Note: runtime engine should evaluate discontinuations_due_to_aes / safety_population_size > 0.10
+              value: 0,
             },
-            severity: 'warning',
-            title: 'Elevated Discontinuation Rate Due to AEs',
+            severity: 'info',
+            title: 'Adverse-event discontinuations reported',
             message:
-              'A high rate of discontinuation due to adverse events may affect the tolerability profile and benefit-risk balance. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), the CSR should analyze AEs leading to discontinuation by PT and SOC, and compare rates between treatment groups. The FDA labeling team will consider this rate when drafting the Adverse Reactions section (USPI Section 6).',
+              'The supplied answers report discontinuations attributed to adverse events. Review the retained listings, protocol definitions and treatment-arm denominators; distinguish subjects from events and compare the actual source analyses. A nonzero count alone does not determine a rate, causality or a labeling conclusion.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
           {
@@ -1239,12 +1188,12 @@ export function createCsrReportFlow(): FlowDefinition {
             condition: {
               field: 'grade_3_or_higher_aes',
               operator: 'gt',
-              value: 0, // Note: runtime engine should evaluate grade_3_or_higher_aes / safety_population_size > 0.25
+              value: 0,
             },
-            severity: 'warning',
-            title: 'High Rate of Severe (Grade ≥3) Adverse Events',
+            severity: 'info',
+            title: 'Grade 3 or higher adverse events reported',
             message:
-              'The incidence of Grade 3 or higher adverse events is notable. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), severe AEs should be analyzed by SOC and PT with comparison to the control arm. Consider whether a dose modification strategy, Warnings and Precautions language, or monitoring recommendations are warranted for the product label.',
+              'The supplied answers report Grade 3 or higher adverse events. Reconcile the protocol grading scale, coded terms, subject/event counts and denominators by treatment arm with the source outputs. Severity is not seriousness, and this count alone does not establish relatedness or relative incidence; retain the actual clinical review.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
         ],
@@ -1966,7 +1915,7 @@ export function createCsrReportFlow(): FlowDefinition {
             label: 'Efficacy Conclusions',
             type: 'textarea',
             required: false,
-            placeholder: 'State whether the primary objective was met, citing the pre-specified primary analysis: the treatment effect estimate, its confidence interval and p-value, and whether sensitivity and key secondary analyses support it.',
+            placeholder: 'State the source-supported conclusion under the prespecified SAP method: the effect estimate and confidence or credible interval as appropriate, p-values only when applicable, and the actual noninferiority/equivalence margins or Bayesian criteria where relevant. Distinguish sensitivity, supplementary and key secondary analyses; do not invent a criterion or result.',
             helpText: 'ICH E3 asks for efficacy conclusions at the end of the efficacy evaluation, separate from the safety conclusions and the overall discussion. They should rest on the pre-specified primary analysis (ICH E9), not on secondary or post-hoc results.',
           },
           {

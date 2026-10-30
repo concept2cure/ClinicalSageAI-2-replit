@@ -1,0 +1,81 @@
+P-72 slice 1a: mutations. Each is one exact, unique replacement in a lane file (mutate.py.txt), run against the one test file named, then restored; sha256 before and after compared.
+M15 and M16 were re-run after the 2026-10-30 type fix to their files, and M04-M07 after the CASE fix to 20261030b; the runs below are the final ones. M01 and M02 ran before a comment-only edit to the header of 20260928_users_membership_rls.sql (its halt count), so their sha256 is the file's before that edit.
+
+== M01-set-clause-back
+   migrations/20260928_users_membership_rls.sql | test platform-scope-role.pglite.test.ts | sha before 16c61159c86953a5 after 16c61159c86953a5 | restored True
+   result: Tests  6 failed | 2 passed (8)
+   first failure: Error: migrations/20260928_users_membership_rls.sql: permission denied to set parameter "app.current_user_role"
+   first failure: Error: migrations/20260928_users_membership_rls.sql: permission denied to set parameter "app.current_user_role"
+   first failure: Error: migrations/20260928_users_membership_rls.sql: permission denied to set parameter "app.current_user_role"
+== M02-users-policy-without-owner-arm
+   migrations/20260928_users_membership_rls.sql | test platform-scope-role.pglite.test.ts | sha before 16c61159c86953a5 after 16c61159c86953a5 | restored True
+   result: Tests  6 failed | 2 passed (8)
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.users admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.users admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.users admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+== M03-invitations-without-owner-policy
+   migrations/20260928_invitations_for_member.sql | test platform-scope-role.pglite.test.ts | sha before 4106d705aa0e5b9d after 4106d705aa0e5b9d | restored True
+   result: Tests  6 failed | 2 passed (8)
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.organization_invitations admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.organization_invitations admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: no read policy on public.organization_invitations admits c2c_platform_scope, so the pre-auth lookups it owns would find nothing
+== M04-no-hand-off
+   migrations/20261030b_platform_scope_role.sql | test platform-scope-role.pglite.test.ts | sha before df80868d94410f07 after df80868d94410f07 | restored True
+   result: Tests  3 failed | 5 passed (8)
+   first failure: AssertionError: expected [ { …(3) }, { …(3) }, { …(3) } ] to deeply equal [ { …(3) }, { …(3) }, { …(3) } ]
+   first failure: AssertionError: expected [ { id: null } ] to deeply equal [ { id: 2 } ]
+   first failure: AssertionError: expected [ { …(3) }, { …(3) }, { …(3) } ] to deeply equal [ { …(3) }, { …(3) }, { …(3) } ]
+== M05-custom-set-assertion-blind
+   migrations/20261030b_platform_scope_role.sql | test platform-scope-role.pglite.test.ts | sha before df80868d94410f07 after df80868d94410f07 | restored True
+   result: Tests  1 failed | 7 passed (8)
+   first failure: AssertionError: promise resolved "undefined" instead of rejecting
+   first failure: Error {
+== M06-runtime-membership-unchecked
+   migrations/20261030b_platform_scope_role.sql | test platform-scope-role.pglite.test.ts | sha before df80868d94410f07 after df80868d94410f07 | restored True
+   result: Tests  1 failed | 7 passed (8)
+   first failure: AssertionError: promise resolved "undefined" instead of rejecting
+   first failure: Error {
+== M07-stored-clause-not-stripped
+   migrations/20261030b_platform_scope_role.sql | test platform-scope-role.pglite.test.ts | sha before df80868d94410f07 after df80868d94410f07 | restored True
+   result: Tests  1 failed | 7 passed (8)
+   first failure: Error: migrations/20261030b_platform_scope_role.sql: P-72: public.user_id_for_email(text) still names a custom setting in its SET clause after the edit; replace it by hand.
+== M08-check-admits-platform-role
+   migrations/20260926_organization_users_own_writes.sql | test platform-scope-role.pglite.test.ts | sha before b1e2b9f7cf8a30e8 after b1e2b9f7cf8a30e8 | restored True
+   result: Tests  2 failed | 6 passed (8)
+   first failure: AssertionError: expected 'CHECK ((role = ANY (ARRAY[\'admin\'::…' not to contain 'app_super_admin'
+   first failure: AssertionError: expected true to be false // Object.is equality
+== M09-check-validated-unconditionally
+   migrations/20260926_organization_users_own_writes.sql | test platform-scope-role.pglite.test.ts | sha before b1e2b9f7cf8a30e8 after b1e2b9f7cf8a30e8 | restored True
+   result: Tests  1 failed | 7 passed (8)
+   first failure: Error: migrations/20260926_organization_users_own_writes.sql: check constraint "organization_users_role_known" of relation "organization_users" is violated by some row
+== M10-scope-entry-unchecked
+   server/db/tenantStore.ts | test platform-scope-role-refused.test.ts | sha before 4b6dacea949b3682 after 4b6dacea949b3682 | restored True
+   result: Tests  6 failed | 5 passed (11)
+   first failure: AssertionError: expected [Function] to throw an error
+== M11-role-not-normalised
+   server/db/tenantStore.ts | test platform-scope-role-refused.test.ts | sha before 4b6dacea949b3682 after 4b6dacea949b3682 | restored True
+   result: Tests  2 failed | 9 passed (11)
+   first failure: AssertionError: expected [Function] to throw an error
+== M12-system-shape-any-tenant-0
+   server/db/tenantStore.ts | test platform-scope-role-refused.test.ts | sha before 4b6dacea949b3682 after 4b6dacea949b3682 | restored True
+   result: Tests  2 failed | 9 passed (11)
+   first failure: AssertionError: expected [Function] to throw an error
+== M13-pool-entry-unchecked
+   server/db/poolInstrumentation.ts | test platform-scope-role-refused.test.ts | sha before f6ff9dfea627489a after f6ff9dfea627489a | restored True
+   result: Tests  1 failed | 10 passed (11)
+   first failure: AssertionError: promise resolved "{ …(3) }" instead of rejecting
+== M14-pool-begin-unchecked
+   server/db/poolInstrumentation.ts | test platform-scope-role-refused.test.ts | sha before f6ff9dfea627489a after f6ff9dfea627489a | restored True
+   result: Tests  1 failed | 10 passed (11)
+   first failure: AssertionError: promise resolved "{ rows: [], rowCount: +0 }" instead of rejecting
+== M15-request-scope-unchecked
+   server/middleware/establishRequestTenantScope.ts | test request-scope-refuses-platform-role.test.ts | sha before 6588c6acc54b10eb after 6588c6acc54b10eb | restored True
+   result: Tests  3 failed | 1 passed (4)
+   first failure: PlatformScopeRoleRefusedError: tenantSessionVars: the platform role 'app_super_admin' is refused on a tenant, per-user or request scope (the applier, the second layer, still refuses; the request is no longer answered 403)
+== M16-router-keeps-token-claim
+   server/routes/authoring.router.ts | test authoring-router-membership-role.test.ts | sha before e29d251a1ba4efd5 after a4b2a33a5b05d370 | restored False
+   result: Tests  2 failed (2)
+   first failure: AssertionError: expected 'app_super_admin' to be 'reviewer' // Object.is equality
+   first failure: AssertionError: expected 'admin' to be 'reviewer' // Object.is equality
+
+Note on M16: during its run another lane wrote server/routes/authoring.router.ts (its own hunks). The driver then undid only this mutation's text, so the sha it recorded after the run differs; the file was byte-identical to the pre-mutation sha256 once that lane's own write settled (sha256sum -c pre-mutation-3.sha256: OK, 08:48 UTC). M11's first run failed to restore automatically (its replacement text was not unique); it was restored by hand and checked against pre-mutation.sha256 (all OK) before any other step, and the driver was fixed to restore the original bytes.

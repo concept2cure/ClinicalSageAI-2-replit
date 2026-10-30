@@ -1,0 +1,14 @@
+{
+  "kind": "captured before RED execution; no production edits",
+  "canonicalHead": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+  "files": {
+    "server/services/ectd/stf-generator.ts": "c27fae8aa6c58abf31fb35028eda3c4ff9aad1e6bfed47a64f9745413d5db4ce",
+    "server/services/ind/ctd/regulatory-basis.ts": "2179af3bcdb3fa3ed56517c7ae0db8ff4a22452d400d2ed0de41fcf4ee90bd08",
+    "server/services/csr/csr-assembly-plan.ts": "755d1754fd4bf7339eee957582af5507de6b7c5ac6b078876091533642b8aab1",
+    "server/services/ectd/__tests__/stf-csr-source-values.test.ts": "3d236aac59c5b29b531f7cfbd614e7540c24e49b6ee8bd3ee009df6bf1d8d4f8",
+    "server/services/csr/__tests__/csr-stf-source-values.test.ts": "efafe8d0c1025190e863919ef8df405cdc5fc45311e0ddb7eff79ff93b26d970",
+    "server/services/csr/__tests__/csr-assembly.test.ts": "ad444398953c4442a0f0d3ffa9d0e55b26c531bce4b5f89dc701f2464df2ef28",
+    "server/services/csr/__tests__/csr-assembly-narratives.test.ts": "65a8675eb4404166cef42b852841bc0d1b3ce26b885e2e7888a025f12705795c",
+    "server/services/csr/__tests__/csr-narrative-reference.pglite.test.ts": "e950c9936ce248cbe73213aa1f56d3e4c923a1546fdc8f0891dd839fe91da6ff"
+  }
+}

@@ -1,0 +1,26 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[database] Database connection successful
+✅ Template tables initialized
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > one request writes the review rows, the grants, the route header and each reviewer’s task, and tells each reviewer 262ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > or neither does: a reviewer the validator refuses, after the request rows were written, leaves nothing 130ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > a request with no due date, or no reason, is refused with nothing written 110ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > the picker’s read answers with the one validator: a member without signing authority is refused, and why, before anything is sent 176ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > asking another reviewer while the route is open on the same content adds them to it 223ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > stamps the signature on the member row, cites it, tells the sender, and the last reviewer completes the route 289ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses, before the credential, a reviewer the route does not name: a wrong password is never checked 151ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a reviewer whose step has not opened, one after another 335ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a review signature over content the route is not about 141ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Authoring signature door (RR5 merged with P-59) > closes a member’s task only on their own signature, with REVIEWER, over this document and the routed content 206ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > “changes requested” is recorded, the route is returned with its reason, every unsigned member is cancelled, the sender is told 370ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > an approval verdict records the verdict and leaves the route task to the signature 182ms
+(node:6957) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked 467ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a signature over content the document no longer has is not a review of it: the reviewer is awaiting again 270ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > reassigns a reviewer: the task is kept, the review request moves, and the new reviewer signs 298ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > a reviewer hands back: their task waits on the sender, who is told, and they do not sign meanwhile 305ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > another organization’s member reads no round 111ms
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > grandfathering: a review requested before RR5 keeps today’s loop (§2.13, M1) > a reviewer with a request row and a task and no route: the verdict completes the task as before, and no route is written 165ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  14:26:07
+   Duration  12.11s (transform 5.12s, setup 75ms, import 223ms, tests 11.54s, environment 0ms)

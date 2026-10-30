@@ -1,0 +1,54 @@
+import base from '/workspace/ClinicalSageAI/vitest.db.config.ts';
+const target='/workspace/ClinicalSageAI/tests/db/vault-folder-export.dbtest.ts';
+const prepend=String.raw`
+const archiveFinishReview = vi.hoisted(() => ({ afterFinish: undefined as undefined | (() => Promise<void>) }));
+vi.mock('../../server/services/vault/vault-archive-builder', async (importOriginal) => {
+  const real=await importOriginal<typeof import('/workspace/ClinicalSageAI/server/services/vault/vault-archive-builder')>();
+  return {...real, openVaultArchive: async (...args: Parameters<typeof real.openVaultArchive>) => {
+    const stage=await real.openVaultArchive(...args);
+    return {...stage,finish:async (...params:Parameters<typeof stage.finish>) => {
+      const built=await stage.finish(...params);
+      const callback=archiveFinishReview.afterFinish;
+      archiveFinishReview.afterFinish=undefined;
+      await callback?.();
+      return built;
+    }};
+  }};
+});
+`;
+const append=String.raw`
+describe('archive final independent review',()=>{
+  it('refuses to send a finished archive after its private project membership was revoked',async()=>{
+    let removed:Record<string,unknown>[]=[];
+    archiveFinishReview.afterFinish=async()=>{
+      removed=(await owner.query('DELETE FROM project_members WHERE organization_id=$1 AND user_id=$2 RETURNING project_id,organization_id,user_id,role,status,invited_by_id',[mine.orgId,viewer.userId])).rows;
+      expect(removed).toHaveLength(1);
+    };
+    try {
+      const res=await exportFolder(mine,'module-2',viewer);
+      expect(res.status,'private archive sent after exact viewer membership was removed').not.toBe(200);
+    }finally{
+      archiveFinishReview.afterFinish=undefined;
+      for(const row of removed)await owner.query('INSERT INTO project_members(project_id,organization_id,user_id,role,status,invited_by_id) VALUES($1,$2,$3,$4,$5,$6)',[row.project_id,row.organization_id,row.user_id,row.role,row.status,row.invited_by_id]);
+    }
+  });
+  it('refuses a named-actor archive after the organization actor was demoted during building',async()=>{
+    archiveFinishReview.afterFinish=async()=>{
+      const r=await owner.query("UPDATE organization_users SET role='viewer' WHERE organization_id=$1 AND user_id=$2 RETURNING role",[mine.orgId,editor.userId]);
+      expect(r.rows).toEqual([{role:'viewer'}]);
+    };
+    try {
+      const res=await exportFolder(mine,'module-2',editor);
+      if(res.status===200){
+        const trail=JSON.parse(new AdmZip(res.body as Buffer).readAsText('audit/audit-trail.json'));
+        expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+      }
+    }finally{
+      archiveFinishReview.afterFinish=undefined;
+      await owner.query("UPDATE organization_users SET role='admin' WHERE organization_id=$1 AND user_id=$2",[mine.orgId,editor.userId]);
+    }
+  });
+
+});
+`;
+export default {...base,plugins:[{name:'independent-archive-review',enforce:'pre' as const,transform(source:string,id:string){if(id.split('?')[0]===target)return prepend+source+append;}}]};

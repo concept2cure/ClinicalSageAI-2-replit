@@ -1,0 +1,8 @@
+{
+  "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx": "992d27fb409a955b4df9ab6075ffce4e627a0c7ae5e8eb4e581b1c49b12015a3",
+  "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx": "a97546f715f1e0c200ff6d8c69f600ae02a8702ad85bb546b0743c3baf9576d3",
+  "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "851e38f86dff04ba69b630d2dba313feda53ae53d7a0cfdc168624bde4e48111",
+  "client/src/concept2cure/v2/useVaultUpload.ts": "e23599ab93b0907d33e6a5d26d376cfa1f96604c07e45f8ef0dd842837d1f873",
+  "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+  "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "a211037fea3140527a5501b0defe6469add550754302a117fa8f70203afd42ad"
+}

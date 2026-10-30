@@ -1,0 +1,21 @@
+{
+  "baseline_commit": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "tests": 171,
+  "suites": 13,
+  "focused_cases": 17,
+  "red_failures": 11,
+  "red_positive_passes": 6,
+  "failed": 0,
+  "skipped": 0,
+  "build_exit": 0,
+  "explicit_lint_errors": 0,
+  "existing_production_lint_warnings": 7,
+  "new_lint_warnings": 0,
+  "changed_test_lint_warnings": 0,
+  "frozen_inputs": 20,
+  "publication": "pending normal hook/compiler/push gates",
+  "native_browser_filelist_liveness_claimed": false,
+  "deployment_claimed": false,
+  "formal_oq_claimed": false,
+  "agency_acceptance_claimed": false
+}

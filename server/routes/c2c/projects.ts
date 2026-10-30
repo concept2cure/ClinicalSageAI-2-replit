@@ -95,6 +95,8 @@ import { readProjectTeam } from '../../services/c2c/project-team';
 import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
+import { installProjectSettingsRoutes } from './project-settings';
+import { installProjectRecordedContextRoutes } from './project-recorded-context';
 
 /** A filing the market verdict does not offer, found once the scaffold has
  *  resolved its outline. Thrown inside the creation transaction so it rolls
@@ -118,6 +120,8 @@ function sendFilingNotOffered(res: Response, offer: FilingOffer) {
 // (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 installProjectRouteAccess(router, 'projects');
+installProjectSettingsRoutes(router);
+installProjectRecordedContextRoutes(router);
 
 /**
  * A 42P01 (undefined_table) as an actionable 503 — actionable for the OPERATOR,

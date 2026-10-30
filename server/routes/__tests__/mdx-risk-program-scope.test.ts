@@ -10,11 +10,10 @@
  * body's programId unchecked. And no write had an editor gate, so a viewer could
  * add hazards and controls and change their status.
  *
- * Each route that takes a project now asks the one ownership answer first,
- * through admitProject (server/lib/admit-project.ts over programInOrganization),
- * as the UDI, labeling and human-factors routes do: 404 when the organization
- * does not own the live project, 503 when the check cannot run, and nothing
- * read or written either way. The project is stored only after that check.
+ * Current admission additionally checks the actor and the canonical project
+ * tracking/sharing record on the request client. A PATCH admits the existing
+ * project's write authority even when its body does not name a project.
+ * A global list evaluates accessible programs before filtering its risks.
  * Every write refuses a viewer before the handler runs, with the UDI write's
  * 403, and sends nothing. The reads stay open to every member.
  *
@@ -38,14 +37,33 @@ const h = vi.hoisted(() => {
     owner: new Map<string, number>(), deleted: new Set<string>(), ownershipDown: false,
   };
   const sent: Array<{ sql: string; args: unknown[] }> = [];
+  function currentAdmission(sql: string): { rows: Array<Record<string, unknown>> } | null {
+    if (/SELECT ou\.role/.test(sql)) return { rows: state.role ? [{ role: state.role }] : [] };
+    if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{
+      id: 11, owner_id: 5, created_by_id: 5, settings: {}, visibility: 'private', members: [], review_assigned: false,
+    }] };
+    if (/regulatory_program_id::text AS program_id/.test(sql)) return { rows: [{
+      id: 11, program_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', clientWorkspaceId: 71,
+    }] };
+    if (/FROM projects/.test(sql)) return { rows: [{ id: 11, clientWorkspaceId: 71 }] };
+    if (/FROM project_visibility_settings|FROM project_members/.test(sql)) return { rows: [] };
+    if (/SELECT r\.id FROM risk_items r WHERE EXISTS|SELECT c\.id FROM risk_controls/.test(sql)) return { rows: [] };
+    if (/FROM risk_controls c JOIN risk_items/.test(sql)) return { rows: [{
+      id: 1, risk_item_id: 1, new_risk_item_id: null, program_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    }] };
+    return null;
+  }
   const query = vi.fn(async (sql: string, args: unknown[] = []): Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number }> => {
     sent.push({ sql, args });
     if (/FROM regulatory_programs/.test(sql)) {
       if (state.ownershipDown) throw Object.assign(new Error('connection terminated'), { code: '57P01' });
+      if (/SELECT id::text/.test(sql)) return { rows: [{ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }] };
       const [id, org] = args as [string, number];
       const live = !(state.deleted.has(id) && /deleted_at IS NULL/.test(sql));
       return { rows: state.owner.get(id) === org && live ? [{ id }] : [] };
     }
+    const admission = currentAdmission(sql);
+    if (admission) return admission;
     if (/COUNT\(\*\)/.test(sql)) {
       return { rows: [{ total: 2, open: 1, high_residual: 0, accepted: 1, avg_initial: '9.00', avg_residual: '6.00' }] };
     }
@@ -67,6 +85,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: ORG, role: h.state.role };
+    Object.assign(req, { dbClient: { query: (sql: string, params?: unknown[]) => h.query(sql, params) } });
     next();
   });
   a.use('/api/mdx', riskRouter);
@@ -96,7 +115,7 @@ describe('GET /api/mdx/risk-items?program_id=', () => {
   it('reads that project\'s register after the ownership check, and says so', async () => {
     const res = await request(app()).get(`/api/mdx/risk-items?program_id=${OWN}`);
     expect(res.status).toBe(200);
-    expect(ownership()).toHaveLength(1);
+    expect(ownership().length).toBeGreaterThan(0);
     expect(h.sent.indexOf(ownership()[0])).toBeLessThan(h.sent.indexOf(riskReads()[0]));
     expect(riskReads()[0].args.slice(0, 2)).toEqual([ORG, OWN]);
     expect(res.body.meta).toMatchObject({ scope: 'program', programId: OWN });
@@ -106,7 +125,7 @@ describe('GET /api/mdx/risk-items?program_id=', () => {
     const res = await request(app()).get(`/api/mdx/risk-items?program_id=${programId}`);
     expect(riskReads()).toEqual([]);
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Project not found');
+    expect(JSON.stringify(res.body)).toMatch(/Project not found/i);
   });
 
   it('answers 503 when the ownership check cannot run, and reads nothing', async () => {
@@ -117,10 +136,11 @@ describe('GET /api/mdx/risk-items?program_id=', () => {
     expect(JSON.stringify(res.body)).not.toContain('connection terminated');
   });
 
-  it('without a project, reads the organization\'s register as before and says so', async () => {
+  it('without a project, reads the evaluated accessible organization register and says so', async () => {
     const res = await request(app()).get('/api/mdx/risk-items');
     expect(res.status).toBe(200);
-    expect(ownership()).toEqual([]);
+    expect(ownership().length).toBeGreaterThan(0);
+    expect(riskReads()[0].sql).toMatch(/program_id IS NULL OR program_id\s*=\s*ANY/);
     expect(res.body.meta).toMatchObject({ scope: 'organization' });
   });
 
@@ -134,7 +154,7 @@ describe('GET /api/mdx/risk-summary/:programId', () => {
   it('summarizes the project after the ownership check', async () => {
     const res = await request(app()).get(`/api/mdx/risk-summary/${OWN}`);
     expect(res.status).toBe(200);
-    expect(ownership()).toHaveLength(1);
+    expect(ownership().length).toBeGreaterThan(0);
     expect(res.body.data).toMatchObject({ total: 2, accepted: 1 });
   });
 
@@ -157,7 +177,7 @@ describe('POST /api/mdx/risk-items', () => {
     const res = await request(app()).post('/api/mdx/risk-items').send({ ...item, programId: OWN });
     expect(res.status).toBe(201);
     const [insert] = writes();
-    expect(ownership()).toHaveLength(1);
+    expect(ownership().length).toBeGreaterThan(0);
     expect(h.sent.indexOf(ownership()[0])).toBeLessThan(h.sent.indexOf(insert));
     expect(insert.args.slice(0, 2)).toEqual([ORG, OWN]);
   });
@@ -188,7 +208,7 @@ describe('PATCH /api/mdx/risk-items/:id', () => {
     const res = await request(app()).patch('/api/mdx/risk-items/1').send({ programId: OWN });
     expect(res.status).toBe(200);
     const [update] = writes();
-    expect(ownership()).toHaveLength(1);
+    expect(ownership().length).toBeGreaterThan(0);
     expect(h.sent.indexOf(ownership()[0])).toBeLessThan(h.sent.indexOf(update));
     expect(update.sql).toMatch(/program_id = \$1/);
     expect(update.args[0]).toBe(OWN);
@@ -207,16 +227,16 @@ describe('PATCH /api/mdx/risk-items/:id', () => {
     expect(res.status).toBe(503);
   });
 
-  it('a change that names no project asks no ownership question', async () => {
+  it('a change that names no project still admits the source project', async () => {
     const res = await request(app()).patch('/api/mdx/risk-items/1').send({ severity: 4 });
     expect(res.status).toBe(200);
-    expect(ownership()).toEqual([]);
+    expect(ownership().length).toBeGreaterThan(0);
   });
 
-  it('clearing the project asks no ownership question', async () => {
+  it('clearing the project still admits the source project', async () => {
     const res = await request(app()).patch('/api/mdx/risk-items/1').send({ programId: null });
     expect(res.status).toBe(200);
-    expect(ownership()).toEqual([]);
+    expect(ownership().length).toBeGreaterThan(0);
   });
 });
 

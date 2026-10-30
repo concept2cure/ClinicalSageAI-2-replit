@@ -47,6 +47,7 @@ import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { ProjectSettings } from './ProjectSettings';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1442,12 +1443,33 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
+export function ProjectHome(props: SurfaceViewProps) {
+  const selection = useShellProject();
+  const actor = useAuthUser();
+  const session = useAuthoringReadSession(actor);
+  const owner = JSON.stringify([selection?.id ?? null, session.actor, session.key]);
+  const pinOwner = useRef(owner);
+  useEffect(() => {
+    if (pinOwner.current === owner) return;
+    pinOwner.current = owner;
+    window.C2C_SOURCE_PINS = [];
+  }, [owner]);
+  return <ProjectWorkspace key={owner} {...props} selection={selection} actor={actor} session={session} />;
+}
+
+type ProjectWorkspaceProps = SurfaceViewProps & {
+  selection: ReturnType<typeof useShellProject>;
+  actor: ReturnType<typeof useAuthUser>;
+  session: ReturnType<typeof useAuthoringReadSession>;
+};
+
+/** One project's local drafts and reads belong to one account/session visit.
+ * Step and title changes retain this workspace; ownership changes retire it. */
+function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, session: projectSession }: ProjectWorkspaceProps) {
   // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
   const available = useSurfaceAvailable();
-  const sel = useShellProject();
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
@@ -1468,23 +1490,16 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
-  const pinProgram = useRef(pid);
-  useEffect(() => {
-    if (pinProgram.current === pid) return;
-    pinProgram.current = pid;
-    window.C2C_SOURCE_PINS = [];
-  }, [pid]);
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
-  const teamActor = useAuthUser();
-  const projectSession = useAuthoringReadSession(teamActor);
+  const [metadataEpoch, setMetadataEpoch] = useState(0);
   const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
-  const progState = useLiveData<ProgramRow>(projectPath, [projectPath], undefined,
-    { key: JSON.stringify([pid, projectSession.actor, projectSession.key]), current: projectSession.sameRevision });
+  const progState = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
+    { key: JSON.stringify([pid, projectSession.actor, projectSession.key, metadataEpoch]), current: projectSession.sameRevision });
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
-  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
+  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
   const dossier = useProjectDossier(pid);
@@ -1802,6 +1817,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           )}
           <ProjectReportsDoor onNav={onNav} />
         </div>
+        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
 
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict

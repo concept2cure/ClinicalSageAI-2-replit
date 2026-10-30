@@ -1265,18 +1265,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Agency meetings ──
-  {
-    id: 'agency-meetings.select-meeting',
-    surfaceId: 'agency-meetings',
-    label: 'Open an agency meeting',
-    description:
-      'On the agency-meetings workspace, open a meeting by its id or a distinctive phrase (agency, type, or program) so its briefing book and minutes show — the same row click a person makes. Requesting or scheduling a meeting stays a governed human act. Honest misses; held while the list loads.',
-    params: [
-      { name: 'meeting', required: true, description: 'The meeting id, or a distinctive phrase from its agency / type / program (case-insensitive).' },
-    ],
-  },
-
   // ── Source tracer ──
   {
     id: 'source-tracer.select-section',

@@ -23,7 +23,7 @@ import {
 import { getGatewaySizeLimitOnFile, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
 import { REGIONAL_MODULE1_REQUIREMENTS } from '../global-ri/regional-module1-requirements';
 import { getLicenseInfo } from '../license-manager';
-import { appModuleId } from '../../../shared/regulatory/app-registry';
+import { appModuleId, appModuleEnabled } from '../../../shared/regulatory/app-registry';
 import { toMarket, isCanonicalRegion } from '../../../shared/regulatory/region-identity';
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -99,14 +99,15 @@ export async function enrichWorkspaceConfig(
         config.clientType.entitlement = { tier: lic.tier, enabledModules: lic.enabledModules };
 
         // App-level gating falls straight out of the unified app-registry: an app
-        // is locked iff it maps to a module the org has not enabled. Apps with no
-        // moduleId are always accessible.
+        // accepts its canonical owner and the explicit legacy grant keys retained
+        // by that registry. This projection does not replace effective route/
+        // tool access checks. Apps with no moduleId remain always accessible.
         const enabled = new Set(lic.enabledModules);
         const accessible: typeof config.clientType.accessibleApps = [];
         const locked: typeof config.clientType.lockedApps = [];
         for (const a of config.apps) {
           const mod = appModuleId(a.id);
-          if (mod && !enabled.has(mod)) locked.push({ id: a.id, requiredModule: mod });
+          if (mod && !appModuleEnabled(a.id, enabled)) locked.push({ id: a.id, requiredModule: mod });
           else accessible.push(a.id);
         }
         config.clientType.accessibleApps = accessible;

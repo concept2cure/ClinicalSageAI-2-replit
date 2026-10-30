@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5241/api/authoring/docs/afe3ea45-deba-4252-850b-7bde8dae2081/e-sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "WHATEVER",
+      "intent": "OQ bad meaning"
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 26,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "AUTHORING_OBJECT_FORBIDDEN",
+        "message": "You do not have permission to perform this action on the authoring object."
+      }
+    }
+  }
+}

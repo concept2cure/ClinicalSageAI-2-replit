@@ -1,0 +1,40 @@
+W1 / D5 Vault current archive access verification, 2026-10-30
+
+Red: 8 new native controls failed, 28 existing cases passed (2 files).
+Green: 36 of 36 native PostgreSQL tests passed (2 files, 9.99 s).
+Focused: 86 of 86 archive/project-access/history/cabinet checks passed (8 files, 18.34 s).
+Mutation controls: all 4 caught with one targeted native test each (exit 1).
+Lint: route 6 -> 6 warnings; both native test files 0 -> 0; 0 errors.
+No baseline changes, production dependencies, schema changes or second permission policy.
+Full combined TypeScript/build/publication qualification belongs to the root continuation.
+
+Native command:
+  npx vitest run --config vitest.db.config.ts tests/db/vault-folder-export.dbtest.ts tests/db/vault-data-room-seal.dbtest.ts
+  Node 24, RLS_ENFORCE=on, recorded disposable platform_ci_vault_fixture_20261030,
+  APP_DATABASE_URL names the restricted app_service (NOSUPERUSER, NOBYPASSRLS).
+Native fixture asserts runtime posture on its actual scoped executor.
+All synthetic sharing/role/anchor changes are restored in finally; no trigger or permission bypass.
+
+Focused command:
+  npx vitest run --config vitest.config.ts
+    server/services/vault/__tests__/vault-archive-delivery.test.ts
+    server/services/vault/__tests__/vault-archive-audit-projection.test.ts
+    server/services/vault/__tests__/vault-archive-builder.test.ts
+    server/services/vault/__tests__/vault-folder-export.test.ts
+    server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+    server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+    server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+    server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+
+Mutation transforms affect loaded source in memory, not live source files:
+  role: remove changed-current-role refusal -> prepared named archive test fails.
+  workspace: remove changed-workspace-anchor refusal -> anchor test fails.
+  commit: remove final preCOMMIT admission -> during-audit revocation test fails.
+  request: derive named actors from old request roles -> stale admin-role test fails.
+
+Admission boundary: captured current database role and exact program/project/workspace
+are checked on the final audit transaction before writes and before commit. Existing
+forShare actor admission retains organization/user/membership rows through that transaction.
+Observed project/anchor access changes refuse and roll back all export audit rows.
+There is no claim of absolute revocation during an already-started network stream.
+No hosted browser, deployment, production data or complete launch acceptance claim.

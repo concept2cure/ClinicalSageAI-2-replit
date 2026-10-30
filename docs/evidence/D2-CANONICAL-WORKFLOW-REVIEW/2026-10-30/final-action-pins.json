@@ -1,0 +1,53 @@
+{
+  "reviewer": "action_order_contract",
+  "date": "2026-10-30",
+  "approved": true,
+  "executionByReviewer": false,
+  "preImplementationSourceSha256": "013cd9f750c8f9ed3dd3f6be9326c9fea915d37e8ff041cd3d2bbd5dbaaae09b",
+  "pins": {
+    "client/src/concept2cure/v2/surfaceActions.ts": {
+      "sha256": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
+      "bytes": 23865
+    },
+    "client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts": {
+      "sha256": "c0229da821607611ed48085cd1d9e0ce74441f9c02df6e08fa438465c1b1e73f",
+      "bytes": 11747
+    },
+    "client/src/concept2cure/v2/__tests__/surfaceActions.test.ts": {
+      "sha256": "ea46c72effce981c1de44fb655c0cf142d447c6458eb9944949adbb6393f56ad",
+      "bytes": 11530
+    },
+    "client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx": {
+      "sha256": "3202e1320e8a9e78d3d5546e5a7eff94c916bef4f5cde3462247f261e91475b1",
+      "bytes": 5940
+    },
+    "client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx": {
+      "sha256": "4f4cfa06ec9416b7b8b9a9e144f51be72721e476b2635dfd14d17f4d9949aabd",
+      "bytes": 5438
+    },
+    "client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts": {
+      "sha256": "2faf3516aa422bc01a1543b36e9738e117e3ffa6ecc4187025a3e62189f8849b",
+      "bytes": 4934
+    },
+    "shared/navigation/surface-actions.ts": {
+      "sha256": "888e74fd750698bc8ebfbb13ad59652b00ceb02fc9595dfebed77738a0a0465e",
+      "bytes": 74777
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/action-red-inputs.json": {
+      "sha256": "c8a180beceaf93b1888bfda6971fce6db619bd9f55a68ec2170a515193335aed",
+      "bytes": 265
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/action-red.txt": {
+      "sha256": "4797699f5169606414104d7269dc4885a45503d137631eb26c73909776421db1",
+      "bytes": 5600
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/action-green.txt": {
+      "sha256": "8d3639dd4586880dcc016f30f59be9e4f89dd44892138ed37384c65bf4e75920",
+      "bytes": 10090
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/action-lint.json": {
+      "sha256": "3378c46743b006815b160a9f3f564873c8469b8125aef663d68153b4c713e115",
+      "bytes": 517
+    }
+  }
+}

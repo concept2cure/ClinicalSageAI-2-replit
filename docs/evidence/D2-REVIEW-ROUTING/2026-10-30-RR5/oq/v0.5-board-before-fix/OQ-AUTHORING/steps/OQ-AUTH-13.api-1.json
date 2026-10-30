@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5242/api/authoring/docs/9a6313a3-6018-40e1-b7f7-478b05f5b231/e-sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "REVIEWER",
+      "intent": "OQ wrong password"
+    }
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 466,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Signature rejected: password verification failed (§11.200).",
+      "code": "PASSWORD_VERIFICATION_FAILED"
+    }
+  }
+}

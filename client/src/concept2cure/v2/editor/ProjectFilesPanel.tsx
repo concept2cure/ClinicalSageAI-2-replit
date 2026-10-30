@@ -42,7 +42,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
-import { EmptyState, ErrorState } from '../dataConnect';
+import { EmptyState, ErrorState, useDataReadVisit, type DataReadOwner } from '../dataConnect';
 import { downloadVaultFile, PdfFrame, presentOpenedFile, useVaultPdfViewer, type ViewerState as SharedViewerState } from './vaultPdfViewer';
 import type { PdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
@@ -65,6 +65,8 @@ export interface ProjectFilesPanelProps {
   programId: string | null;
   programName: string | null;
   fireToast: FireToast;
+  /** The host's existing project/session visit, without an additional subscription. */
+  readOwner?: DataReadOwner;
   /* Optional below: on the project's page (ProjectHome's Evidence stage, slice
      23) there is no editor. No `onClose`, no rail header; no editor callbacks,
      no cite and no ask for a section that is not there. */
@@ -162,7 +164,7 @@ async function readProjectVault(programId: string): Promise<VaultReadResult> {
 /* ── The state the rail keeps ─────────────────────────────────────────────── */
 
 /** The tree read and its retry, so the panel only renders what they hold. */
-function useProjectVaultRead(programId: string | null) {
+function useProjectVaultRead(programId: string | null, current: () => boolean) {
   const [state, setState] = useState<ReadState>('idle');
   const [vault, setVault] = useState<VaultRead | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
@@ -171,16 +173,21 @@ function useProjectVaultRead(programId: string | null) {
   useEffect(() => { alive.current = true; return () => { alive.current = false; readSequence.current += 1; }; }, []);
 
   const load = useCallback(async () => {
-    if (!programId) return;
+    if (!programId || !alive.current || !current()) return;
     const sequence = ++readSequence.current;
-    setState('loading');
-    setReadError(null);
+    const ownsRead = () => alive.current && current() && sequence === readSequence.current;
+    setState(previous => ownsRead() ? 'loading' : previous);
+    setReadError(previous => ownsRead() ? null : previous);
     const result = await readProjectVault(programId);
-    if (!alive.current || sequence !== readSequence.current) return;
-    if (!result.ok) { setState('error'); setReadError(result.message); return; }
-    setVault(result.vault);
-    setState('ready');
-  }, [programId]);
+    if (!ownsRead()) return;
+    if (!result.ok) {
+      setState(previous => ownsRead() ? 'error' : previous);
+      setReadError(previous => ownsRead() ? result.message : previous);
+      return;
+    }
+    setVault(previous => ownsRead() ? result.vault : previous);
+    setState(previous => ownsRead() ? 'ready' : previous);
+  }, [programId, current]);
 
   useEffect(() => { void load(); }, [load]);
   return { state, vault, readError, load };
@@ -190,54 +197,58 @@ function useProjectVaultRead(programId: string | null) {
  *  in a toast that states exactly what happened — and Open needs the busy row. */
 function useVaultFileActions(opts: {
   programId: string | null; sectionCode: string | null; fireToast: FireToast;
+  current: () => boolean;
   sourceFor: (doc: VaultDoc) => ProjectSource | null;
   onCite: (sourceId: string) => boolean | Promise<boolean>; onInsertReference: (text: string) => boolean;
   showPdf: (doc: VaultDoc, blob: PdfViewerBlob, hash: string | null) => void;
 }) {
-  const { programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf } = opts;
+  const { programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf, current: ownerCurrent } = opts;
   const [opening, setOpening] = useState<string | null>(null);
   const citing = useRef(false);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const current = () => alive.current && ownerCurrent();
 
   const openDoc = async (doc: VaultDoc) => {
-    if (!programId || opening) return;
+    if (!current() || !programId || opening) return;
     const docId = storedFileIdFor(doc);
     const nothingToOpen = 'This row is an authored section, not a stored file — there is nothing to open here.';
     if (!docId) return fireToast(nothingToOpen, 'error');
-    setOpening(doc.id);
+    setOpening(previous => current() ? doc.id : previous);
     try {
+      if (!current()) return;
       const file = await downloadVaultFile(programId, docId, doc);
-      if (alive.current) presentOpenedFile({ file, doc, report: fireToast, showPdf });
+      if (current()) presentOpenedFile({ file, doc, report: fireToast, showPdf });
     } catch (e) {
-      if (alive.current) fireToast(redactInternals(e instanceof Error ? e.message : '', `${doc.title} was not opened.`), 'error');
+      if (current()) fireToast(redactInternals(e instanceof Error ? e.message : '', `${doc.title} was not opened.`), 'error');
     } finally {
-      if (alive.current) setOpening(null);
+      if (current()) setOpening(previous => current() ? null : previous);
     }
   };
 
   const cite = async (doc: VaultDoc) => {
-    if (citing.current) return;
+    if (!current() || citing.current) return;
     const src = sourceFor(doc);
     if (!src) return;
     citing.current = true;
     try {
       const ok = await onCite(String(src.id));
-      if (alive.current) fireToast(
+      if (current()) fireToast(
         ok ? `Cited “${src.title ?? doc.title}” in ${sectionCode ?? 'the open section'} — the citation numbers from its position and the section now records this source.`
           : 'Couldn’t insert the citation — the source or editable section could not be confirmed. Try again in the current section.',
         ok ? 'ok' : 'error',
       );
     } catch {
-      if (alive.current) fireToast('Couldn’t insert the citation — source registration could not be confirmed. Try again.', 'error');
+      if (current()) fireToast('Couldn’t insert the citation — source registration could not be confirmed. Try again.', 'error');
     } finally {
-      citing.current = false;
+      if (current()) citing.current = false;
     }
   };
 
   const insertRef = (doc: VaultDoc) => {
+    if (!current()) return;
     const ok = onInsertReference(referenceTextFor(doc));
-    fireToast(
+    if (current()) fireToast(
       ok ? `Reference to “${doc.title}” inserted at the caret as text. It is not a citation: this file is not a data-room source.`
         : 'Couldn’t insert the reference — the canvas is not editable right now.',
       ok ? 'ok' : 'error',
@@ -446,15 +457,25 @@ function PdfViewerPane(props: {
 
 /** Reset only the files rail on a scope switch; the editor keeps its leave guard. */
 export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
-  return <ProjectFilesForProgram key={props.programId ?? 'no-program'} {...props} />;
+  const owned = useDataReadVisit(props.programId, props.readOwner);
+  // A canonical visit can retire and recur with the same logical owner key.
+  const scope = useRef({ visit: owned.visit, epoch: 0 });
+  if (scope.current.visit !== owned.visit) scope.current = { visit: owned.visit, epoch: scope.current.epoch + 1 };
+  if (!owned.current()) return null;
+  return <ProjectFilesForProgram key={`${props.programId ?? 'no-program'}:${scope.current.epoch}`} {...props} ownerCurrent={owned.current} />;
 }
 
 function ProjectFilesForProgram({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav,
-}: ProjectFilesPanelProps) {
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav, readOwner, ownerCurrent,
+}: ProjectFilesPanelProps & { ownerCurrent: () => boolean }) {
+  // Retained actions keep their original visit rather than adopting a later guard.
+  const capturedCurrent = useRef(ownerCurrent).current;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = useCallback(() => mounted.current && capturedCurrent(), [capturedCurrent]);
   const editorAttached = Boolean(onCite && onInsertReference);
-  const { state, vault, readError, load } = useProjectVaultRead(programId);
+  const { state, vault, readError, load } = useProjectVaultRead(programId, current);
   const [query, setQuery] = useState('');
   const search = useProjectVaultSearch(programId, query);
   const { viewer, showPdf, closeViewer } = useVaultPdfViewer<VaultDoc>();
@@ -467,14 +488,21 @@ function ProjectFilesForProgram({
   const allDocs = useMemo(() => flattenVaultDocs(vault?.tree ?? []), [vault]);
   const selected = findSelectedDoc(selectedId, allDocs, search.hits);
   const { opening, openDoc, cite, insertRef } = useVaultFileActions({
-    programId, sectionCode, fireToast, sourceFor, showPdf, onCite: onCite ?? (() => false), onInsertReference: onInsertReference ?? (() => false),
+    programId, sectionCode, fireToast, sourceFor, showPdf, current, onCite: onCite ?? (() => false), onInsertReference: onInsertReference ?? (() => false),
   });
 
-  const onToggleFolder = useCallback((id: string, isOpen: boolean) => setOpenFolders(o => ({ ...o, [id]: isOpen })), []);
-  const onSelectDoc = useCallback((id: string) => setSelectedId(cur => (cur === id ? null : id)), []);
+  const onToggleFolder = useCallback((id: string, isOpen: boolean) => { if (current()) setOpenFolders(o => current() ? { ...o, [id]: isOpen } : o); }, [current]);
+  const onSelectDoc = useCallback((id: string) => { if (current()) setSelectedId(cur => current() ? (cur === id ? null : id) : cur); }, [current]);
+  const { ask, navigate, openDocument, libraryOwner, header } = useMemo(() => ({
+    ask: onAsk && ((text: string) => { if (current()) onAsk(text); }),
+    navigate: onNav && ((id: string) => { if (current()) onNav(id); }),
+    openDocument: onOpenDocument && ((id: string) => { if (current()) onOpenDocument(id); }),
+    libraryOwner: readOwner ? { key: readOwner.key, current } : undefined,
+    header: onClose ? <ProjectFilesHeader programName={programName} onClose={() => { if (current()) onClose(); }} /> : null,
+  }), [onAsk, onNav, onOpenDocument, readOwner, onClose, programName, current]);
   const rows = { openFolders, onToggleFolder, selectedId, onSelectDoc };
-  const header = onClose ? <ProjectFilesHeader programName={programName} onClose={onClose} /> : null;
 
+  if (!current()) return null;
   if (!programId) {
     return (
       <>
@@ -490,7 +518,7 @@ function ProjectFilesForProgram({
       <>
         {header}
         <PdfViewerPane viewer={viewer} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(viewer.doc)}
-          onBack={closeViewer} onCite={() => cite(viewer.doc)} onInsertRef={() => insertRef(viewer.doc)} />
+          onBack={() => { if (current()) closeViewer(); }} onCite={() => cite(viewer.doc)} onInsertRef={() => insertRef(viewer.doc)} />
       </>
     );
   }
@@ -500,36 +528,36 @@ function ProjectFilesForProgram({
       {header}
       <div className="pf-search">
       <div className="cdl-scope" role="group" aria-label="Document sources">
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => setLane('vault')}>Vault</button>
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => setLane('data-room')}>Data room</button>
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => { if (current()) setLane(previous => current() ? 'vault' : previous); }}>Vault</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => { if (current()) setLane(previous => current() ? 'data-room' : previous); }}>Data room</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => { if (current()) setLane(previous => current() ? 'ind' : previous); }}>IND documents</button>
       </div>
       </div>
-      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} onNav={onNav} />}
-      {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={onAsk} onOpenDocument={onOpenDocument}
-        onFindSources={text => { setQuery(text); setLane('vault'); }} />}
+      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} readOwner={libraryOwner} onOpenDocument={openDocument} onAsk={ask} onNav={navigate} />}
+      {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={ask} onOpenDocument={openDocument}
+        onFindSources={text => { if (current()) { setQuery(previous => current() ? text : previous); setLane(previous => current() ? 'vault' : previous); } }} />}
       {lane === 'vault' && <>
       <div className="pf-search">
         <label className="sr-only" htmlFor="pf-search-input">Search the project vault</label>
         <input
           id="pf-search-input" className="c2c-input" type="search" placeholder="Search titles and text…"
-          value={query} onChange={e => setQuery(e.target.value)} style={{ height: 30, width: '100%' }}
+          value={query} onChange={e => { const value = e.target.value; if (current()) setQuery(previous => current() ? value : previous); }} style={{ height: 30, width: '100%' }}
         />
       </div>
       {query.trim() ? (
-        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={search.retrySearch} />
+        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={() => { if (current()) search.retrySearch(); }} loadMore={async () => { if (current()) await search.loadMore(); }} />
       ) : (
         <VaultBrowseBody {...rows} state={state} vault={vault} readError={readError}
           programName={programName} onRetry={() => void load()} editorAttached={editorAttached} />
       )}
       {selected && (
-        <SelectedFileActions doc={selected} programId={programId} onNav={onNav} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
+        <SelectedFileActions doc={selected} programId={programId} onNav={navigate} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
           busy={opening === selected.id} onOpen={() => void openDoc(selected)} editorAttached={editorAttached}
-          onPull={() => setPullDoc(selected)}
+          onPull={() => { if (current()) setPullDoc(previous => current() ? selected : previous); }}
           onCite={() => cite(selected)} onInsertRef={() => insertRef(selected)} />
       )}
       </>}
-      <VaultSourceImport doc={pullDoc} programId={programId} onClose={() => setPullDoc(null)} onOpenDocument={onOpenDocument} />
+      <VaultSourceImport doc={pullDoc} programId={programId} onClose={() => { if (current()) setPullDoc(previous => current() ? null : previous); }} onOpenDocument={openDocument} />
     </>
   );
 }

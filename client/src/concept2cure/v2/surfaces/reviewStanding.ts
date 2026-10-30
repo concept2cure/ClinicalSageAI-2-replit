@@ -14,6 +14,7 @@
 import { statusKey } from '../editor/CanvasDocumentList';
 import type { ReviewItem } from '../fixtures/review-data';
 import { reviewStandingOf } from '../editor/reviewTaskState';
+import { signedOnRoute } from '@shared/authoring/peer-review';
 
 export type ReviewStandingGroup = 'in-review' | 'changes' | 'declined' | 'sign-off' | 'approved';
 
@@ -24,14 +25,16 @@ export interface ReviewStanding {
   tone?: 'IN_REVIEW' | 'APPROVED';
 }
 
-export function reviewStanding(r: Pick<ReviewItem, 'docStatus' | 'state'> & { reviews?: Array<{ status: string; standing?: unknown }> }): ReviewStanding {
+export function reviewStanding(r: Pick<ReviewItem, 'docStatus' | 'state'> & { reviews?: Array<{ status: string; standing?: unknown; routeSignedAt?: string | null }> }): ReviewStanding {
   if (statusKey(r.docStatus ?? null) === 'APPROVED') return { group: 'approved', words: 'Approved', tone: 'APPROVED' };
   const reviews = r.reviews ?? [];
   const current = reviews.filter(row => reviewStandingOf(row.status, row.standing) === 'current');
   if (current.some(row => row.status === 'rejected')) return { group: 'declined', words: 'Declined' };
   if (current.some(row => row.status === 'changes_requested')) return { group: 'changes', words: 'Changes requested' };
-  if (reviews.length > 0 && current.length === reviews.length && current.every(row => row.status === 'approved')) {
-    return { group: 'sign-off', words: 'Reviewers approved, sign-off pending', tone: 'IN_REVIEW' };
+  // A reviewer's REVIEWER signature on the route is their review (RR5).
+  const signed = reviews.filter(row => signedOnRoute(row));
+  if (reviews.length > 0 && reviews.every(row => signedOnRoute(row) || (reviewStandingOf(row.status, row.standing) === 'current' && row.status === 'approved'))) {
+    return { group: 'sign-off', words: signed.length > 0 ? 'Reviewers signed, sign-off pending' : 'Reviewers approved, sign-off pending', tone: 'IN_REVIEW' };
   }
   if (reviews.some(row => ['stale', 'unbound'].includes(reviewStandingOf(row.status, row.standing))) ||
       (reviews.length === 0 && r.state !== 'in-review')) {

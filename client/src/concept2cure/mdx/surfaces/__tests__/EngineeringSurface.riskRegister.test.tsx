@@ -33,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => H.user }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => H.user }));
 vi.mock('../../../_shared/components/EsignModal', () => ({
   esignSignerOf: (u: { name?: string } | null) => (u?.name ? { name: u.name } : undefined),
   EsignModal: (p: {
@@ -59,7 +59,7 @@ const DC_PATH = `/api/design-controls?program_id=${PROGRAM.id}`;
 
 /** Six hazards: more than the four rows Engineering used to show. */
 const hazard = (n: number, over: Record<string, unknown> = {}) => ({
-  id: n, ref_code: `HZ-0${n}`, hazard: `Hazard ${n}`, hazardous_situation: `Situation ${n}`, harm: `Harm ${n}`,
+  id: n, program_id: PROGRAM.id, ref_code: `HZ-0${n}`, hazard: `Hazard ${n}`, hazardous_situation: `Situation ${n}`, harm: `Harm ${n}`,
   sequence_of_events: '', severity: 3, probability: 3, detectability: 3, residual_probability: 1,
   control_strategy: 'design_reduce', source: 'fmea', status: 'open', acceptable: null, ...over,
 });
@@ -95,11 +95,15 @@ beforeEach(() => {
       if (H.riskThrows) throw H.riskThrows;
       return answer(200, H.riskAnswer);
     }
+    if (method === 'GET' && path.startsWith('/api/mdx/risk-items/')) {
+      const id = Number(path.split('/').pop()?.split('?')[0]);
+      return answer(200, { data: { ...hazard(id), controls: [] } });
+    }
     if (method === 'GET' && path === DC_PATH) return answer(200, keyed([]));
-    if (method === 'POST' && path === '/api/mdx/risk-items') {
+    if (method === 'POST' && path === RISK_PATH) {
       return answer(201, { data: hazard(7, { ...(body as Record<string, unknown>), id: 7, ref_code: 'HZ-07', hazard: 'Battery swelling', harm: 'Burn' }) });
     }
-    if (method === 'POST' && /\/controls$/.test(path)) {
+    if (method === 'POST' && /\/controls\?/.test(path)) {
       return answer(201, { data: { id: 91, description: 'Dual-sensor check', control_type: 'protective_measure', status: 'proposed' } });
     }
     if (method === 'PATCH') {
@@ -139,7 +143,7 @@ function directive(actionId: string, params: Record<string, unknown> = {}) {
 describe("Engineering reads the open project's risk file", () => {
   it('reads it by the project, and only after its own route has admitted the project', async () => {
     await loaded();
-    expect(H.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/api/mdx/risk-items')).map((c) => c.path)).toEqual([RISK_PATH]);
+    await waitFor(() => expect(H.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/api/mdx/risk-items')).map((c) => c.path)).toEqual([RISK_PATH, `/api/mdx/risk-items/1?program_id=${PROGRAM.id}`]));
   });
 
   it('reads nothing for a project its own route refused', async () => {
@@ -194,7 +198,7 @@ describe('every function of the risk register, on Engineering', () => {
     fireEvent.click(screen.getByRole('button', { name: /Add hazard/ }));
     await waitFor(() => expect(writes()).toHaveLength(1));
     expect(writes()[0]).toMatchObject({
-      method: 'POST', path: '/api/mdx/risk-items',
+      method: 'POST', path: RISK_PATH,
       body: { hazard: 'Battery swelling', harm: 'Burn', severity: 4, probability: 2, programId: PROGRAM.id },
     });
     await waitFor(() => expect(drawer().querySelector('.dr-title')?.textContent).toBe('Battery swelling'));
@@ -207,7 +211,7 @@ describe('every function of the risk register, on Engineering', () => {
     fireEvent.change(screen.getByLabelText(/^Control type/), { target: { value: 'protective_measure' } });
     fireEvent.click(screen.getByRole('button', { name: /Add control/ }));
     await waitFor(() => expect(writes()).toHaveLength(1));
-    expect(writes()[0]).toMatchObject({ method: 'POST', path: '/api/mdx/risk-items/1/controls', body: { description: 'Dual-sensor check' } });
+    expect(writes()[0]).toMatchObject({ method: 'POST', path: `/api/mdx/risk-items/1/controls?program_id=${PROGRAM.id}`, body: { description: 'Dual-sensor check' } });
     await waitFor(() => expect(drawer().textContent).toMatch(/Dual-sensor check/));
   });
 
@@ -218,7 +222,7 @@ describe('every function of the risk register, on Engineering', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Accept the residual risk of HZ-01' })).getByText('stub-sign'));
     await waitFor(() => expect(H.signed).not.toBeNull());
     expect(writes()).toEqual([{
-      method: 'PATCH', path: '/api/mdx/risk-items/1',
+      method: 'PATCH', path: `/api/mdx/risk-items/1?program_id=${PROGRAM.id}`,
       body: { status: 'accepted', meaning: 'approval', reason: 'Reviewed', password: 'pw' },
     }]);
     await waitFor(() => expect(within(drawer()).queryByRole('button', { name: /Accept residual/ })).toBeNull());

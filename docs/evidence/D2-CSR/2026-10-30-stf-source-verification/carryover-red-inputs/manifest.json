@@ -1,0 +1,14 @@
+{
+  "kind": "captured before carryover RED; corrected core role with unchanged placement/lifecycle production",
+  "canonicalHead": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+  "files": {
+    "server/services/ectd/stf-generator.ts": "df4760b1daabf82f02f56ad0dcf4128d4f3124bdbb56987b6dfecdaee492dff9",
+    "server/services/ind/ctd/regulatory-basis.ts": "7aa40c3e87edda6854834421d1c54379cdd1acdb8f156300e69078418130ba8e",
+    "server/services/csr/csr-assembly-plan.ts": "99aec61ee1f97de84617ce3be64e3188be3c6ec16539f5b265721397c9c4effb",
+    "server/services/csr/csr-assembly-placement.ts": "58b833c209a393839be70a93bc8d06b0dd5902e95a0e5d40241d946c61e665d7",
+    "server/services/csr/csr-placement-lifecycle.ts": "5a8bb92ba919d44a922e7bfbde143ea8803e09451307d04a36cf2632274ab7b3",
+    "server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts": "8185aaf4b053d702c0f3c2864136c40442e3ffea026b4e0392e417450ad43dfc",
+    "server/services/csr/__tests__/csr-assembly-run.pglite.test.ts": "03fda7381534aab7a48784149d344ee18109ad5f558b46330830f19792f71d5a",
+    "server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts": "7c64aad4d3a45b4341d8642da9e9058a9b36a10df14a3d98a539f7b4173b01aa"
+  }
+}

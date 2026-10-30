@@ -1,0 +1,35 @@
+-- P-72 slice 1a: what a replay must leave unchanged, as the superuser (read-only).
+\pset footer off
+\echo '== the three lookups: oid, owner, SET clause, body digest, ACL'
+SELECT p.oid, p.oid::regprocedure AS fn, pg_get_userbyid(p.proowner) AS owner, p.prosecdef AS definer, p.proconfig, md5(p.prosrc) AS body_md5, p.proacl
+  FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace AND p.proname IN ('user_id_for_email','user_id_for_reset_token','invitations_for_member') ORDER BY 2;
+\echo '== their tables'' policies: oid, name, USING, WITH CHECK'
+SELECT p.oid, c.relname, p.polname, p.polcmd, pg_get_expr(p.polqual, p.polrelid) AS using_expr, pg_get_expr(p.polwithcheck, p.polrelid) AS check_expr
+  FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
+ WHERE c.relnamespace = 'public'::regnamespace AND c.relname IN ('users','organization_users','organization_invitations') ORDER BY 2, 3;
+\echo '== the role check'
+SELECT oid, conname, pg_get_constraintdef(oid) AS def, convalidated FROM pg_constraint
+ WHERE conrelid = 'public.organization_users'::regclass AND conname = 'organization_users_role_known';
+\echo '== c2c_platform_scope: attributes, memberships, column grants, schema public ACL'
+SELECT rolname, rolcanlogin, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication FROM pg_roles WHERE rolname = 'c2c_platform_scope';
+SELECT m.rolname AS member, g.rolname AS grantor, a.admin_option, a.inherit_option, a.set_option
+  FROM pg_auth_members a JOIN pg_roles r ON r.oid = a.roleid JOIN pg_roles m ON m.oid = a.member JOIN pg_roles g ON g.oid = a.grantor
+ WHERE r.rolname = 'c2c_platform_scope' ORDER BY 1, 2;
+SELECT table_name, string_agg(column_name::text, ',' ORDER BY column_name) AS select_columns
+  FROM information_schema.column_privileges WHERE grantee = 'c2c_platform_scope' AND privilege_type = 'SELECT' GROUP BY 1 ORDER BY 1;
+SELECT has_table_privilege('c2c_platform_scope', 'public.users', 'UPDATE') AS users_update,
+       has_table_privilege('c2c_platform_scope', 'public.users', 'SELECT') AS users_whole_table_select,
+       has_column_privilege('c2c_platform_scope', 'public.users', 'password_hash', 'SELECT') AS users_password_hash;
+SELECT nspacl FROM pg_namespace WHERE nspname = 'public';
+\echo '== every function SET clause that names a custom setting (must be none)'
+SELECT p.oid::regprocedure, p.proconfig FROM pg_proc p, unnest(p.proconfig) c(s) WHERE split_part(c.s, '=', 1) LIKE '%.%';
+\echo '== whole-catalog digests: every policy (oid, name, expressions) and every non-catalog function (oid, owner, SET clauses, body)'
+SELECT count(*) AS policies, md5(string_agg(p.oid || ':' || p.polname || ':' || coalesce(pg_get_expr(p.polqual, p.polrelid), '') || ':' || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''), '|' ORDER BY p.oid)) AS policy_digest FROM pg_policy p;
+SELECT count(*) AS functions, md5(string_agg(p.oid || ':' || p.proowner || ':' || coalesce(array_to_string(p.proconfig, ','), '') || ':' || md5(p.prosrc), '|' ORDER BY p.oid)) AS function_digest
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname NOT IN ('pg_catalog', 'information_schema');
+SELECT count(*) AS constraints, md5(string_agg(c.oid || ':' || c.conname || ':' || pg_get_constraintdef(c.oid) || ':' || c.convalidated, '|' ORDER BY c.oid)) AS constraint_digest
+  FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE n.nspname NOT IN ('pg_catalog', 'information_schema');
+\echo '== the journal'
+SELECT count(*) AS journal_rows FROM c2c_migration_journal;
+SELECT file, apply_count FROM c2c_migration_journal
+ WHERE file IN ('migrations/20260926_organization_users_own_writes.sql','migrations/20260928_users_membership_rls.sql','migrations/20260928_invitations_for_member.sql','migrations/20261030b_platform_scope_role.sql') ORDER BY 1;

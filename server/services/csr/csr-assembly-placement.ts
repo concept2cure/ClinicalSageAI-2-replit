@@ -53,6 +53,7 @@
 import type { Queryable } from '../authoring/authoring-evidence.js';
 import { CsrAssemblyRunError, readCsrAssembly, readCsrJobBinding, STALL_MINUTES, type AssemblySummary, type CsrAssemblyRunRow } from './csr-assembly-run.js';
 import { lifecycleRefusal, parseKeepOnFile, parseWithdraw, planCsrLifecycle, type CsrLifecycleDecisions, type CsrLifecyclePlan, type PriorCsrStudyLeaf, type PriorStudyLeavesArgs } from './csr-placement-lifecycle.js';
+import { csrAssemblyFileTag } from './csr-assembly-plan.js';
 
 export interface PlacementSequence { id: number; submissionId: number; sequenceNumber: string; status: string; dispatchStatus?: string | null }
 export interface CsrPlacementDeps {
@@ -134,6 +135,17 @@ function bodyRefusal(result: AssemblySummary): Refusal {
   return null;
 }
 
+/** A retained assembly keeps the roles it was made with; never relabel it at placement. */
+function stfRoleRefusal(result: AssemblySummary): Refusal {
+  const outdated = result.leaves.filter(leaf => {
+    const expected = typeof leaf.appendix === 'string' ? csrAssemblyFileTag(leaf.appendix) : undefined;
+    return expected === undefined || leaf.fileTag !== expected;
+  });
+  if (!outdated.length) return null;
+  return { code: 'CSR_PLACEMENT_STF_ROLE_STALE', message: `The assembled Study Tagging File roles do not match the current CSR plan for ${outdated.map(leaf => String(leaf.appendix)).join(', ')}. `
+    + 'Assemble again to apply the current CSR roles. Existing assembled files are preserved. Nothing was placed.' };
+}
+
 /** The assembly must be finished, not already placed or being placed, free of blocking gaps, and its own checks must have passed. */
 export function placementRefusal(run: CsrAssemblyRunRow): Refusal {
   if (run.status !== 'assembled' || !run.result) return { code: 'CSR_PLACEMENT_NOT_ASSEMBLED', message: 'This assembly has not finished. Nothing was placed.' };
@@ -150,6 +162,8 @@ export function placementRefusal(run: CsrAssemblyRunRow): Refusal {
   if (unverified.length) return { code: 'CSR_PLACEMENT_LISTING_UNVERIFIED', message: `Listing ${unverified.join(', ')} does not agree with its source. Nothing was placed.` };
   const body = bodyRefusal(result);
   if (body) return body;
+  const roles = stfRoleRefusal(result);
+  if (roles) return roles;
   if (!result.leaves.length) return { code: 'CSR_PLACEMENT_NO_LEAVES', message: 'The assembly produced no file to place. Nothing was placed.' };
   return null;
 }

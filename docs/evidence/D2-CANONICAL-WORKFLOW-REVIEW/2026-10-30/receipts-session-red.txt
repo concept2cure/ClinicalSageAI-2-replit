@@ -1,0 +1,2216 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs 529ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Prior-session recorded safety source'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session 971ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Source recorded —'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session 644ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Citation removed.'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session 528ms
+   → expected 'Current accessible draftSaved draft s…' not to contain 'Earlier session source re-read.'
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement 517ms
+   → expected <div class="scaf-note" …(3)>…(2)</div> to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=false) 541ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true) 1283ms
+   → Unable to find an accessible element with the role "button" and name `/^2 Second section$/`
+
+Here are the accessible roles:
+
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"ed-tree"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"ed-comments"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"authoring-oversight-note"[39m
+    [33mid[39m=[32m"_r_1e_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mid[39m=[32m"_r_1f_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"de-desc"[39m
+    [33mid[39m=[32m"_r_1g_-search-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "—Current accessible draft2":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m/>[39m
+
+  Name "1First section":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"padding-left: 22px;"[39m
+  [36m/>[39m
+
+  Name "2Second section":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mstyle[39m=[32m"padding-left: 22px;"[39m
+  [36m/>[39m
+
+  Name "Saved":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+    [33mdata-testid[39m=[32m"save-section"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Re-file saved text":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Open a saved section bound to a filing first."[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Section":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Edit one section"[39m
+  [36m/>[39m
+
+  Name "Document":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Read the whole document"[39m
+  [36m/>[39m
+
+  Name "AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Comments":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "History":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Sources 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mdata-testid[39m=[32m"sources-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Signatures":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Audit":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Exports":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"exports-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Project files":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"vault-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Tasks":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"tasks-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Access":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"access-rail-open"[39m
+  [36m/>[39m
+
+  Name "Send for review":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"send-for-review-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "File to vault":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"file-to-vault-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export this document and file the file into the project vault, with its SHA-256 recorded."[39m
+  [36m/>[39m
+
+  Name "Draft with AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Draft from sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"ai-draft-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Draft this section from Data Room evidence and accept it with recorded citations."[39m
+  [36m/>[39m
+
+  Name "Review section":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Review document":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reconcile project evidence":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Prepare targeted fixes":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Check saved sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Your signed-in account or organization changed. Reopen this document before checking saved sources."[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Clear template search":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Clear template search"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Preview build":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Build document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Rename":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mstyle[39m=[32m"margin-left: 8px; vertical-align: middle;"[39m
+    [33mtitle[39m=[32m"Rename this section's code and title — its content and history are unchanged"[39m
+  [36m/>[39m
+
+  Name "Move 1 up":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Move 1 up"[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Move this section up — the document assembles and exports in tree order"[39m
+  [36m/>[39m
+
+  Name "Move 1 down":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Move 1 down"[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mtitle[39m=[32m"Move this section down"[39m
+  [36m/>[39m
+
+  Name "Check":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mstyle[39m=[32m"margin-left: 4px; vertical-align: middle;"[39m
+    [33mtitle[39m=[32m"Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."[39m
+  [36m/>[39m
+
+  Name "Bold (⌘B)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Bold (⌘B)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+    [33mtitle[39m=[32m"Bold (⌘B)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Italic (⌘I)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Italic (⌘I)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+    [33mtitle[39m=[32m"Italic (⌘I)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Underline (⌘U)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Underline (⌘U)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+    [33mtitle[39m=[32m"Underline (⌘U)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Superscript (⌘.) — x2":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+    [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Subscript (⌘,) — x2":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+    [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Highlight — ab":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Highlight — ab"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+    [33mtitle[39m=[32m"Highlight"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Bullet list (⌘⇧8)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+    [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Numbered list (⌘⇧7)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+    [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align left":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align left"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-left"[39m
+    [33mtitle[39m=[32m"Align left"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align center":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align center"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-center"[39m
+    [33mtitle[39m=[32m"Align center"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align right":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align right"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-right"[39m
+    [33mtitle[39m=[32m"Align right"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert a link":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert a link"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-a-link"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Insert a link"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert a cross-reference to another section — § Ref":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert a cross-reference to another section — § Ref"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-a-cross-reference-to-another-section"[39m
+    [33mtitle[39m=[32m"Insert a cross-reference to another section"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cite a source — inserts a numbered citation and adds the source to this document’s reference list":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Cite a source — inserts a numbered citation and adds the source to this document’s reference list"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-cite-a-source-inserts-a-numbered-citation-and-adds-the-source-to-this-document-s-reference-list"[39m
+    [33mtitle[39m=[32m"Cite a source — inserts a numbered citation and adds the source to this document’s reference list"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert table (3 columns × 3 rows, header row)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert table (3 columns × 3 rows, header row)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-table-3-columns-3-rows-header-row-"[39m
+    [33mtitle[39m=[32m"Insert table (3 columns × 3 rows, header row)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-an-image-png-jpeg-or-gif-stored-in-the-tenant-s-governed-image-store-"[39m
+    [33mtitle[39m=[32m"Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Caption a table or figure — put the cursor in a table, or select a figure":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Caption a table or figure — put the cursor in a table, or select a figure"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-caption-a-table-or-figure-put-the-cursor-in-a-table-or-select-a-figure"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Caption a table or figure — put the cursor in a table, or select a figure"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Undo (⌘Z)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Undo (⌘Z)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-undo"[39m
+    [33mtitle[39m=[32m"Undo (⌘Z)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Redo (⌘⇧Z)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Redo (⌘⇧Z)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-redo"[39m
+    [33mtitle[39m=[32m"Redo (⌘⇧Z)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Find & replace (Ctrl/⌘-F)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Find & replace (Ctrl/⌘-F)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-find-replace-ctrl-f-"[39m
+    [33mtitle[39m=[32m"Find & replace (Ctrl/⌘-F)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-ask-ana-to-suggest-a-source-for-the-selected-claim-this-does-not-insert-a-citation"[39m
+    [33mtitle[39m=[32m"Ask AnA to suggest a source for the selected claim — this does not insert a citation"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-offer-alternatives-for-the-selected-passage-ana-drafts-up-to-three-and-nothing-changes-until-you-choose-one"[39m
+    [33mtitle[39m=[32m"Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Comment on the selection":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Comment on the selection"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-comment-on-the-selection"[39m
+    [33mtitle[39m=[32m"Comment on the selection"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Try again":
+  [36m<button[39m
+    [33mstyle[39m=[32m"border: 1px solid var(--border); background: transparent; color: var(--text-100); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-reading…":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mdata-testid[39m=[32m"refresh-all-sources"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."[39m
+  [36m/>[39m
+
+  Name "Close sources":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close sources"[39m
+    [33mclass[39m=[32m"ed-comments-close"[39m
+    [33mtitle[39m=[32m"Close sources"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Record a source":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+  [36m/>[39m
+
+  Name "Re-read source":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+  [36m/>[39m
+
+  Name "Remove":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"ed-doc-h"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Save and sign":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Save and sign"[39m
+    [33mclass[39m=[32m"ed-doc-commit"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  Name "Editor view":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Editor view"[39m
+    [33mclass[39m=[32m"ed-viewtoggle"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "AnA document oversight":
+  [36m<section[39m
+    [33maria-label[39m=[32m"AnA document oversight"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+  [36m/>[39m
+
+  Name "Document assembly":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document assembly"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+    [33mstyle[39m=[32m"min-width: 0;"[39m
+  [36m/>[39m
+
+  Name "Document attribution":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document attribution"[39m
+    [33mstyle[39m=[32m"border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.5;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-desc"[39m
+    [33mid[39m=[32m"_r_1g_-results"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search templates":
+  [36m<input[39m
+    [33maria-controls[39m=[32m"_r_1g_"[39m
+    [33maria-describedby[39m=[32m"_r_1g_-search-hint _r_1g_-results"[39m
+    [33mclass[39m=[32m"de-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mid[39m=[32m"_r_1g_-search"[39m
+    [33mplaceholder[39m=[32m"Search titles and template details"[39m
+    [33mstyle[39m=[32m"min-width: 0; flex: 1 1 0%;"[39m
+    [33mtype[39m=[32m"search"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Template":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"_r_1f_ _r_1g_-results"[39m
+    [33mclass[39m=[32m"de-select"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mid[39m=[32m"_r_1g_"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Build target":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Paragraph style":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Paragraph style"[39m
+    [33mclass[39m=[32m"rse-sel"[39m
+  [36m/>[39m
+
+  Name "Insert symbol":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Insert symbol"[39m
+    [33mclass[39m=[32m"rse-sel"[39m
+    [33mtitle[39m=[32m"Insert a symbol"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a template":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Entire document":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Paragraph":
+  [36m<option[39m
+    [33mvalue[39m=[32m"p"[39m
+  [36m/>[39m
+
+  Name "Heading 1":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h1"[39m
+  [36m/>[39m
+
+  Name "Heading 2":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h2"[39m
+  [36m/>[39m
+
+  Name "Heading 3":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h3"[39m
+  [36m/>[39m
+
+  Name "Heading 4":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h4"[39m
+  [36m/>[39m
+
+  Name "Heading 5":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h5"[39m
+  [36m/>[39m
+
+  Name "Ω…":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "±":
+  [36m<option[39m
+    [33mvalue[39m=[32m"±"[39m
+  [36m/>[39m
+
+  Name "°":
+  [36m<option[39m
+    [33mvalue[39m=[32m"°"[39m
+  [36m/>[39m
+
+  Name "µ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"µ"[39m
+  [36m/>[39m
+
+  Name "≤":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≤"[39m
+  [36m/>[39m
+
+  Name "≥":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≥"[39m
+  [36m/>[39m
+
+  Name "×":
+  [36m<option[39m
+    [33mvalue[39m=[32m"×"[39m
+  [36m/>[39m
+
+  Name "≈":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≈"[39m
+  [36m/>[39m
+
+  Name "½":
+  [36m<option[39m
+    [33mvalue[39m=[32m"½"[39m
+  [36m/>[39m
+
+  Name "α":
+  [36m<option[39m
+    [33mvalue[39m=[32m"α"[39m
+  [36m/>[39m
+
+  Name "β":
+  [36m<option[39m
+    [33mvalue[39m=[32m"β"[39m
+  [36m/>[39m
+
+  Name "γ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"γ"[39m
+  [36m/>[39m
+
+  Name "Δ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Δ"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Draft empty eligible sections with AnA":
+  [36m<input[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Track changes":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reason for build":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Section 1 — First section":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Section 1 — First section"[39m
+    [33maria-multiline[39m=[32m"true"[39m
+    [33mclass[39m=[32m"tiptap ProseMirror"[39m
+    [33mcontenteditable[39m=[32m"true"[39m
+    [33mrole[39m=[32m"textbox"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtranslate[39m=[32m"no"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "First section":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ed-mast-t"[39m
+    [33mstyle[39m=[32m"display: inline;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  toolbar:
+
+  Name "Formatting":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Formatting"[39m
+    [33mclass[39m=[32m"rse-ribbon"[39m
+    [33mrole[39m=[32m"toolbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<span[39m
+    [33mrole[39m=[32m"alert"[39m
+    [33mstyle[39m=[32m"color: var(--warning, #955d22);"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"sources"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+          [36m>[39m
+            [0mCurrent accessible draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mSaved draft sections · unbound[0m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+          [36m>[39m
+            [0mUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m—[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mCurrent accessible draft[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mFirst section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSecond section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mUnbound draft[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Current accessible draft"[39m
+            [36m>[39m
+              [0mCurrent accessible draft[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a saved section bound to a filing first."[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRe-file saved text[0m
+            [36m</button>[39m
+           ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Prior-session recorded safety source'
+
+Expected: "Prior-session recorded safety source"
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourcePrior-session recorded safety source· cited Not checked against content Re-read sourceRemove"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:112:43
+    110|     await act(async () => { oldBody.resolve({ sources: [source('Prior-…
+    111|
+    112|     expect(document.body.textContent).not.toContain('Prior-session rec…
+       |                                           ^
+    113|     await screen.findByText('Current recorded protocol');
+    114|     expect(replacementSourceReads).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Source recorded —'
+
+Expected: "Source recorded —"
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 2 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 2 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveSource recorded — this section now cites it, with the source’s current checksum."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:141:43
+    139|     await act(async () => { pending.resolve(ok({ success: true, create…
+    140|
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+       |                                           ^
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Citation removed.'
+
+Expected: "Citation removed."
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveCitation removed."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:142:43
+    140|
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+       |                                           ^
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+    144|     expect(screen.getByTestId('sources-rail-open').textContent?.replac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session
+AssertionError: expected 'Current accessible draftSaved draft s…' not to contain 'Earlier session source re-read.'
+
+Expected: "Earlier session source re-read."
+Received: "Current accessible draftSaved draft sections · unboundUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.—Current accessible draft21First section2Second sectionUnbound draft›Current accessible draft›1 SavedRe-file saved text Section Document AnA Comments History Sources 1 Signatures Audit Exports Project files Tasks Access Send for review File to vault Draft with AnA Draft from sourcesReview with AnAReview sectionReview documentReconcile project evidencePrepare targeted fixesAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Your signed-in account or organization changed. Sign in and reopen this document before building.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplateSearch templatesClearSearch titles, descriptions, types, categories, regions and recorded template details.0 of 0 templatesNo templates are available.Choose a templateBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document1First section Rename CheckCurrent accessible draft · 1 citationsParagraphHeading 1Heading 2Heading 3Heading 4Heading 5BIUx2x2ab§ RefCite TableCaptionΩ…±°µ≤≥×≈½αβγΔAsk for a sourceOffer alternativesCommentTrack changesReplacement-session prose.Attribution could not be read, so none is shown. Failed to parse URL from /api/data-origins/document?documentTable=authoring_sections&documentId=20000000-0000-4000-8000-000000000001 Try againAll changes saved·2 wordsDrafted fromRe-read all Record a sourceCurrent recorded protocol· cited Not checked against content Re-read sourceRemoveEarlier session source re-read."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:143:43
+    141|     expect(document.body.textContent).not.toContain('Source recorded —…
+    142|     expect(document.body.textContent).not.toContain('Citation removed.…
+    143|     expect(document.body.textContent).not.toContain('Earlier session s…
+       |                                           ^
+    144|     expect(screen.getByTestId('sources-rail-open').textContent?.replac…
+    145|     expect(sourceReads.length).toBe(readsBeforeReceipt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement
+AssertionError: expected <div class="scaf-note" …(3)>…(2)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="scaf-note"
+  data-testid="refresh-skipped"
+  role="alert"
+  style="margin: 12px; font-size: 12px; border-left-color: var(--error);"
+>
+  <div
+    style="display: flex; gap: 8px; align-items: baseline;"
+  >
+    <b>
+      1
+       citation
+       could not be re-read
+    </b>
+    <span
+      style="flex: 1 1 0%;"
+    />
+    <button
+      class="nda-open"
+    >
+      Dismiss
+    </button>
+  </div>
+  <div
+    style="margin-top: 4px;"
+  >
+    The recorded source could not be verified. Nothing was changed.
+  </div>
+</div>
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:161:53
+    159|       skipped: [{ cite_id: 'old-private-citation', reason: 'source_not…
+    160|
+    161|     expect(screen.queryByTestId('refresh-skipped')).toBeNull();
+       |                                                     ^
+    162|     expect(document.body.textContent).not.toContain('Re-read 0 citatio…
+    163|     expect(sourceReads.length).toBe(readsBeforeReceipt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true)
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^2 Second section$/`
+
+Here are the accessible roles:
+
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"ed-tree"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"ed-comments"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"authoring-oversight-note"[39m
+    [33mid[39m=[32m"_r_1e_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mid[39m=[32m"_r_1f_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"de-desc"[39m
+    [33mid[39m=[32m"_r_1g_-search-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "—Current accessible draft2":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m/>[39m
+
+  Name "1First section":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"padding-left: 22px;"[39m
+  [36m/>[39m
+
+  Name "2Second section":
+  [36m<button[39m
+    [33mclass[39m=[32m"ed-tree-row"[39m
+    [33mstyle[39m=[32m"padding-left: 22px;"[39m
+  [36m/>[39m
+
+  Name "Saved":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+    [33mdata-testid[39m=[32m"save-section"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Re-file saved text":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Open a saved section bound to a filing first."[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Section":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Edit one section"[39m
+  [36m/>[39m
+
+  Name "Document":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Read the whole document"[39m
+  [36m/>[39m
+
+  Name "AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Comments":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "History":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Sources 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-active[39m=[32m"true"[39m
+    [33mdata-testid[39m=[32m"sources-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Signatures":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Audit":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Exports":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"exports-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Project files":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"vault-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Tasks":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"tasks-rail-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Access":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"access-rail-open"[39m
+  [36m/>[39m
+
+  Name "Send for review":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"send-for-review-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "File to vault":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"file-to-vault-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export this document and file the file into the project vault, with its SHA-256 recorded."[39m
+  [36m/>[39m
+
+  Name "Draft with AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Draft from sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdata-testid[39m=[32m"ai-draft-open"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Draft this section from Data Room evidence and accept it with recorded citations."[39m
+  [36m/>[39m
+
+  Name "Review section":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Review document":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Reconcile project evidence":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Prepare targeted fixes":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"_r_1e_"[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Check saved sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Your signed-in account or organization changed. Reopen this document before checking saved sources."[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Clear template search":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Clear template search"[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Preview build":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Build document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Rename":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mstyle[39m=[32m"margin-left: 8px; vertical-align: middle;"[39m
+    [33mtitle[39m=[32m"Rename this section's code and title — its content and history are unchanged"[39m
+  [36m/>[39m
+
+  Name "Move 1 up":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Move 1 up"[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Move this section up — the document assembles and exports in tree order"[39m
+  [36m/>[39m
+
+  Name "Move 1 down":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Move 1 down"[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mtitle[39m=[32m"Move this section down"[39m
+  [36m/>[39m
+
+  Name "Check":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mstyle[39m=[32m"margin-left: 4px; vertical-align: middle;"[39m
+    [33mtitle[39m=[32m"Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."[39m
+  [36m/>[39m
+
+  Name "Bold (⌘B)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Bold (⌘B)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+    [33mtitle[39m=[32m"Bold (⌘B)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Italic (⌘I)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Italic (⌘I)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+    [33mtitle[39m=[32m"Italic (⌘I)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Underline (⌘U)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Underline (⌘U)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+    [33mtitle[39m=[32m"Underline (⌘U)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Superscript (⌘.) — x2":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+    [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Subscript (⌘,) — x2":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+    [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Highlight — ab":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Highlight — ab"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+    [33mtitle[39m=[32m"Highlight"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Bullet list (⌘⇧8)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+    [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Numbered list (⌘⇧7)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+    [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align left":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align left"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-left"[39m
+    [33mtitle[39m=[32m"Align left"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align center":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align center"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-center"[39m
+    [33mtitle[39m=[32m"Align center"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Align right":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Align right"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-align-right"[39m
+    [33mtitle[39m=[32m"Align right"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert a link":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert a link"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-a-link"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Insert a link"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert a cross-reference to another section — § Ref":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert a cross-reference to another section — § Ref"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-a-cross-reference-to-another-section"[39m
+    [33mtitle[39m=[32m"Insert a cross-reference to another section"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cite a source — inserts a numbered citation and adds the source to this document’s reference list":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Cite a source — inserts a numbered citation and adds the source to this document’s reference list"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-cite-a-source-inserts-a-numbered-citation-and-adds-the-source-to-this-document-s-reference-list"[39m
+    [33mtitle[39m=[32m"Cite a source — inserts a numbered citation and adds the source to this document’s reference list"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert table (3 columns × 3 rows, header row)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert table (3 columns × 3 rows, header row)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-table-3-columns-3-rows-header-row-"[39m
+    [33mtitle[39m=[32m"Insert table (3 columns × 3 rows, header row)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-insert-an-image-png-jpeg-or-gif-stored-in-the-tenant-s-governed-image-store-"[39m
+    [33mtitle[39m=[32m"Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Caption a table or figure — put the cursor in a table, or select a figure":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Caption a table or figure — put the cursor in a table, or select a figure"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-caption-a-table-or-figure-put-the-cursor-in-a-table-or-select-a-figure"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Caption a table or figure — put the cursor in a table, or select a figure"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Undo (⌘Z)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Undo (⌘Z)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-undo"[39m
+    [33mtitle[39m=[32m"Undo (⌘Z)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Redo (⌘⇧Z)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Redo (⌘⇧Z)"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-redo"[39m
+    [33mtitle[39m=[32m"Redo (⌘⇧Z)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Find & replace (Ctrl/⌘-F)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Find & replace (Ctrl/⌘-F)"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-find-replace-ctrl-f-"[39m
+    [33mtitle[39m=[32m"Find & replace (Ctrl/⌘-F)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-ask-ana-to-suggest-a-source-for-the-selected-claim-this-does-not-insert-a-citation"[39m
+    [33mtitle[39m=[32m"Ask AnA to suggest a source for the selected claim — this does not insert a citation"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-offer-alternatives-for-the-selected-passage-ana-drafts-up-to-three-and-nothing-changes-until-you-choose-one"[39m
+    [33mtitle[39m=[32m"Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Comment on the selection":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Comment on the selection"[39m
+    [33mclass[39m=[32m"rse-rb"[39m
+    [33mdata-testid[39m=[32m"rse-rb-comment-on-the-selection"[39m
+    [33mtitle[39m=[32m"Comment on the selection"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Try again":
+  [36m<button[39m
+    [33mstyle[39m=[32m"border: 1px solid var(--border); background: transparent; color: var(--text-100); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-reading…":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+    [33mdata-testid[39m=[32m"refresh-all-sources"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."[39m
+  [36m/>[39m
+
+  Name "Close sources":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close sources"[39m
+    [33mclass[39m=[32m"ed-comments-close"[39m
+    [33mtitle[39m=[32m"Close sources"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Record a source":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+  [36m/>[39m
+
+  Name "Re-read source":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+  [36m/>[39m
+
+  Name "Remove":
+  [36m<button[39m
+    [33mclass[39m=[32m"nda-open"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"ed-doc-h"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Save and sign":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Save and sign"[39m
+    [33mclass[39m=[32m"ed-doc-commit"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  Name "Editor view":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Editor view"[39m
+    [33mclass[39m=[32m"ed-viewtoggle"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "AnA document oversight":
+  [36m<section[39m
+    [33maria-label[39m=[32m"AnA document oversight"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+  [36m/>[39m
+
+  Name "Document assembly":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document assembly"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+    [33mstyle[39m=[32m"min-width: 0;"[39m
+  [36m/>[39m
+
+  Name "Document attribution":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document attribution"[39m
+    [33mstyle[39m=[32m"border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.5;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-desc"[39m
+    [33mid[39m=[32m"_r_1g_-results"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Search templates":
+  [36m<input[39m
+    [33maria-controls[39m=[32m"_r_1g_"[39m
+    [33maria-describedby[39m=[32m"_r_1g_-search-hint _r_1g_-results"[39m
+    [33mclass[39m=[32m"de-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mid[39m=[32m"_r_1g_-search"[39m
+    [33mplaceholder[39m=[32m"Search titles and template details"[39m
+    [33mstyle[39m=[32m"min-width: 0; flex: 1 1 0%;"[39m
+    [33mtype[39m=[32m"search"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Template":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"_r_1f_ _r_1g_-results"[39m
+    [33mclass[39m=[32m"de-select"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mid[39m=[32m"_r_1g_"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Build target":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Paragraph style":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Paragraph style"[39m
+    [33mclass[39m=[32m"rse-sel"[39m
+  [36m/>[39m
+
+  Name "Insert symbol":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Insert symbol"[39m
+    [33mclass[39m=[32m"rse-sel"[39m
+    [33mtitle[39m=[32m"Insert a symbol"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a template":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Entire document":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Paragraph":
+  [36m<option[39m
+    [33mvalue[39m=[32m"p"[39m
+  [36m/>[39m
+
+  Name "Heading 1":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h1"[39m
+  [36m/>[39m
+
+  Name "Heading 2":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h2"[39m
+  [36m/>[39m
+
+  Name "Heading 3":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h3"[39m
+  [36m/>[39m
+
+  Name "Heading 4":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h4"[39m
+  [36m/>[39m
+
+  Name "Heading 5":
+  [36m<option[39m
+    [33mvalue[39m=[32m"h5"[39m
+  [36m/>[39m
+
+  Name "Ω…":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "±":
+  [36m<option[39m
+    [33mvalue[39m=[32m"±"[39m
+  [36m/>[39m
+
+  Name "°":
+  [36m<option[39m
+    [33mvalue[39m=[32m"°"[39m
+  [36m/>[39m
+
+  Name "µ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"µ"[39m
+  [36m/>[39m
+
+  Name "≤":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≤"[39m
+  [36m/>[39m
+
+  Name "≥":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≥"[39m
+  [36m/>[39m
+
+  Name "×":
+  [36m<option[39m
+    [33mvalue[39m=[32m"×"[39m
+  [36m/>[39m
+
+  Name "≈":
+  [36m<option[39m
+    [33mvalue[39m=[32m"≈"[39m
+  [36m/>[39m
+
+  Name "½":
+  [36m<option[39m
+    [33mvalue[39m=[32m"½"[39m
+  [36m/>[39m
+
+  Name "α":
+  [36m<option[39m
+    [33mvalue[39m=[32m"α"[39m
+  [36m/>[39m
+
+  Name "β":
+  [36m<option[39m
+    [33mvalue[39m=[32m"β"[39m
+  [36m/>[39m
+
+  Name "γ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"γ"[39m
+  [36m/>[39m
+
+  Name "Δ":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Δ"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Draft empty eligible sections with AnA":
+  [36m<input[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Track changes":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reason for build":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Section 1 — First section":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Section 1 — First section"[39m
+    [33maria-multiline[39m=[32m"true"[39m
+    [33mclass[39m=[32m"tiptap ProseMirror"[39m
+    [33mcontenteditable[39m=[32m"true"[39m
+    [33mrole[39m=[32m"textbox"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtranslate[39m=[32m"no"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "First section":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ed-mast-t"[39m
+    [33mstyle[39m=[32m"display: inline;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  toolbar:
+
+  Name "Formatting":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Formatting"[39m
+    [33mclass[39m=[32m"rse-ribbon"[39m
+    [33mrole[39m=[32m"toolbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<span[39m
+    [33mrole[39m=[32m"alert"[39m
+    [33mstyle[39m=[32m"color: var(--warning, #955d22);"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"sources"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+          [36m>[39m
+            [0mCurrent accessible draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mSaved draft sections · unbound[0m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+          [36m>[39m
+            [0mUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note"[39m
+          [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+        [36m>[39m
+          [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m—[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mCurrent accessible draft[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mFirst section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mSecond section[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mUnbound draft[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Current accessible draft"[39m
+            [36m>[39m
+              [0mCurrent accessible draft[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a saved section bound to a filing first."[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRe-file saved text[0m
+            [36m</button>[39m
+           ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:174:30
+    172|     fireEvent.click(screen.getByTestId('refresh-all-sources'));
+    173|     if (switchSection) {
+    174|       fireEvent.click(screen.getByRole('button', { name: /^2 Second se…
+       |                              ^
+    175|       await waitFor(() => expect(document.querySelector('.tiptap')?.te…
+    176|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  16:41:11
+   Duration  8.91s (transform 2.53s, setup 130ms, import 3.19s, tests 5.02s, environment 430ms)
+

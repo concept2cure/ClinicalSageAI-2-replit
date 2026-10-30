@@ -24,6 +24,7 @@ import { promises as fs, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import JSZip from 'jszip';
+import { DOMParser } from '@xmldom/xmldom';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
@@ -144,24 +145,19 @@ async function assembledReady() {
   return run;
 }
 
-async function openSequence(number: string): Promise<number> {
+async function openSequence(number: string, submissionId = 3): Promise<number> {
   const seq = await h.pglite.query<{ id: number }>(`INSERT INTO ectd_sequences (submission_id, region, sequence_number, status, organization_id, created_by)
-    VALUES (3, 'fda', $1, 'draft', ${ORG}, ${USER}) RETURNING id`, [number]);
+    VALUES ($2, 'fda', $1, 'draft', ${ORG}, ${USER}) RETURNING id`, [number, submissionId]);
   return Number(seq.rows[0].id);
 }
 
 const placeInto = (deps: CsrPlacementDeps, assemblyId: number, sequence: number) =>
   placeCsrAssembly(q, deps, { organizationId: ORG, userId: USER, jobId: 41, assemblyId, sequenceId: sequence, reason: 'CSR for the Part B data cut' });
 
-it('packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC)', async () => {
-  const run = await assembledReady();
-  const leaves = run.result!.leaves;
-  await placeInto(realPlacement(), run.id, sequenceId);
-  const rows = await placedLeafRows(sequenceId);
-  expect(rows).toHaveLength(leaves.length);
-
-  // Package the sequence's leaves as Submission Center does.
-  const stageDir = path.join(work, 'stage');
+/** The same persisted-leaf materialization and package path Submission Center uses. */
+async function packageSequence(sequence: number, label: string) {
+  const rows = await placedLeafRows(sequence);
+  const stageDir = path.join(work, `${label}-stage`);
   await fs.mkdir(stageDir, { recursive: true });
   const core = rows.map(coreLeafFromSubmissionLeaf);
   // As assemble-from-core.ts passes them: the source reference and the op, each present (null when absent).
@@ -171,10 +167,37 @@ it('packages a placed CSR with every GoToR link in the body naming a file in the
   const ectdLeaves = core.map(l => mapCoreLeafToEctdLeaf(l, materialized.byKey.get(leafSourceKey(l.documentTable, l.documentId, l.documentUuid))!));
   const bundle = await packageEctdSubmission({
     region: 'fda', applicationId: '123456', sequence: '0000', submissionType: 'original', fda: { applicationType: 'ind' },
-    sponsorId: 'D', sponsorName: 'SYNTHETIC sponsor', productName: 'SYNTHETIC product', outputDir: path.join(work, 'pkg'),
+    sponsorId: 'D', sponsorName: 'SYNTHETIC sponsor', productName: 'SYNTHETIC product', outputDir: path.join(work, `${label}-pkg`),
     environment: 'staging', leaves: ectdLeaves, studyMeta: [{ studyId: 'SYN-LMN201-B', studyTitle: 'SYNTHETIC LMN-201-shaped study' }],
   });
+  return { bundle, materialized, rows };
+}
+
+it('packages a placed CSR with source-confirmed body roles and every GoToR link naming a packaged file (SYNTHETIC)', async () => {
+  const run = await assembledReady();
+  const leaves = run.result!.leaves;
+  await placeInto(realPlacement(), run.id, sequenceId);
+  const { bundle, materialized, rows } = await packageSequence(sequenceId, 'current-csr');
+  expect(rows).toHaveLength(leaves.length);
+  // Independent source value: ICH STF v2.6.1 §III.B p8, E3 sections 1 and 3–15.
+  for (const part of leaves.filter(l => ['body', '14', '14.3.3'].includes(l.appendix))) {
+    expect(rows.find(row => row.documentId === part.renderedLeafFileId)?.stfFileTag).toBe('study-report-body');
+  }
   const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+  const stfEntry = Object.keys(zip.files).find(file => file.endsWith('/stf-syn-lmn201-b.xml'))!;
+  expect(stfEntry).toBeTruthy();
+  const stfXml = await zip.file(stfEntry)!.async('string');
+  const document = new DOMParser().parseFromString(stfXml, 'application/xml');
+  const contents = Array.from(document.getElementsByTagName('doc-content'));
+  expect(contents).toHaveLength(leaves.length);
+  for (const part of leaves.filter(l => ['body', '14', '14.3.3'].includes(l.appendix))) {
+    const content = contents.find(node => node.getElementsByTagName('title')[0]?.textContent === part.title)!;
+    expect(content).toBeTruthy();
+    const tag = content.getElementsByTagName('file-tag')[0];
+    expect(tag.getAttribute('name')).toBe('study-report-body');
+    expect(tag.getAttribute('info-type')).toBe('ich');
+  }
+  expect(Array.from(document.getElementsByTagName('file-tag')).some(tag => tag.getAttribute('name') === 'study-report')).toBe(false);
   const bodyLeaf = leaves.find(l => l.appendix === 'body')!;
   const bodyName = materialized.byKey.get(leafSourceKey('rendered_leaf_files', bodyLeaf.renderedLeafFileId))!.fileName;
   const bodyEntry = Object.keys(zip.files).find(f => f.endsWith(`/${bodyName}`))!;
@@ -184,6 +207,22 @@ it('packages a placed CSR with every GoToR link in the body naming a file in the
   expect(targets.length).toBeGreaterThan(3);
   const folder = path.posix.dirname(bodyEntry);
   expect(targets.filter(t => !zip.file(`${folder}/${t}`))).toEqual([]);
+}, 300_000);
+
+it('refuses newly packaging an already placed old role without changing its retained rows or assembly (SYNTHETIC)', async () => {
+  const run = await assembledReady();
+  await h.pglite.query(`INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+    VALUES (4, 'SYNTHETIC second application', 'ind', 'pharma', 'fda', ${ORG}, ${USER}, $1)`, [PROGRAM]);
+  const sequence = await openSequence('0000', 4);
+  await placeInto(realPlacement(), run.id, sequence);
+  const body = run.result!.leaves.find(leaf => leaf.appendix === 'body')!;
+  // Historical fixture: metadata written before the role correction, not an automatic repair.
+  await h.pglite.query('UPDATE submission_leaves SET stf_file_tag=$1 WHERE sequence_id=$2 AND document_id=$3', ['study-report', sequence, body.renderedLeafFileId]);
+  const before = await placedLeafRows(sequence);
+  const assembly = (await readLatestCsrAssembly(q, ORG, 41))!;
+  await expect(packageSequence(sequence, 'legacy-csr')).rejects.toThrow(/study-report.*study-report-body/);
+  expect(await placedLeafRows(sequence)).toEqual(before);
+  expect(await readLatestCsrAssembly(q, ORG, 41)).toEqual(assembly);
 }, 300_000);
 
 it('finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC)', async () => {

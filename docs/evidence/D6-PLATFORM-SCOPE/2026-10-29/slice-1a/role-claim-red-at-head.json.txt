@@ -1,0 +1,61 @@
+{
+  "A": 7,
+  "B": 8,
+  "adminA": 1,
+  "membershipRoleBefore": "admin",
+  "results": {
+    "runWithTenantScope tenant A, role app_super_admin": {
+      "B unified_tasks": 1,
+      "B audit_logs": 1,
+      "B users": 1,
+      "B vault.legal_holds": 1,
+      "UPDATE B unified_tasks": "rowCount 1",
+      "A membership := app_super_admin": "rowCount 1"
+    },
+    "establishRequestTenantScope tenant A, role app_super_admin": {
+      "viaPool": {
+        "B unified_tasks": 1,
+        "B audit_logs": 1,
+        "B users": 1,
+        "B vault.legal_holds": 1,
+        "UPDATE B unified_tasks": "rowCount 1",
+        "A membership := app_super_admin": "rowCount 1"
+      },
+      "viaRequestClient": {
+        "B unified_tasks": 1,
+        "B audit_logs": 1,
+        "B users": 1,
+        "B vault.legal_holds": 1,
+        "UPDATE B unified_tasks": "rowCount 1",
+        "A membership := app_super_admin": "rowCount 1"
+      }
+    },
+    "runWithTenantScope tenant A, role admin": {
+      "B unified_tasks": 0,
+      "B audit_logs": 0,
+      "B users": 0,
+      "B vault.legal_holds": 0,
+      "UPDATE B unified_tasks": "rowCount 0",
+      "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+    },
+    "establishRequestTenantScope tenant A, role admin": {
+      "viaPool": {
+        "B unified_tasks": 0,
+        "B audit_logs": 0,
+        "B users": 0,
+        "B vault.legal_holds": 0,
+        "UPDATE B unified_tasks": "rowCount 0",
+        "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+      },
+      "viaRequestClient": {
+        "B unified_tasks": 0,
+        "B audit_logs": 0,
+        "B users": 0,
+        "B vault.legal_holds": 0,
+        "UPDATE B unified_tasks": "rowCount 0",
+        "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+      }
+    }
+  }
+}
+probe exit 0

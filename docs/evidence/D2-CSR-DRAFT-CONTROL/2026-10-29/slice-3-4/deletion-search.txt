@@ -1,0 +1,107 @@
+# Rule 3 deletion search for slices 3 and 4 (revise by instruction; alternatives for a selected passage)
+# Source: a blob-less clone of the full concept2cure-v2 history (the working clone is shallow), tip 7f132f663 2026-10-29.
+# Command: git log --all --diff-filter=D --name-only --format='@@ %h %ad %s' --date=short -- client server shared
+# Filter (case-insensitive) on the deleted paths: selection|inline.?ai|rewrite|rephrase|alternative|passage|revis|refine|redraft|paraphras|variant|regenerat|derived|instruction|toolbar|suggest|track.?change|diff|compare|redline
+# _archived/ trees and .py files dropped. Each line: commit | date | subject | deleted path
+
+90760ae00 2026-08-17 Editor: one canonical canvas (TipTap), track changes, anchored comments, revision diff, collab wiring | client/src/concept2cure/v2/surfaces/EditorCanvas.tsx
+877747535 2026-08-04 fix(ci): regenerate the second dead-code baseline, and delete two unused routers | server/routes/atoms.js
+877747535 2026-08-04 fix(ci): regenerate the second dead-code baseline, and delete two unused routers | server/routes/collaboration.ts
+2895218b8 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/claude-ectd-coauthor/SelectionToolbar.tsx
+2895218b8 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/concept2cure-projects/tabs/InstructionsTab.tsx
+2895218b8 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/intelligentDocs/SourceSuggestionPanel.tsx
+2895218b8 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/knowledge/CustomInstructions.tsx
+a32a0067c 2026-07-13 feat(ui-v2): phases 3-7 full UI replacement + backend gap closures (#1012) | client/src/concept2cure/hooks/useWorkspaceSuggestedActions.ts
+e70291f9f 2026-06-11 feat(ops): GA seed gate, security-alert webhook routing, staging invariants rollout | server/routes/510k-literature-routes.ts
+e70291f9f 2026-06-11 feat(ops): GA seed gate, security-alert webhook routing, staging invariants rollout | server/routes/510k-project.routes.ts
+e70291f9f 2026-06-11 feat(ops): GA seed gate, security-alert webhook routing, staging invariants rollout | server/routes/510kRoutes.ts
+46044c426 2026-06-05 chore(cleanup): Tier 3C — remove 126 zero-reference legacy client files (vite build + tsc green) | client/src/lib/diff.ts
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/components/ui/toast.jsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/components/ui/toaster.jsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/contexts/AuthContext.jsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/contexts/AuthContext.tsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/contexts/UserContext.jsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/contexts/UserContext.tsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/use-toast.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/use-toast.jsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/use-toast.tsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/useQCWebSocket.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/useQCWebSocket.ts
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/hooks/useQCWebSocket.tsx
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/lib/queryClient.enhanced.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/lib/queryClient.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/lib/ui-utils.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/lib/ui-utils.ts
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/lib/utils.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/utils/axiosWithToken.js
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/utils/axiosWithToken.ts
+307081beb 2026-06-05 chore(cleanup): Tier 3B — remove superseded duplicate client variants (.jsx/.js); vite build green | client/src/utils/errorBoundary.jsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/editor/DocumentDiff.tsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/editor/extensions/TrackChangesExtension.ts
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/provenance/DocumentVersionCompare.tsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/ui/InlineAIButton.tsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/ui/InlineAIMenu.tsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/ui/ValidationRefineTrigger.tsx
+e5a74a4df 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/hooks/useInlineAI.ts
+ac5018cc3 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/citation-engine-diff.test.ts
+ac5018cc3 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/citation-engine-project-diff.test.ts
+ac5018cc3 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/submission-chat-apply-rewrite.test.ts
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/510k/LiteratureVisualizationPanel.jsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/DocumentDiffViewer.tsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/cmc/AISuggestionEngine.tsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/coauthor/AnnotationToolbar.jsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/coauthor/SearchSuggestions.jsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/documentrecommender/ContentSuggestionPanel.jsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/extensions/TrackChangesExtension.js
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/lumen-bio/ProtocolVersionCompare.tsx
+7a144fd1e 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/protocol/ProtocolCompareViewer.tsx
+6a25ab34d 2026-05-01 chore: delete 31 orphaned workspace/* files (-9,172 LOC) | client/src/concept2cure/components/workspace/useWorkspaceDerivedState.ts
+2776a04a3 2026-05-01 Delete orphan workspace/ files (legacy non-canonical workbench) | client/src/concept2cure/components/workspace/useWorkspaceDerivedState.ts
+b79f020e1 2026-04-05 refactor: surgical dead code purge — 670 files removed, build verified | server/routes/versionDiff.ts
+fc9a7943b 2026-04-04 refactor: Phase 2D — delete orphaned editors, pages, and route components | client/src/components/DocumentDiffViewer.tsx
+3ea8cc863 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/coauthor/AnnotationToolbar.jsx
+3ea8cc863 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/lumen-bio/ProtocolVersionCompare.tsx
+3ea8cc863 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/protocol/ProtocolCompareViewer.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/document-management/DocuShareIntegration.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/document-management/DocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/document-management/DocumentBrowser.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/document-management/FolderTreeView.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/AIEnhancedDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/AiGeneratedBadge.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/DocumentRecommendations.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/EnhancedDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/IntelligentDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/RecommendationSidebar.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/SmartDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/UnifiedDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/AuditTrail.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/DocumentPreview.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/DocumentSearch.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/DocumentUpload.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/OCRProcessor.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/docushare/components/VersionHistory.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/AlertPreferencesPanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/AnimatedWorkflow.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/DocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/EnhancedDocuSharePanel.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/FDAFormsPanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/INDAutomationPanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/INDDocuShareIntegration.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/ManualDataForm.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/ProjectKnowledgePanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/SAMLSettingsPanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/TeamsSettingsPanel.tsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/WorkflowDashboard.jsx
+88b8be526 2026-04-04 refactor: Phase 2 — delete all 8 DocuSharePanel variants + 2 dead directories | client/src/components/ind-automation/WorkflowProgress.jsx
+e1dca6e3d 2026-04-04 refactor: Phase 1 final — delete remaining orphaned services | server/services/componentDiff.js
+b6e991501 2026-04-04 refactor: Phase 1 dead code purge — delete unused routes and orphaned services | server/services/diffChecker.js
+83fa7f6cf 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines) | client/src/components/HeroMessagingVariants.jsx
+83fa7f6cf 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines) | client/src/components/ProtocolCorrectionSuggestions.tsx
+36f997067 2026-03-30 chore: delete 35 verified orphaned client components (-13,782 lines) | client/src/components/DocumentDiffDialog.tsx
+36f997067 2026-03-30 chore: delete 35 verified orphaned client components (-13,782 lines) | client/src/components/VersionDiff.tsx
+5c1033735 2026-03-30 chore: delete 3 orphaned components + remove stale jspdf type declarations | client/src/components/csr/CSRCompareViewer.tsx
+786e79499 2026-03-23 Remove unused legacy vault page variants to reduce V2 surface area | client/src/pages/vault/DataRoomPage.jsx
+786e79499 2026-03-23 Remove unused legacy vault page variants to reduce V2 surface area | client/src/pages/vault/DocumentsPage.jsx
+786e79499 2026-03-23 Remove unused legacy vault page variants to reduce V2 surface area | client/src/pages/vault/PredictiveVaultBrowser.jsx
+786e79499 2026-03-23 Remove unused legacy vault page variants to reduce V2 surface area | client/src/pages/vault/PredictiveVaultPage.jsx
+3decdf8b3 2026-03-22 chore: remove _deprecated folder (13 dead component files) | client/src/components/_deprecated/ProtocolCorrectionSuggestions.jsx

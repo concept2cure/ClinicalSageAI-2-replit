@@ -1,0 +1,14 @@
+# The fetch gate, extended to the XHR transport's callers, made to fail on each case it exists for
+
+## The ingest caller drops the bearer header: sendIngest(form, {}, onProgress)
+❌ ci:unauthenticated-fetch — 1 raw fetch() call(s) send no bearer token:
+   client/src/concept2cure/v2/useVaultUpload.ts:231  form
+gate exit 1
+
+## A second XMLHttpRequest, outside the transport
+❌ ci:unauthenticated-fetch — client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx:336 makes a raw XMLHttpRequest; send through client/src/concept2cure/v2/vaultIngestTransport.ts so its headers are scanned
+gate exit 1
+
+## Restored
+✅ ci:unauthenticated-fetch — 72 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+gate exit 0

@@ -1,0 +1,24 @@
+# Source at47ce1d3d9; nine new controls fail for the product regressions they cover.
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > a full send with no reply is unknown in the row and batch, never claimed not recorded 23ms
+   → expected { name: 'a.pdf', …(1) } to match object { name: 'a.pdf', unknown: true }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > tracks a full send even without a progress callback and preserves partial-send refusal 4ms
+   → expected { name: 'a.pdf', …(1) } to match object { unknown: true }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > a refused row queued behind another retry says waiting without refusal colour 55ms
+   → Unable to find an element with the text: Waiting: files are sent one at a time.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > refuses a File-only line rather than claiming its empty patch applied 7ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > names the chosen CSV and states the actual zero applied count 5010ms
+   → expected 'Manifest applied to 0 files. Nothing …' to contain 'library.csv'
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > caps the details while keeping exact counts for large refused and unnamed lists 2ms
+   → expected 'Manifest applied to 0 files. Nothing …' not to contain 'bad39.pdf'
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > exports a UTF-8 BOM so spreadsheet folder labels retain their characters 1ms
+   → expected 70 to be 65279 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > refuses to apply a delayed file read once upload starts 62ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > keeps its live regions mounted, then clears stale notes when upload starts 40ms
+   → Unable to find an accessible element with the role "status"
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  16:13:27
+   Duration  6.53s (transform 418ms, setup 163ms, import 550ms, tests 5.21s, environment 483ms)

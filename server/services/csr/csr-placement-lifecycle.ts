@@ -12,10 +12,11 @@
  *     placement writes from the job's protocol/study id) and its section;
  *   - the part: the Study Tagging File role (stf_file_tag). Every §16 appendix
  *     has its own role (csr-assembly-plan.ts). The body and the §14 tables share
- *     'study-report', so for those the part is the one the CSR placement that
+ *     'study-report-body', so for those the part is the one the CSR placement that
  *     wrote the leaf recorded (csr_assembly_runs.placement.leaves[].appendix).
- *     A 'study-report' leaf no CSR placement wrote is not identified, and is
- *     listed for the user rather than guessed.
+ *     An earlier 'study-report' role is recognized only while reading history.
+ *     A shared-role leaf no CSR placement wrote is not identified, and is
+ *     listed for the user rather than guessed; no stored role is normalized.
  *
  * Only what is still current counts: an earlier leaf another earlier leaf
  * already replaced or withdrew (parent_leaf_id) is superseded, and a removed
@@ -82,7 +83,9 @@ export interface CsrLifecyclePlan {
 /** Each §16 appendix's own STF role, and the part it identifies. */
 const ROLE_PART: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries(
   [...Object.entries(CSR_SUPPLIED_APPENDICES), ...Object.entries(CSR_LISTING_APPENDICES)].map(([number, tag]) => [tag, number])));
-const CSR_ROLES = [CSR_BODY_FILE_TAG, ...Object.keys(ROLE_PART)];
+// Read-only continuity for leaves written before the verified body-role fix.
+// New assembly and packaging never acquire this obsolete spelling here.
+const CSR_ROLES = [CSR_BODY_FILE_TAG, 'study-report', ...Object.keys(ROLE_PART)];
 
 /** The current CSR leaves of a study in the earlier sequences of the target's application. */
 export async function readPriorCsrStudyLeaves(q: Queryable, a: PriorStudyLeavesArgs): Promise<PriorCsrStudyLeaf[]> {

@@ -49,6 +49,7 @@ import {
 } from '../csr-builder';
 import { renderE3Brief } from '../ind/ctd/csr-e3-guidance';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver';
+import { buildCsrAuthoringEvidence } from '../csr/cortex-authoring-context';
 
 const STUDY: CSRBuildRequest['studyInfo'] = {
   title: 'A Study of Drug X',
@@ -96,29 +97,53 @@ beforeEach(() => {
 });
 
 describe.each(PATHS)('%s', (_label, draft) => {
-  it('§12.6 is drafted against the E3 record, not "per ICH E3 guidelines"', async () => {
-    const msg = await draft(section('12.6'));
-    const firstLine = renderE3Brief('12.6')!.split('\n')[0];
-    expect(firstLine).toBe('## ICH E3 §12.6 Safety Conclusions');
+  it('§9.1 is drafted against the E3 record, not "per ICH E3 guidelines"', async () => {
+    const msg = await draft(section('9.1'));
+    const firstLine = renderE3Brief('9.1')!.split('\n')[0];
+    expect(firstLine).toBe('## ICH E3 §9.1 Overall Study Design and Plan — Description');
     expect(msg).toContain(firstLine);
     // A bullet from the body of the brief, so a heading alone does not pass.
-    const bullet = renderE3Brief('12.6')!.split('\n').find((l) => l.startsWith('- '));
+    const bullet = renderE3Brief('9.1')!.split('\n').find((l) => l.startsWith('- '));
     expect(bullet).toBeTruthy();
     expect(msg).toContain(bullet);
     expect(msg).not.toContain(RECALL_SENTENCE);
     expect(msg).toMatch(/do not add requirements from memory/i);
   });
 
-  it('§2, the synopsis, is briefed with E3 §2 itself — E3 numbers no synopsis children', async () => {
-    const msg = await draft(section('2'));
-    expect(msg).toContain('## ICH E3 §2 Synopsis');
+  it('§8, study objectives, is briefed with E3 §8 itself — E3 numbers no objectives children', async () => {
+    const msg = await draft(section('8'));
+    expect(msg).toContain('## ICH E3 §8 Study Objectives');
     expect(msg).not.toMatch(/does not number/);
     expect(msg).not.toContain(RECALL_SENTENCE);
   });
 
-  it('§12.2.1, a heading the old outline did not have, is briefed with its own E3 record', async () => {
-    const msg = await draft(section('12.2.1'));
-    expect(msg).toContain(renderE3Brief('12.2.1')!.split('\n')[0]);
+  it('a detailed statistical-plan heading is briefed with its own E3 record', async () => {
+    const msg = await draft(section('9.7.1'));
+    expect(msg).toContain(renderE3Brief('9.7.1')!.split('\n')[0]);
+  });
+});
+
+describe('result messages use an actual canonical retained evidence pack', () => {
+  it.each(['12.6', '2', '12.2.1'])('§%s preserves its own E3 brief and quotes its source at user priority', async number => {
+    const programId = '11111111-1111-4111-8111-111111111111';
+    const runId = '22222222-2222-4222-8222-222222222222';
+    const evidence = buildCsrAuthoringEvidence({
+      programId, runId, historical: true, releaseEligibilityVerified: false,
+      studies: [{ source: { documentId: '33333333-3333-4333-8333-333333333333', version: '1', sha256: 'a'.repeat(64),
+        studyId: 'STUDY-ALPHA', protocolNumber: STUDY.protocolNumber, dataCutDate: '2026-10-01', clinicalVerification: 'not-established' },
+      tables: { analysisPopulations: { title: 'Recorded analysis populations', headers: ['Analysis set', 'Recorded count'], rows: [['Full analysis set', '120']] } } }],
+    }, { programId, runId, studyId: 'STUDY-ALPHA', sectionNumber: number });
+    const result = await draftCSRSectionWithProvenance(section(number), REQUEST, undefined, evidence);
+    expect(result.source).toBe('ai');
+    expect(completeMock).toHaveBeenCalledTimes(1);
+    const messages = completeMock.mock.calls[0][0] as Array<{ role: string; content: string }>;
+    const users = messages.filter(message => message.role === 'user');
+    expect(users).toHaveLength(2);
+    expect(users[0].content).toContain(renderE3Brief(number)!.split('\n')[0]);
+    expect(users[0].content).not.toContain(RECALL_SENTENCE);
+    expect(users[0].content).toMatch(/do not add requirements from memory/i);
+    expect(JSON.parse(users[1].content)).toMatchObject({ type: 'retained_csr_evidence', evidence: { evidenceDigest: evidence.evidenceDigest } });
+    expect(messages.filter(message => message.role === 'system').map(message => message.content).join('\n')).not.toContain(evidence.evidenceDigest);
   });
 });
 

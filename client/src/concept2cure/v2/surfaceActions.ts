@@ -522,8 +522,19 @@ export function applySurfaceAction(
 ): SurfaceActionOutcome {
   const reg = registration;
   if (reg && reg.surfaceId === resolvedTargetSurface(directive)) {
+    const previous = pending;
     const res = performRaw(directive, options?.waitForCommit);
-    if (res.kind === 'done') return res.outcome;
+    if (res.kind === 'done') {
+      // A successful newer choice must not be undone by the earlier retry.
+      // Only retire the captured entry: the handler may have queued newer work.
+      if (res.outcome.status === 'applied' && previous && pending === previous &&
+          previous.directive !== directive && previous.directive.actionId === directive.actionId &&
+          resolvedTargetSurface(previous.directive) === reg.surfaceId) {
+        cancelPendingSurfaceAction(previous.directive,
+          `"${previous.directive.label}" was replaced by a newer action before its screen was ready.`);
+      }
+      return res.outcome;
+    }
     // Mounted but not ready — hold for the surface's ready signal.
     stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome, waitForCommit: options?.waitForCommit });
     return { status: 'stashed' };

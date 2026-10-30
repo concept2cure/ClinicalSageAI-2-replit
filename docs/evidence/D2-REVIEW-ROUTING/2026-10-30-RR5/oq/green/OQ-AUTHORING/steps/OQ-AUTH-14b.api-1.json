@@ -1,0 +1,72 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5241/api/authoring/documents/5bdf2248-39a4-404b-9b5c-4689aed1bf16/review-route",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "round": {
+        "route": {
+          "id": "ef388266-9772-4871-a917-52557fe8c7d8",
+          "round": 1,
+          "senderId": 1,
+          "senderName": "OQ Runner",
+          "order": "parallel",
+          "status": "complete",
+          "statusReason": null,
+          "statusBy": 2,
+          "statusAt": "2026-10-30T15:05:13.544Z",
+          "contentDigest": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+          "reviewDueAt": "2026-11-06T23:59:59.999Z",
+          "approvalDueAt": null,
+          "createdAt": "2026-10-30T15:05:02.841Z"
+        },
+        "members": [
+          {
+            "taskId": "ROUTE-ef388266-2",
+            "userId": 2,
+            "role": "reviewer",
+            "step": 1,
+            "printedName": "OQ Signer",
+            "outcome": "signed",
+            "stepOpen": true,
+            "dueDate": "2026-11-06T23:59:59.999Z",
+            "signature": {
+              "id": "d4432389-00ef-4fdd-8701-beef62c9d3b2",
+              "printedName": "OQ Signer",
+              "meaning": "REVIEWER",
+              "signedAt": "2026-10-30T15:05:13.544Z"
+            },
+            "actId": null
+          }
+        ],
+        "reviewComplete": true,
+        "approvalComplete": false,
+        "history": [
+          {
+            "action": "send",
+            "at": "2026-10-30T15:05:02.899Z",
+            "actorId": 1,
+            "actorName": "OQ Runner",
+            "reason": "OQ-003 step 17: ready for medical review for validation",
+            "members": [
+              {
+                "userId": 2,
+                "role": "reviewer",
+                "printedName": "OQ Signer"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

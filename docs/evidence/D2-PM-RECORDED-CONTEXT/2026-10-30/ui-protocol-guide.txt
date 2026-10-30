@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > keeps every original tab and refuses a tab switch while the section has pending changes 773ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > refuses the suggested study-design step without unmounting the editor 259ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > refuses a section-outline switch without moving the open section 326ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > returns a refusal to AnA instead of reporting a section action as applied 280ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > keeps keyboard focus on the selected tab when a requested keyboard switch is refused 277ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > allows keyboard selection and moves focus when there are no pending section changes 256ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > releases the navigation guard after the save is confirmed and the current record is re-read 605ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > keeps the editor and navigation guard after a concurrent save is refused 360ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > protects an actual shared-editor content edit while its PATCH is unresolved and after refusal 573ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > keeps a nested Create a study design dialog and its inputs when AnA requests a different section 371ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses to select another protocol while the current section has pending changes 571ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses the all protocol scope while pending work belongs to the current project 218ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses the unfiled protocol scope while pending work belongs to the current project 258ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses to start another protocol while the current section has pending changes 367ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > consumes a refused incoming handoff, preserves the editor, and waits for a fresh request after pending changes are reverted 345ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > unregisters its leave guard on unmount so a later clean protocol can be selected 398ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses File protocol in open project while an unfiled protocol has pending section changes 322ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > suggests the five existing steps in order, with only the open step current 205ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Study design step requests its existing study-design tab 53ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Statistics step requests its existing statistics tab 32ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Write protocol step requests its existing document tab 25ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Run checks step requests its existing compliance tab 20ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Review protocol step requests its existing reviews tab 16ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > does not assign a current guided step to an unrelated tab 20ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > asks for a study design when no design is bound 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > reports an unreadable design without treating the recorded link as a successful read 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > reports the recorded blocking findings when approval is blocked 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > suggests writing and checking a resolved design without claiming approval or completion 7ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  18:35:21
+   Duration  14.38s (transform 2.90s, setup 451ms, import 4.33s, tests 6.98s, environment 1.86s)
+

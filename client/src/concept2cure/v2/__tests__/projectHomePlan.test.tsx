@@ -133,6 +133,25 @@ afterEach(() => {
 });
 
 describe('a US IND’s Plan is what the filing needs, by phase', () => {
+  it('starts study and protocol design from the verified project before its filing requirements', async () => {
+    serve();
+    const { onNav } = mount();
+    const plan = await openPlan();
+    const heading = await within(plan).findByRole('heading', { name: 'Start work in this project' });
+    const filing = await within(plan).findByRole('heading', { name: 'What this IND needs' });
+    expect(heading.compareDocumentPosition(filing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const choice = within(plan).getByRole('combobox', { name: 'Core work' });
+    expect(within(choice).getAllByRole('option', { name: 'Study & Protocol Design' })).toHaveLength(1);
+    // RBM and Biostatistics are not in this release; naming a peer does not admit it.
+    expect(Array.from((choice as HTMLSelectElement).options).map(option => option.value)).toEqual(['', 'protocol-dev', 'cmc']);
+    fireEvent.change(choice, { target: { value: 'protocol-dev' } });
+    expect(onNav).not.toHaveBeenCalled();
+    fireEvent.click(within(plan).getByRole('button', { name: 'Start selected work' }));
+    expect(onNav).toHaveBeenCalledExactlyOnceWith('protocol-dev');
+    expect((window as unknown as { C2C_PROJECT?: { id: string } }).C2C_PROJECT?.id).toBe(PID);
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toHaveLength(0);
+  });
+
   it('a new project opens on it, phases in order, with the target date', async () => {
     serve();
     mount();
@@ -296,6 +315,16 @@ describe('what Plan says, and when (design review, pass 3)', () => {
     await openPlan();
     expect(screen.getByText('Reading this project…')).toBeTruthy();
     expect(screen.queryByTestId('pj-plan-none')).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Core work' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Start selected work' })).toBeNull();
+  });
+
+  it('does not offer project initiation for a returned record belonging to another project', async () => {
+    serve({ program: { ...US_DRUG_IND, id: OTHER } });
+    mount();
+    await openPlan();
+    expect(screen.queryByRole('combobox', { name: 'Core work' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Start selected work' })).toBeNull();
   });
 
   it('a filing with no list is not told to "see every document" by the step band', async () => {

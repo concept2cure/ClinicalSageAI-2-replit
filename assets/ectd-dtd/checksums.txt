@@ -12,6 +12,8 @@
 #
 #   <sha256>  ich-ectd-3-2.dtd
 #   <sha256>  us-regional-v3-3.dtd
+#   <sha256>  ich-stf-v2-2.dtd
+#   <sha256>  ich-stf-stylesheet-2-3.xsl
 #   <sha256>  ectd-2-0.xsl
 #   <sha256>  us-regional.xsl
 #   <sha256>  eu-regional.dtd
@@ -48,3 +50,6 @@
 # <sha256>  eu-regional.dtd
 # <sha256>  jp-regional.dtd
 # <sha256>  ca-regional.dtd
+
+# 2026-10-30: STF grammar/current stylesheet requirements documented; official
+# acquisition and measured digests await the runbook prerequisite.

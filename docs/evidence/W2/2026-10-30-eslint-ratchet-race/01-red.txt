@@ -1,0 +1,75 @@
+TAP version 13
+# Subtest: historical source does not enter the source tree while the gate runs
+not ok 1 - historical source does not enter the source tree while the gate runs
+  ---
+  duration_ms: 463.661577
+  type: 'test'
+  location: '/workspace/ClinicalSageAI/scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs:65:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The historical source became visible to other scanners: __eslint_ratchet_prev__.record.js, __eslint_ratchet_prev__.record.js, __eslint_ratchet_prev__.record.js
+    + actual - expected
+
+    + [
+    +   '__eslint_ratchet_prev__.record.js',
+    +   '__eslint_ratchet_prev__.record.js',
+    +   '__eslint_ratchet_prev__.record.js'
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '__eslint_ratchet_prev__.record.js'
+    1: '__eslint_ratchet_prev__.record.js'
+    2: '__eslint_ratchet_prev__.record.js'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/ClinicalSageAI/scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs:73:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: the original basename controls both historical and current warning counts
+not ok 2 - the original basename controls both historical and current warning counts
+  ---
+  duration_ms: 409.567563
+  type: 'test'
+  location: '/workspace/ClinicalSageAI/scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs:81:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /src\/record\.js {2}\(1 -> 0\)/. Input:
+
+    '[ci:eslint-warning-ratchet] --since HEAD (aaaaaaaaa) -- 1 lintable file(s) changed; linting both versions of each...\n' +
+      '[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    [ci:eslint-warning-ratchet] --since HEAD (aaaaaaaaa) -- 1 lintable file(s) changed; linting both versions of each...
+    [ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/ClinicalSageAI/scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs:86:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an invalid real ESLint configuration remains a gate failure
+ok 3 - an invalid real ESLint configuration remains a gate failure
+  ---
+  duration_ms: 226.775695
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1162.127923

@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > does not send project A’s unsent question from the same-mounted project B composer 435ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires draft, older pages, activity and dossier in B’s first commit before passive read resets 278ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a later A visit is fresh and ignores an older-page reply from the first A visit 357ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > ignores late first-page threads, activity and dossier replies from an abandoned project 109ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'account' changes 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'organization' changes 101ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a new sign-in of the same account retires unsent state even though the actor and project match 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace 239ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > preserves the exact composer and loaded history through stage/title changes and ordinary bearer refresh 439ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps the remembered step while retiring global source pins after a project ownership change 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > names the owning client rather than calling the CRO organization the sponsor 139ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no tab says "Not in this release" 172ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > what Submit will hold is named as coming later, in words, with no button 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "plan" opens Plan, a step again 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "lifecycle" opens Submit too 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > a message typed in the start box survives switching tabs 310ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the steps come first; the start box and the conversations sit beside the step and stay on every step 101ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 639ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > keeps a selected step through same-project card republishing 9ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > drops the prior project step on A → B → A 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > clear retires the step and its mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > restores a valid step only for the URL’s same project 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "lifecycle" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "not-a-step" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step {} 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step null 0ms
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  16:25:47
+   Duration  11.37s (transform 2.94s, setup 363ms, import 4.44s, tests 4.10s, environment 1.87s)
+

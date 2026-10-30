@@ -1,0 +1,97 @@
+{
+  "kind": "actual unconfigured local qualification, synthetic golden packages",
+  "agencyQualification": "blocked",
+  "rawAvailableChecksPassed": true,
+  "limitations": [
+    "Official DTD/XSL corpus absent; no schema acceptance claimed",
+    "Licensed external validator/profile not configured",
+    "Raw specification reference declares older criteria4.5, not current4.7 coverage",
+    "No human witness, FDA transmission or agency ACK"
+  ],
+  "original": {
+    "path": "/tmp/ectd-agency-qualification-candidate/v3-fda-out/123456-0000-fda.zip",
+    "sha256": "088977b35de103d8a3098f9d5aad27953e8962d788da39df12768719fb5907b4",
+    "evidencePath": "synthetic-0000.zip"
+  },
+  "amendment": {
+    "path": "/tmp/ectd-agency-qualification-candidate/v3-fda-out/123456-0001-fda.zip",
+    "sha256": "ce3a3a0e2b8e36513abf47de94a1164d69b37f58c9f3a5a7815efe872481daa2",
+    "evidencePath": "synthetic-0001.zip"
+  },
+  "reports": [
+    {
+      "name": "xmllint well-formed (index.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "backbone DOCTYPE (index.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "xmllint well-formed (m1/us/us-regional.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "backbone DOCTYPE (m1/us/us-regional.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "xmllint well-formed (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "backbone DOCTYPE (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "dtd-checksum-manifest",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "stf-cross-linking",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "cross-references",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "0001/xmllint well-formed (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    },
+    {
+      "name": "0001/backbone DOCTYPE (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0
+    }
+  ],
+  "notes": [
+    "No external eValidator configured; xmllint + FDA-criteria subset are the accepted validators for this run.",
+    "STF: 1 study tagging file(s) generated + cross-linked (1 tagged leaves).",
+    "Cross-references: 1 resolved, 0 broken.",
+    "No DTDs vendored (assets/ectd-dtd/*.dtd); DTD *validity* is skipped for 0000/index.xml (needs ich-ectd-3-2.dtd), 0000/m1/us/us-regional.xml (needs us-regional-v3-3.dtd), 0000/m5/5-3-5-1/study-001/stf-study-001.xml (needs ich-stf-v2-2.dtd), 0001/m1/us/us-regional.xml (needs us-regional-v3-3.dtd), 0001/m5/5-3-5-1/study-001/stf-study-001.xml (needs ich-stf-v2-2.dtd) \u2014 that DTD is not in the package. See the separate per-file well-formedness results. Drop the licensed DTD(s) into assets/ectd-dtd/ (or $ECTD_DTD_DIR) to enable it.",
+    "Lifecycle backbone operations emitted: append, delete, new, replace; superseding operations carrying a modified-file pointer: append, delete, replace.",
+    "Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs."
+  ]
+}

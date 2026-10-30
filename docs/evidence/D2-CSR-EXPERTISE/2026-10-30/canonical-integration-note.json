@@ -1,0 +1,7 @@
+{
+  "receipt": "canonical-integration.json",
+  "gitExitCode": 0,
+  "fastForwardedTo": "f0e0ff86352efde626a149a256c42303bc04dfd7",
+  "sourceDriftExpected": true,
+  "reason": "Integration is an intentional source mutation, not a qualification run. Its before/after report uses the earlier RED source pins and therefore lists canonical incoming changes plus the deliberately corrected fallback. Final checks pin the integrated source afresh."
+}

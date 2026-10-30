@@ -1,0 +1,15 @@
+# Red: the committed router (HEAD dd677ecf9), the new server cases
+ × server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > refuses an approval while review comments are open, before the credential, and signs nothing 14ms
+   → {"success":true,"signatureId":"487d14bf-e861-4f2a-a0d7-4cb0ed027fa7","documentHash":"34c494533fdf8e1a63ce2747ed7c4e1019f911c0f45a307079e1eb15f0761729","digest":"bb58a0948c07a6ccbf80224474adcad420f77d26c4d488965dbbd2185d992357","covers":{"version":"approved","contentHash":"1569ede457231bc5b026c4609936c4a301745b1808a09f48f9b27041bdf44f78"},"workflowSourceAdoption":null,"signedAt":"2026-10-30T14:28:32.459Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > approves it as it stands when the approver says so, and records what was approved over 5ms
+   → expected false to be true // Object.is equality
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > a settled document approves as before, with nothing to acknowledge (control) 4ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER asks whether the document is settled > a review signature is not an approval and is not asked (control) 4ms
+      Tests  2 failed | 12 passed (14)
+
+# Red: the committed filing bar, the new client cases
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses an approval because the document is not settled > re-asks, naming what is outstanding, and sends the acknowledgement only on a deliberate, re-signed approval 5066ms
+   → Unable to find an element by: [data-testid="form-title"]
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses an approval because the document is not settled > sends nothing more when the approver chooses to go back and resolve 5065ms
+   → Unable to find an element by: [data-testid="form-fields"]
+      Tests  2 failed | 23 passed (25)

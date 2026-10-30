@@ -1,0 +1,58 @@
+{
+  "runtimeRole": {
+    "u": "app_service",
+    "s": "app_service"
+  },
+  "functions": [
+    {
+      "fn": "invitations_for_member(integer)",
+      "owner": "c2c_platform_scope",
+      "proconfig": [
+        "search_path=pg_catalog, public"
+      ]
+    },
+    {
+      "fn": "user_id_for_email(text)",
+      "owner": "c2c_platform_scope",
+      "proconfig": [
+        "search_path=pg_catalog, public"
+      ]
+    },
+    {
+      "fn": "user_id_for_reset_token(text)",
+      "owner": "c2c_platform_scope",
+      "proconfig": [
+        "search_path=pg_catalog, public"
+      ]
+    }
+  ],
+  "expectedAccountId": 2,
+  "sign-in: bindAccountByEmail(B admin), then read the bound row": {
+    "id": 2,
+    "boundRowRead": {
+      "id": 2,
+      "email": "p72-b-admin@example.invalid"
+    }
+  },
+  "sign-in, case as stored only: unknown address": null,
+  "password reset: bindAccountByResetToken(hash), then read the bound row": {
+    "id": 2,
+    "boundRowRead": {
+      "id": 2,
+      "email": "p72-b-admin@example.invalid",
+      "has_token": true
+    }
+  },
+  "password reset: a token nobody holds": null,
+  "invitations_for_member(B admin) from B's own scope (A's invitation)": [
+    {
+      "organization_id": 7,
+      "email": "p72-b-admin@example.invalid",
+      "status": "pending"
+    }
+  ],
+  "invitations_for_member(B admin) from A's scope (not a member there: nothing)": [],
+  "the pre-auth scope reads no other row of users": 0,
+  "app_service: SET ROLE c2c_platform_scope": "refused: permission denied to set role \"c2c_platform_scope\""
+}
+probe exit 0

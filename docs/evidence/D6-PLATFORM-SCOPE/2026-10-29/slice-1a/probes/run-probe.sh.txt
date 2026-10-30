@@ -1,0 +1,8 @@
+#!/bin/bash
+# Run a .mts probe ($1) as the runtime role against database $2 with the source tree $3 (default the repository); output to $4.
+DB=$2; export REPO=${3:-/home/user/ClinicalSageAI-2-replit}
+export DATABASE_URL="postgresql://c2c_rds_master:local-p72-pw@127.0.0.1:55472/$DB?sslmode=disable"
+export APP_DATABASE_URL="postgresql://app_service:local-p72-pw@127.0.0.1:55472/$DB?sslmode=disable"
+export APP_SERVICE_DB_PASSWORD=local-p72-pw RLS_ENFORCE=on NODE_ENV=test LOG_LEVEL=warn
+unset DATABASE_OWNER_URL TEST_DATABASE_URL
+cd /home/user/ClinicalSageAI-2-replit && node_modules/.bin/tsx "$1" > "$4" 2>&1; echo "probe exit $?" >> "$4"

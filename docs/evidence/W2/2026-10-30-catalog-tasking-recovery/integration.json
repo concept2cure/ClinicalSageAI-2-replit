@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "3c17cb40e",
+  "inputCommit": "f22a971f517f6e0cdaee4f548152f3d92b68fef3",
+  "incomingCanonical": "f0e0ff863",
+  "tests": {
+    "passed": 429,
+    "suites": 25,
+    "failed": 0,
+    "countsOverlapWorkerCohorts": true
+  },
+  "review": "No blocking finding in own sources, mobile catalog CSS or incoming action-supersession/ProjectHome boundary; older pending filters cannot overwrite newer successful filter choices.",
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": "563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
+    "client/src/concept2cure/v2/styles/workflows-v2.css": "1be535d55d7d6a2be52563097ae7e0c88899eddb10ebd544c31cfae8633d08fe",
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx": "27afaba399c9da399c2df1ba30c1bfe3715299230d9e299e2ea59b38348c51e5",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e",
+    "client/src/concept2cure/v2/surfaceActions.ts": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b"
+  },
+  "limits": "Controlled component/HTTP browser fixtures, not hosted/native-DB incident verification. Shared null/204 project semantics and board first-row guard remain unchanged."
+}

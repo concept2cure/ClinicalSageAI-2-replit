@@ -1,0 +1,252 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+{
+  "timestamp": "2026-10-30T16:41:56.241Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:41:56.242Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+{
+  "timestamp": "2026-10-30T16:41:56.242Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure
+{
+  "timestamp": "2026-10-30T16:42:00.118Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "ana-ri.enrichment"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD
+{
+  "timestamp": "2026-10-30T16:42:00.157Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records
+{
+  "timestamp": "2026-10-30T16:42:00.158Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty
+{
+  "timestamp": "2026-10-30T16:42:00.159Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > reads the profile and workflow of the linked project, org-scoped, and reports nothing unavailable 32ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a program with no linked project is an honest empty: nothing read, nothing unavailable, and the model is told why 14ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > eCTD project memory is read by the integer project id, never the UUID 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /safety reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cmc reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /csr reads no memory and says nothing about what is recorded; it is not a failure 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /device reads no memory and says nothing about what is recorded; it is not a failure 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cms reads no memory and says nothing about what is recorded; it is not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /diagnostics reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /ectd reads no memory and says nothing about what is recorded; it is not a failure 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, Draft the Module 2.5 clinical overview for Vorelinib BX-512. reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > the CMC build state keeps the program UUID; CMC memory takes the integer 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a project the caller already resolved is used as given, with no second lookup 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > an integer project id is still itself, with no lookup 0ms
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > preserves populated risks, decisions and their recorded context without inventing severity or status 14ms
+   → expected '\n\n## Project Intelligence Profile\n…' to contain 'Comparator evidence gap'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > does not invent unrecorded confidence, optional mitigation/source or inject profile instructions 3ms
+   → expected '\n\n## Project Intelligence Profile\n…' to contain 'Study limitation'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > retains the existing five-risk and three-note slice limits 2ms
+   → expected '\n\n## Project Intelligence Profile\n…' to contain 'Risk marker 5'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed riskFactors unavailable while preserving other sources 1ms
+   → expected [] to include 'project-profile'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed keyDecisions unavailable while preserving other sources 1ms
+   → expected [] to include 'project-profile'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed openQuestions unavailable while preserving other sources 1ms
+   → expected [] to include 'project-profile'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed learnedInsights unavailable while preserving other sources 1ms
+   → expected [] to include 'project-profile'
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > an unresolved project from the caller is reported with its reason, and nothing is looked up again 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a program with no organization to scope its lookup is could-not-tell, not "no linked project" 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > records a timeout as a timeout and a failure as a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a project lookup that cannot finish marks the project record unavailable and reads nothing 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > preserves populated risks, decisions and their recorded context without inventing severity or status
+AssertionError: expected '\n\n## Project Intelligence Profile\n…' to contain 'Comparator evidence gap'
+
+- Expected
++ Received
+
+- Comparator evidence gap
++
++
++ ## Project Intelligence Profile
++ **Strategy:** Retain stability arm
++
++ **Known Risks (1):**
++ - [medium] [object Object]
++
++ **Open Questions (1):**
++ - Which comparator is applicable?
++
++ **Key Decisions (1):**
++ - Retain assay B (pending)
++
++ **Learned Insights (1):**
++ - Matrix effect noted
++
++ **Documents:** 2 ingested | 3 memory atoms
++
++ Use this context to personalize your responses. Reference known risks, open questions, and decisions.
++ Workflow context
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:196:28
+    194|       'Retain assay B', 'Recorded validation rationale', '2026-10-20',…
+    195|       'Diagnostic cohort', 'Recorded high', 'Matrix effect noted', 'An…
+    196|       expect(result.block).toContain(text);
+       |                            ^
+    197|     }
+    198|     expect(result.block).toContain('Recorded profile notes');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > does not invent unrecorded confidence, optional mitigation/source or inject profile instructions
+AssertionError: expected '\n\n## Project Intelligence Profile\n…' to contain 'Study limitation'
+
+- Expected
++ Received
+
+- Study limitation
++
++
++ ## Project Intelligence Profile
++ **Strategy:** Retain stability arm
++
++ **Known Risks (1):**
++ - [medium] [object Object]
++
++ **Key Decisions (1):**
++ - Keep existing cohort (pending)
++
++ **Learned Insights (1):**
++ - Unscored recorded observation
++
++ **Documents:** 2 ingested | 3 memory atoms
++
++ Use this context to personalize your responses. Reference known risks, open questions, and decisions.
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:210:26
+    208|     });
+    209|     const result = await enrichContextForChat({ message: SEARCH, proje…
+    210|     expect(result.block).toContain('Study limitation');
+       |                          ^
+    211|     expect(result.block).toContain('Recorded team rationale');
+    212|     expect(result.block).toContain('Study note');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > retains the existing five-risk and three-note slice limits
+AssertionError: expected '\n\n## Project Intelligence Profile\n…' to contain 'Risk marker 5'
+
+- Expected
++ Received
+
+- Risk marker 5
++
++
++ ## Project Intelligence Profile
++ **Strategy:** Retain stability arm
++
++ **Known Risks (6):**
++ - [medium] [object Object]
++ - [medium] [object Object]
++ - [medium] [object Object]
++ - [medium] [object Object]
++ - [medium] [object Object]
++
++ **Open Questions (4):**
++ - Question marker 1
++ - Question marker 2
++ - Question marker 3
++
++ **Key Decisions (4):**
++ - Decision marker 1 (pending)
++ - Decision marker 2 (pending)
++ - Decision marker 3 (pending)
++
++ **Learned Insights (4):**
++ - Insight marker 1
++ - Insight marker 2
++ - Insight marker 3
++
++ **Documents:** 2 ingested | 3 memory atoms
++
++ Use this context to personalize your responses. Reference known risks, open questions, and decisions.
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:224:126
+    222|     });
+    223|     const result = await enrichContextForChat({ message: SEARCH, proje…
+    224|     for (const text of ['Risk marker 5', 'Question marker 3', 'Decisio…
+       |                                                                                                                              ^
+    225|     for (const text of ['Risk marker 6', 'Question marker 4', 'Decisio…
+    226|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed riskFactors unavailable while preserving other sources
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed keyDecisions unavailable while preserving other sources
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed openQuestions unavailable while preserving other sources
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed learnedInsights unavailable while preserving other sources
+AssertionError: expected [] to include 'project-profile'
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:236:55
+    234|     h.summary.mockResolvedValue({ ...PROFILE, [String(field)]: notes }…
+    235|     const result = await enrichContextForChat({ message: SEARCH, proje…
+    236|     expect(result.enrichmentMeta?.unavailableSources).toContain('proje…
+       |                                                       ^
+    237|     expect(result.enrichmentMeta?.unavailableReasons?.['project-profil…
+    238|     expect(result.sources).not.toContain('project-profile');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 26 passed (33)
+   Start at  16:41:52
+   Duration  7.68s (transform 5.27s, setup 75ms, import 7.18s, tests 95ms, environment 0ms)

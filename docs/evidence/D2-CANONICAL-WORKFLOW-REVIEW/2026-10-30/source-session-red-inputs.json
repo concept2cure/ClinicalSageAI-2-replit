@@ -1,0 +1,6 @@
+{
+  "client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx": "f4d80c505b74bdefd6d9e2e0361cb1391d959ea83f7297d6de6032401f290a89",
+  "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": "d6a89cf30ad47e0bcaf1b05bb098a869b5c6b3d0cb38e923283848485f5cb807",
+  "client/src/concept2cure/v2/editor/citationAdmission.ts": "58d88401f947d63a0c7c61954dda8a9076d7f3199c33d7cd8bf0992ed82200c4",
+  "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "326e0ddcf63bc0de0b28a88b46587b9539b0af0e4a0964ea72abb65ca11d13e9"
+}

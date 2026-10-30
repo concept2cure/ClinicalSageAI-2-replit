@@ -1,0 +1,31 @@
+{
+  "revision": "90e5c3a1a",
+  "files": {
+    "server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts": "8bec942a61da4eeb5e0dd9aad0d415c6d9d52f6e2bef79513f22308937747dac",
+    "server/routes/csr-jobs.ts": "e7a9e69e2c15446e5d4ab43daed5e4a20d390011489cb895e2feb92e602f219e",
+    "server/services/__tests__/csr-builder-completeness.test.ts": "0a9d82832bdce5b24b8a489454b67c8a034bf93a784c84b17a22afac8dd645dd",
+    "server/services/__tests__/csr-builder-expertise.test.ts": "74b298bc6d3bc097c2ecd5bd89c68fd0dbe9d0beab16193244876de2da252bf0",
+    "server/services/ana/__tests__/csr-expertise-writing.test.ts": "67c8847969384e8a74df009ecd54b025f3dc3347b398ecee75f329c58a3be593",
+    "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts": "3b30b5eb6b1333f97bfdc8bb0ea715bb84167e155693e3b12fa585cdaac92f90",
+    "server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts": "f87ee4de70f0627ef78e028e675c21710c8cff133a34812c08ac116b8838482a",
+    "server/services/ana/intelligence-questions/flows/csr-report.ts": "b03c4edf4fa4c575e34f7a06532637e0b1992b6e1df217d256288634890d909c",
+    "server/services/csr-builder.ts": "5cb526686d3aaada89fafc1526ec4d8258bf2c9a5fdbc86dfc67f14910c882f1",
+    "server/services/csr/__tests__/csr-current-scope.pglite.test.ts": "3ec455447f6ebc034bf4b922ecd2ebeaf827b166259ae643a1f62ed23ec3bde6",
+    "server/services/csr/__tests__/csr-evidence-target.pglite.test.ts": "5590548996b6627ff43099a8c04f2d28fcb1da4a9376db4b39c7c6d0dd715459",
+    "server/services/csr/__tests__/csr-job-runner.evidence.test.ts": "cbda60efb63650002c4a980a0e175481850e09348f10fd256b5a642968eb5d54",
+    "server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts": "550c2ea3ce632be3df3adae2b03ae7570883156482bf4754653587c34f7b34ab",
+    "server/services/csr/__tests__/csr-project-scope.pglite.test.ts": "42255c1c0d2d1e9d3c20fafe202c34200f22cb6b81bc3ea7bb4ea7bb7729d195",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts": "7a9cb4acfb618377ca6f514b5b21432bd3dd0df6f747e36a1148eb01d5975b7c",
+    "server/services/csr/__tests__/saved-clinical-tables.test.ts": "66b3b51b952dcfb0f2e90b672c858d621f6312547e0f3549508b90ff287db889",
+    "server/services/csr/__tests__/study-pivotal-declaration.pglite.test.ts": "080189978b036e0e7ad62ccdd54d54778a17403bf7810d08f904186004d236c5",
+    "server/services/csr/__tests__/unsupplied-statistics.test.ts": "c938cf58e24c26bbba8b0763fcfbe0093f9ee51c351c1935e36dfe9d72bfff96",
+    "server/services/csr/cortex-authoring-reader.ts": "8eb8636c061ccc471df8330168f7a9d41bf7602798e037ef9ec95a37447f0aa0",
+    "server/services/csr/csr-job-runner.ts": "3c706f3964ec80e7506ee2f8b83993d04b31065b1a4ca48e9e1a505453ca5699",
+    "server/services/csr/project-scope.ts": "d2289789ee58654b3e7abce540a4ee5c0f991dc75f2a738249f50c4e710f0897",
+    "server/services/csr/saved-clinical-tables.ts": "2668ef93beb9b25f9fb8f019ea22d3bae81b1513fa686c0b74310061fb940dc7",
+    "server/services/ind/ctd/csr-e3-sections-plan.ts": "90d88d6e4eed1da1b05161a520f79ecec2dacf39b283c8a8aa003367714f60eb",
+    "server/services/ind/ctd/csr-e3-writing.ts": "e614eb2b383e6a8e6a23c9edaf6817230fe84ed4faae75621d89931472e89c7f",
+    "tests/unit/csr-job-runner.test.ts": "674d01e1fcd91be65fd5b2b246f26df6b148a74188b9938f50476711a28442bf"
+  },
+  "purpose": "Read-only canonical snapshots for overlap reconciliation; original source remains in canonical history."
+}

@@ -38,7 +38,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'A. Approver', mfaEnabled: false }) }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => ({ name: 'A. Approver', mfaEnabled: false }) }));
 vi.mock('../../_shared/components/EsignModal', () => ({
   esignSignerOf: (u: { name?: string } | null) => (u?.name ? { name: u.name } : undefined),
   EsignModal: (p: {
@@ -57,10 +57,10 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
-import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
+import { EngineeringRiskPanel, PANEL_PROGRAM_ID, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 const HAZARD = {
-  id: 41, ref_code: 'HZ-41', hazard: 'Sensor drift during wear', hazardous_situation: 'Drift over 14 days',
+  id: 41, program_id: PANEL_PROGRAM_ID, ref_code: 'HZ-41', hazard: 'Sensor drift during wear', hazardous_situation: 'Drift over 14 days',
   harm: 'Mis-dosing of insulin', sequence_of_events: '', severity: 4, probability: 3, detectability: 3,
   residual_probability: 1, control_strategy: 'design_reduce', source: 'fmea', status: 'verified', acceptable: null,
 };
@@ -128,7 +128,7 @@ describe('the signed acceptance', () => {
     await waitFor(() => expect(H.signed).not.toBeNull());
     expect(patches()).toEqual([{
       method: 'PATCH',
-      path: '/api/mdx/risk-items/41',
+      path: `/api/mdx/risk-items/41?program_id=${PANEL_PROGRAM_ID}`,
       body: {
         status: 'accepted', meaning: 'approval', reason: 'Residual risk reviewed against the policy',
         password: 'pw', mfaToken: '123456',

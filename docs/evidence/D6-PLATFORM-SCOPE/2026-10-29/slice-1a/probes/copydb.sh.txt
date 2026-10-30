@@ -1,0 +1,4 @@
+#!/bin/bash
+# Copy the production-shaped base (s1a_base: slice 0's seeded two-tenant copy, RDS-shaped, plus 10-base-data) to $1, owned by c2c_rds_master.
+PG="postgresql://postgres@127.0.0.1:55472/postgres?sslmode=disable"
+psql "$PG" -q -c "DROP DATABASE IF EXISTS $1 WITH (FORCE)" -c "CREATE DATABASE $1 TEMPLATE ${2:-s1a_base}" -c "ALTER DATABASE $1 OWNER TO c2c_rds_master"

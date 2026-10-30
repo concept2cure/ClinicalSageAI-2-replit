@@ -1,0 +1,12 @@
+{
+  "note": "Selector-only correction after first run; Workbench is unchanged. Optional-owner hook/files extensions are present in compatibility mode; Workbench has not yet supplied an owner.",
+  "sha256": {
+    "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "326e0ddcf63bc0de0b28a88b46587b9539b0af0e4a0964ea72abb65ca11d13e9",
+    "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": "c47955252bde36f14c714e36b05f07bc3d90ab6091b2237b7fd2b502c253d581",
+    "client/src/concept2cure/v2/editor/citationAdmission.ts": "6b071684f6839bfa673eaaea68f15c17a148b0e75fefc783c34a4a54937f0464",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "b98423abd4f95a3d4d77f79309e0b03314c1f775ec09185b2a004414542017e6",
+    "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": "167df31292a807b81979808985812a0ddbd55288038a9267218da87bcf3e566f",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx": "e4bbb98f9b741c0dc8f894f6588411949e4b0ddc196b445181f462c162bb54da"
+  }
+}

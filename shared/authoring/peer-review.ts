@@ -105,3 +105,12 @@ export type AuthoringReviewExpected = z.infer<typeof authoringReviewExpectedSche
 export type AuthoringReviewContext = z.infer<typeof authoringReviewContextSchema>;
 export type AuthoringReviewInput = z.infer<typeof authoringReviewInputSchema>;
 export type AuthoringReviewRow = z.infer<typeof authoringReviewRowSchema>;
+
+/**
+ * On a review route (RR5) a reviewer's REVIEWER signature over today's sections
+ * is their review: `routeSignedAt` is set by the Review board's read only
+ * then. A later verdict other than approval still governs.
+ */
+export function signedOnRoute(r: { status: string; routeSignedAt?: string | null }): boolean {
+  return r.routeSignedAt != null && (r.status === 'pending' || r.status === 'approved');
+}

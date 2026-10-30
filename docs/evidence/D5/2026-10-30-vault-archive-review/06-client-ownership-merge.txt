@@ -1,0 +1,8 @@
+2026-10-30 second canonical merge
+
+Second normal push passed every hook and full TypeScript (zero errors), then the remote refused the ref update because f0e0ff86352efde626a149a256c42303bc04dfd7 arrived during the hook. Preserved in the second compressed attempt log.
+The incoming client ProjectHome ownership and surfaceActions ordering changes do not modify this continuation's Vault source, server services, archive dbtests or lint implementation. Normal merge: a48a21e0e3f43c8cc005e71cf42e88b7af0897d6.
+
+On the merged source: 118/118 tests pass across 12 files (the two incoming client suites and ten upload/archive suites). Production client, server and audit-verifier builds pass. These checks overlap earlier cohorts; no cumulative sum is claimed.
+All this continuation's implementation files match their content at1d4bc939d; the source comparison reports no changes.
+Third push uses all normal repository hooks. Final publication and logs: /workspace/shared/vault-handoff-release.json and /workspace/shared/vault-handoff-push.txt.

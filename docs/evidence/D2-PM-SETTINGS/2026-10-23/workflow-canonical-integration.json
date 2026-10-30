@@ -1,0 +1,30 @@
+{
+  "recordedAtUtc": "2026-10-23T20:37:00.239812+00:00",
+  "priorQualifiedHead": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "incomingRemote": "ecc1539410d2be5deca4e0d790f6db1ed3d06124",
+  "mergedHead": "295bacc114b13e0883478db22daaa3c7b1a0d2f7",
+  "localImplementationCommit": "86a3a31bc",
+  "incomingCommitCount": 6,
+  "boundSourceOverlap": [],
+  "boundSourcesUnchanged": 81,
+  "merge": "normal non-forced merge, no conflicts; incoming work preserved",
+  "runtimePaths": [
+    "client/src/concept2cure/v2/Shell.tsx",
+    "client/src/concept2cure/v2/appMentions.tsx",
+    "client/src/concept2cure/v2/catalogWorkflows.ts",
+    "client/src/concept2cure/v2/navEntitlements.tsx",
+    "client/src/concept2cure/v2/registryModel.ts",
+    "client/src/concept2cure/v2/styles/workflows-v2.css",
+    "client/src/concept2cure/v2/surfaces/AccessRequests.tsx",
+    "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+    "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx",
+    "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+    "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+    "shared/constants/ui-surface-registry.ts",
+    "shared/navigation/demo-scripts.ts",
+    "shared/navigation/index.ts",
+    "shared/navigation/surface-actions.ts"
+  ],
+  "qualification": "Focused settings/home and ProjectHome launch-scope integration; final combined build and whole-program incremental TypeScript."
+}

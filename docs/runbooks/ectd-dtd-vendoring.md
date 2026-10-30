@@ -39,6 +39,7 @@ Summary:
 | --- | --- | --- |
 | `ich-ectd-3-2.dtd` | ICH backbone | ICH eCTD Specification |
 | `us-regional-v3-3.dtd` | FDA | FDA eCTD Technical Conformance Guide |
+| `ich-stf-v2-2.dtd` | ICH STF, when STFs exist | Current FDA production table / ICH STF related files |
 | `eu-regional.dtd` | EMA | EMA / HMA eSubmission portal |
 | `jp-regional.dtd` | PMDA | PMDA eCTD notification |
 | `ca-regional.dtd` | Health Canada | Health Canada eCTD guidance |
@@ -52,9 +53,10 @@ alongside the DTDs under the one `ECTD_REQUIRE_DTD` flag:
 | --- | --- | --- |
 | `ectd-2-0.xsl` | `index.xml` → `util/style/ectd-2-0.xsl` (every region) | ICH eCTD Specification, same page as the DTD |
 | `us-regional.xsl` | `m1/us/us-regional.xml` → `../../util/style/us-regional.xsl` (FDA only) | FDA eCTD specifications page, same page as the DTD |
+| `ich-stf-stylesheet-2-3.xsl` | Every STF → relative `util/style/` path, when STFs exist | Current FDA production table / ICH STF related files; stylesheet2.3 |
 
 WO-9 is US-only: vendor `ich-ectd-3-2.dtd`, `us-regional-v3-3.dtd`,
-`ectd-2-0.xsl` and `us-regional.xsl`. Do not vendor EU/JP/CA files for it.
+`ectd-2-0.xsl` and `us-regional.xsl`; an STF package also needs `ich-stf-v2-2.dtd` and `ich-stf-stylesheet-2-3.xsl`. Do not vendor EU/JP/CA files for it.
 
 Cross-check the **mandated production version** on each agency's canonical
 page before each acquisition cycle; do not vendor draft versions.
@@ -241,3 +243,12 @@ If a vendored DTD turns out to be the wrong version after merge:
 - `HI_8_ECTD_SCOPING_BRIEF.md` — broader eCTD GA-readiness scope.
 - `docs/reports/PATH_TO_GA_2026-06-29.md` §C.8 — GA-1 dependency this runbook unblocks.
 - `docs/runbooks/esg-production-setup.md` — adjacent runbook for the FDA ESG transport (DTDs are bundled into the zip the ESG runbook ships).
+
+
+## Source and prerequisite review — 2026-10-30 (unsigned)
+
+The current FDA production standards table was read at <https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1>. Current source facts: ICH specification3.2.2/DTD3.2; STF specification2.6.1/DTD2.2/stylesheet2.3; US Module1 specification2.6/DTD3.3/stylesheet2.2. The page lists validation criteria **4.7** (2026-10-16) and says FDA uses Lorenz eValidator25.2. This does not establish current coverage of an existing local subset/engine.
+
+`docs/evidence/MR-10/2026-10-30-agency-qualification/ASSET_REVIEW.md` is an unsigned review request with exact issuer URLs, observed issuer MD5 values and actual public ICH/FDA notices. Archive signed counsel decisions outside this repository under step1 and record their reference before step2. No DTD/XSL/archive bytes were acquired or hashed in this source review. The externally supplied licensed engine/profile and actual post-acquisition package-validation run remain required. Source access, public notices and passing synthetic-schema tests do not replace them.
+
+The current STF stylesheet basename is `ich-stf-stylesheet-2-3.xsl`; do not silently rename it to the older sample's generic filename. Acquisition must inspect archives for modules/entities/includes and preserve necessary dependencies verbatim. Measure SHA-256 of extracted bytes and compare issuer digests where their scope matches. Current platform publication uses normal direct canonical commits/pushes under `CLAUDE.md`, superseding this runbook's older PR/branch wording. Production-enforcement defaults remain the separate MR-10 Stage11 workstream.

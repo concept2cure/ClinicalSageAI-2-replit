@@ -465,7 +465,7 @@ describe('guarded transmit', () => {
  */
 describe('packager → pre-transmit: the stylesheet gap survives the bundle', () => {
   const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
-  const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
+  const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl', 'ich-stf-stylesheet-2-3.xsl'];
 
   async function buildFdaBundle(dropFiles: string[]): Promise<SubmissionBundle> {
     const work = await fsp.mkdtemp(path.join(os.tmpdir(), 'pre-transmit-wiring-'));

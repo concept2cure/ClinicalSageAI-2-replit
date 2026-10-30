@@ -1,0 +1,17 @@
+# 01-red: the new and changed cases, before the change (the hook sent the request with fetch; the rows had no progress)
+# npx vitest run useVaultUpload.test.tsx vaultUploadStaging.test.tsx -t 'how far|bytes go out|once per whole percent|connection that drops|not JSON|scanning and storing'
+# The dropped-connection case passes before and after: it pins the hook's wording across the change of transport.
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+   → Unable to find an element with the text: Uploading… 50% of 1.9 MB sent. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows
+   → expected 'Uploading…' to be 'Sent. The server is scanning it and s…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+   → expected [ Array(4) ] to deeply equal [ Array(8) ]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+   → expected [ undefined ] to deeply equal [ undefined, …(3) ]
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a reply that is not JSON is refused with its status, never read as recorded
+   → expected [ { name: 'csr.pdf', …(1) } ] to deeply equal [ { name: 'csr.pdf', …(1) } ]
+ Test Files  2 failed (2)
+      Tests  5 failed | 1 passed | 18 skipped (24)

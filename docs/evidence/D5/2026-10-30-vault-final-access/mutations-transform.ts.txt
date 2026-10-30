@@ -1,0 +1,14 @@
+import base from '/workspace/ClinicalSageAI/vitest.db.config.ts';
+const changes = {
+  role: ['current.actor.role !== admitted.actor.role ||', ''],
+  workspace: ['current.clientWorkspaceId !== admitted.clientWorkspaceId', 'false'],
+  commit: ["    await requireArchiveAccess(client, d.orgId, d.access);\n    await client.query('COMMIT');", "    await client.query('COMMIT');"],
+  request: ['namedActors: canReadArchiveAudit(req, access)', 'namedActors: canReadAuditTrail(req)'],
+};
+const mode=process.env.C2C_ARCHIVE_ACCESS_MUTATION as keyof typeof changes;
+export default {...base,plugins:[{name:'archive-access-negative-controls',enforce:'pre' as const,transform(source:string,id:string){
+  if(id.split('?')[0]!=='/workspace/ClinicalSageAI/server/routes/c2c/project-vault.ts')return;
+  const [find,replacement]=changes[mode];
+  if(!source.includes(find))throw new Error('Mutation target missing: '+mode);
+  return source.split(find).join(replacement);
+}}]};

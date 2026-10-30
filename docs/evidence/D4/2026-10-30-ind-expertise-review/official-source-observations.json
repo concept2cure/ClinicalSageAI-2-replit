@@ -1,0 +1,71 @@
+[
+  {
+    "key": "fda-ind",
+    "requestedUrl": "https://www.fda.gov/drugs/types-applications/investigational-new-drug-ind-application",
+    "finalUrl": "https://www.fda.gov/drugs/types-applications/investigational-new-drug-application-ind",
+    "status": 200,
+    "bytes": 60122,
+    "sha256": "d9a9e2a8a06c06873423022015358db2c0c1289966478dd13c5835ec37f4d9de",
+    "title": "Investigational New Drug Application (IND) | FDA",
+    "retrievedOn": "2026-10-30"
+  },
+  {
+    "key": "ema-ctr",
+    "requestedUrl": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/clinical-trials-human-medicines/clinical-trials-regulation",
+    "finalUrl": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/clinical-trials-human-medicines/clinical-trials-regulation",
+    "status": 200,
+    "bytes": 74830,
+    "sha256": "5e3e419725d1162126ab5e7ee7c9832684696ffe2db74786cdf095de09d6a160",
+    "title": "Clinical Trials Regulation | European Medicines Agency (EMA)",
+    "retrievedOn": "2026-10-30"
+  },
+  {
+    "key": "mhra-cta",
+    "requestedUrl": "https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-authorisation-in-the-uk",
+    "finalUrl": "https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-authorisation-in-the-uk",
+    "status": 200,
+    "bytes": 191725,
+    "sha256": "c6f17cf2506a8f6141c78bac009c6cdc5dc37fd8b66c12fb724e806aac38b20d",
+    "title": "Clinical trials for medicines: apply for authorisation in the UK - GOV.UK",
+    "retrievedOn": "2026-10-30",
+    "verificationLimit": "Page explicitly scoped to applications before 2026-04-28; not current UK authoring authority"
+  },
+  {
+    "key": "health-canada-cta",
+    "requestedUrl": "https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/applications-submissions/guidance-documents/clinical-trials/clinical-trial-sponsors-applications.html",
+    "finalUrl": "https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/applications-submissions/guidance-documents/clinical-trials/clinical-trial-sponsors-applications.html",
+    "status": 200,
+    "bytes": 181635,
+    "sha256": "7fa19a7252fde1ead12578599333668eab149cd1984d4f905ffb17df8efde538",
+    "title": "Guidance Document For Clinical Trial Sponsors: Clinical Trial Applications - Canada.ca",
+    "retrievedOn": "2026-10-30"
+  },
+  {
+    "key": "pmda-trials",
+    "requestedUrl": "https://www.pmda.go.jp/english/review-services/trials/0001.html",
+    "error": "HTTP Error 404: Not Found",
+    "retrievedOn": "2026-10-30",
+    "verificationLimit": "Generic URL failed; actual CTN blueprint PDF URLs were not checked and are not shown broken"
+  },
+  {
+    "key": "ich-efficacy",
+    "requestedUrl": "https://www.ich.org/page/efficacy-guidelines",
+    "finalUrl": "https://www.ich.org/page/efficacy-guidelines",
+    "status": 200,
+    "bytes": 687,
+    "sha256": "c19774b8c67c6c22182e1aca7db08afb04861080c763ed9d7399c50fa5b7df7c",
+    "title": "ICH Official web site : ICH",
+    "retrievedOn": "2026-10-30",
+    "verificationLimit": "HTML JavaScript shell only; no guideline text verified"
+  },
+  {
+    "key": "fda-oncology-dose",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/optimizing-dosage-human-prescription-drugs-and-biological-products-treatment-oncologic-diseases",
+    "finalUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/optimizing-dosage-human-prescription-drugs-and-biological-products-treatment-oncologic-diseases",
+    "status": 200,
+    "bytes": 35705,
+    "sha256": "57ebe2c42efdb555595451a4ebcdf3785a1dde9680d397df1fee4c7c055028e7",
+    "title": "Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases | FDA",
+    "retrievedOn": "2026-10-30"
+  }
+]

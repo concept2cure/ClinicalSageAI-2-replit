@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > confirms the actual scoped fields, new revision and transactional audit 2ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different programId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different projectId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different organizationId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different actorUserId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different clientWorkspaceId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > leaves a first read unbound when no client was selected, then pins the saved parent for writes 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"description":"Other description"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"priority":"low"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"targetSubmissionDate":"2028-03-01"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"revision":"v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"revision":"1"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"canChange":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {"persisted":false,"chained":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {"persisted":true,"chained":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":[]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["priority","priority"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["leadUserId"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["targetAgencies"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not treat pending stores or a missing audit envelope as a saved update 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > confirms deliberate clearing against canonical null values 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses an audited field that was not in the submitted change 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID 0 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID "11" 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID 2147483648 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 0) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 1) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 2) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 3) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 4) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 5) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 6) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 7) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 8) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 9) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 10) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > accepts a valid leap day, an omitted field and deliberate clearing 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > accepts the saved profile without inventing confidence or interpreting dates in notes 2ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > distinguishes a confirmed missing profile from a missing or malformed profile field 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses a receipt for another programId 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses a receipt for another projectId 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses a receipt for another organizationId 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses a receipt for another actorUserId 1ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses a receipt for another clientWorkspaceId 1ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > allows an unselected workspace but binds an explicitly null legacy parent 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"riskFactors":null} 1ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"openQuestions":[{}]} 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"keyDecisions":[{"decision":"A decision"}]} 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"learnedInsights":[{"insight":"Guess","source":"doc","extractedAt":"yesterday","confidence":null}]} 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"customInstructions":{}} 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > refuses malformed persisted notes rather than declaring them empty: {"lastEnrichedAt":"not a timestamp"} 0ms
+ ✓ shared/__tests__/project-recorded-context.test.ts > recorded project context transport boundary > does not accept coerced, fractional or out-of-range identity numbers 0ms
+
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+   Start at  16:41:12
+   Duration  551ms (transform 126ms, setup 94ms, import 78ms, tests 21ms, environment 0ms)

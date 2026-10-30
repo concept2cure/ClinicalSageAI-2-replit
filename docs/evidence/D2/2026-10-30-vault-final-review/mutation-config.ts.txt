@@ -1,0 +1,17 @@
+import base from '/workspace/ClinicalSageAI/vitest.config.ts';
+const modes: Record<string, { file: string; replacements: Array<[string,string]> }> = {
+  project: { file: 'vaultUploadVisit.ts', replacements: [['ref.current.programId !== programId || ', '']] },
+  duplicate: { file: 'vaultUploadVisit.ts', replacements: [[' || batch.current?.visit === visit', '']] },
+  credentials: { file: 'vaultUploadVisit.ts', replacements: [['? Boolean(bearer && authService.captureSessionReadGuard(bearer).current())', '? true']] },
+  gateway: { file: 'useVaultUpload.ts', replacements: [['![413, 415].includes(res.status) && mutationUnconfirmed(res.status, code ?? undefined)', "code === 'OUTCOME_UNKNOWN'"]] },
+};
+const mode = modes[process.env.C2C_VAULT_FINAL_MUTATION ?? ''];
+if (!mode) throw new Error('Select a named mutation');
+export default {...base,plugins:[{name:'vault-upload-negative-controls',enforce:'pre' as const,transform(source:string,id:string){
+ if (id.split('?')[0] !== `/workspace/ClinicalSageAI/client/src/concept2cure/v2/${mode.file}`) return;
+ for (const [find,replacement] of mode.replacements) {
+  if (!source.includes(find)) throw new Error('Mutation target missing');
+  source = source.replace(find,replacement);
+ }
+ return source;
+}}]};

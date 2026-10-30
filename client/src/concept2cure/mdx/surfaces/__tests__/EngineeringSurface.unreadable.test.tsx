@@ -26,10 +26,8 @@ import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { EngineeringSurface } from '../EngineeringSurface';
 import type { Program } from '../../data/programs';
 
-vi.mock('@/utils/authToken', () => ({
-  getAuthToken: () => 'test-token',
-  getOrgId: () => '7',
-}));
+import { endCompanySession, seedCompanySession } from '../../../v2/__tests__/_company-session-fixture';
+import { clearShellProject, publishShellProject } from '../../../v2/shellProject';
 
 const PROGRAM = {
   id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -44,11 +42,13 @@ const EMPTY_DATA = {
 
 let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
+  seedCompanySession({ organizationId: '7' }, 'engineering-read');
+  publishShellProject({ id: PROGRAM.id });
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
   riskFile = riskFileKeyed([]);
 });
-afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
+afterEach(() => { cleanup(); endCompanySession(); clearShellProject(); vi.unstubAllGlobals(); });
 
 /* Since fold F1 slice B the ISO 14971 matrix is the risk register's, which
    reads the project's risk file itself (GET /api/mdx/risk-items?program_id=,
@@ -56,7 +56,7 @@ afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
    request is Engineering's own route. */
 const RISK_PATH = `/api/mdx/risk-items?program_id=${PROGRAM.id}`;
 const HAZARD = {
-  id: 1, ref_code: 'HZ-01', hazard: 'Sensor drift', hazardous_situation: null, harm: 'Missed hypoglycaemia',
+  id: 1, program_id: PROGRAM.id, ref_code: 'HZ-01', hazard: 'Sensor drift', hazardous_situation: null, harm: 'Missed hypoglycaemia',
   sequence_of_events: null, severity: 4, probability: 3, detectability: 3, residual_probability: 2,
   control_strategy: 'design_reduce', source: 'fmea', status: 'open', acceptable: null,
 };

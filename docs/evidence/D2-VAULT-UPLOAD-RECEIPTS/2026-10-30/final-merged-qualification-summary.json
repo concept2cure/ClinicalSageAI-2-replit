@@ -1,0 +1,19 @@
+{
+  "canonical_base": "0ad3a15ceed158232dfb1cb18e543820027c0488",
+  "tests": 357,
+  "suites": 30,
+  "receipt_cases": 74,
+  "actual_vault_caller_cases": 5,
+  "actual_device_caller_cases": 3,
+  "red_title_failures": 4,
+  "red_other_passes": 78,
+  "build_exit": 0,
+  "lint_errors": 0,
+  "lint_warnings": 2,
+  "new_lint_warnings": 0,
+  "frozen_inputs": 39,
+  "review_pins": 46,
+  "publication": "pending normal push gates",
+  "native_server_title_mismatch_claimed": false,
+  "native_legacy_repair_claimed": false
+}

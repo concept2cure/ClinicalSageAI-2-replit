@@ -1,0 +1,6 @@
+{
+  "client/src/concept2cure/v2/surfaceActions.ts": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
+  "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+  "client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts": "c0229da821607611ed48085cd1d9e0ce74441f9c02df6e08fa438465c1b1e73f",
+  "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "73dc2af1d10587d233923cb9044b2a7fcce019a0c804b7fdb923c8d9559965bc"
+}

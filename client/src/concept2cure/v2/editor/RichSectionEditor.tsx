@@ -133,6 +133,7 @@ import {
   type CitationSource,
 } from '@shared/authoring/citations';
 import { I } from '../icons';
+import { offerSelectedPassage, type OfferedPassage } from './draftPassage';
 import '../styles/rich-section-editor.css';
 
 /* ── Public contract ──────────────────────────────────────────── */
@@ -257,6 +258,8 @@ export interface RichSectionEditorProps {
   showSaveButton?: boolean;
   /** Ask AnA — powers the cite-selection and empty-state draft affordances. */
   onAsk?: ((prompt: string) => void) | null;
+  /** AnA's alternatives for the selected passage, in the host's review panel (editor/draftPassage.ts); omit to hide. */
+  onOfferAlternatives?: ((passage: OfferedPassage) => void) | null;
   /** Span-lineage right-click contract (see DataOriginsMenu). */
   lineage?: {
     documentTable: string;
@@ -569,6 +572,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       chrome = 'full',
       showSaveButton = true,
       onAsk = null,
+      onOfferAlternatives = null,
       lineage = null,
       track = null,
       commentsApi = null,
@@ -1525,6 +1529,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .trim();
       if (s) onAsk(`Suggest a source for this claim: "${s}"`);
     }, [editor, onAsk]);
+    const offerAlternatives = useCallback(() => offerSelectedPassage(editor, onOfferAlternatives, setActionNotice), [editor, onOfferAlternatives]);
 
     /* ── Find & replace ──
        Declared ahead of the imperative handle, which exposes openFind. Open
@@ -2373,6 +2378,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   Ask for a source
                 </RB>
               </>
+            )}
+            {onOfferAlternatives && !readOnly && (
+              <RB title="Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"
+                onClick={offerAlternatives}>
+                Offer alternatives
+              </RB>
             )}
             {commentsApi && (
               <RB title="Comment on the selection" onClick={() => void commentOnSelection()}>

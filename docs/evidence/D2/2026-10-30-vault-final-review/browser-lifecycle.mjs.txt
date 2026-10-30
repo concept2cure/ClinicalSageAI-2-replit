@@ -1,0 +1,54 @@
+import {chromium} from '/tmp/vault-handoff-tools/node_modules/playwright-core/index.mjs';
+import {writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const out='/workspace/ClinicalSageAI/docs/evidence/D2/2026-10-30-vault-final-review';
+const PROGRAM='11111111-1111-4111-8111-111111111111';
+const token=(id,suffix)=>`fixture.${btoa(JSON.stringify({userId:id,organizationId:7,session:suffix}))}.synthetic`;
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+const results=[];
+try{
+for(const width of [1440,390])for(const theme of ['light','dark'])for(const kind of ['project','account','refresh','duplicate']){
+ const ctx=await browser.newContext({viewport:{width,height:1000},colorScheme:theme});
+ const page=await ctx.newPage();page.setDefaultTimeout(12000);
+ let release;const held=new Promise(done=>{release=done;});let writes=0,refreshes=0;
+ const headers=[],errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.route('**/api/v1/auth/refresh',async route=>{
+  refreshes++;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({accessToken:token(33,'refreshed'),refreshToken:'synthetic-refreshed',expiresIn:3600})});
+ });
+ await page.route('**/api/vault/ingest',async route=>{
+  writes++;const n=writes;headers.push(route.request().headers().authorization);
+  if(n===1)await held;
+  const name=n===1?'receipt.pdf':'queued.pdf';
+  await route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({success:true,document:{id:`22222222-2222-4222-8222-${String(n).padStart(12,'0')}`,programId:PROGRAM,documentCode:name,documentTitle:name,version:'1.0',extraction:'extracted'},filing:{folderId:'module-3',folderLabel:'Module 3 · Quality',placementStatus:'suggested',needsReview:false}})});
+ });
+ try{
+  await page.goto('http://127.0.0.1:5197/?lifecycle');
+  await page.evaluate(dark=>{document.documentElement.classList.toggle('dark',dark);document.querySelector('.c2c-v2').classList.toggle('dark',dark);},theme==='dark');
+  await (kind==='duplicate'?page.getByRole('button',{name:'Repeat upload'}):page.getByTestId('vault-stage-upload')).click();
+  await page.waitForFunction(()=>document.querySelector('[data-testid="owner"]').getAttribute('data-busy')==='true');
+  for(let attempt=0;writes<1&&attempt<50;attempt++)await page.waitForTimeout(20);
+  assert.equal(writes,1);
+  if(kind==='project')await page.getByRole('button',{name:'Change project'}).click();
+  if(kind==='account')await page.getByRole('button',{name:'Change account'}).click();
+  if(kind==='refresh'){
+   await page.getByRole('button',{name:'Refresh bearer'}).click();
+   for(let attempt=0;refreshes<1&&attempt<50;attempt++)await page.waitForTimeout(20);
+   assert.equal(refreshes,1);await page.waitForTimeout(100);
+  }
+  release();
+  await page.waitForFunction(()=>document.querySelector('[data-testid="owner"]').getAttribute('data-busy')==='false');
+  await page.waitForFunction(()=>document.querySelector('[data-testid="outcome"]').getAttribute('data-value')!=='null');
+  const outcome=JSON.parse(await page.getByTestId('outcome').getAttribute('data-value'));
+  const note=await page.getByTestId('batch-note').innerText();
+  if(['project','account'].includes(kind)){assert.equal(writes,1);assert.deepEqual(outcome.recorded,[]);assert.deepEqual(outcome.succeeded,[]);assert.equal(note,'');}
+  else{assert.equal(writes,2);assert.equal(outcome.recorded.length,2);assert.equal(outcome.succeeded.length,2);assert.match(note,/Auto-filed/);}
+  if(kind==='refresh')assert.equal(headers[1],`Bearer ${token(33,'refreshed')}`);
+  else assert(headers.every(header=>header===`Bearer ${token(33,'original')}`));
+  assert.deepEqual(errors,[]);
+  results.push({width,theme,kind,writes,refreshes,confirmed:outcome.recorded.length,privateHeadersVerified:true,pageErrors:errors});
+ }catch(error){console.error({width,theme,kind,writes,refreshes,body:await page.locator('body').innerText()});throw error;}
+ finally{release();await ctx.close();}
+}
+await writeFile(`${out}/browser-lifecycle.json`,JSON.stringify({seams:'Actual hook, canonical authService refresh/session ownership, real XMLHttpRequest and staging component. Synthetic JWT/files and intercepted HTTP replies; navigation controls exercise hook project ownership, not a hosted full-app navigation claim.',flows:results.length,results},null,2)+'\n');
+console.log(JSON.stringify({flows:results.length,results},null,2));
+}finally{await browser.close();}

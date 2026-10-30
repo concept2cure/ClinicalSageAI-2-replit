@@ -1,0 +1,11 @@
+{
+  "incoming_commit": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "integration_commit": "941d64104a96ec876bde9af0ceb6466d6e81c761",
+  "previous_selected_inputs": 148,
+  "current_selected_inputs": 155,
+  "previous_selected_inputs_changed": [
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx",
+    "client/src/concept2cure/v2/styles/protocol-dev-editing.css"
+  ],
+  "review": "Retain the existing protocol workflow guide and shared pending-work guard across tabs/outline/AnA/selection/handoff. Blocked handoff is consumed without later replay. Project/current-document ownership is preserved; actual TipTap and409/failedreread tests cover retention. No settings/profile/AnA-summary/unified-blocker owner changes. Requalify46 core/Plan/protocol cases and28 newguide/navigation/selection cases with no overlap. Actual context browsers and production build pass; finalunchangedhook qualifies the composed tree."
+}

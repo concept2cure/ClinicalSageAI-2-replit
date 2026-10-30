@@ -1,7 +1,7 @@
 /** Human-review board admission and current-content facts on real canonical DDL. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { assertNoSchemaGaps, createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import { assertNoSchemaGaps, createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import type { RequestSqlClient } from '../../../db/requestDb';
 import { AUTHORING_REVIEW_BINDING_BASIS } from '../../../../shared/authoring/peer-review';
 import { authoringSnapshotHash, fullVisibleAuthoringSnapshot } from '../../authoring/authoring-content-digests';
@@ -40,6 +40,7 @@ beforeAll(async () => {
       INSERT INTO projects VALUES (101,7,'${PROGRAM}',NULL,'active',11,11,'{}'),
         (102,7,'${PRIVATE_PROGRAM}',NULL,'active',11,11,'{}');
       INSERT INTO project_visibility_settings VALUES (101,7,'org_public'),(102,7,'private');
+      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks','task_dependencies','cross_module_task_links'])}
     `,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -50,6 +51,11 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'migrations/20260728_authoring_reviews.sql',
+      // The board reads each document's latest review route (RR5).
+      'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+      'db/migrations/20260807_task_graph_org_columns.sql',
+      'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      'migrations/20261023_review_routes.sql',
     ],
   });
   sql = database.pool as RequestSqlClient;

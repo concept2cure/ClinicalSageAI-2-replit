@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-30T16:22:32.833461+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts",
+    "-t",
+    "pre-claim project-policy await"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.576,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "preclaim-red-source-freeze.json",
+  "sourcesBefore": {
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "99f1d8e8b0ff12b72db1d3056754621b6bd0ff89a63586c414fa1bb29a7ae232",
+    "server/services/csr/csr-job-runner.ts": "63c0eb6be315ef3fb8b3a5d2e645f342bdef28d7b6defbd837a9b6a37bd9a833",
+    "server/services/csr/csr-job-evidence.ts": "bad81d2ed01c1edabc1a3323f8825276e8009a90bf3633790792aff1a2295327"
+  },
+  "sourcesAfter": {
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "99f1d8e8b0ff12b72db1d3056754621b6bd0ff89a63586c414fa1bb29a7ae232",
+    "server/services/csr/csr-job-runner.ts": "63c0eb6be315ef3fb8b3a5d2e645f342bdef28d7b6defbd837a9b6a37bd9a833",
+    "server/services/csr/csr-job-evidence.ts": "bad81d2ed01c1edabc1a3323f8825276e8009a90bf3633790792aff1a2295327"
+  },
+  "sourceDrift": [],
+  "rawOutput": "preclaim-cancellation-red.log.gz",
+  "rawGzipSha256": "5d2697627cd0213aa2893de0d2be466a3c97578fdf5abb4d87a287c00afbfebf",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 16 skipped (17)",
+    "Duration  3.92s (transform 1.97s, setup 131ms, import 3.34s, tests 29ms, environment 0ms)"
+  ]
+}

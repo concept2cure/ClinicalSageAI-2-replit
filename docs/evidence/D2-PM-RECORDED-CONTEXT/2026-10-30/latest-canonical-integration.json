@@ -1,0 +1,12 @@
+{
+  "incoming_commit": "6747c44709702ed016afa446ef52d2c99710614d",
+  "integration_commit": "3109d66dda6fdfd680bc69580a6ff236be997b55",
+  "previous_bound_inputs_changed": [
+    "docs/evidence/D2-PM-RECORDED-CONTEXT/2026-10-30/browser-check.mjs",
+    "server/services/csr/project-scope.ts"
+  ],
+  "existing_bound_inputs": 133,
+  "new_selected_inputs": 4,
+  "selected_source_input_count": 137,
+  "review": "Incoming CSR scope now imports parseCsrEvidenceSelection for resolveCsrBuildContext. PM uses readCsrProjectActor with a raw request executor; its active actor/membership SQL and row reservation are unchanged. The185 affected backend tests and native8 pass again. The new import is included in the selected binding. Browser helper qualifies window.innerWidth explicitly, lint0 and both widths pass. Existing unified-work adapter is corrected after3 fail-first cases;26 tests preserve active blockers and partial-source disclosure. Final whole hook/compiler/build qualify this composed source before publication."
+}

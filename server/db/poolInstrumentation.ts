@@ -18,7 +18,7 @@
  */
 
 import type { Pool, PoolClient, QueryConfig, QueryResult } from 'pg';
-import { getTenantScope, type TenantScope } from './tenantStore';
+import { assertScopeRoleAdmissible, getTenantScope, type TenantScope } from './tenantStore';
 import { readEnforcementMode } from './rlsEnforcement';
 import { tenantSessionVarMissing, tenantSessionVarPresent } from './tenantSessionMetrics';
 import { createScopedLogger } from '../utils/logger';
@@ -172,7 +172,25 @@ const tenantSetConfigSql = (): string =>
   switchPinTerms(true);
 
 function scopeParams(scope: TenantScope): [string, string, string, string] {
+  // Re-checked here, not only at the pool's entry: a scope object is mutable, and
+  // this is the statement that writes the role to app.current_user_role (P-72).
+  assertScopeRoleAdmissible(scope, 'pool');
   return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? '', scope.accountId != null ? String(scope.accountId) : ''];
+}
+
+/**
+ * The refusal for a scope that carries the platform role outside the system
+ * scope's shape (tenantStore.assertScopeRoleAdmissible, P-72 slice 1a), or null.
+ * Checked at the pool's entry, like a missing scope, so no connection is taken.
+ */
+function refusedScopeRole(scope: TenantScope | null): Error | null {
+  if (!scope) return null;
+  try {
+    assertScopeRoleAdmissible(scope, 'pool');
+    return null;
+  } catch (error) {
+    return error as Error;
+  }
 }
 
 /**
@@ -284,7 +302,7 @@ function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient 
             return;
           }
           transactionOpen = true;
-          (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope)).then(
+          Promise.resolve().then(() => (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope))).then(
             () => callback(null, result),
             (error: unknown) => {
               poisonError = error instanceof Error
@@ -381,8 +399,9 @@ export function instrumentPool(pool: Pool): Pool {
     const enforcing = readEnforcementMode() === 'on';
     const isInfra = isInfrastructureQuery(queryText);
     const scope = enforcingScope(queryText);
-    if (enforcing && !isInfra && !scope) {
-      const error = missingTenantScopeError('pool.query');
+    const refused = refusedScopeRole(scope);
+    if ((enforcing && !isInfra && !scope) || refused) {
+      const error = refused ?? missingTenantScopeError('pool.query');
       if (hasCallback) {
         const callback = args[args.length - 1] as (error: Error) => void;
         queueMicrotask(() => callback(error));
@@ -422,8 +441,9 @@ export function instrumentPool(pool: Pool): Pool {
     recordCheck('pool.connect', undefined);
     const hasCallback = typeof args[args.length - 1] === 'function';
     const scope = enforcingScope(undefined);
-    if (readEnforcementMode() === 'on' && !scope) {
-      const error = missingTenantScopeError('pool.connect');
+    const refused = refusedScopeRole(scope);
+    if ((readEnforcementMode() === 'on' && !scope) || refused) {
+      const error = refused ?? missingTenantScopeError('pool.connect');
       if (hasCallback) {
         const callback = args[args.length - 1] as Function;
         queueMicrotask(() => callback(error, undefined, undefined));

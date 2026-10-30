@@ -147,7 +147,8 @@ vi.mock('drizzle-orm', async (importOriginal) => {
   };
 });
 
-vi.mock('../../server/db', () => {
+vi.mock('../../server/db', async () => {
+  const { PgDialect } = await import('drizzle-orm/pg-core');
   // Predicate evaluation against a row, using the column-name tags above.
   function evalPred(pred: any, row: Record<string, any>): boolean {
     if (!pred) return true;
@@ -190,6 +191,17 @@ vi.mock('../../server/db', () => {
   }
 
   const db = {
+    // The canonical actor reader now reaches SQL through the Drizzle adapter.
+    // This state-machine fixture supplies only its two active memberships;
+    // csr-current-scope.pglite.test.ts exercises the actual SQL admission policy.
+    async execute(statement: import('drizzle-orm').SQL) {
+      const query = new PgDialect().sqlToQuery(statement);
+      if (!/SELECT ou\.role FROM organization_users ou/.test(query.sql)) {
+        throw new Error('Unexpected SQL in the CSR state-machine fixture');
+      }
+      const activeMembers = [{ organizationId: 100, userId: 7, role: 'member' }, { organizationId: 200, userId: 8, role: 'member' }];
+      return { rows: activeMembers.filter(row => row.organizationId === query.params[0] && row.userId === query.params[1]).map(row => ({ role: row.role })) };
+    },
     select(_projection?: any) {
       let table: TableTag = 'csr_build_jobs';
       let predicate: any = null;

@@ -1,0 +1,8 @@
+{
+  "pausedBase": "ef8d6e8b1",
+  "stashCommit": "cd1d93b6bd49216eb15629e54f3a739e9bbb3a3b",
+  "currentCanonical": "47ce1d3d95eff4a6b3614146cc79b670d7b20645",
+  "patchSha256": "f067f51fbfc4a3c28298310f362421c0e48e44aa6647251e18c05147ab32b153",
+  "uncompressedBytes": 98783,
+  "reason": "Preserve earlier unfinished A3 changes while resuming latest checked-in CSR expertise handoff from user-provided Claude continuation. No A3 production change applied to current canonical source."
+}

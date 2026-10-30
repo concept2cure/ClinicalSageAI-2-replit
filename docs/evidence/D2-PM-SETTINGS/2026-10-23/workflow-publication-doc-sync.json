@@ -1,0 +1,16 @@
+{
+  "recordedAtUtc": "2026-10-23T20:43:42.123799+00:00",
+  "priorHead": "295bacc114b13e0883478db22daaa3c7b1a0d2f7",
+  "incomingRemote": "aef1b6a15456b9d3911753790a610a23487fa4c5",
+  "mergedHead": "a8a2a77951e5ba3f5d7cd953b6a14c38f7ea2884",
+  "paths": [
+    "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/PUBLICATION.md",
+    "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/README.md",
+    "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/publication-manifest.json",
+    "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/code-push-final.txt",
+    "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/root/code-verification.json"
+  ],
+  "runtimeChanges": 0,
+  "boundInputsUnchanged": 88,
+  "qualification": "Documentation-only merge preserves the exact running TypeScript and completed workflow build/test runtime inputs."
+}

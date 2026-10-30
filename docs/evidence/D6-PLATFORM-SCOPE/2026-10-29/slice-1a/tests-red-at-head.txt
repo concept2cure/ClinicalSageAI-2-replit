@@ -1,0 +1,465 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneA/red-tree
+
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > applies the three creators and the converge file, and a replay changes nothing 2166ms
+   → migrations/20260928_users_membership_rls.sql: permission denied to set parameter "app.current_user_role"
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > answers sign-in, password-reset and invitation lookups for the runtime role, and nothing else 1523ms
+   → every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > converges a database whose stored lookups still carry the custom SET clause 1432ms
+   → every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails on any function whose SET clause names a custom setting, whoever created it 1423ms
+   → every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails if the runtime role is a member of c2c_platform_scope 1490ms
+   → every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails if a policy the lookups read does not admit their owner 1471ms
+   → every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > organization_users.role refuses the platform role string (D6, P-72 slice 1a) > admits every assignable role and the values rows already hold, and never app_super_admin 1443ms
+   → expected [] to have a length of 1 but got +0
+ × server/__tests__/migrations/platform-scope-role.pglite.test.ts > organization_users.role refuses the platform role string (D6, P-72 slice 1a) > keeps a database whose rows already hold the platform role deployable, and refuses to keep the value 1415ms
+   → Cannot read properties of undefined (reading 'valid')
+stderr | server/routes/__tests__/authoring-router-membership-role.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-router-membership-role.test.ts
+{
+  "timestamp": "2026-10-30T08:29:35.220Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-router-membership-role.test.ts
+{
+  "timestamp": "2026-10-30T08:29:38.237Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T08:29:38.238Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-router-membership-role.test.ts
+{
+  "timestamp": "2026-10-30T08:29:38.239Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-router-membership-role.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoring-router-membership-role.test.ts > authoring router principal > replaces the token's role claim with the membership row's role, and derives x-roles from it 12ms
+   → expected 'app_super_admin' to be 'reviewer' // Object.is equality
+ × server/routes/__tests__/authoring-router-membership-role.test.ts > authoring router principal > does so for an ordinary stale claim too: a demoted administrator is the membership role 2ms
+   → expected 'admin' to be 'reviewer' // Object.is equality
+stdout | server/db/__tests__/platform-scope-role-refused.test.ts
+{
+  "timestamp": "2026-10-30T08:29:39.807Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T08:29:39.808Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/db/__tests__/platform-scope-role-refused.test.ts
+{
+  "timestamp": "2026-10-30T08:29:39.808Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses a tenant's request scope, before the callback runs 5ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses a tenant scope with no organization uuid, before the callback runs 1ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses the string cased or padded, before the callback runs 1ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' that names an organization, before the callback runs 1ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' bound to an account, before the callback runs 1ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' with the string padded, before the callback runs 1ms
+   → expected [Function] to throw an error
+ × server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses it through withTenantConnection, before any checkout 3ms
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > opens an ordinary role, and the system scope by its helper or its explicit shape 1ms
+ × server/db/__tests__/platform-scope-role-refused.test.ts > the instrumented pool sends no scope that carries the platform role outside the system scope > refuses a pooled statement whose scope was changed after it was entered, taking no connection 4ms
+   → promise resolved "{ rows: [], rowCount: +0 }" instead of rejecting
+ × server/db/__tests__/platform-scope-role-refused.test.ts > the instrumented pool sends no scope that carries the platform role outside the system scope > refuses the scope at BEGIN on a client checked out before the change 1ms
+   → promise resolved "{ rows: [], rowCount: +0 }" instead of rejecting
+ ✓ server/db/__tests__/platform-scope-role-refused.test.ts > the instrumented pool sends no scope that carries the platform role outside the system scope > sends the system scope as it is, and an ordinary scope with its role 1ms
+ × server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is "app_super_admin", with no scope and no client 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is "APP_SUPER_ADMIN", with no scope and no client 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is " app_super_admin ", with no scope and no client 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ✓ server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > opens the member's own scope for an ordinary role (control) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > applies the three creators and the converge file, and a replay changes nothing
+Error: migrations/20260928_users_membership_rls.sql: permission denied to set parameter "app.current_user_role"
+ ❯ applyAsApplier server/__tests__/migrations/platform-scope-role.pglite.test.ts:112:15
+    110|         await d.exec(sql(f));
+    111|       } catch (error) {
+    112|         throw new Error(`${f}: ${(error as Error).message}`);
+       |               ^
+    113|       }
+    114|     }
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:168:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > answers sign-in, password-reset and invitation lookups for the runtime role, and nothing else
+AssertionError: every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+-   "migrations/20261030b_platform_scope_role.sql",
+    "migrations/20260926_organization_users_own_writes.sql",
+    "migrations/20260928_users_membership_rls.sql",
+    "migrations/20260928_invitations_for_member.sql",
+  ]
+
+ ❯ inSetOrder server/__tests__/migrations/platform-scope-role.pglite.test.ts:41:69
+     39| function inSetOrder(files: string[]): string[] {
+     40|   const ordered = (C2C_MIGRATION_FILES as string[]).filter((f) => file…
+     41|   expect(ordered, 'every file this case applies is on the applier').to…
+       |                                                                     ^
+     42|     [...files].sort((a, b) => (C2C_MIGRATION_FILES as string[]).indexO…
+     43|   );
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:199:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy set on a non-superuser applier (D1, P-72 slice 1a) > converges a database whose stored lookups still carry the custom SET clause
+AssertionError: every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+-   "migrations/20261030b_platform_scope_role.sql",
+    "migrations/20260926_organization_users_own_writes.sql",
+    "migrations/20260928_users_membership_rls.sql",
+    "migrations/20260928_invitations_for_member.sql",
+  ]
+
+ ❯ inSetOrder server/__tests__/migrations/platform-scope-role.pglite.test.ts:41:69
+     39| function inSetOrder(files: string[]): string[] {
+     40|   const ordered = (C2C_MIGRATION_FILES as string[]).filter((f) => file…
+     41|   expect(ordered, 'every file this case applies is on the applier').to…
+       |                                                                     ^
+     42|     [...files].sort((a, b) => (C2C_MIGRATION_FILES as string[]).indexO…
+     43|   );
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:220:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails on any function whose SET clause names a custom setting, whoever created it
+AssertionError: every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+-   "migrations/20261030b_platform_scope_role.sql",
+    "migrations/20260926_organization_users_own_writes.sql",
+    "migrations/20260928_users_membership_rls.sql",
+    "migrations/20260928_invitations_for_member.sql",
+  ]
+
+ ❯ inSetOrder server/__tests__/migrations/platform-scope-role.pglite.test.ts:41:69
+     39| function inSetOrder(files: string[]): string[] {
+     40|   const ordered = (C2C_MIGRATION_FILES as string[]).filter((f) => file…
+     41|   expect(ordered, 'every file this case applies is on the applier').to…
+       |                                                                     ^
+     42|     [...files].sort((a, b) => (C2C_MIGRATION_FILES as string[]).indexO…
+     43|   );
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:254:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails if the runtime role is a member of c2c_platform_scope
+AssertionError: every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+-   "migrations/20261030b_platform_scope_role.sql",
+    "migrations/20260926_organization_users_own_writes.sql",
+    "migrations/20260928_users_membership_rls.sql",
+    "migrations/20260928_invitations_for_member.sql",
+  ]
+
+ ❯ inSetOrder server/__tests__/migrations/platform-scope-role.pglite.test.ts:41:69
+     39| function inSetOrder(files: string[]): string[] {
+     40|   const ordered = (C2C_MIGRATION_FILES as string[]).filter((f) => file…
+     41|   expect(ordered, 'every file this case applies is on the applier').to…
+       |                                                                     ^
+     42|     [...files].sort((a, b) => (C2C_MIGRATION_FILES as string[]).indexO…
+     43|   );
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:265:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > the deploy refuses what would bring the regression back > fails if a policy the lookups read does not admit their owner
+AssertionError: every file this case applies is on the applier: expected [ …(3) ] to deeply equal [ …(4) ]
+
+- Expected
++ Received
+
+  [
+-   "migrations/20261030b_platform_scope_role.sql",
+    "migrations/20260926_organization_users_own_writes.sql",
+    "migrations/20260928_users_membership_rls.sql",
+    "migrations/20260928_invitations_for_member.sql",
+  ]
+
+ ❯ inSetOrder server/__tests__/migrations/platform-scope-role.pglite.test.ts:41:69
+     39| function inSetOrder(files: string[]): string[] {
+     40|   const ordered = (C2C_MIGRATION_FILES as string[]).filter((f) => file…
+     41|   expect(ordered, 'every file this case applies is on the applier').to…
+       |                                                                     ^
+     42|     [...files].sort((a, b) => (C2C_MIGRATION_FILES as string[]).indexO…
+     43|   );
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:272:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > organization_users.role refuses the platform role string (D6, P-72 slice 1a) > admits every assignable role and the values rows already hold, and never app_super_admin
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:292:19
+    290|       `SELECT pg_get_constraintdef(oid) AS def, convalidated AS valid …
+    291|         WHERE conrelid = 'public.organization_users'::regclass AND con…
+    292|     expect(check).toHaveLength(1);
+       |                   ^
+    293|     expect(check[0].valid).toBe(true);
+    294|     expect(check[0].def).toContain(`'legacy_reviewer'::text`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+ FAIL  server/__tests__/migrations/platform-scope-role.pglite.test.ts > organization_users.role refuses the platform role string (D6, P-72 slice 1a) > keeps a database whose rows already hold the platform role deployable, and refuses to keep the value
+TypeError: Cannot read properties of undefined (reading 'valid')
+ ❯ server/__tests__/migrations/platform-scope-role.pglite.test.ts:321:28
+    319|       `SELECT pg_get_constraintdef(oid) AS def, convalidated AS valid …
+    320|         WHERE conrelid = 'public.organization_users'::regclass AND con…
+    321|     expect((await state()).valid).toBe(false);
+       |                            ^
+    322|     expect((await state()).def).not.toContain('app_super_admin');
+    323|     // The row cannot be written keeping the value; correcting it work…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses a tenant's request scope, before the callback runs
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses a tenant scope with no organization uuid, before the callback runs
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses the string cased or padded, before the callback runs
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' that names an organization, before the callback runs
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' bound to an account, before the callback runs
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses tenant '0' with the string padded, before the callback runs
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:83:51
+     81|     it(`refuses ${name}, before the callback runs`, () => {
+     82|       const fn = vi.fn();
+     83|       expect(() => runWithTenantScope(scope, fn)).toThrow(REFUSED);
+       |                                                   ^
+     84|       expect(fn).not.toHaveBeenCalled();
+     85|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > runWithTenantScope refuses the platform role string outside the system scope > refuses it through withTenantConnection, before any checkout
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:90:84
+     88|   it('refuses it through withTenantConnection, before any checkout', a…
+     89|     const fn = vi.fn();
+     90|     await expect(withTenantConnection({ tenantId: 7, role: 'app_super_…
+       |                                                                                    ^
+     91|     expect(fn).not.toHaveBeenCalled();
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > the instrumented pool sends no scope that carries the platform role outside the system scope > refuses a pooled statement whose scope was changed after it was entered, taking no connection
+AssertionError: promise resolved "{ rows: [], rowCount: +0 }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "rowCount": 0,
++   "rows": [],
+  }
+
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:107:61
+    105|     await runWithTenantScope({ tenantId: '7', orgUuid: 'uuid-7', role:…
+    106|       getTenantScope()!.role = 'app_super_admin';
+    107|       await expect(pool.query('SELECT 1 FROM unified_tasks')).rejects.…
+       |                                                             ^
+    108|       await expect(pool.connect()).rejects.toThrow(REFUSED);
+    109|     });
+ ❯ Module.runWithTenantScope server/db/tenantStore.ts:75:24
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:105:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+
+ FAIL  server/db/__tests__/platform-scope-role-refused.test.ts > the instrumented pool sends no scope that carries the platform role outside the system scope > refuses the scope at BEGIN on a client checked out before the change
+AssertionError: promise resolved "{ rows: [], rowCount: +0 }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "rowCount": 0,
++   "rows": [],
+  }
+
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:119:41
+    117|       const client = await pool.connect();
+    118|       getTenantScope()!.role = 'app_super_admin';
+    119|       await expect(client.query('BEGIN')).rejects.toThrow(REFUSED);
+       |                                         ^
+    120|       client.release();
+    121|     });
+ ❯ server/db/__tests__/platform-scope-role-refused.test.ts:116:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+
+ FAIL  server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is "app_super_admin", with no scope and no client
+ FAIL  server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is "APP_SUPER_ADMIN", with no scope and no client
+ FAIL  server/middleware/__tests__/request-scope-refuses-platform-role.test.ts > establishRequestTenantScope and the platform role string > answers 403 for a request whose role is " app_super_admin ", with no scope and no client
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/request-scope-refuses-platform-role.test.ts:45:24
+     43|       const next = vi.fn();
+     44|       establishRequestTenantScope(req, res, next);
+     45|       expect(next).not.toHaveBeenCalled();
+       |                        ^
+     46|       expect(res.statusCode).toBe(403);
+     47|       expect(res.body).toMatchObject({ error: { code: 'PLATFORM_SCOPE_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+
+ FAIL  server/routes/__tests__/authoring-router-membership-role.test.ts > authoring router principal > replaces the token's role claim with the membership row's role, and derives x-roles from it
+AssertionError: expected 'app_super_admin' to be 'reviewer' // Object.is equality
+
+Expected: "reviewer"
+Received: "app_super_admin"
+
+ ❯ server/routes/__tests__/authoring-router-membership-role.test.ts:61:27
+     59|     const { req, nextRan } = await authenticate(await bearer({ role: '…
+     60|     expect(nextRan).toBe(true);
+     61|     expect(req.user.role).toBe('reviewer');
+       |                           ^
+     62|     expect(req.user.roles).not.toContain('app_super_admin');
+     63|     expect(req.user.roles).toContain('reviewer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯
+
+ FAIL  server/routes/__tests__/authoring-router-membership-role.test.ts > authoring router principal > does so for an ordinary stale claim too: a demoted administrator is the membership role
+AssertionError: expected 'admin' to be 'reviewer' // Object.is equality
+
+Expected: "reviewer"
+Received: "admin"
+
+ ❯ server/routes/__tests__/authoring-router-membership-role.test.ts:70:27
+     68|   it('does so for an ordinary stale claim too: a demoted administrator…
+     69|     const { req } = await authenticate(await bearer({ role: 'admin', r…
+     70|     expect(req.user.role).toBe('reviewer');
+       |                           ^
+     71|   });
+     72| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  22 failed | 3 passed (25)
+   Start at  08:29:19
+   Duration  20.62s (transform 4.93s, setup 140ms, import 7.54s, tests 12.42s, environment 0ms)
+

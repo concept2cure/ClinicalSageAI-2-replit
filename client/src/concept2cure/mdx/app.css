@@ -4500,3 +4500,13 @@
 .mdx-shell .empty-state{ padding:40px 24px; text-align:center; background:var(--bg-050); border:1px dashed var(--border); border-radius:var(--radius-lg); color:var(--text-200); }
 .mdx-shell .empty-state-t{ font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:6px; }
 .mdx-shell .empty-state-s{ font-size:12px; margin-bottom:14px; }
+
+/* The shared risk register keeps its matrix and hazard drawer readable on a phone. */
+@media (max-width: 640px) {
+  .mdx-shell[data-surface] .risk-split { grid-template-columns: minmax(0, 1fr); }
+  .mdx-shell[data-surface] .risk-split > .sec, .mdx-shell[data-surface] .risk-drawer { min-width: 0; }
+  .mdx-shell[data-surface] .riskmx { grid-template-columns: 64px repeat(5, minmax(0, 1fr)); }
+  .mdx-shell[data-surface] .riskmx-col { overflow-wrap: anywhere; }
+  .mdx-shell[data-surface] .riskmx-cell { min-width: 0; padding: 3px; }
+  .mdx-shell[data-surface] .risk-br { flex-wrap: wrap; }
+}

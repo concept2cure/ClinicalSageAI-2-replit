@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run deploy-migrate from a snapshot tree ($1) against database $2 as the RDS-shaped applier c2c_rds_master; log to $3.
+TREE=$1 DB=$2 LOG=$3
+export DATABASE_URL="postgresql://c2c_rds_master:local-p72-pw@127.0.0.1:55472/$DB?sslmode=disable"
+unset DATABASE_OWNER_URL TEST_DATABASE_URL
+export APP_DATABASE_URL="postgresql://app_service:local-p72-pw@127.0.0.1:55472/$DB?sslmode=disable"
+export APP_SERVICE_DB_PASSWORD=local-p72-pw NODE_ENV=test
+cd "$TREE" || exit 9
+{ echo "tree $TREE ($(cat $TREE/HEAD.sha 2>/dev/null || echo working-tree snapshot)); database $DB; applier c2c_rds_master; $(date -u +%FT%TZ)"; node scripts/db/deploy-migrate.mjs; echo "deploy-migrate exit $?"; } > "$LOG" 2>&1
+tail -1 "$LOG"

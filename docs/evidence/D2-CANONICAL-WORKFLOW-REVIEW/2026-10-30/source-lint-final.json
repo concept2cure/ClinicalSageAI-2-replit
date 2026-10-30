@@ -1,0 +1,194 @@
+[
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/dataConnect.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "errorCount": 0,
+    "warningCount": 12,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+        "line": 350,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 350,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (5092). Maximum allowed is 500.",
+        "line": 782,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 6675,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has too many lines (4252). Maximum allowed is 100.",
+        "line": 1249,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 1249,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has a complexity of 479. Maximum allowed is 15.",
+        "line": 1249,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1249,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+        "line": 2179,
+        "column": 82,
+        "messageId": "complex",
+        "endLine": 2179,
+        "endColumn": 84
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 32. Maximum allowed is 15.",
+        "line": 2452,
+        "column": 16,
+        "messageId": "complex",
+        "endLine": 2452,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+        "line": 3196,
+        "column": 50,
+        "messageId": "complex",
+        "endLine": 3196,
+        "endColumn": 52
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+        "line": 3261,
+        "column": 55,
+        "messageId": "complex",
+        "endLine": 3261,
+        "endColumn": 57
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+        "line": 3426,
+        "column": 5,
+        "endLine": 3426,
+        "endColumn": 50,
+        "suggestions": [
+          {
+            "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+            "fix": {
+              "range": [
+                178192,
+                178237
+              ],
+              "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+            }
+          }
+        ]
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 3793,
+        "column": 43,
+        "messageId": "complex",
+        "endLine": 3793,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+        "line": 6300,
+        "column": 28,
+        "messageId": "exceed",
+        "endLine": 6300,
+        "endColumn": 30
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+        "line": 6300,
+        "column": 28,
+        "messageId": "complex",
+        "endLine": 6300,
+        "endColumn": 30
+      }
+    ]
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/citationAdmission.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  }
+]

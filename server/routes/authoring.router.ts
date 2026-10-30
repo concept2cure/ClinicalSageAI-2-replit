@@ -13,6 +13,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
+import { applyOrganizationRole } from '../middleware/auth';
 import { getPool } from '../db';
 import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
@@ -161,7 +162,8 @@ import {
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
-import { savedSectionDraftTemplate, buildSectionDraftPrompt, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
+import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
+import { draftPassageFor } from '../services/authoring/authoring-draft-passage';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -188,9 +190,10 @@ const router = Router();
 // resolves to the same file under vitest, tsx, and the production build —
 // verifyJwtWithRotation via ../utils/jwtVerify (whose .js is a shim that
 // re-exports the .ts), nonAccessTokenReason via ../middleware/tokenType (no .js
-// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin). An
-// extensionless import of '../middleware/auth' would instead bind to the stale
-// auth.js twin under vitest and silently drop AUTH_008/AUTH_009.
+// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin),
+// applyOrganizationRole via ../middleware/auth, whose .js twin is now a pure
+// re-export of auth.ts (KNOWN_ISSUES_LEDGER M-5), so every resolver runs the
+// same code.
 router.use((req: Request, res: Response, next: any) => {
   // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
   // anything downstream reads them. requireAny() reads x-roles, createAuditTrail
@@ -268,7 +271,17 @@ router.use((req: Request, res: Response, next: any) => {
   // AUTH_009 (terminal): live organization_users re-check — fail-closed 403 on a
   // revoked membership, fail-open only on infra-indeterminate. Same control and
   // ~60s cache as authenticateToken.
-  return enforceOrgMembership(req, res, next);
+  return enforceOrgMembership(req, res, () => {
+    // The membership row's role replaces the token's claim, as authenticateToken
+    // does (IAM-10). Until 2026-10-30 req.user.role stayed the claim, and the
+    // image upload re-entered its scope with it, so the token's copy of the role
+    // at sign-in reached app.current_user_role (P-72 slice 1a). x-roles follows.
+    applyOrganizationRole(req);
+    const live: unknown = (req.user as { roles?: unknown } | undefined)?.roles;
+    const liveRoles = Array.isArray(live) && live.length ? live : undefined;
+    setOrClear('x-roles', liveRoles ? liveRoles.map((r: unknown) => String(r).toUpperCase()).join(',') : undefined);
+    next();
+  });
 });
 /* A disk-backed multer instance and its MIME allowlist stood here, attached
    to no route. The two upload routes this file does serve build their own
@@ -3602,6 +3615,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       tenantId, documentId: section.doc_id, programId: section.client_program_id,
       sectionId: String(sectionId), code: section.code,
     }, section, req.body.region);
+    // A passage of the saved section, for alternatives to it alone; never parked (slice 4).
+    const passage = draftPassageFor(req.body, section);
+    // A revision drafts from a live candidate of this section, read and never consumed (slice 3).
+    const revision = await draftRevisionFor(req.body, async draftId => (await import(
+      '../services/clinical-regulatory-evidence/draft-candidate-store.js')).readDraftCandidate(tenantId, String(sectionId), draftId, section));
     // P-73 slice 2: the application the project records, and its requirements, as AnA's batch drafting reads them.
     const filing = await recordedFilingDraftContext(pool,
       { tenantId, programId: projectScope ? section.client_program_id : null, code: section.code },
@@ -3717,14 +3735,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: filing.block });
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: filing.block, revision: revision.prompt, passage: passage.prompt });
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,
       userId: getActorId(req),
       sectionId: String(sectionId),
       request: { tone, region, context: context ?? null, requirements: requirements ?? null,
-        ...(assemblySources ? { sources: assemblySources } : {}) },
+        ...(assemblySources ? { sources: assemblySources } : {}), ...revision.turnRequest, ...passage.turnRequest },
       prompt,
       audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
@@ -3799,7 +3817,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       shownEvidence: retrievalStatus === 'ok' ? evidenceShown(evidenceBlock) : null,
       // The header lines exactly as the prompt shows them.
       sectionHeader: `Module: ${section.module}\nSection: ${section.code} - ${section.title}\nProduct: ${section.product_code || 'Medical Product'}`,
-      personWords: [context, requirements].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
+      personWords: [context, requirements, revision.instruction].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
       retrievalStatus,
     });
     // Park the draft + the sources it came from so the accept endpoint can
@@ -3851,7 +3869,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       const { createDraftCandidate, savedSectionDraftBase } = await import(
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
-      const candidate = await createDraftCandidate(
+      // The whole-section accept is a candidate's one consumer, so a passage is never parked.
+      const candidate = passage.prompt ? null : await createDraftCandidate(
         tenantId,
         String(sectionId),
         generatedContent,
@@ -3875,10 +3894,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
+          ...revision.generator,
         },
         assertions,
       );
-      draftId = candidate.id;
+      draftId = candidate?.id;
     } catch (attrErr: any) {
       console.warn(
         '[Authoring] draft-candidate creation failed (non-fatal):',
@@ -3899,6 +3919,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         // The engine's check of the draft as generated, and whether its turn was filed.
         check: drafted?.check ?? null,
         turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
+        ...revision.generator,
+        ...passage.response,
         metadata: {
           tone,
           region,
@@ -4845,8 +4867,8 @@ async function freezeCensus(
   return { openCommentCount, pendingEdits };
 }
 
-/** The 409 a freeze answers while work is outstanding — naming it, never a status code. */
-function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
+/** The 409 a freeze, or an approval, answers while work is outstanding — naming it, never a status code. */
+function notSettledRefusal(openCommentCount: number, pendingEdits: number, act: 'freeze' | 'approve' = 'freeze') {
   const parts: string[] = [];
   if (openCommentCount > 0) {
     parts.push(`${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`);
@@ -4854,19 +4876,50 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   if (pendingEdits > 0) {
     parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
   }
+  const message = act === 'approve'
+    ? `Not approved — this document still has ${parts.join(' and ')}. ` +
+      'An approval seals the content for filing, so the questions would go ' +
+      'unanswered and the proposed edits would stay undecided in the approved ' +
+      'text. Resolve them, or approve again confirming you intend to approve it ' +
+      'as it stands. Nothing was signed.'
+    : `Not frozen — this document still has ${parts.join(' and ')}. ` +
+      'Freezing seals the content for signature and filing, so the questions ' +
+      'would go unanswered and the proposed edits would reach a reviewer ' +
+      'undecided. Resolve them, or freeze again confirming you intend to ' +
+      'seal it as it stands.';
   return {
     success: false,
-    error: {
-      code: 'DOCUMENT_NOT_SETTLED',
-      message:
-        `Not frozen — this document still has ${parts.join(' and ')}. ` +
-        'Freezing seals the content for signature and filing, so the questions ' +
-        'would go unanswered and the proposed edits would reach a reviewer ' +
-        'undecided. Resolve them, or freeze again confirming you intend to ' +
-        'seal it as it stands.',
-    },
+    error: { code: 'DOCUMENT_NOT_SETTLED', message },
     unresolved: { openComments: openCommentCount, pendingEdits },
   };
+}
+
+/**
+ * What an APPROVER e-signature must clear before the credential (2026-10-30,
+ * the CSR path sweep): separation of duties, then the settle question Freeze
+ * asks. An approval freezes the document too, and it did not ask, so an
+ * approved CSR could carry open review comments and undecided tracked changes
+ * inside the signed text. Refused (409) while either is outstanding, unless the
+ * approver states they approve it as it stands; that is recorded on this
+ * transaction, as Freeze records it. Before re-authentication, so a refusal
+ * spends no second factor.
+ */
+async function approvalRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await signingRefused(client, req, res, ids)) return true;
+  const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
+  if (openCommentCount === 0 && pendingEdits === 0) return false;
+  if (req.body?.acknowledgeUnresolved !== true) {
+    res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits, 'approve'));
+    return true;
+  }
+  await createAuditTrail(req, ids.docId, null, 'APPROVAL_UNRESOLVED_ACKNOWLEDGED', null, null,
+    `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
+    { openCommentCount, pendingEdits, acknowledged: true }, client);
+  return false;
 }
 
 /**
@@ -5375,7 +5428,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
          Before `reverifyAuthoringSigner`, so a refusal spends no
          re-authentication code; before the status flip, the snapshot and the
          signature row, so a refused approval seals nothing. */
-      if (meaning === 'APPROVER' && await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await approvalRefused(client, req, res, current, { docId, tenantId, meaning })) return;
       // RR5: on a live review route only a named reviewer whose turn it is signs REVIEWER, over the route's content; refused before the credential.
       const routed = meaning === 'REVIEWER' ? await authoringReviewerPrecheck(client, { tenantId, docId: String(current.doc.id), title: String(current.doc.title ?? ''), signerId: Number(getActorId(req)), digest: sectionsDigest(current.sections) }) : null;
 

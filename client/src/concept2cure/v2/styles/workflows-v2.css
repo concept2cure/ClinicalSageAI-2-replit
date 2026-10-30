@@ -13,6 +13,9 @@
 .c2c-v2 .workflow-additional { margin-top: 18px; min-width: 0; }
 .c2c-v2 .workflow-additional .sec { margin-top: 18px; }
 @media (max-width: 760px) {
+  /* Keep recovery actions from squeezing the error message on a phone. */
+  .c2c-v2 .workflow-page .c2c-error-state { display: grid; grid-template-columns: 15px minmax(0, 1fr); }
+  .c2c-v2 .workflow-page .c2c-error-actions { grid-column: 2; }
   .c2c-v2 .workflow-guidance { grid-template-columns: 1fr; gap: 12px; }
   .c2c-v2 .workflow-area { padding: 16px; }
   .c2c-v2 .workflow-page .ph { flex-wrap: wrap; gap: 12px; }

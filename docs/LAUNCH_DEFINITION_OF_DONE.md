@@ -281,6 +281,18 @@ The fixer raised three questions about P-19, decided the same day:
 - The demo seeds use the code BX-204 for two different products. The seed's dossier-map project gets its own code;
   demo data must not depend on a code collision.
 
+The bounded PM-06 maintenance extension (2026-10-23; [evidence](evidence/D2-PM-SETTINGS/2026-10-23/README.md))
+reaches the existing program-profile writer from Project home for description, priority and recorded target date.
+Current lead/organization-manager authority, a current-row revision and a stated reason protect the change; its
+chained audit commits in the same transaction. Concurrent/stale edits refuse, and uncertain outcomes require a
+fresh read. Target maintenance does not regenerate milestone plans or change actuals, approved versions or ownership.
+
+2026-10-30, the existing Author-side Memory and Instructions cards reach the saved project intelligence profile
+through the current UUID/actor/anchor/client access path ([evidence](evidence/D2-PM-RECORDED-CONTEXT/2026-10-30/README.md)).
+They distinguish recorded notes from verified evidence and profile instructions from authored instructions/skills.
+The existing AnA profile formatter also uses recorded risk/decision fields rather than invented severity/status.
+This bounded completion adds no instruction precedence, profile writer, provider or launch-row green claim.
+
 ### P-20 — A safety report never infers what nobody stated
 
 The onset date is stated either as a date or explicitly as unknown; a blank is refused. When expectedness is not
@@ -661,8 +673,10 @@ deletion record the working agreement requires:
      - `c2c_agency_meetings` and the Agency Meetings surface retire in that change.
      - *2026-10-30:* Communication records and moves meetings, admitted by the meeting's project
        (`docs/evidence/D2-MEETINGS-IN-COMMUNICATION/2026-10-30/`). A meeting names its minutes letter
-       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`). The retirement of
-       `c2c_agency_meetings` and its surface is next.
+       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`).
+       `c2c_agency_meetings` is read-only with its rows kept, and its routes and surface are deleted; `agency-meetings`
+       is an alias to Communication (`docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/`). Step 4 is done but for
+       `lifecycle_obligations`, deferred above.
 
 ### P-40 — A sealed editing copy is revisable, and the refusal says so
 

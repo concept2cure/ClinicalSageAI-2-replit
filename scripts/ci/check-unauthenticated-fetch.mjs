@@ -42,6 +42,13 @@
  * Calls through apiRequest / useFetchJson / queryClient are not raw fetch() and
  * are not scanned; those helpers attach the token themselves.
  *
+ * The Vault ingest is sent with XMLHttpRequest, for its upload progress (MR-08
+ * Stage 6 step 2, `client/src/concept2cure/v2/vaultIngestTransport.ts`). That
+ * transport sets the headers its caller hands it, so each `sendIngest(...)`
+ * call is scanned exactly as a fetch() is. A `new XMLHttpRequest` anywhere else
+ * in client/src is refused: a second XHR path would be a request this gate
+ * cannot see.
+ *
  * Usage:
  *   node scripts/ci/check-unauthenticated-fetch.mjs
  *   node scripts/ci/check-unauthenticated-fetch.mjs --list
@@ -149,12 +156,19 @@ function firstArg(args) {
 
 const allow = readAllowlist();
 const findings = [];
+const XHR_TRANSPORT = 'client/src/concept2cure/v2/vaultIngestTransport.ts';
+const rawXhr = [];
 let scanned = 0;
 for (const file of walk(CLIENT)) {
   // Stripped for EVERYTHING below, not just the call search: a comment that
   // merely mentions Authorization must not count as sending it.
   const src = stripComments(fs.readFileSync(file, 'utf8'));
-  const re = /(?<![\w$.])fetch\s*\(/g;
+  const relFile = path.relative(repoRoot, file);
+  for (const x of src.matchAll(/\bnew\s+XMLHttpRequest\s*\(/g)) {
+    if (relFile !== XHR_TRANSPORT) rawXhr.push(`${relFile}:${src.slice(0, x.index).split('\n').length}`);
+  }
+  // fetch(...), and the XHR transport's callers; not the transport's own definition.
+  const re = /(?<![\w$.])(?<!function\s+)(?:fetch|sendIngest)\s*\(/g;
   let m;
   while ((m = re.exec(src))) {
     scanned += 1;
@@ -187,6 +201,9 @@ if (scanned < MIN_SCANNED) {
 let baseline = { allow: [] };
 if (fs.existsSync(BASELINE)) baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
 const errors = [];
+for (const at of rawXhr) {
+  errors.push(`${at} makes a raw XMLHttpRequest; send through ${XHR_TRANSPORT} so its headers are scanned`);
+}
 for (const b of baseline.allow) {
   if (!b.reason || b.reason.trim().length < 20) errors.push(`baseline entry ${b.file} :: ${b.target} has no written reason`);
 }

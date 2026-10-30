@@ -1,0 +1,83 @@
+[
+  {
+    "mutation": "closed-response",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 5 passed (7)"
+    ],
+    "log": "mutation-closed-response.txt.gz"
+  },
+  {
+    "mutation": "duplicate-build",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 5 passed (7)"
+    ],
+    "log": "mutation-duplicate-build.txt.gz"
+  },
+  {
+    "mutation": "stale-release",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  1 failed | 6 passed (7)"
+    ],
+    "log": "mutation-stale-release.txt.gz"
+  },
+  {
+    "mutation": "audit-identity",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  4 failed | 1 passed (5)"
+    ],
+    "log": "mutation-audit-identity.txt.gz"
+  },
+  {
+    "mutation": "cabinet-placement",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 1 passed (3)"
+    ],
+    "log": "mutation-cabinet-placement.txt.gz"
+  },
+  {
+    "mutation": "missing-document",
+    "exit": 1,
+    "summary": [
+      "Test Files  1 failed (1)",
+      "Tests  1 failed | 2 passed (3)"
+    ],
+    "log": "mutation-missing-document.txt.gz"
+  },
+  {
+    "mutation": "document-export-audit",
+    "exit": 1,
+    "summary": [
+      "Test Files  2 failed (2)",
+      "Tests  3 failed | 25 passed (28)"
+    ],
+    "log": "mutation-document-export-audit.txt.gz"
+  },
+  {
+    "mutation": "route-build-guard",
+    "exit": 1,
+    "summary": [
+      "Test Files  2 failed (2)",
+      "Tests  2 failed | 26 passed (28)"
+    ],
+    "log": "mutation-route-build-guard.txt.gz"
+  },
+  {
+    "mutation": "route-audit-authority",
+    "exit": 1,
+    "summary": [
+      "Test Files  2 failed (2)",
+      "Tests  2 failed | 26 passed (28)"
+    ],
+    "log": "mutation-route-audit-authority.txt.gz"
+  }
+]

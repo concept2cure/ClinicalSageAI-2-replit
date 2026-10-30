@@ -1,0 +1,6 @@
+{
+  "incoming_commit": "9e6ee17ba1de7d60f35b8ddbf68338385341f9b9",
+  "integration_commit": "e21d5357b9adf09cc66e788dbd1a1f14c06bf856",
+  "selected_pm_inputs_unchanged": 148,
+  "review": "Retain canonical sourced STF supportive-file checks and agency review prerequisites. No selected PM source/test/browser/runtime input changes. Existing590 distinct focused cases, native8 and component-browser results remain qualified; no repeated counts are added. A fresh production build and unchanged complete pre-push hook qualify the composed application before expected-head publication."
+}

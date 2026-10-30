@@ -46,9 +46,9 @@ export const oncologyProfile: TherapeuticAreaProfile = {
       appliesTo: '2',
       triggerKeywords: ['dose', 'MTD', 'RP2D', 'dose escalation'],
       instruction:
-        "Per FDA's Project Optimus, randomized dose-finding (≥2 doses) is now expected before pivotal study initiation. Drafts that establish RP2D solely from MTD/single-dose 3+3 should flag the absence of randomized dose comparison and propose a remediation plan.",
+        "Assess dosage optimization using the recorded phase, product category and population before applying Project Optimus. The FDA final guidance (August 2024) does not address first-in-human starting-dose selection. Its scope excludes radiopharmaceuticals, cellular and gene therapy products, oncolytics, microbiota and cancer vaccines, and does not specifically address pediatric development. Do not impose a universal randomized two-dose design or assume an MTD-only rationale is sufficient. Identify the product- and stage-specific dose evidence and verified applicable guidance; leave unknown applicability unresolved.",
       severity: 'major',
-      guidanceRef: 'FDA Project Optimus initiative (2023)',
+      guidanceRef: 'FDA final dosage-optimization guidance, August 2024: https://www.fda.gov/regulatory-information/search-fda-guidance-documents/optimizing-dosage-human-prescription-drugs-and-biological-products-treatment-oncologic-diseases',
     },
     {
       id: 'onc-rems-genotoxic',
@@ -149,8 +149,8 @@ export const oncologyProfile: TherapeuticAreaProfile = {
     {
       code: 'FDA Project Optimus',
       authority: 'FDA',
-      title: 'Optimizing the Dose of Oncology Drug Products',
-      why: 'Randomized dose-finding now expected before pivotal — major shift from MTD-only',
+      title: 'Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (final, August 2024)',
+      why: 'Dosage-optimization evidence within the final guidance\'s product and population scope; not first-in-human starting-dose selection or a universal two-dose rule',
     },
     {
       code: 'EMA Anticancer Guideline',

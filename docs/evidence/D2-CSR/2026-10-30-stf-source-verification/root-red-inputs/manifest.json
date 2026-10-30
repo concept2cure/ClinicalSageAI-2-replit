@@ -1,0 +1,9 @@
+{
+  "kind": "captured before RED execution",
+  "canonicalHead": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+  "files": {
+    "server/services/ectd/stf-generator.ts": "c27fae8aa6c58abf31fb35028eda3c4ff9aad1e6bfed47a64f9745413d5db4ce",
+    "server/services/ind/ctd/regulatory-basis.ts": "2179af3bcdb3fa3ed56517c7ae0db8ff4a22452d400d2ed0de41fcf4ee90bd08",
+    "server/services/ectd/__tests__/stf-csr-source-values.test.ts": "9dce8308634fea00dcd7e3023da193a2751a1aef52211ec55ff91fdff6ad905a"
+  }
+}

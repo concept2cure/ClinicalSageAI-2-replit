@@ -14,7 +14,6 @@
     "server/routes/510k-device-routes.ts",
     "server/routes/510k-estar-routes.ts",
     "server/routes/account-intelligence.ts",
-    "server/routes/agency-meetings.routes.ts",
     "server/routes/ai-actions.ts",
     "server/routes/ana-biostats-governed-documents.ts",
     "server/routes/ana-biostats.ts",

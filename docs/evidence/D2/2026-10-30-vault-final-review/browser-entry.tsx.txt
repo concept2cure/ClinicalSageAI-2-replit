@@ -1,0 +1,35 @@
+import React,{useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import {useVaultUpload,type VaultUploadOutcome} from '/workspace/ClinicalSageAI/client/src/concept2cure/v2/useVaultUpload';
+import {stageFiles,fieldsOf,VaultUploadStaging} from '/workspace/ClinicalSageAI/client/src/concept2cure/v2/surfaces/VaultUploadStaging';
+import {authService} from '/workspace/ClinicalSageAI/client/src/services/portal/authService';
+import '/workspace/ClinicalSageAI/design-system/colors_and_type.css';
+import '/workspace/ClinicalSageAI/client/src/concept2cure/v2/styles/app-v2.css';
+import '/workspace/ClinicalSageAI/client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '/workspace/ClinicalSageAI/client/src/concept2cure/v2/styles/surface-text-ramp.css';
+const token=(id:number,suffix:string)=>`fixture.${btoa(JSON.stringify({userId:id,organizationId:7,session:suffix}))}.synthetic`;
+const user=(id:number)=>({id:String(id),organizationId:'7',roles:['author'],permissions:[]});
+authService.setToken(token(33,'original'),user(33),'synthetic-refresh',3600);
+const PROGRAM='11111111-1111-4111-8111-111111111111',OTHER='33333333-3333-4333-8333-333333333333';
+const lifecycle=new URLSearchParams(location.search).has('lifecycle');
+function App(){
+ const [program,setProgram]=useState(PROGRAM);
+ const uploader=useVaultUpload(program);
+ const [staging,setStaging]=useState(()=>stageFiles({files:(lifecycle?['receipt.pdf','queued.pdf']:['receipt.pdf']).map(name=>({file:new File(['synthetic document bytes'],name,{type:'application/pdf'}),path:name})),unread:0},'OTHER'));
+ const [outcome,setOutcome]=useState<VaultUploadOutcome|null>(null);
+ const upload=async()=>{
+  const selected=staging.rows.filter(r=>r.status?.state!=='stored');
+  const result=await uploader.upload(selected.map(r=>r.file),{fields:selected.map(fieldsOf),onFileStatus:(index,status)=>setStaging(s=>({...s,rows:s.rows.map(r=>r.key===selected[index]?.key?{...r,status}:r)}))});
+  setOutcome(result);
+ };
+ return <main className="c2c-v2" style={{padding:16,maxWidth:1000,margin:'0 auto'}}>
+  <h1>Vault upload final reliability check</h1>
+  {lifecycle&&<div><button onClick={()=>setProgram(OTHER)}>Change project</button><button onClick={()=>authService.setToken(token(34,'replacement'),user(34),'synthetic-next',3600)}>Change account</button><button onClick={()=>void authService.refreshToken()}>Refresh bearer</button><button onClick={()=>{void upload();void upload();}}>Repeat upload</button></div>}
+  <VaultUploadStaging staging={staging} folders={[{id:'module-3',label:'Module 3 · Quality'}]} uploading={uploader.uploading}
+   onChange={(key,patch)=>setStaging(s=>({...s,rows:s.rows.map(r=>r.key===key?{...r,...patch}:r)}))} onRemove={()=>{}} onUpload={()=>void upload()} onDone={()=>{}} />
+  <p data-testid="batch-note">{uploader.note?.text}</p>
+  <output className="sr-only" data-testid="outcome" data-value={JSON.stringify(outcome)} />
+  <output className="sr-only" data-testid="owner" data-program={program} data-busy={uploader.uploading} />
+ </main>;
+}
+createRoot(document.getElementById('root')!).render(<App/>);

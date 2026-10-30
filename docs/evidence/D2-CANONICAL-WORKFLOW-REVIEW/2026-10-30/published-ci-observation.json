@@ -1,0 +1,74 @@
+[
+  {
+    "id": 41095956546,
+    "name": "Semgrep",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956546",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41095956654,
+    "name": "C2C Agent \u2014 Validate & Audit",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956654",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41095956870,
+    "name": "CI",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956870",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41095956538,
+    "name": "Repo Health Baseline Refresh",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "pending",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956538",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41095956616,
+    "name": "Tier 5 Browser Smoke",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956616",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41095956573,
+    "name": "CodeQL",
+    "head_sha": "162f2845e487e310657ea75d15120fe3e95beefc",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41095956573",
+    "created_at": "2026-10-30T17:06:55Z"
+  },
+  {
+    "id": 41094674411,
+    "name": "Semgrep",
+    "head_sha": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41094674411",
+    "created_at": "2026-10-30T16:58:27Z"
+  },
+  {
+    "id": 41094674313,
+    "name": "Tier 5 Browser Smoke",
+    "head_sha": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+    "status": "queued",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41094674313",
+    "created_at": "2026-10-30T16:58:27Z"
+  }
+]

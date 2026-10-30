@@ -123,6 +123,14 @@ prerequisite remains open. Synthetic schemas prove execution and negative
 cases only. Stage 3 and CAT2-01 remain open until the agency corpus and remaining
 acceptance criteria are qualified; unsupported dependency forms are unverified.
 
+2026-10-30 continuation: the current FDA/ICH production source review and unsigned
+per-asset decision packet are in `docs/evidence/MR-10/2026-10-30-agency-qualification/`.
+The existing generator/packager now reference and conditionally require the current
+STF stylesheet2.3, classify the ten source-observed US file-tags correctly and
+refuse obsolete retained STF proof inventories. Actual official-asset acquisition
+and licensed-engine/profile qualification still require the runbook prerequisites;
+no counsel signoff, current-criteria coverage or agency acceptance is invented.
+
 This is the root of stages 4–7, 9, 10 and 11. Nothing downstream can be proved without it.
 
 1. Re-confirm CAT2-01 at the current head (statuses here are from 94b4f9238).

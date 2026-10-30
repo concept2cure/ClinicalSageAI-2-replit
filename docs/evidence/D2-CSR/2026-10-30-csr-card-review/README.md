@@ -135,3 +135,16 @@ reads as a non-`/api` template; the same is true of the existing `/sections` and
   which `/headings` does not). It is kept: it is the API for a build's drafted text, held by
   `csr-jobs-build-and-review.pglite.test.ts` and `tests/unit/csr-jobs-routes.test.ts`.
   Removing it is a separate decision.
+
+## Follow-up (2026-10-30, lead session): the import dialog names the project
+
+Item 4 above is closed. `CsrRunBuilds.tsx` reads the open shell project (`useShellProject`, the same
+source `EctdCompile` reads) and passes its title as `programName` only when the shell project's id is
+this card's `programId` (case-insensitive). Any other open project, or none, leaves the dialog naming
+the target by id, as before. No prop is threaded through the five hosts.
+
+| Check | Result |
+|---|---|
+| `csrCardReach.test.tsx` "names the target project … and only then", with `programName` not passed | fails: `expected { …(2) } to match object { …(2) }` |
+| Same, restored | 8 of 8 pass |
+| ESLint `--max-warnings 0` on both files | clean |

@@ -1,0 +1,39 @@
+{
+  "recordedAtUtc": "2026-10-23T20:27:56.723453+00:00",
+  "inventoryBase": "df869f2815533a2fb6c5174b87a02c21c8a28e87",
+  "integratedHead": "9f8cae7f06df2d1b4c9200bb33b949e7aa30aa50",
+  "integration": "normal fetch and fast-forward; all concurrent commits preserved",
+  "incomingCommits": 39,
+  "incomingPathCount": 596,
+  "ownedPathOverlap": [],
+  "boundSourceOverlap": [],
+  "localBoundChangesSinceFreeze": [
+    "server/routes/c2c/__tests__/project-settings.pglite.test.ts"
+  ],
+  "runtimePaths": [
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+    "client/src/concept2cure/v2/apiCall.ts",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+    "client/src/concept2cure/v2/editorTarget.ts",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+    "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
+    "client/src/concept2cure/v2/surfaces/MarketApplicationNumber.tsx",
+    "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalReadiness.tsx",
+    "client/src/concept2cure/v2/surfaces/company-documents/LegalLifecycleEditor.tsx",
+    "client/src/concept2cure/v2/surfaces/company-documents/LegalRequirementsEditor.tsx",
+    "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts",
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts",
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyResource.ts",
+    "client/src/concept2cure/v2/surfaces/useCompanyDocumentSettings.ts",
+    "client/src/concept2cure/v2/surfaces/useCompanySubmissionLibrary.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ectd/package-identity.ts",
+    "server/services/submission-service/market-application-number.ts",
+    "server/services/vault/document-chunking-backfill.service.ts"
+  ],
+  "qualification": "Rerun integrated production build, focused ProjectHome cohorts and whole-program TypeScript. Existing backend/native/settings-browser runtime inputs unchanged by incoming work."
+}

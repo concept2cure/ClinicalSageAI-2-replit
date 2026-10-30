@@ -353,11 +353,11 @@ export interface DataState<T> {
 
 /** Optional ownership of a read, supplied by the caller's existing session/visit guard. */
 export interface DataReadOwner { key: string; current: () => boolean }
-interface DataReadVisit { key: string; path: string | null; retired: boolean }
+export interface DataReadVisit { key: string; path: string | null; retired: boolean }
 function currentDataOwner(owner: DataReadOwner): boolean {
   try { return owner.current() === true; } catch { return false; }
 }
-function useDataReadVisit(path: string | null, owner?: DataReadOwner) {
+export function useDataReadVisit(path: string | null, owner?: DataReadOwner) {
   const visit = React.useRef<DataReadVisit | null>(null);
   if (!owner) { visit.current = null; return { visit: null, current: () => visit.current === null }; }
   const valid = currentDataOwner(owner), previous = visit.current;

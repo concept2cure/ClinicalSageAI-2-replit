@@ -739,6 +739,8 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
 
   // 5-step workflow — always included for any authoring module
   const authoringModules = [
+    'ind-checklist', 'submission-center', 'device-cer',
+    'cmc', 'document-authoring', 'protocol-dev',
     'ectd-coauthor',
     'cmc-wizard',
     'doc-canvas',
@@ -748,7 +750,7 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
     'protocol-designer',
   ];
   const hasAuthoring = enabledModules.some(m => authoringModules.includes(m));
-  if (hasAuthoring || enabledModules.length === 0) {
+  if (hasAuthoring) {
     parts.push(getDossierWorkflowPrompt());
   }
 
@@ -757,6 +759,7 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
 
   // Dossier Manager — included for submission-oriented modules
   const submissionModules = [
+    'ind-checklist', 'submission-center', 'device-510k', 'device-pma', 'device-submission', 'device-cer',
     'ectd-coauthor',
     'ind-filing',
     '510k-submission',
@@ -765,12 +768,13 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
     'ce-marking',
   ];
   const hasSubmission = enabledModules.some(m => submissionModules.includes(m));
-  if (hasSubmission || enabledModules.length === 0) {
+  if (hasSubmission) {
     parts.push(getDossierManagerPrompt());
   }
 
   // Document Editor — included for authoring/canvas modules
   const editorModules = [
+    'submission-center', 'cmc', 'document-authoring', 'protocol-dev',
     'doc-canvas',
     'cmc-wizard',
     'ectd-coauthor',
@@ -778,7 +782,7 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
     'csr-author',
   ];
   const hasEditor = enabledModules.some(m => editorModules.includes(m));
-  if (hasEditor || enabledModules.length === 0) {
+  if (hasEditor) {
     parts.push(getDocumentEditorPrompt());
   }
 
@@ -791,8 +795,9 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
   // Regulatory precedent intelligence — always included (core judgment layer)
   parts.push(getRegulatoryPrecedentPrompt());
 
-  // Cross-jurisdictional intelligence — included for multi-market or when no specific module
+  // Cross-jurisdictional intelligence — included for its recorded module owners.
   const globalModules = [
+    'ind-checklist', 'submission-center', 'device-cer',
     'ectd-coauthor',
     'ind-filing',
     'nda-bla',
@@ -801,7 +806,7 @@ export function assembleInstructionEnginePrompt(enabledModules: string[]): strin
     'global-strategy',
   ];
   const hasGlobal = enabledModules.some(m => globalModules.includes(m));
-  if (hasGlobal || enabledModules.length === 0) {
+  if (hasGlobal) {
     parts.push(getCrossJurisdictionalPrompt());
   }
 

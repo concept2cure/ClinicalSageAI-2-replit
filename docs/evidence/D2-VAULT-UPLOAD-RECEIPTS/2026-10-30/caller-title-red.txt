@@ -1,0 +1,86 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'an array instead of a record' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success false' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID is not a UUID' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'program omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a different program recorded the file' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version is blank' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title is blank' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'filing omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder ID is blank' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder label is not text or null' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement omitted' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement is unknown' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims a folder' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placed claims no folder' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'review flag is not boolean' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims no review needed' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'extraction is unknown' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unexpected accepted status' (HTTP 202)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '200 without reupload acknowledgement' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '201 contradicts a reupload marker' (HTTP 201)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a change has a nontext before value' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'differs is not an array' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference is null' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has an unknown field' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has no requested value' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unchanged contradicts an actual repair' (HTTP 200)
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "" without retry
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "<html>upstream response</html>" without retry
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "{\"success\":" without retry
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > continues a mixed batch after missing and malformed reupload receipts, with no second POST for either
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'absent extraction and extra future fi…'
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'extracted with null label and opaque …'
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'pending with empty label'
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'failed extraction stored unfiled'
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=true and truthful repair copy
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=false and truthful repair copy
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > retains the actual server-assigned check-in version and never sends a client version or document code 30ms
+   → expected [ { name: 'protocol.pdf', …(3) } ] to deeply equal [ { name: 'protocol.pdf', …(3) } ]
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not turn an unconfirmed check-in into a successful new-version receipt
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt
+ ↓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > retains the actual server-assigned check-in version and never sends a client version or document code
+AssertionError: expected [ { name: 'protocol.pdf', …(3) } ] to deeply equal [ { name: 'protocol.pdf', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "folderLabel": "Quality",
+      "name": "protocol.pdf",
+-     "title": "Stored protocol",
++     "title": "Earlier request title",
+      "version": "revision-7B",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:217:31
+    215|   expect(outcome.failed).toEqual([]);
+    216|   expect(outcome.recorded).toEqual([DOC]);
+    217|   expect(outcome.newVersions).toEqual([{ name: FILE, version: 'revisio…
+       |                               ^
+    218|   expect(outcome.filings).toEqual([]);
+    219|   expect(outcome.alreadyRecorded).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 skipped (2)
+      Tests  1 failed | 46 skipped (47)
+   Start at  17:22:14
+   Duration  4.29s (transform 2.13s, setup 244ms, import 2.66s, tests 36ms, environment 1.04s)
+

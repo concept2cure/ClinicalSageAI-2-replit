@@ -1,0 +1,58 @@
+{
+  "seams": "Actual VaultUploadStaging, manifest controls/parser/export and canonical CSS. Synthetic local files and explicit status props; not an authenticated hosted Vault journey. Actual hook/Vault integration is covered separately by tests.",
+  "checks": 24,
+  "results": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "checks": 6,
+      "permanentLiveRegions": true,
+      "noopRefused": true,
+      "namedAppliedSummary": true,
+      "downloadBom": true,
+      "busyUnknownAndWaitingDistinct": true,
+      "settledUnknownAndRefusedDistinct": true,
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "checks": 6,
+      "permanentLiveRegions": true,
+      "noopRefused": true,
+      "namedAppliedSummary": true,
+      "downloadBom": true,
+      "busyUnknownAndWaitingDistinct": true,
+      "settledUnknownAndRefusedDistinct": true,
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "checks": 6,
+      "permanentLiveRegions": true,
+      "noopRefused": true,
+      "namedAppliedSummary": true,
+      "downloadBom": true,
+      "busyUnknownAndWaitingDistinct": true,
+      "settledUnknownAndRefusedDistinct": true,
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "checks": 6,
+      "permanentLiveRegions": true,
+      "noopRefused": true,
+      "namedAppliedSummary": true,
+      "downloadBom": true,
+      "busyUnknownAndWaitingDistinct": true,
+      "settledUnknownAndRefusedDistinct": true,
+      "overflow": false,
+      "pageErrors": []
+    }
+  ]
+}

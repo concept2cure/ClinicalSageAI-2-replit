@@ -1,0 +1,12 @@
+Qualification on canonical base 13be18d3d plus this receipt implementation, 2026-10-30.
+
+Broad Vault/MDX/server regression selection: 2,672/2,672 tests, 257/257 files pass, exit 0.
+Command matches prior Vault review selection; includes the 52 added receipt controls and 52 existing focused upload checks. The focused 104 tests overlap this cohort and must not be added again.
+Full-program TypeScript: 0 errors, exit 0, baseline unchanged at zero.
+Production client/server/audit-verifier build: exit 0.
+Changed-file warning ratchet: no warning growth across all 11 changed source/test files. Production/parser/new-test ESLint reports zero errors; the two existing complexity-warning sites in the upload hook remain.
+Actual PostgreSQL receipt-contract suite: 5/5, one file; synthetic disposable database, real storage and app_service, RLS enforced. Its added contract case makes real create, same-bytes retry and check-in requests.
+Actual component/browser flows: 32/32, 1440/390 px, light/dark, one POST per flow, matched request actor/project metadata, no page errors or overflow. HTTP replies, JWT and file are synthetic. The raw HTML response proves real JSON.parse failure handling.
+
+No production dependency, migration, server write path, surface or navigation change. No deployment or full launch acceptance claimed.
+Current canonical merges and normal push-hook results are recorded in subsequent qualification notes and /workspace/shared/vault-upload-receipts-release.json.

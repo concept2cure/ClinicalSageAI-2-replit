@@ -46,6 +46,7 @@ export {
   nonAccessTokenReason,
   invalidateOrgMembershipCache,
   authenticateToken,
+  applyOrganizationRole,
   authenticateJWT,
   authenticate,
   requireAuth,

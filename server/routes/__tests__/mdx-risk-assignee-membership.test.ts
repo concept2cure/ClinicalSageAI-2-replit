@@ -18,24 +18,19 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const query = vi.fn();
-const checkOrgMembership = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
-// The real requireEditorAccess (the risk writes take it since D2 fold F1 slice A,
-// 2026-10-29); only the membership lookup is a double.
-vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
-  checkOrgMembership: (...a: unknown[]) => checkOrgMembership(...a),
-}));
 
 import riskRouter from '../mdx-risk-management';
 
 const ORG = 7;
+let membership: 'member' | 'revoked' | 'indeterminate';
 
 function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 1, role: 'member' };
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => query(...args) } });
     next();
   });
   a.use('/api/mdx', riskRouter);
@@ -43,40 +38,50 @@ function app() {
 }
 
 const wrote = () => query.mock.calls.some((c) => /\b(INSERT\s+INTO|UPDATE)\s+risk_items/i.test(String(c[0])));
+const assigneeChecks = () => query.mock.calls.filter((c) => /SELECT ou\.role/.test(String(c[0]))
+  && (c[1] as unknown[])[1] !== 1);
 const item = { hazard: 'h', harm: 'x', severity: 3, probability: 2 };
 
 beforeEach(() => {
   query.mockReset();
-  query.mockResolvedValue({ rows: [{ id: 1 }] });
-  checkOrgMembership.mockReset();
+  membership = 'member';
+  query.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    if (/SELECT ou\.role/.test(sql)) {
+      if (params[1] === 1) return { rows: [{ role: 'member' }] };
+      if (membership === 'indeterminate') throw new Error('membership store unavailable');
+      return { rows: membership === 'member' ? [{ role: 'member' }] : [] };
+    }
+    return { rows: [{ id: 1, program_id: null }] };
+  });
 });
 
 describe('risk assignee must be a member of the organization', () => {
   it('creates the risk when the assignee is a member', async () => {
-    checkOrgMembership.mockResolvedValue('member');
     const res = await request(app()).post('/api/mdx/risk-items').send({ ...item, assignedTo: 42 });
     expect(res.status).toBe(201);
-    expect(checkOrgMembership).toHaveBeenCalledWith(42, ORG);
+    expect(assigneeChecks()).toHaveLength(1);
+    expect(assigneeChecks()[0][1]).toEqual([ORG, 42]);
+    expect(assigneeChecks()[0][0]).toContain('FOR SHARE OF ou,u,o');
     expect(wrote()).toBe(true);
   });
 
   it('refuses a user of another organization with 422 and writes nothing', async () => {
-    checkOrgMembership.mockResolvedValue('revoked');
+    membership = 'revoked';
     const res = await request(app()).post('/api/mdx/risk-items').send({ ...item, assignedTo: 99 });
     expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/not a member/);
+    expect(res.body.message).toMatch(/not a member/);
     expect(wrote()).toBe(false);
   });
 
   it('fails closed when membership cannot be verified', async () => {
-    checkOrgMembership.mockResolvedValue('indeterminate');
+    membership = 'indeterminate';
     const res = await request(app()).post('/api/mdx/risk-items').send({ ...item, assignedTo: 42 });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
     expect(wrote()).toBe(false);
   });
 
   it('applies the same rule to PATCH', async () => {
-    checkOrgMembership.mockResolvedValue('revoked');
+    membership = 'revoked';
     const res = await request(app()).patch('/api/mdx/risk-items/1').send({ assignedTo: 99 });
     expect(res.status).toBe(422);
     expect(wrote()).toBe(false);
@@ -86,7 +91,7 @@ describe('risk assignee must be a member of the organization', () => {
     await request(app()).post('/api/mdx/risk-items').send(item);
     await request(app()).patch('/api/mdx/risk-items/1').send({ assignedTo: null });
     await request(app()).patch('/api/mdx/risk-items/1').send({ severity: 4 });
-    expect(checkOrgMembership).not.toHaveBeenCalled();
+    expect(assigneeChecks()).toEqual([]);
     expect(wrote()).toBe(true);
   });
 });

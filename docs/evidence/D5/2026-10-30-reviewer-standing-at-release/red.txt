@@ -1,0 +1,33 @@
+# Red: the committed code (HEAD d92dbcd71)
+
+$ npx vitest run server/services/authoring/__tests__/csr-reviewer-standing.test.ts
+  × a deactivated scientific reviewer > is named as the reason, not "no receipt" 303ms
+   → expected CsrScientificReviewError: No current assi… { …(2) } to match object { Object (code) }
+  × a deactivated scientific reviewer > reaches the release boundary as that reason, 409, with its own sentence 4ms
+   → expected WorkflowImportGovernanceError: No current… { …(2) } to match object { …(3) }
+  × a scientific reviewer who no longer stands, at the release boundary > removed from the project: 409 naming it, not a 500 4ms
+   → expected AuthoringProgramAccessError: You do not h… { …(2) } to match object { …(3) }
+  × a scientific reviewer who no longer stands, at the release boundary > the project itself unresolved: 409 saying so, not that the reviewer lost access 3ms
+   → expected AuthoringProgramAccessError: This project… { …(2) } to match object { …(3) }
+  × a scientific reviewer who no longer stands, at the release boundary > now recorded as an author of the CSR: 409 naming it, not a 500 4ms
+   → expected SeparationOfDutiesError: Separation of du… { code: '…' } to match object { …(3) }
+  × a scientific reviewer who no longer stands, at the release boundary > when the check cannot run: 503 "could not be checked", not a 500 2ms
+   → expected SeparationOfDutiesUnverifiedError: Separa… { code: '…' } to match object { …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)
+
+$ node --test scripts/ci/csr-scientific-review/scientific-review.test.mjs   (every file at HEAD)
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/c2c-csr-evidence-gOXBlZ/shared/canonical-json' imported from /tmp/c2c-csr-evidence-gOXBlZ/server/services/authoring/csr-scientific-review-core.js
+# tests 1
+# pass 0
+# fail 1
+  The harness cannot load, so CI's test:ci-scripts step (node --test "scripts/**/*.test.mjs") fails on it.
+
+$ node --test scripts/ci/csr-scientific-review/scientific-review.test.mjs   (harness repaired, csr-scientific-review.ts at HEAD)
+not ok 25 - adapter: release re-reads source tables and returns the retained current receipt
+not ok 27 - adapter: a retained receipt whose reviewer is no longer active says so, not that there is no receipt
+    caught: CsrScientificReviewError: No current assigned scientific-review receipt covers this saved CSR. Nothing was signed or released.
+    25: error: "Cannot read properties of undefined (reading 'params')"
+# tests 41
+# pass 39
+# fail 2

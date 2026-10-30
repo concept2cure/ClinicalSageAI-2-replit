@@ -914,15 +914,10 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Doc journey route:', error);
   }
 
-  // Agency meetings — org-scoped list of regulatory interactions read by GET
-  // /api/agency-meetings (own sub-prefix). Feeds the AgencyMeetings surface.
-  try {
-    const agencyMeetingsModule = await import('../routes/agency-meetings.routes');
-    app.use('/api/agency-meetings', authMiddleware, agencyMeetingsModule.default);
-    console.info('✅ Agency meetings route mounted (/api/agency-meetings)');
-  } catch (error) {
-    console.error('❌ Failed to mount Agency meetings route:', error);
-  }
+  // /api/agency-meetings is retired (P-39 step 4, 2026-10-30): a meeting is
+  // recorded in Communication on ha_interactions (/api/ha-interactions), its
+  // minutes an inbox letter. c2c_agency_meetings is read-only, its rows kept
+  // (migrations/20261030b_c2c_agency_meetings_read_only.sql).
 
   // Design controls — org-scoped 820.30 traceability matrix read by GET
   // /api/design-controls (own sub-prefix). Feeds the DesignControls surface.

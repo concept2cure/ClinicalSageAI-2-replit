@@ -1,0 +1,1485 @@
+{
+  "kind": "read-only metadata attribution for existing public synthetic candidate packages",
+  "recordedAtUtc": "2026-10-30T18:20:15.762313+00:00",
+  "inputComparisonRecord": "candidate-final-input-verification.json",
+  "qualifiedFinalBase": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "pdfPairCount": 9,
+  "normalizationFields": [
+    "XMP xmp:ModifyDate",
+    "XMP xmp:CreateDate",
+    "XMP xmp:MetadataDate",
+    "XMP xmpMM:DocumentID UUID",
+    "PDF /CreationDate",
+    "PDF /ModDate",
+    "PDF trailer /ID pair"
+  ],
+  "allPdfPairsMatchAfterOnlyListedMetadataNormalization": true,
+  "allPdfPairsDeclareGhostscript10_05_1": true,
+  "pdfPairs": [
+    {
+      "sequence": "0000",
+      "file": "m1/us/1-1/form-356h.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "7a02d7dd42831d817dad0c783e8f725d52af62ef539a33ac8e8ebda917ea269e",
+      "afterSha256": "c058d2e763a4109cf5d23255a3263704e62fcbbd188c9d94c313ba0dc0789165",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:8948190d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "trailerId": [
+          "CB88F084326F5F2EC7D89E7FB8E4F5B1",
+          "CB88F084326F5F2EC7D89E7FB8E4F5B1"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "41A5B3BD7F4100546489ABF14F028416",
+          "41A5B3BD7F4100546489ABF14F028416"
+        ]
+      }
+    },
+    {
+      "sequence": "0000",
+      "file": "m1/us/1-2/cover-letter.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "7134fbdc7e2c57e6327fc844029daabf3f4895a3912456b2bc7e262d4f44fc08",
+      "afterSha256": "147c2ffe6c41d7c3a91b63491018e8dce8665ecaab0a5d93eedf52f3c255d02b",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:8948190d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "trailerId": [
+          "4CFB1BFD0EB8BD5112971E302F616468",
+          "4CFB1BFD0EB8BD5112971E302F616468"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "D48DC686C6736E8855A5FC5ECC46EB23",
+          "D48DC686C6736E8855A5FC5ECC46EB23"
+        ]
+      }
+    },
+    {
+      "sequence": "0000",
+      "file": "m2/2-2/intro.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "42cf98705cfdc85ec0ec1544e0f6e451ca01ae6bf5a8bc78f83711bf8e30f0df",
+      "afterSha256": "4b0562c22a9304f7d6fff0b5a7650d0744f747ea108612a01aec06280a7722fb",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:8948190d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "trailerId": [
+          "6F734831A209D9A4B1C16BA12D8440D7",
+          "6F734831A209D9A4B1C16BA12D8440D7"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "A8F07FD0975CFA05CBCD8E8A5739D651",
+          "A8F07FD0975CFA05CBCD8E8A5739D651"
+        ]
+      }
+    },
+    {
+      "sequence": "0000",
+      "file": "m3/3-2-p-1/description-composition.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "d8291271cf797ecf4264b7db7a3c961641ceb898904116978a642b2756c1b662",
+      "afterSha256": "f03758975bb910e51684b2449015646e4faec9c867bf8578f1833a5bf66a0873",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:8948190d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "trailerId": [
+          "E0AE806C29A1A1D265515607326B2609",
+          "E0AE806C29A1A1D265515607326B2609"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "C38ED50AC5AED46F864EFFB038009ACE",
+          "C38ED50AC5AED46F864EFFB038009ACE"
+        ]
+      }
+    },
+    {
+      "sequence": "0000",
+      "file": "m5/5-3-5-1/study-001/study-report.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "90c67fa8f1bdea29960bdf165a443ee6b992b8a32224ba43164ee4e2dd903625",
+      "afterSha256": "38468c0bd3438ae05d3c84adf63c07a16ea41625037237eae86663259d5f77b3",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:02Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:8948190d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180902Z00'00'"
+        ],
+        "trailerId": [
+          "C94CC72A0431A383048AB6A7921B3E70",
+          "C94CC72A0431A383048AB6A7921B3E70"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "C7D266A1724C1B751D9CA017AE18C94F",
+          "C7D266A1724C1B751D9CA017AE18C94F"
+        ]
+      }
+    },
+    {
+      "sequence": "0001",
+      "file": "m1/us/1-1/form-356h.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "72720ab9ffe06b1fe14029c380addec62d4f76cbd3f6135562c2ad9041c3c19e",
+      "afterSha256": "efb9078b1dc1243e24bfb339971dec1a4543d2ce3235173db4d092e8c266a8ec",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:89e0af8d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "trailerId": [
+          "7DCCD7ADCD9BEEE5BBD4B4DDDA78E2B1",
+          "7DCCD7ADCD9BEEE5BBD4B4DDDA78E2B1"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "4D2066F41BAA8FDACDB332F8406D9061",
+          "4D2066F41BAA8FDACDB332F8406D9061"
+        ]
+      }
+    },
+    {
+      "sequence": "0001",
+      "file": "m1/us/1-2/cover-letter.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "97b66938113b392aa37cf59a8aa912020f58a90a1e3088123d5aa8ca9c9f01a2",
+      "afterSha256": "c39f824223c69bfebe740383537392b50841d543fd7ede685dc7313846228487",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:89e0af8d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "trailerId": [
+          "295D4524FAF08527A87F3F13DBF29025",
+          "295D4524FAF08527A87F3F13DBF29025"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "1E0297946C37F872DB4DA56E0AD6DE8C",
+          "1E0297946C37F872DB4DA56E0AD6DE8C"
+        ]
+      }
+    },
+    {
+      "sequence": "0001",
+      "file": "m2/2-2/intro.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "ad6eab5528318baa8e5dd4eea3009e87a2ad0ce1a6bd4332af2310026a23bd1f",
+      "afterSha256": "1d9837830f77497355dbb1753002293df3ca905a9cd882b7dc40b0a9a58384ac",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:89e0af8d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "trailerId": [
+          "2DF7EAAD578CFFAAA2A98E650C34C6EC",
+          "2DF7EAAD578CFFAAA2A98E650C34C6EC"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "A1B7F2AB0FA32142397C4B0CC212C498",
+          "A1B7F2AB0FA32142397C4B0CC212C498"
+        ]
+      }
+    },
+    {
+      "sequence": "0001",
+      "file": "m5/5-3-5-1/study-001/study-report.pdf",
+      "beforeBytes": 5250,
+      "afterBytes": 5250,
+      "beforeSha256": "6c177a66e168ee5136ad812e31970b3162042f533adb9376602e213dc8313271",
+      "afterSha256": "f5fcaadf0cc89dbcc2d8da9df036facee2a7a642e2fae6bbc5c5fc1773455832",
+      "rawBytesIdentical": false,
+      "byteIdenticalAfterOnlyListedMetadataNormalization": true,
+      "beforeMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:09:03Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:89e0af8d-0ca9-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030180903Z00'00'"
+        ],
+        "trailerId": [
+          "8B83FDAD5B9687DCBF1FFB6A478181B4",
+          "8B83FDAD5B9687DCBF1FFB6A478181B4"
+        ]
+      },
+      "afterMetadata": {
+        "producer": [
+          "GPL Ghostscript 10.05.1"
+        ],
+        "xmpModifyDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpCreateDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpMetadataDate": [
+          "2026-10-30T18:14:57Z"
+        ],
+        "xmpDocumentId": [
+          "uuid:5ce0cc90-0caa-11fd-0000-8a8476eca18e"
+        ],
+        "pdfCreationDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "pdfModDate": [
+          "D:20261030181457Z00'00'"
+        ],
+        "trailerId": [
+          "8E88086809327526DA2E48CCC41703D0",
+          "8E88086809327526DA2E48CCC41703D0"
+        ]
+      }
+    }
+  ],
+  "sequences": [
+    {
+      "sequence": "0000",
+      "beforeZip": "unconfigured-candidate/synthetic-0000.zip",
+      "afterZip": "final-unconfigured-candidate/synthetic-0000.zip",
+      "beforeZipSha256": "088977b35de103d8a3098f9d5aad27953e8962d788da39df12768719fb5907b4",
+      "afterZipSha256": "52f813893dc29de5a5b13fb053909c8352c22155a51b6e2971043245e3081ebb",
+      "membershipIdentical": true,
+      "xmlComparisons": [
+        {
+          "file": "index.xml",
+          "rawBytesIdentical": false,
+          "byteIdenticalAfterOnlyChecksumAttributeNormalization": true
+        },
+        {
+          "file": "m1/us/us-regional.xml",
+          "rawBytesIdentical": false,
+          "byteIdenticalAfterOnlyChecksumAttributeNormalization": true
+        }
+      ],
+      "utilIndexMd5IdenticalAfterOnlyLeadingDigestNormalization": true,
+      "stfComparisons": [
+        {
+          "file": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "rawBytesIdentical": true,
+          "beforeSha256": "0ddbb13ab8d198c12b36d880381294f65b45996b5d33bbdff079d4da48b59bc0",
+          "afterSha256": "0ddbb13ab8d198c12b36d880381294f65b45996b5d33bbdff079d4da48b59bc0"
+        }
+      ],
+      "changedArchiveTimestamps": [
+        {
+          "file": "m1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/us-regional.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-1/form-356h.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-2/cover-letter.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/2-2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/2-2/intro.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m3/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m3/3-2-p-1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m3/3-2-p-1/description-composition.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/study-report.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "index.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "index-md5.txt",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "util/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "util/index-md5.txt",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        }
+      ]
+    },
+    {
+      "sequence": "0001",
+      "beforeZip": "unconfigured-candidate/synthetic-0001.zip",
+      "afterZip": "final-unconfigured-candidate/synthetic-0001.zip",
+      "beforeZipSha256": "ce3a3a0e2b8e36513abf47de94a1164d69b37f58c9f3a5a7815efe872481daa2",
+      "afterZipSha256": "bc4837da6a62b0def1f7a136737db98a87c5216f7dfeff1b6ca023d8385c9bba",
+      "membershipIdentical": true,
+      "xmlComparisons": [
+        {
+          "file": "index.xml",
+          "rawBytesIdentical": false,
+          "byteIdenticalAfterOnlyChecksumAttributeNormalization": true
+        },
+        {
+          "file": "m1/us/us-regional.xml",
+          "rawBytesIdentical": false,
+          "byteIdenticalAfterOnlyChecksumAttributeNormalization": true
+        }
+      ],
+      "utilIndexMd5IdenticalAfterOnlyLeadingDigestNormalization": true,
+      "stfComparisons": [
+        {
+          "file": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "rawBytesIdentical": true,
+          "beforeSha256": "0ddbb13ab8d198c12b36d880381294f65b45996b5d33bbdff079d4da48b59bc0",
+          "afterSha256": "0ddbb13ab8d198c12b36d880381294f65b45996b5d33bbdff079d4da48b59bc0"
+        }
+      ],
+      "changedArchiveTimestamps": [
+        {
+          "file": "m1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/us-regional.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-1/form-356h.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m1/us/1-2/cover-letter.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/2-2/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m2/2-2/intro.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/study-report.pdf",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "m5/5-3-5-1/study-001/stf-study-001.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "index.xml",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "index-md5.txt",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "util/",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        },
+        {
+          "file": "util/index-md5.txt",
+          "beforeDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            9,
+            2
+          ],
+          "afterDateTime": [
+            2026,
+            10,
+            30,
+            18,
+            14,
+            56
+          ]
+        }
+      ]
+    }
+  ],
+  "sourceAttribution": [
+    {
+      "path": "server/services/ectd/qualification/golden-fixtures.ts",
+      "line": 151,
+      "observation": "v3GoldenInput returns normal packager input without skipPdfaConversion."
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "line": 285,
+      "observation": "Only explicit skipPdfaConversion returns the PDF unchanged; otherwise finalizePdfA is called at286."
+    },
+    {
+      "path": "server/services/ectd/pdfa-pipeline.ts",
+      "line": 142,
+      "observation": "Available Ghostscript conversion is invoked."
+    },
+    {
+      "path": "server/services/ectd/pdfa-pipeline.ts",
+      "line": 211,
+      "observation": "Ghostscript conversion uses random temporary names and its PDF/A invocation has no deterministic date/document-ID override."
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "line": 1333,
+      "observation": "ZIP entries are added without an explicit date."
+    },
+    {
+      "path": "node_modules/jszip/lib/object.js",
+      "line": 33,
+      "observation": "Installed JSZip defaults entry date to new Date()."
+    },
+    {
+      "path": "server/services/submission-gateways/regional-packager.ts",
+      "line": 952,
+      "observation": "Captured package re-addition preserves the original entry date."
+    }
+  ],
+  "finding": "Observed PDF differences are confined to Ghostscript-produced dates and document IDs. Downstream XML and manifest differences are confined to checksums. Archive timestamps also vary. STF bytes are identical.",
+  "limits": [
+    "Read-only comparison of these two already generated public synthetic original/amendment candidate pairs only.",
+    "Normalization is an analysis operation in memory; no PDF, ZIP, source or evidence bytes were modified.",
+    "This establishes the observed difference attribution, not general repeat-byte determinism or equivalent rendered appearance.",
+    "Each qualification run remains bound to its own raw report and exact package hashes.",
+    "No new publisher invocation, unit test, build, compiler, Git job, provider or agency call occurred.",
+    "No agency qualification, licensed external engine execution or acceptance is established."
+  ]
+}

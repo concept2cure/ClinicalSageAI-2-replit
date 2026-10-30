@@ -1,0 +1,21 @@
+{
+  "existingOwners": {
+    "ProjectHome.tsx": "Current owned project read and coarse IND tool/plan admission; presently considers program_type+agency without exact filing fields.",
+    "ProjectPlan.tsx": "Initial IND, device and biotech plans use existing slots; incoming usInd flag currently outranks exact subtype.",
+    "ProjectBiotechPlan.tsx": "Reads exact registry_id, actual saved filing outline, canonical template bank and current working docs; does not yet prioritize recorded submission_type_id.",
+    "Projects.tsx": "Wizard sends exact submissionTypeId; programTypeFor consults canonical filing-document classes before generic pathway fallback.",
+    "AnaVerbs.tsx": "RegistryPicker reads actual market verdicts for program types; no unsupported filing is silently offered.",
+    "programSequence.ts:isUsInd": "Coarse IND/FDA predicate shared by tool admission; no exact filing fields today."
+  },
+  "identifiedGaps": [
+    "Parent program_type IND can expose initial-IND catalogue for recorded amendment/expanded-access subtype.",
+    "ProjectPlan trusts a stale usInd prop before exact saved type.",
+    "Unknown present exact catalogue identity can inherit registry_id fallback.",
+    "New subtype IDs need canonical class mappings and actual support rows rather than generic CTD/NDA fallback."
+  ],
+  "prepatchTest": "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+  "newDescribe": "the exact recorded filing controls project planning",
+  "newCases": 7,
+  "productionEditsAtDiscovery": false,
+  "jobsRun": false
+}

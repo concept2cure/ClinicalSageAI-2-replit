@@ -1,0 +1,4 @@
+ × tests/schema-contract/c2c-agency-meetings-read-only.pglite.test.ts > c2c_agency_meetings is read-only > refuses an insert, an update and a truncate, and keeps the row as it was 13ms
+ × tests/schema-contract/c2c-agency-meetings-read-only.pglite.test.ts > c2c_agency_meetings is read-only > replays with its creator unchanged, and leaves delete open for a tenant purge 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

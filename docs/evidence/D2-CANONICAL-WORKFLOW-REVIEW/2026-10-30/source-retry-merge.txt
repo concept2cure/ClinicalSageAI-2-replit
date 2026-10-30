@@ -1,0 +1,142 @@
+Merge made by the 'ort' strategy.
+ .../CSR_EXPERTISE_IMPROVEMENTS_2026-10-30.md       |   6 ++
+ .../evidence/D2-CSR-EXPERTISE/2026-10-30/README.md |   4 +-
+ .../2026-10-30/resumed-codex/README.md             |  67 ++++++++++++
+ .../2026-10-30/resumed-codex/csr-build.log.gz      | Bin 0 -> 4693 bytes
+ .../2026-10-30/resumed-codex/csr-cancel-red.log.gz | Bin 0 -> 1245 bytes
+ .../manifest.json                                  |  42 ++++++++
+ .../server__db__drizzle-queryable.ts.gz            | Bin 0 -> 1130 bytes
+ ..._tests____csr-evidence-target.pglite.test.ts.gz | Bin 0 -> 2129 bytes
+ .../server__services__csr__csr-job-runner.ts.gz    | Bin 0 -> 9058 bytes
+ .../server__services__csr__project-scope.ts.gz     | Bin 0 -> 2904 bytes
+ .../server__services__project-sharing-access.ts.gz | Bin 0 -> 1594 bytes
+ ...rver__services__report-os__project-access.ts.gz | Bin 0 -> 2594 bytes
+ .../shared__schema.ts.gz                           | Bin 0 -> 165500 bytes
+ .../csr-cancellation-red-corrected.log.gz          | Bin 0 -> 856 bytes
+ .../csr-cancellation-red-initial-fixture.log.gz    | Bin 0 -> 1388 bytes
+ .../resumed-codex/csr-expertise-conduct-red.log.gz | Bin 0 -> 1495 bytes
+ .../resumed-codex/csr-expertise-green.log.gz       | Bin 0 -> 6018 bytes
+ .../resumed-codex/csr-expertise-red.log.gz         | Bin 0 -> 9304 bytes
+ .../resumed-codex/csr-final-tests.json.gz          | Bin 0 -> 22058 bytes
+ .../resumed-codex/csr-final-tests.log.gz           | Bin 0 -> 17231 bytes
+ .../csr-generation-green-final.log.gz              | Bin 0 -> 3752 bytes
+ .../resumed-codex/csr-generation-green.log.gz      | Bin 0 -> 2215 bytes
+ .../csr-evidence-target.pglite.test.ts.gz          | Bin 0 -> 1678 bytes
+ .../csr-job-runner.evidence.test.ts.gz             | Bin 0 -> 5396 bytes
+ .../csr-generation-red-reconstructed/manifest.json |  25 +++++
+ .../csr-generation-red-reconstructed/red.log.gz    | Bin 0 -> 5077 bytes
+ .../saved-clinical-tables.test.ts.gz               | Bin 0 -> 2860 bytes
+ .../resumed-codex/csr-generation-red.log.gz        | Bin 0 -> 5077 bytes
+ .../resumed-codex/csr-integration-attempt1.log.gz  | Bin 0 -> 17906 bytes
+ .../2026-10-30/resumed-codex/csr-lint-final.log.gz | Bin 0 -> 58 bytes
+ .../resumed-codex/csr-lint-post-type-fix.log.gz    | Bin 0 -> 57 bytes
+ .../resumed-codex/csr-lint-race-tests.log.gz       | Bin 0 -> 487 bytes
+ .../2026-10-30/resumed-codex/csr-lint.json.gz      | Bin 0 -> 971 bytes
+ .../2026-10-30/resumed-codex/csr-lint.log.gz       | Bin 0 -> 490 bytes
+ .../resumed-codex/csr-merged-build.log.gz          | Bin 0 -> 4705 bytes
+ .../resumed-codex/csr-merged-client-tests.log.gz   | Bin 0 -> 1071 bytes
+ .../2026-10-30/resumed-codex/csr-push-retry.log.gz | Bin 0 -> 4630 bytes
+ .../resumed-codex/csr-push-type-rejection.log.gz   | Bin 0 -> 5064 bytes
+ .../resumed-codex/csr-retained-tenant-red.log.gz   | Bin 0 -> 1409 bytes
+ .../resumed-codex/csr-scope-green.log.gz           | Bin 0 -> 2024 bytes
+ .../resumed-codex/csr-scope-interactions.log.gz    | Bin 0 -> 1915 bytes
+ .../resumed-codex/csr-scope-post-type-fix.log.gz   | Bin 0 -> 1026 bytes
+ .../2026-10-30/resumed-codex/csr-scope-red.log.gz  | Bin 0 -> 1927 bytes
+ .../resumed-codex/csr-unit-fixture-green.log.gz    | Bin 0 -> 1038 bytes
+ .../resumed-codex/csr-vault-merged-build.log.gz    | Bin 0 -> 4697 bytes
+ .../resumed-codex/csr-vault-merged-tests.log.gz    | Bin 0 -> 3854 bytes
+ .../resumed-codex/final-source-freeze.json         |  71 +++++++++++++
+ .../2026-10-30/resumed-codex/fixture-type-fix.json |   8 ++
+ .../integration-attempt1-source-freeze.json        |  70 ++++++++++++
+ .../2026-10-30/resumed-codex/lint-check.mjs.txt    |  19 ++++
+ .../resumed-codex/paused-a3-manifest.json          |   8 ++
+ .../2026-10-30/resumed-codex/paused-a3.patch.gz    | Bin 0 -> 25789 bytes
+ .../2026-10-30/resumed-codex/publication.json      |  37 +++++++
+ .../resumed-codex/published-source-freeze.json     |  78 ++++++++++++++
+ .../resumed-codex/qualification-summary.json       |  34 ++++++
+ .../2026-10-30/resumed-codex/test-files.txt        |  43 ++++++++
+ .../csr-workflow-program-scope.pglite.test.ts      |   2 +
+ server/routes/csr-jobs.ts                          |   2 +-
+ .../__tests__/csr-builder-completeness.test.ts     |  17 ++-
+ .../__tests__/csr-builder-expertise.test.ts        | 118 +++++++++++++++++++++
+ .../ana/__tests__/csr-expertise-writing.test.ts    |  33 ++++++
+ .../__tests__/module2-csr-inputs.pglite.test.ts    |   2 +
+ .../__tests__/csr-expertise-flow.test.ts           |  69 ++++++++++++
+ .../ana/intelligence-questions/flows/csr-report.ts |  48 +++++----
+ server/services/csr-builder.ts                     |  87 ++++++++-------
+ .../csr/__tests__/csr-current-scope.pglite.test.ts | 109 +++++++++++++++++++
+ .../__tests__/csr-evidence-target.pglite.test.ts   |  85 +++++++++++++++
+ .../csr/__tests__/csr-job-runner.evidence.test.ts  | 111 ++++++++++++++++++-
+ .../csr-latest-completed-generation.pglite.test.ts |   2 +
+ .../csr/__tests__/csr-project-scope.pglite.test.ts |   5 +
+ .../csr-worker-private-access.pglite.test.ts       |  30 +++++-
+ .../csr/__tests__/saved-clinical-tables.test.ts    |  23 ++++
+ .../study-pivotal-declaration.pglite.test.ts       |   2 +
+ .../csr/__tests__/unsupplied-statistics.test.ts    |   7 +-
+ server/services/csr/cortex-authoring-reader.ts     |   9 +-
+ server/services/csr/csr-job-runner.ts              |  90 ++++++++++++----
+ server/services/csr/project-scope.ts               |  54 +++++-----
+ server/services/csr/saved-clinical-tables.ts       |   9 +-
+ server/services/ind/ctd/csr-e3-sections-plan.ts    |  12 +--
+ server/services/ind/ctd/csr-e3-writing.ts          |  13 ++-
+ tests/unit/csr-job-runner.test.ts                  |  14 ++-
+ 81 files changed, 1323 insertions(+), 142 deletions(-)
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/README.md
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-build.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancel-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/manifest.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__db__drizzle-queryable.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__services__csr____tests____csr-evidence-target.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__services__csr__csr-job-runner.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__services__csr__project-scope.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__services__project-sharing-access.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/server__services__report-os__project-access.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected-freeze/shared__schema.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-corrected.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-cancellation-red-initial-fixture.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-expertise-conduct-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-expertise-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-expertise-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-final-tests.json.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-final-tests.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-green-final.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red-reconstructed/csr-evidence-target.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red-reconstructed/csr-job-runner.evidence.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red-reconstructed/manifest.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red-reconstructed/red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red-reconstructed/saved-clinical-tables.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-generation-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-integration-attempt1.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-lint-final.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-lint-post-type-fix.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-lint-race-tests.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-lint.json.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-lint.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-merged-build.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-merged-client-tests.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-push-retry.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-push-type-rejection.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-retained-tenant-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-scope-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-scope-interactions.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-scope-post-type-fix.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-scope-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-unit-fixture-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-vault-merged-build.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/csr-vault-merged-tests.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/final-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/fixture-type-fix.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/integration-attempt1-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/lint-check.mjs.txt
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/paused-a3-manifest.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/paused-a3.patch.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/publication.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/published-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/qualification-summary.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/test-files.txt
+ create mode 100644 server/services/__tests__/csr-builder-expertise.test.ts
+ create mode 100644 server/services/ana/__tests__/csr-expertise-writing.test.ts
+ create mode 100644 server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts
+ create mode 100644 server/services/csr/__tests__/csr-current-scope.pglite.test.ts
+ create mode 100644 server/services/csr/__tests__/csr-evidence-target.pglite.test.ts

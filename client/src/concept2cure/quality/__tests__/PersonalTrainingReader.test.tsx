@@ -31,8 +31,8 @@ function context(patch: Partial<QmsTrainingContext> = {}): QmsTrainingContext {
   };
 }
 const response = (body: unknown, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
-function read(c = context(), organizationId = 12) {
-  return response({ data: { id: c.documentId, organization_id: organizationId, version: c.documentVersion, status: c.status }, meta: { training: c } });
+function read(c = context(), organizationId = 12, row: { version?: string; status?: string } = {}) {
+  return response({ data: { id: c.documentId, organization_id: organizationId, version: c.documentVersion, status: c.status, ...row }, meta: { training: c } });
 }
 const acknowledged = () => response({ data: receipt, meta: { auditTrail: { persisted: true, chained: true } } });
 function deferred<T>() {
@@ -297,5 +297,115 @@ describe('reader identities and late responses', () => {
     await act(async () => pending.resolve(acknowledged()));
     expect(view.onAcknowledged).not.toHaveBeenCalled();
     expect(screen.queryByRole('region', { name: 'My acknowledgement' })).toBeNull();
+  });
+});
+
+/* A version approved for a later day is read and acknowledged ahead of it, beside the
+   version in force (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12). */
+describe('the version in force and the version approved for a later day', () => {
+  const EFFECTIVE_ON = '2026-11-16';
+  const successorReceipt: QmsTrainingAcknowledgement = { ...receipt, id: 32, documentVersion: '2.0', contentDigest: 'b'.repeat(64) };
+  const successor = (patch: Partial<QmsTrainingContext> = {}) => context({
+    documentVersion: '2.0', contentDigest: 'b'.repeat(64), inForce: false, effectiveDate: EFFECTIVE_ON,
+    sections: [{ key: 'procedure', label: 'Procedure', body: 'Qualify every new supplier by audit.' }], ...patch,
+  });
+  const pending = (patch: Partial<QmsTrainingContext> = {}, next = successor()) =>
+    read(context({ inForce: true, effectiveDate: '2026-09-01', successor: next, ...patch }), 12, { version: '2.0', status: 'effective' });
+
+  it('opens on the version in force and offers the next version with the day it takes effect', async () => {
+    H.apiRequest.mockResolvedValue(pending());
+    mount();
+    expect(await screen.findByText(/Keep the release record/)).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText(`v2.0 is approved and takes effect on ${EFFECTIVE_ON}.`)).toBeTruthy();
+    expect((screen.getByRole('radio', { name: 'In force: v1.0' }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.queryByText('Qualify every new supplier by audit.')).toBeNull();
+    expect(screen.queryByText(/counts from/)).toBeNull();
+  });
+
+  it('acknowledges the version selected, and says the acknowledgement counts from the day it takes effect', async () => {
+    let saved = false;
+    H.apiRequest.mockImplementation(async (method: string) => {
+      if (method === 'POST') { saved = true; return response({ data: successorReceipt, meta: { auditTrail: { persisted: true, chained: true } } }); }
+      return pending({}, successor({ acknowledgement: saved ? successorReceipt : null }));
+    });
+    const { onAcknowledged } = mount();
+    fireEvent.click(await screen.findByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }));
+    expect(screen.getByText('Qualify every new supplier by audit.')).toBeTruthy();
+    expect(screen.queryByText(/Keep the release record/)).toBeNull();
+    expect(screen.getByText(/Revision 2.0 · Approved · takes effect 2026-11-16/)).toBeTruthy();
+    expect(screen.getByText(`Your acknowledgement is recorded now and counts from ${EFFECTIVE_ON}.`)).toBeTruthy();
+    fireEvent.click(await declare());
+    const mine = await screen.findByRole('region', { name: 'My acknowledgement' });
+    expect(mine.textContent).toMatch(/You acknowledged revision 2.0/);
+    expect(mine.textContent).toMatch(`Counts from${EFFECTIVE_ON}`);
+    expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/training-ack', {
+      documentVersion: '2.0', contentDigest: 'b'.repeat(64), understood: true, method: 'attestation',
+    }, expect.any(Object));
+    await waitFor(() => expect(onAcknowledged).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(H.apiRequest.mock.calls.filter(([method]) => method === 'GET')).toHaveLength(2));
+    expect((screen.getByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText(/has changed/)).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'In force: v1.0' }));
+    expect((screen.getByRole('checkbox', { name: QMS_TRAINING_DECLARATION }) as HTMLInputElement).disabled).toBe(false);
+    expect(screen.queryByRole('region', { name: 'My acknowledgement' })).toBeNull();
+  });
+
+  it('keeps a confirmed receipt on the next version, and only there, when the following refresh fails', async () => {
+    let reads = 0;
+    H.apiRequest.mockImplementation(async (method: string) => {
+      if (method === 'POST') return response({ data: successorReceipt, meta: { auditTrail: { persisted: true, chained: true } } });
+      if (++reads > 1) throw new Error('Unavailable');
+      return pending();
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }));
+    fireEvent.click(await declare());
+    expect((await screen.findByRole('region', { name: 'My acknowledgement' })).textContent).toMatch(`Counts from${EFFECTIVE_ON}`);
+    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/was recorded.*could not be refreshed/));
+    fireEvent.click(screen.getByRole('radio', { name: 'In force: v1.0' }));
+    expect(screen.queryByRole('region', { name: 'My acknowledgement' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: QMS_TRAINING_DECLARATION })).toBeTruthy();
+  });
+
+  it('does not carry a declaration made on one version over to the other', async () => {
+    H.apiRequest.mockResolvedValue(pending());
+    mount();
+    fireEvent.click(await screen.findByRole('checkbox', { name: QMS_TRAINING_DECLARATION }));
+    fireEvent.click(screen.getByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }));
+    expect((screen.getByRole('checkbox', { name: QMS_TRAINING_DECLARATION }) as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByRole('button', { name: 'Acknowledge this revision' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('shows why a next version may not be read, with none of its text and no declaration', async () => {
+    const reason = 'You do not have permission to read this version.';
+    H.apiRequest.mockResolvedValue(pending({}, successor({ eligible: false, sections: [], unavailableReason: reason })));
+    mount();
+    fireEvent.click(await screen.findByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }));
+    expect(screen.getByText(reason)).toBeTruthy();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.queryByText(/Keep the release record/)).toBeNull();
+  });
+
+  it('opens a document whose next version is being drafted on the version in force', async () => {
+    H.apiRequest.mockResolvedValue(read(context({ inForce: true, effectiveDate: '2026-09-01' }), 12, { version: '2.0', status: 'draft' }));
+    mount();
+    expect(await screen.findByText(/Keep the release record/)).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('checkbox', { name: QMS_TRAINING_DECLARATION })).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+  });
+
+  it.each([
+    ['a row that is neither the version read nor its successor', read(context({ inForce: true }), 12, { version: '2.0', status: 'effective' })],
+    ['a successor that is not the row', pending({}, successor({ documentVersion: '3.0' }))],
+    ['a receipt of another person on the next version', pending({}, successor({ acknowledgement: { ...successorReceipt, userId: 8 } }))],
+  ])('refuses %s as unverifiable', async (_case, body) => {
+    H.apiRequest.mockResolvedValue(body);
+    mount();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/could not be verified/);
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });

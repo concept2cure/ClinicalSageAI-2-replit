@@ -1,11 +1,13 @@
 /**
  * OQ-003 — Operational Qualification: Authoring.
  * Protocol: docs/validation/OQ-003-AUTHORING.md. Requirements: docs/validation/URS-003-AUTHORING.md.
+ * The review-route steps (OQ-AUTH-17, 17b, 12 to 14b) are in ./steps-review-route.mjs (v0.5, RR5).
  */
 import { createRun, helpers, runCredential } from '../../lib/harness.mjs';
 import { createProgram } from '../../lib/fixtures.mjs';
 import { CREDENTIAL_NOT_SUPPLIED } from '../../lib/credentials.mjs';
 import { freshTotp } from '../../lib/totp.mjs';
+import { runReviewRequestSteps, runSignatureSteps } from './steps-review-route.mjs';
 
 const run = await createRun({
   app: 'AUTHORING',
@@ -16,9 +18,11 @@ const run = await createRun({
 const { step, state } = run;
 const stamp = helpers.stamp();
 /**
- * The run identity's own credentials, for the e-signature steps: the platform's
- * signing ceremony re-verifies the account password, and a current code when
- * an authenticator is enrolled. Null on a dev-login run, which holds no password.
+ * The run identity's own credentials, for the freeze (OQ-AUTH-11), a signature:
+ * the platform's signing ceremony re-verifies the account password, and a
+ * current code when an authenticator is enrolled. Null on a dev-login run,
+ * which holds no password. The review signatures are the route's named
+ * reviewer's (./steps-review-route.mjs).
  */
 const signerCredential = runCredential();
 
@@ -235,50 +239,7 @@ await step(
   },
 );
 
-await step(
-  {
-    id: 'OQ-AUTH-17',
-    urs: ['URS-AUTH-013'],
-    title: 'Request review and submit the document into its approval workflow (before freeze — submit requires DRAFT)',
-    action: 'POST /documents/:id/request-review {reviewers:[self]}; POST /docs/:id/submit {workflow_steps:[{role:"QA", approver_email:self}]}; GET /docs/:id/workflow',
-    expected: 'Review request recorded (pending, reviewer = self); submit refused without approver_email; with it the document moves to IN_REVIEW and the workflow lists a PENDING step',
-    dependsOn: ['OQ-AUTH-03'],
-  },
-  async ({ api, expect, auth }) => {
-    const rr = await api('POST', `/api/authoring/documents/${state.docId}/request-review`, {
-      reviewers: [{ id: Number(auth.user.id), name: auth.user.displayName, email: auth.user.email }],
-    });
-    expect(rr.status < 300, `request-review expected 2xx, got ${rr.status}`, rr.json);
-    const pending = (rr.json?.reviews ?? []).filter((x) => x.review_status === 'pending');
-    expect(pending.length >= 1 && pending[0].reviewer_email === auth.user.email, 'review request not recorded as pending for the reviewer', rr.json);
-    const noApprover = await api('POST', `/api/authoring/docs/${state.docId}/submit`, { workflow_steps: [{ role: 'QA' }] });
-    expect(noApprover.status === 400, `submit without approver_email expected 400, got ${noApprover.status}`, noApprover.json);
-    const sub = await api('POST', `/api/authoring/docs/${state.docId}/submit`, { workflow_steps: [{ role: 'QA', approver_email: auth.user.email }] });
-    expect(sub.status < 300, `submit expected 2xx, got ${sub.status}`, sub.json);
-    const wf = await api('GET', `/api/authoring/docs/${state.docId}/workflow`);
-    expect(wf.status === 200 && /PENDING/.test(JSON.stringify(wf.json)), 'workflow has no PENDING step', wf.json);
-    return `review pending for ${pending[0].reviewer_email}; submit w/o approver → 400; workflow: ${JSON.stringify(wf.json).slice(0, 200)}`;
-  },
-);
-
-await step(
-  {
-    id: 'OQ-AUTH-17b',
-    urs: ['URS-AUTH-013'],
-    title: 'The reviewer sees the pending review on the Review surface',
-    action: 'GET /api/review/board (the read model behind /concept2cure/review) after the request-review and submit above',
-    expected: 'The queue lists the document for the reviewer',
-    dependsOn: ['OQ-AUTH-17'],
-    note: 'The Review board reads document_workflows / workflow_approvals (server/routes/review-board-routes.ts); authoring reviews are stored in authoring_reviews and authoring_workflow_steps (server/routes/authoring.router.ts:3476, 6259). If this step fails, a review requested in Authoring is not visible where a reviewer is told to look.',
-  },
-  async ({ api, expect }) => {
-    const board = await api('GET', '/api/review/board');
-    expect(board.status === 200, `board expected 200, got ${board.status}`, board.json);
-    const queue = board.json?.data?.queue ?? [];
-    expect(queue.some((q) => JSON.stringify(q).includes(state.docId) || JSON.stringify(q).includes(state.docTitle)), 'authoring review request is not on the Review board queue', board.json?.data?.meta);
-    return `queue lists the document (${queue.length} items)`;
-  },
-);
+await runReviewRequestSteps({ step, state });
 
 await step(
   {
@@ -406,86 +367,7 @@ await step(
   },
 );
 
-await step(
-  {
-    id: 'OQ-AUTH-12',
-    urs: ['URS-AUTH-010'],
-    title: 'A signing PIN signs nothing, and no route sets one',
-    action: 'POST /api/authoring/users/pin {pin}; POST /docs/:id/e-sign {pin, meaning:"REVIEWER", intent} with no password',
-    expected: '404 for the PIN route; 400 PASSWORD_REQUIRED for the PIN-only signature; no signature stored beyond the OQ-AUTH-11 freeze\'s own',
-    dependsOn: ['OQ-AUTH-11'],
-  },
-  async ({ api, expect }) => {
-    const route = await api('POST', '/api/authoring/users/pin', { pin: '246813' });
-    expect(route.status === 404, `the PIN route expected 404, got ${route.status}`, route.json);
-    const sign = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: '246813', meaning: 'REVIEWER', intent: 'OQ PIN only' });
-    expect(sign.status === 400 && sign.json?.code === 'PASSWORD_REQUIRED', `a PIN-only signature expected 400 PASSWORD_REQUIRED, got ${sign.status}`, sign.json);
-    const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
-    // The one signature on record is the OQ-AUTH-11 freeze's own (DP-35); the PIN added none.
-    expect((s.json?.signatures ?? []).length === 1, 'a signature was stored for a PIN', s.json);
-    return 'PIN route → 404; PIN-only signature → 400 PASSWORD_REQUIRED; no signature stored';
-  },
-);
-
-await step(
-  {
-    id: 'OQ-AUTH-13',
-    urs: ['URS-AUTH-010'],
-    title: 'E-signature refuses a wrong password, a missing code and an invalid meaning',
-    action: 'POST /docs/:id/e-sign with (a) a wrong password, (b) the right password and no code (identity with an authenticator enrolled), (c) meaning "WHATEVER"',
-    expected: '(a) 401 PASSWORD_VERIFICATION_FAILED; (b) 400 MFA_TOKEN_REQUIRED; (c) 400 Invalid signature meaning; no signature stored beyond the OQ-AUTH-11 freeze\'s own',
-    dependsOn: ['OQ-AUTH-12'],
-  },
-  async ({ api, expect, deviation }) => {
-    if (!signerCredential) deviation(CREDENTIAL_NOT_SUPPLIED);
-    const a = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: 'not-the-password', meaning: 'REVIEWER', intent: 'OQ wrong password' });
-    expect(a.status === 401 && a.json?.code === 'PASSWORD_VERIFICATION_FAILED', `wrong password expected 401 PASSWORD_VERIFICATION_FAILED, got ${a.status}`, a.json);
-    let b = null;
-    if (signerCredential.totpSecret) {
-      b = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: signerCredential.password, meaning: 'REVIEWER', intent: 'OQ no code' });
-      expect(b.status === 400 && b.json?.code === 'MFA_TOKEN_REQUIRED', `password without the enrolled code expected 400 MFA_TOKEN_REQUIRED, got ${b.status}`, b.json);
-    }
-    // The meaning is refused before the credentials are checked, so no code is spent.
-    const c = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: signerCredential.password, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
-    expect(c.status === 400, `bad meaning expected 400, got ${c.status}`, c.json);
-    const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
-    // The one signature on record is the OQ-AUTH-11 freeze's own (DP-35); the refusals added none.
-    expect((s.json?.signatures ?? []).length === 1, 'a signature was stored despite refusal', s.json);
-    return `wrong password → 401; ${b ? 'no code → 400 MFA_TOKEN_REQUIRED; ' : 'no authenticator enrolled for this identity, so (b) does not apply; '}bad meaning → 400; no signature stored`;
-  },
-);
-
-await step(
-  {
-    id: 'OQ-AUTH-14',
-    urs: ['URS-AUTH-010', 'URS-AUTH-011'],
-    title: 'Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot',
-    action: 'POST /docs/:id/e-sign {password, mfaToken (current code), meaning:"REVIEWER", intent}; GET /docs/:id/signatures',
-    expected: 'HTTP 200; two signatures — the OQ-AUTH-11 freeze (AUTHOR) and this one, with signer_email = actor, meaning REVIEWER, method password+mfa (password for an identity with no authenticator), pin_verified false, signature_digest and covered_content_hash present',
-    dependsOn: ['OQ-AUTH-13'],
-  },
-  async ({ api, expect, auth, deviation }) => {
-    if (!signerCredential) deviation(CREDENTIAL_NOT_SUPPLIED);
-    const mfaToken = signerCredential.totpSecret ? await freshTotp(signerCredential.email, signerCredential.totpSecret) : undefined;
-    const r = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, {
-      password: signerCredential.password,
-      ...(mfaToken ? { mfaToken } : {}),
-      meaning: 'REVIEWER',
-      intent: 'OQ-003 step 14: reviewed for validation',
-    });
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
-    const sigs = s.json?.signatures ?? [];
-    // DP-35: the freeze in OQ-AUTH-11 is itself a signature (AUTHOR), so this one is the second.
-    expect(sigs.length === 2 && sigs.some((x) => x.meaning === 'AUTHOR'), `expected the freeze's AUTHOR signature and this one, got ${sigs.length}`, sigs);
-    const sig = sigs.find((x) => x.meaning === 'REVIEWER') ?? {};
-    const method = mfaToken ? 'password+mfa' : 'password';
-    expect(sig.signer_email === auth.user.email && sig.meaning === 'REVIEWER', 'signature attributes wrong', sig);
-    expect(sig.method === method && sig.pin_verified === false, `the signature records method ${sig.method} (pin_verified ${sig.pin_verified}); expected ${method}, false`, sig);
-    expect(sig.signature_digest && sig.covered_content_hash, 'signature not bound to a frozen snapshot', sig);
-    return `signature ${sig.id} by ${sig.signer_email}, meaning ${sig.meaning}, method ${sig.method}, covers freeze v${sig.covered_freeze_version} (${String(sig.covered_content_hash).slice(0, 12)}…)`;
-  },
-);
+await runSignatureSteps({ step, state });
 
 await step(
   {

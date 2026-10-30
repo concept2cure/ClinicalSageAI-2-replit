@@ -16,7 +16,11 @@ import { render, cleanup, fireEvent, screen, waitFor } from '@testing-library/re
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DossierDrawer } from '../pathway/PathwayPanes';
 
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(),
+  getAuthToken: () => 'test-token', getOrgId: () => '7',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token', 'x-organization-id': '7' }),
+}));
 
 let calls: string[] = [];
 function serve(versions: unknown[] | null) {

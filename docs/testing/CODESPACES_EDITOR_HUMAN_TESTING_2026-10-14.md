@@ -360,6 +360,12 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 161 | In a response working copy, try unsupported rich structures or pending tracked changes. The plain response-register boundary must refuse without flattening or dropping content. Supported paragraphs and line breaks must survive exactly; preserve the rich working document separately for the applicable attachment/export workflow. | Not run | |
 | 162 | Switch letter/project/account/session with a response dialog, pending read, pending save or retained callback. Prior questions, editor candidates, reasons, signing targets and busy/notice state must retire before effects; stale callbacks must not initiate new reads or writes. An uncertain prior write must not be retried blindly. | Not run | |
 | 163 | Run the canonical coverage report and inspect the biotech matrix. Template/blueprint facts, tested workflow evidence, original forms, live-provider/human status and specialty/format gaps must stay separate. Counts must not claim complete biotech coverage, Weave parity, regulatory correctness or actual agency delivery. | Not run | |
+| 164 | From the existing CSR workflow, request a results section without retained results, then repeat with an explicitly unavailable pack. Check both job and on-demand paths with an operator. The outcome must identify missing data and template origin without billing a model or asserting a clean safety finding, event severity or actual conduct. | Not run | |
+| 165 | Draft ethics/consent and statistical-methods sections with missing records and with recorded late approval or post-unblinding SAP changes. Inspect the actual model context and output. Approval, GCP, consent and prespecification must not be inferred from metadata; gaps and deviations need independent review. | Not run | |
+| 166 | In the CSR interview, record both met and unmet primary outcomes, including a therapeutic-area branch. Both paths must reach robustness questions, distinguish sensitivity/supplementary/post-hoc work, and allow an analysis not performed without inventing a result. An AE count alone must not produce a high-rate conclusion. | Not run | |
+| 167 | Compare superiority, noninferiority, equivalence and Bayesian study records with the CSR drafting guidance. Verify the actual source analysis set, margin/threshold, interval type and decision; no p-value, clinical conclusion or new analysis may be invented. Clinical/statistical reviewers must assess the resulting prose separately. | Not run | |
+| 168 | With an operator's isolated delayed-model fixture, revoke access or withdraw/change the retained source before the reply returns. The job must refuse the late section and retain earlier outputs. Repeat a fully populated resume with changed evidence or missing lineage; it must not silently complete or overwrite prior work. | Not run | |
+| 169 | Compare owner/editor and read-only/review-assignee accounts on the same retained CSR job. Retained reads may remain available, but build, review writes and cancellation require current edit permission. A pending-deletion tenant must retain allowed history reads while refusing these writes; disabled users must be refused. | Not run | |
 
 
 
@@ -367,6 +373,10 @@ Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORI
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
 boundary is an explicit limit, not an automated migration or renumbering action.
+
+Cases 164–169 extend the [CSR expertise contract](../design/CSR_EXPERTISE_IMPROVEMENTS_2026-10-30.md).
+Operator-controlled failures and captured prompts qualify transport and refusal behavior only.
+Record real human observations separately from mocked-provider automated checks; these cases remain unrun.
 
 For case 15, use the canonical registry entries `US_NDA`, `CA_CTA`, `EU_CTA`,
 `JP_CTN`, plus `component:quality_overall_summary`; identify choices by the

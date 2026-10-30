@@ -1,0 +1,7 @@
+{
+  "commit": "4c4a27daf1cbdc462b24b1acb6c6ce970dcfec4b",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "a6e013f38467747c313d4095ad31d25bc8f31dbeecaf58153d4c2fc37f0398ac",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "172f98c094be6851e22f3e072940bed9a5c196ea6d83ee7f7038d930e66c4ac2"
+  }
+}

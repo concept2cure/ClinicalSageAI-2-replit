@@ -9256,7 +9256,7 @@ export const sharepointIntegrationRelations = relations(sharepointIntegration, (
  *
  * Phase 3 job-state wrapper for server/services/csr-builder.ts.
  * One row per CSR build request, with state transitions tracked here so
- * launchCSRBuild can run asynchronously and survive a worker restart.
+ * a CSR build (launchCSRBuildAsync) runs asynchronously and survives a worker restart.
  *
  * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
  * Migration:  migrations/20260628_csr_job_state.sql

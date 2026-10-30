@@ -1,0 +1,8 @@
+{
+  "kind": "retained proof RED before guard correction",
+  "canonicalBase": "a97f503b521930b838f310c9087c80644a1e4717",
+  "files": {
+    "server/services/ectd/dtd-bundler.ts": "1ee79410683ad29a409e1df52c46e07d25cd5403bc6223f6f07dab36d5c203d4",
+    "server/services/ectd/__tests__/dtd-bundler.test.ts": "b3cfbc53aa12544cb074500c19e53cb08632ed456afa066b2c46817e50c45930"
+  }
+}

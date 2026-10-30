@@ -1,0 +1,10 @@
+-- P-72 slice 1a: every policy, non-catalog function and constraint, one line each, for an object-level diff between replays.
+\pset footer off
+\pset tuples_only on
+\pset format unaligned
+SELECT 'policy|' || n.nspname || '.' || c.relname || '|' || p.polname || '|' || p.oid || '|' || md5(coalesce(pg_get_expr(p.polqual, p.polrelid), '') || '#' || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''))
+  FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace ORDER BY 1;
+SELECT 'function|' || p.oid::regprocedure || '|' || p.oid || '|' || pg_get_userbyid(p.proowner) || '|' || md5(coalesce(array_to_string(p.proconfig, ','), '') || '#' || p.prosrc)
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') ORDER BY 1;
+SELECT 'constraint|' || n.nspname || '.' || coalesce(cl.relname, '-') || '|' || c.conname || '|' || c.oid || '|' || md5(pg_get_constraintdef(c.oid) || '#' || c.convalidated)
+  FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace LEFT JOIN pg_class cl ON cl.oid = c.conrelid WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') ORDER BY 1;

@@ -1,0 +1,98 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > does not send project A’s unsent question from the same-mounted project B composer 423ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires draft, older pages, activity and dossier in B’s first commit before passive read resets 291ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a later A visit is fresh and ignores an older-page reply from the first A visit 367ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > ignores late first-page threads, activity and dossier replies from an abandoned project 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'account' changes 116ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'organization' changes 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a new sign-in of the same account retires unsent state even though the actor and project match 120ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace 249ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > preserves the exact composer and loaded history through stage/title changes and ordinary bearer refresh 478ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps the remembered step while retiring global source pins after a project ownership change 132ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > names the owning client rather than calling the CRO organization the sponsor 140ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no tab says "Not in this release" 148ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > what Submit will hold is named as coming later, in words, with no button 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "plan" opens Plan, a step again 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "lifecycle" opens Submit too 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > a message typed in the start box survives switching tabs 315ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the steps come first; the start box and the conversations sit beside the step and stay on every step 116ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 655ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 125ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage 30ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then its sequence without manual renders (delayed read: false) 362ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then its sequence without manual renders (delayed read: true) 157ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a stashed action mounts and commits before the next action (StrictMode: false) 130ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a stashed action mounts and commits before the next action (StrictMode: true) 109ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > an action that navigates away releases its barrier after unregistering its source 110ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > direct chip callers retain the same immediate applied outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > a non-React registration needs no commit barrier even when requested 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > Stop preserves an already-performed action awaiting commit (was stashed: false) 53ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx > React surface commit boundaries > Stop preserves an already-performed action awaiting commit (was stashed: true) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > a navigation holds the next move until its screen is showing and settled 7ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — order > runs a batch of navigations strictly in the order AnA made them 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — a navigation that never lands > reports failure after NAV_SHOW_TIMEOUT_MS, never success, and moves on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > waits for the deferred outcome, then reports it as applied with the screen detail 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > reports a deferred refusal as a failure with the screen reason, never as applied 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — an action the screen performs later > a screen that never answers is reported unavailable after the belt timeout 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > refuse() short-circuits: the move is reported failed and the screen never moves 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > clear() drops every move not yet started; the one in flight finishes 3ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a clear with a reason settles each dropped move with that reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > once the person has taken over (canApply=false) no move is made at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — refusal and take-over > a move the queue itself fails on is settled as dropped, and the next still runs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue.test.ts > createDriveQueue — whenIdle > resolves only after the last queued move has landed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps the newer personal selection after an older team filter finally receives readiness 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > reports replacement once and clears the old retry timer after a newer immediate success 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler refused 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler throws 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps an independent queued view action when a filter on that same surface applies 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > leaves a queued action for another surface owned by that surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: false) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: true) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > retains the existing queued-to-queued replacement behavior 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves the deferred outcome when the caller retries the identical directive object 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves a newer action queued by the old replacement observer 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > returns the exact newer commit promise and detail while retiring its older retry 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > names what is listed, deduplicated and trimmed, for a refusal AnA can retry from 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > says nothing when nothing is listed — an empty list is never presented as choices 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > lists a long name by its opening words, the ellipsis outside the quotes so the quoted part still matches 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > summarises beyond the cap instead of silently dropping names 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > resolves through the registry — the canonical copy, not the payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > drops unknown actions, malformed payloads, and enum violations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > performs through the registered handler and reports the handler outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > reports an honest refusal from the handler, never a fabricated success 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a throwing handler is a failure, not a crash 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted surface WITHOUT the handler is unavailable — never performed "at" it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > stashes across the navigate→mount gap and performs on registration (one shot) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > an expired stash never performs, and says so once — never silence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash replaced by a newer one is told it will not run 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash for another surface is not consumed by an unrelated registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted-but-not-ready surface (retry refusal) holds the directive for the ready signal 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a retry-held directive still dies at the TTL — held is not forever 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > unregistration clears ownership so a stale unmount cannot swallow actions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > keeps a selected step through same-project card republishing 6ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > drops the prior project step on A → B → A 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > clear retires the step and its mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > restores a valid step only for the URL’s same project 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "lifecycle" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "not-a-step" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step {} 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step null 1ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels the mount-gap action so arriving on its screen after Stop cannot execute it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels a loading-screen retry and starts the replacement demo without the 20-second TTL 3ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > keeps the success of an action already applied before Stop 2ms
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > a stale cancellation cannot erase a different pending action the person selected 1ms
+
+ Test Files  10 passed (10)
+      Tests  89 passed (89)
+   Start at  16:29:42
+   Duration  14.58s (transform 3.11s, setup 540ms, import 5.00s, tests 5.33s, environment 2.56s)
+

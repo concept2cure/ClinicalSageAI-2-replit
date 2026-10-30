@@ -1,0 +1,29 @@
+{
+  "kind": "pre-publication disjoint incoming project initiation synchronization",
+  "qualifiedBase": "1ce6adc681c984f1669715d37fda774f11203059",
+  "publicationBase": "0ad3a15ceed158232dfb1cb18e543820027c0488",
+  "qualifiedInputCount": 77,
+  "qualifiedInputsUnchanged": true,
+  "incomingPaths": [
+    ".design/client-journey/INFORMATION_ARCHITECTURE.md",
+    "client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx",
+    "client/src/concept2cure/v2/styles/project-home-v2.css",
+    "client/src/concept2cure/v2/styles/protocol-dev-editing.css",
+    "client/src/concept2cure/v2/surfaces/ProjectCoreWork.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx",
+    "docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/README.md",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/build.log.gz",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/canvas-path.log.gz",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/copy-styles.log.gz",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/desktop.png",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/green.log.gz",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/mobile.png",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/red.log.gz",
+    "docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/typecheck.log.gz"
+  ],
+  "review": "Project initiation/protocol UI and its own evidence only; no STF/CSR frozen-input intersection. Normal fast-forward; no incoming path rewritten."
+}

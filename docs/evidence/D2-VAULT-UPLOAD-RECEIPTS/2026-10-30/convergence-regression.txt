@@ -1,0 +1,188 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > refuses a persisted source program that does not anchor the numeric target, even for the same protocol
+[csr-job-runner] Job 42 failed on section '<setup>': CSR_SCOPE_MISMATCH
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a reply after its source was withdrawn during the model call
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_SOURCE_RECEIPT_REVOKED
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a reply when its source-table digest changed during the model call
+[csr-job-runner] Job 42 failed on section '12.2.1': The retained evidence changed while this CSR section was drafted. No late section was saved. Existing outputs were retained. Verify the current study sources and start a new CSR build.
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a late reply after the requester loses current project access
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_PROJECT_ACCESS_DENIED
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > revalidates source access on a fully populated resume and preserves all saved work on refusal
+[csr-job-runner] Job 42 failed on section '<setup>': CSR_SOURCE_RECEIPT_REVOKED
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses to reuse saved narrative whose exact evidence digest differs from the readable current pack
+[csr-job-runner] Job 42 failed on section '<setup>': Saved CSR results do not identify the same readable source evidence. Existing outputs were retained. Verify the current study sources and start a new CSR build.
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > does not treat missing source lineage on a saved run-bound results section as verified
+[csr-job-runner] Job 42 failed on section '<setup>': Saved CSR results do not identify the same readable source evidence. Existing outputs were retained. Verify the current study sources and start a new CSR build.
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses completion if the source is withdrawn after the final section was saved
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_SOURCE_RECEIPT_REVOKED
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not reinterpret a malformed retained binding as an unbound metadata build
+[csr-job-runner] Job 42 failed on section '<setup>': CSR_EVIDENCE_SELECTION_INVALID
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > also rechecks current project permission before saving an unbound metadata section
+[csr-job-runner] Job 42 failed on section '1': CSR_PROJECT_ACCESS_DENIED
+
+stderr | server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not grandfather a clean legacy results finding over an empty retained evidence pack
+[csr-job-runner] Job 42 failed on section '<setup>': The retained evidence contains no usable result tables for this CSR section. Existing outputs were retained. Verify or supply the needed study results and start a new CSR build.
+
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > preserves cancellation when the pre-claim project-policy await rejects 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not overwrite cancellation with a stale study-identity refusal 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not overwrite cancellation with an invalid-selection refusal after its claim 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > preserves cancellation and damaged saved work when its integrity read finishes late 13ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > refuses a persisted source program that does not anchor the numeric target, even for the same protocol 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a reply after its source was withdrawn during the model call 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a reply when its source-table digest changed during the model call 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a late reply after the requester loses current project access 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > revalidates source access on a fully populated resume and preserves all saved work on refusal 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses to reuse saved narrative whose exact evidence digest differs from the readable current pack 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > does not treat missing source lineage on a saved run-bound results section as verified 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses completion if the source is withdrawn after the final section was saved 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > reuses an unchanged, verified saved section without a model call or rewriting its provenance 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > saves and completes an unchanged source-supported draft 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR progress when cancellation finishes during retained-output admission > preserves the cancelled job progress before drafting can begin 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > preserves cancellation while a model call is outstanding 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > preserves cancellation while the late source recheck is outstanding 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not start a model call if cancellation happens during its source read 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not reinterpret a malformed retained binding as an unbound metadata build 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > also rechecks current project permission before saving an unbound metadata section 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not grandfather a clean legacy results finding over an empty retained evidence pack 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > can draft supported title metadata without requiring unavailable clinical result tables 3ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing 579ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry 793ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown 244ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt 172ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt 177ms
+stdout | server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts
+{
+  "timestamp": "2026-10-30T17:28:21.954Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T17:28:21.955Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts
+{
+  "timestamp": "2026-10-30T17:28:21.956Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > admits owner/editor 5 for a new CSR write 16ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > admits owner/editor 6 for a new CSR write 5ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > retains read access for user 7 while refusing build/review writes 10ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > retains read access for user 8 while refusing build/review writes 7ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > does not treat organization-public read visibility as edit permission 6ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > denies a currently inactive requester through the Drizzle path 4ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > denies a currently suspended requester through the Drizzle path 3ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > does not write under a currently inactive tenant 2ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > does not write under a currently suspended tenant 3ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > does not write under a currently pending_deletion tenant 2ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > applies the same explicit pending-deletion retained-read policy to both adapters 4ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > retains pending-deletion project history while refusing new CSR writes 6ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR current source-project read and write admission > refuses a malformed blank membership role in either adapter 1ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > binds the actual source program to the numeric project before billing 2ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > refuses contradictory program declarations before quota reservation 1ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > derives the unique editable target from an explicitly selected retained program 4ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > retains matching exact source identity 4ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > refuses malformed retained source selection before quota: null 1ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > refuses malformed retained source selection before quota: {} 0ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > refuses malformed retained source selection before quota: {"programId":"11111111-2222-4333-8444-000000000011"} 0ms
+ ✓ server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts > CSR retained source target before quota reservation > refuses malformed retained source selection before quota: {"programId":"11111111-2222-4333-8444-000000000011","runId":"not-a-run","studyId":"SAME-PROTOCOL"} 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > a general study with primary endpoint met=true reaches sensitivity questions 5ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > a general study with primary endpoint met=false reaches sensitivity questions 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > an oncology study with primary endpoint met=true keeps its therapeutic-area questions 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > an oncology study with primary endpoint met=false keeps its therapeutic-area questions 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > a vaccine study keeps its source-specific questions before robustness questions 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > does not require a successful study to explain a failure, or invent sensitivity analyses that were not performed 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > teaches same-estimand sensitivity, different-estimand supplementary work and exploratory post hoc work 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR robustness follows the recorded analysis, not a success/failure shortcut > describes uncertainty and decision criteria under the actual SAP method, not a universal superiority p-value 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR safety review does not invent a high rate from a nonzero count > one event among a large population triggers factual review without an elevated-incidence claim 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR safety review does not invent a high rate from a nonzero count > a missing denominator is not substituted with a high-rate assessment 20ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts > CSR safety review does not invent a high rate from a nonzero count > zero supplied counts do not produce those event-presence issues 1ms
+
+ Test Files  4 passed (4)
+      Tests  59 passed (59)
+   Start at  17:28:12
+   Duration  14.03s (transform 5.77s, setup 247ms, import 8.25s, tests 4.35s, environment 503ms)
+

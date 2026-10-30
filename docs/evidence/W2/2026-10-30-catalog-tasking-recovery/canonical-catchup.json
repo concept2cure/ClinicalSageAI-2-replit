@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "542b23a13e616a8a693b726cac9f3583cb4e840b",
+  "incomingCanonical": "84853e7bc",
+  "scope": "Preserves Vault archive/upload review and CSR expertise/current-scope improvements; shared transport/startup/board API and own product sources unchanged",
+  "tests": {
+    "passed": 341,
+    "suites": 24,
+    "failed": 0,
+    "countsOverlapEarlierCohorts": true
+  },
+  "review": "No blocking compatibility issue; incoming Vault headers remain canonical and new CSR imports are static/lazy at startup.",
+  "fixtureCorrection": "Canonical Apps registry metadata replaces the invalid handwritten fixture. All 12 focused cases and zero-warning lint pass.",
+  "build": "Pass; both stamps verified against actual Git source; wrong manual override rejected and discarded.",
+  "typecheck": {
+    "exitCode": 0,
+    "errors": 0,
+    "baseline": 0,
+    "inputCommit": "542b23a13e616a8a693b726cac9f3583cb4e840b",
+    "heapMb": 13312
+  }
+}

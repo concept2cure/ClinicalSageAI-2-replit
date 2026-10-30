@@ -1,0 +1,22 @@
+[
+  "server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts",
+  "server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts",
+  "server/routes/csr-jobs.ts",
+  "server/routes/csr-workflow-routes.ts",
+  "server/services/__tests__/csr-builder-writing-expertise.test.ts",
+  "server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts",
+  "server/services/ana/intelligence-questions/flows/csr-report.ts",
+  "server/services/csr-builder.ts",
+  "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+  "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts",
+  "server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts",
+  "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+  "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts",
+  "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+  "server/services/csr/csr-job-evidence.ts",
+  "server/services/csr/csr-job-runner.ts",
+  "server/services/csr/project-scope.ts",
+  "server/services/ind/ctd/csr-e3-sections-plan.ts",
+  "server/services/ind/ctd/csr-e3-writing.ts",
+  "docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-lint.mjs"
+]

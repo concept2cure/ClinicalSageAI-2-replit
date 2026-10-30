@@ -1,0 +1,881 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference 279ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > clears description and recorded target with null without inventing another change 73ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > leaves an admitted reader read-only when the fresh capability is false 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > does not propose trimming a legacy description that the person has not edited 36ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > pins writes to the verified GET parent when the global workspace was empty 65ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed program settings read without blank editable defaults 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed actor settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed organization settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed anchor settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed workspace settings read without blank editable defaults 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed revision settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed date settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed priority settings read without blank editable defaults 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed pending settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > bounds the governed reason before sending a write 57ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a network outcome across collapse until an explicit reload 96ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a zero outcome across collapse until an explicit reload 104ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a server outcome across collapse until an explicit reload 103ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a explicit outcome across collapse until an explicit reload 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a receipt outcome across collapse until an explicit reload 109ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a audit outcome across collapse until an explicit reload 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a scope outcome across collapse until an explicit reload 79ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a unchanged-field outcome across collapse until an explicit reload 84ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a changed-fields outcome across collapse until an explicit reload 78ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > requires a fresh read after a stale row refusal and never automatically repeats PATCH 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > withdraws editable private values after a current access refusal 57ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > blocks duplicate saves and settings Escape/close until the pending reply settles 69ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a account change 47ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a role change 43ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a organization change 43ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a workspace change 49ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a program-roundtrip change 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a token change 45ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > withholds a delayed GET after a token switch without another render 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > blocks a stale same-frame review click before any PATCH dispatch 27ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > preserves a pending save through ordinary same-account bearer refresh 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a drug IND offers no locked tool, and names what comes later in one bare line of words 139ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a drug IND offers no locked tool, and names what comes later in one bare line of words 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a drug IND offers no locked tool, and names what comes later in one bare line of words 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a drug IND offers no locked tool, and names what comes later in one bare line of words 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a drug IND offers no locked tool, and names what comes later in one bare line of words 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a drug IND offers no locked tool, and names what comes later in one bare line of words 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio 309ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'generic project' 5045ms
+   → expected [ <button …(3)>…(2)</button>, …(5) ] to have a length of 5 but got 6
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mBX204[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mBX204[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-desc"[39m
+            [36m>[39m
+              [0mPhase 3 BLA[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mClient[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mApplication number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"margin-top: 12px;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px; height: auto; min-height: 28px; white-space: normal; text-align: left;"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mSee this project’s reports in Reporting & analytics[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-settings"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_4_-panel"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [0mProject settings[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-...
+ × client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'IVD 510K project' 5037ms
+   → expected [ <button …(3)>…(2)</button>, …(5) ] to have a length of 5 but got 6
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mBX204[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mBX204[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-desc"[39m
+            [36m>[39m
+              [0mPhase 3 BLA[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0m510K[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mClient[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mDevice class[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mRegulatory path[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [0m510(k)[0m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct code[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mRegulation[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mReview panel[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[...
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'generic project'
+AssertionError: expected [ <button …(3)>…(2)</button>, …(5) ] to have a length of 5 but got 6
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mBX204[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mBX204[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-desc"[39m
+            [36m>[39m
+              [0mPhase 3 BLA[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mClient[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mApplication number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"margin-top: 12px;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost"[39m
+                [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px; height: auto; min-height: 28px; white-space: normal; text-align: left;"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mSee this project’s reports in Reporting & analytics[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-settings"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_4_-panel"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [0mProject settings[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-...
+
+- Expected
++ Received
+
+- 5
++ 6
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx:101:42
+     99|     mount();
+    100|     const stages = () => Array.from(document.querySelectorAll<HTMLButt…
+    101|     await waitFor(() => expect(stages()).toHaveLength(5));
+       |                                          ^
+    102|     if (mdx) expect((await screen.findByTestId('pj-mdx-workflow')).tex…
+    103|     expect(screen.getAllByRole('button', { name: 'Project settings' })…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'IVD 510K project'
+AssertionError: expected [ <button …(3)>…(2)</button>, …(5) ] to have a length of 5 but got 6
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mBX204[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mBX204[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-desc"[39m
+            [36m>[39m
+              [0mPhase 3 BLA[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0m510K[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mClient[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mDevice class[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mRegulatory path[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [0m510(k)[0m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct code[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mRegulation[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mReview panel[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[...
+
+- Expected
++ Received
+
+- 5
++ 6
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx:101:42
+     99|     mount();
+    100|     const stages = () => Array.from(document.querySelectorAll<HTMLButt…
+    101|     await waitFor(() => expect(stages()).toHaveLength(5));
+       |                                          ^
+    102|     if (mdx) expect((await screen.findByTestId('pj-mdx-workflow')).tex…
+    103|     expect(screen.getAllByRole('button', { name: 'Project settings' })…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 52 passed (54)
+   Start at  16:22:21
+   Duration  18.11s (transform 1.90s, setup 276ms, import 2.84s, tests 13.35s, environment 1.26s)

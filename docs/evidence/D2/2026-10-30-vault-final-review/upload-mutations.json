@@ -1,0 +1,26 @@
+[
+  {
+    "mutation": "project",
+    "exit": 1,
+    "caught": true,
+    "log": "/workspace/shared/vault-final-mutation-project.txt"
+  },
+  {
+    "mutation": "duplicate",
+    "exit": 1,
+    "caught": true,
+    "log": "/workspace/shared/vault-final-mutation-duplicate.txt"
+  },
+  {
+    "mutation": "credentials",
+    "exit": 1,
+    "caught": true,
+    "log": "/workspace/shared/vault-final-mutation-credentials.txt"
+  },
+  {
+    "mutation": "gateway",
+    "exit": 1,
+    "caught": true,
+    "log": "/workspace/shared/vault-final-mutation-gateway.txt"
+  }
+]

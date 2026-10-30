@@ -1,0 +1,25 @@
+{
+  "provenance": "Reconstructed after RED execution; no pre-run hashes were captured. These tests reverse only the documented post-RED load-call assertion and cancellation-test additions. Root project-scope source at original RED was not frozen and has since changed. Do not call this a pre-run source freeze.",
+  "originalProductionBase": "47ce1d3d95eff4a6b3614146cc79b670d7b20645",
+  "files": [
+    {
+      "path": "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+      "archive": "csr-job-runner.evidence.test.ts.gz",
+      "sha256": "dab3a6920e2da10aa1fd8f2434daf7c76b73eedb4d0495228b0af454e2c8ecf9",
+      "status": "post-run reconstruction"
+    },
+    {
+      "path": "server/services/csr/__tests__/saved-clinical-tables.test.ts",
+      "archive": "saved-clinical-tables.test.ts.gz",
+      "sha256": "66b3b51b952dcfb0f2e90b672c858d621f6312547e0f3549508b90ff287db889",
+      "status": "post-run reconstruction"
+    },
+    {
+      "path": "server/services/csr/__tests__/csr-evidence-target.pglite.test.ts",
+      "archive": "csr-evidence-target.pglite.test.ts.gz",
+      "sha256": "38eb9c3da96bd8da51107d15bd52efb1cfbe5d60596d4e16eedd3b0d1466cc6d",
+      "status": "post-run reconstruction"
+    }
+  ],
+  "rawRedLogSha256": "b6dd5e9c7aa2d231cdc85e99a5c195c4b90b5cea53ce96877bd75d1c383d8049"
+}

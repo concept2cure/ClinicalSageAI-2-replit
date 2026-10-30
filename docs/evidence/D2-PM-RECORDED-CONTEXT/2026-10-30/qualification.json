@@ -1,0 +1,76 @@
+{
+  "groups": [
+    {
+      "log": "ui-mdx-core.txt",
+      "files": 5,
+      "tests": 81,
+      "result": "passed"
+    },
+    {
+      "log": "ui-mdx-retained.txt",
+      "files": 12,
+      "tests": 121,
+      "result": "passed"
+    },
+    {
+      "log": "ui-mdx-actions.txt",
+      "files": 2,
+      "tests": 22,
+      "result": "passed"
+    },
+    {
+      "log": "backend-latest-csr.txt",
+      "files": 9,
+      "tests": 185,
+      "result": "passed"
+    },
+    {
+      "log": "backend-formatter-retained.txt",
+      "files": 5,
+      "tests": 51,
+      "result": "passed"
+    },
+    {
+      "log": "shared-guards.txt",
+      "files": 2,
+      "tests": 53,
+      "result": "passed"
+    },
+    {
+      "log": "unified-work-green.txt",
+      "files": 2,
+      "tests": 26,
+      "result": "passed"
+    },
+    {
+      "log": "ui-protocol-core.txt",
+      "files": 3,
+      "tests": 46,
+      "result": "passed"
+    },
+    {
+      "log": "mdx-target-helper.txt",
+      "files": 1,
+      "tests": 5,
+      "result": "passed"
+    },
+    {
+      "log": "ui-protocol-guide.txt",
+      "files": 3,
+      "tests": 28,
+      "result": "passed"
+    }
+  ],
+  "unique_tests": 618,
+  "unique_files": 44,
+  "native_settings_tests": 8,
+  "browser_widths": [
+    1280,
+    390
+  ],
+  "limits": "Focused component/HTTP/SQL qualification; no deployed authentication or full installed-schema/browser API journey.",
+  "production_build": "passed",
+  "whole_program_typecheck_errors": 0,
+  "scoped_new_file_lint_errors": 0,
+  "scoped_new_file_lint_warnings": 0
+}

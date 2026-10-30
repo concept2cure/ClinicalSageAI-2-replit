@@ -43,7 +43,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { useAuthUser } from '@/services/portal/authService';
 import { ceremonyOpen } from '../ceremony';
 import { ReviewDecisionDialog } from './ReviewDecisionDialog';
-import type { AuthoringReviewRow } from '@shared/authoring/peer-review';
+import { signedOnRoute, type AuthoringReviewRow } from '@shared/authoring/peer-review';
 import type { ReviewItem, ReviewComment, ReviewWorkflow, ReviewRequest } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
@@ -113,6 +113,17 @@ function PageHead({ eyebrow, title, sub, actions }: {
 
 function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
+}
+
+/**
+ * The open program as the switch names it. A program opened from a link
+ * (`?program=`) is known to the shell by its id alone; the board's own rows
+ * name it, else it is "this project". Never its id.
+ */
+function namedProgram(program: { id: string; title: string | null } | null, queue: ReviewItem[]): { id: string; title: string } | null {
+  if (!program) return null;
+  const title = program.title ?? queue.find((r) => r.programId === program.id && r.prog)?.prog ?? 'this project';
+  return { id: program.id, title };
 }
 
 /** Scope + program switch, rendered above the queue and in the empty state. */
@@ -222,7 +233,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   const program = useMemo(() => {
     const p = readShellProject();
     if (!p || !UUID_RE.test(String(p.id))) return null;
-    return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
+    return { id: String(p.id), title: p.title || p.code || p.product || null };
   }, []);
   /* With a program open, the board starts on THAT program. It started
      org-wide, so the screen reached from BX-256's project home listed BX-204's
@@ -399,7 +410,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   const scopeBar = (
     <>
-      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
+      <ScopeBar scope={scope} onScope={changeScope} program={namedProgram(program, queue)} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
       {/* Send for review on a Vault version assigns nobody, so it was in no
           queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
       <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
@@ -469,7 +480,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
           />
         )}
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -647,7 +658,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
                     <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
                     <button className="btn primary" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
                   </>
-                : item.myReviewStatus && item.myReviewStatus !== 'pending'
+                : hasRecordedReview(item)
                   ? <RecordedReviewStanding item={item} />
                   : item.atMySignOff
                     ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
@@ -797,14 +808,21 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
 
       <C2CToast msg={toast} />
     </div>
   );
 }
 
+/** The caller recorded a decision, or signed the review on its route (RR5). */
+const hasRecordedReview = (item: ReviewItem): boolean =>
+  Boolean(item.myReviewSignedAt) || Boolean(item.myReviewStatus && item.myReviewStatus !== 'pending');
+
 function RecordedReviewStanding({ item }: { item: ReviewItem }) {
+  if (item.myReviewSignedAt) {
+    return <span className="rd-chip tone-ok">Your review signature recorded {new Date(item.myReviewSignedAt).toLocaleDateString()}</span>;
+  }
   const current = item.myReviewStanding === 'current';
   const label = REVIEW_STATUS_LABEL[item.myReviewStatus ?? ''] ?? item.myReviewStatus;
   return <span className={`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}>
@@ -820,7 +838,8 @@ function recordedNotice(receipt: AuthoringReviewRow): string {
 
 function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: number }) {
   const current = review.standing === 'current';
-  const approved = current && review.status === 'approved';
+  const signed = signedOnRoute(review);
+  const approved = signed || (current && review.status === 'approved');
   const tone = approved ? 'ok' : current && review.status === 'rejected' ? 'err' : 'warn';
   const state = approved ? 'approved' : review.status === 'pending' ? 'current' : 'pending';
   return <div className="rv-wf-step" data-status={state}>
@@ -828,8 +847,10 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
     <div className="rv-wf-body">
       <div className="rv-wf-nm">{review.reviewer}<span className={`rv-wf-tag tone-${tone}`}>{reviewRequestWords(review)}</span></div>
       <div className="rv-wf-meta mono">
-        {review.requestedBy ? `requested by ${review.requestedBy}` : 'requested'}
-        {review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
+        {review.requestedByName ? `requested by ${review.requestedByName}` : 'requested'}
+        {signed && review.routeSignedAt
+          ? ` · signed ${new Date(review.routeSignedAt).toLocaleDateString()}`
+          : review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
         {review.comments && ` · ${review.comments}`}
       </div>
     </div>
@@ -837,6 +858,7 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
 }
 
 function reviewRequestWords(review: ReviewRequest): string {
+  if (signedOnRoute(review)) return 'Signed';
   const label = REVIEW_STATUS_LABEL[review.status] ?? review.status;
   if (review.status === 'pending' || review.standing === 'current') return label;
   return `${label} · ${review.standing === 'stale' ? 'Earlier saved content' : 'Content binding unavailable'}`;

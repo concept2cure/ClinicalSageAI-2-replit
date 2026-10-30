@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5242/api/authoring/documents/9a6313a3-6018-40e1-b7f7-478b05f5b231/route-candidates",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 73,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "timeZone": "UTC",
+      "canonicalId": null,
+      "candidates": [
+        {
+          "id": 1,
+          "name": "OQ Runner",
+          "reviewer": {
+            "code": "MEMBER_IS_AUTHOR",
+            "message": "OQ Runner is an author of this document (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit), so cannot review or approve it."
+          },
+          "approver": {
+            "code": "MEMBER_IS_AUTHOR",
+            "message": "OQ Runner is an author of this document (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit), so cannot review or approve it."
+          }
+        },
+        {
+          "id": 2,
+          "name": "OQ Signer",
+          "reviewer": null,
+          "approver": null
+        }
+      ]
+    }
+  }
+}

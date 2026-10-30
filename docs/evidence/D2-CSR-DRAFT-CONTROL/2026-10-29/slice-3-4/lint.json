@@ -1,0 +1,356 @@
+{
+ "command": "npx eslint -f json <every lane file>; baseline per modified file: git show HEAD:<file> | npx eslint -f json --stdin --stdin-filename <file>",
+ "files": [
+  {
+   "file": "client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 12,
+   "errorsAfter": 0,
+   "warningsAfter": 12,
+   "newRules": {},
+   "messagesBefore": [
+    "complexity: Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+    "max-lines: File has too many lines (5043). Maximum allowed is 500.",
+    "max-lines-per-function: Function 'DocumentWorkbench' has too many lines (4204). Maximum allowed is 100.",
+    "complexity: Function 'DocumentWorkbench' has a complexity of 467. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 17. Maximum allowed is 15.",
+    "complexity: Arrow function has a complexity of 32. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 16. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 36. Maximum allowed is 15.",
+    "react-hooks/exhaustive-deps: React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+    "complexity: Async arrow function has a complexity of 16. Maximum allowed is 15.",
+    "max-lines-per-function: Arrow function has too many lines (210). Maximum allowed is 100.",
+    "complexity: Arrow function has a complexity of 24. Maximum allowed is 15."
+   ],
+   "messagesAfter": [
+    "350: complexity: Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+    "782: max-lines: File has too many lines (5056). Maximum allowed is 500.",
+    "1249: max-lines-per-function: Function 'DocumentWorkbench' has too many lines (4216). Maximum allowed is 100.",
+    "1249: complexity: Function 'DocumentWorkbench' has a complexity of 468. Maximum allowed is 15.",
+    "2166: complexity: Async arrow function has a complexity of 17. Maximum allowed is 15.",
+    "2439: complexity: Arrow function has a complexity of 32. Maximum allowed is 15.",
+    "3164: complexity: Async arrow function has a complexity of 16. Maximum allowed is 15.",
+    "3220: complexity: Async arrow function has a complexity of 36. Maximum allowed is 15.",
+    "3385: react-hooks/exhaustive-deps: React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+    "3752: complexity: Async arrow function has a complexity of 16. Maximum allowed is 15.",
+    "6253: max-lines-per-function: Arrow function has too many lines (210). Maximum allowed is 100.",
+    "6253: complexity: Arrow function has a complexity of 24. Maximum allowed is 15."
+   ]
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/DraftPassage.tsx",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 4,
+   "errorsAfter": 0,
+   "warningsAfter": 4,
+   "newRules": {},
+   "messagesBefore": [
+    "max-lines-per-function: Function 'RichSectionEditor' has too many lines (1871). Maximum allowed is 100.",
+    "complexity: Function 'RichSectionEditor' has a complexity of 190. Maximum allowed is 15.",
+    "max-lines: File has too many lines (2137). Maximum allowed is 500.",
+    "no-useless-assignment: The value assigned to 'drift' is not used in subsequent statements."
+   ],
+   "messagesAfter": [
+    "561: max-lines-per-function: Function 'RichSectionEditor' has too many lines (1879). Maximum allowed is 100.",
+    "561: complexity: Function 'RichSectionEditor' has a complexity of 193. Maximum allowed is 15.",
+    "936: max-lines: File has too many lines (2147). Maximum allowed is 500.",
+    "1057: no-useless-assignment: The value assigned to 'drift' is not used in subsequent statements."
+   ]
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/__tests__/draftPassage.test.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/draftPassage.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 2,
+   "errorsAfter": 0,
+   "warningsAfter": 2,
+   "newRules": {},
+   "messagesBefore": [
+    "max-lines-per-function: Function 'AuthoringAiDraft' has too many lines (309). Maximum allowed is 100.",
+    "complexity: Function 'AuthoringAiDraft' has a complexity of 47. Maximum allowed is 15."
+   ],
+   "messagesAfter": [
+    "286: max-lines-per-function: Function 'AuthoringAiDraft' has too many lines (302). Maximum allowed is 100.",
+    "286: complexity: Function 'AuthoringAiDraft' has a complexity of 50. Maximum allowed is 15."
+   ]
+  },
+  {
+   "file": "server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/routes/authoring.router.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 22,
+   "errorsAfter": 0,
+   "warningsAfter": 22,
+   "newRules": {},
+   "messagesBefore": [
+    "complexity: Arrow function has a complexity of 23. Maximum allowed is 15.",
+    "max-params: Async arrow function has too many parameters (10). Maximum allowed is 5.",
+    "max-params: Arrow function has too many parameters (7). Maximum allowed is 5.",
+    "max-lines: File has too many lines (5296). Maximum allowed is 500.",
+    "no-console: Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+    "max-lines-per-function: Async arrow function has too many lines (281). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 72. Maximum allowed is 15.",
+    "max-lines-per-function: Async arrow function has too many lines (277). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 62. Maximum allowed is 15.",
+    "max-lines-per-function: Async arrow function has too many lines (171). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 37. Maximum allowed is 15.",
+    "max-lines-per-function: Async arrow function has too many lines (171). Maximum allowed is 100.",
+    "max-lines-per-function: Async arrow function has too many lines (130). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 27. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 24. Maximum allowed is 15.",
+    "max-lines-per-function: Async arrow function has too many lines (105). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 26. Maximum allowed is 15.",
+    "max-depth: Blocks are nested too deeply (5). Maximum allowed is 4.",
+    "max-lines-per-function: Async arrow function has too many lines (111). Maximum allowed is 100.",
+    "complexity: Async arrow function has a complexity of 25. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 20. Maximum allowed is 15.",
+    "complexity: Async arrow function has a complexity of 17. Maximum allowed is 15."
+   ],
+   "messagesAfter": [
+    "189: complexity: Arrow function has a complexity of 23. Maximum allowed is 15.",
+    "722: max-params: Async arrow function has too many parameters (10). Maximum allowed is 5.",
+    "912: max-params: Arrow function has too many parameters (7). Maximum allowed is 5.",
+    "983: max-lines: File has too many lines (5310). Maximum allowed is 500.",
+    "1006: no-console: Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+    "1589: max-lines-per-function: Async arrow function has too many lines (281). Maximum allowed is 100.",
+    "1589: complexity: Async arrow function has a complexity of 72. Maximum allowed is 15.",
+    "3388: max-lines-per-function: Async arrow function has too many lines (283). Maximum allowed is 100.",
+    "3388: complexity: Async arrow function has a complexity of 64. Maximum allowed is 15.",
+    "3787: max-lines-per-function: Async arrow function has too many lines (171). Maximum allowed is 100.",
+    "3787: complexity: Async arrow function has a complexity of 37. Maximum allowed is 15.",
+    "4214: max-lines-per-function: Async arrow function has too many lines (171). Maximum allowed is 100.",
+    "4861: max-lines-per-function: Async arrow function has too many lines (130). Maximum allowed is 100.",
+    "4861: complexity: Async arrow function has a complexity of 27. Maximum allowed is 15.",
+    "5138: complexity: Async arrow function has a complexity of 24. Maximum allowed is 15.",
+    "5907: max-lines-per-function: Async arrow function has too many lines (105). Maximum allowed is 100.",
+    "5907: complexity: Async arrow function has a complexity of 26. Maximum allowed is 15.",
+    "6008: max-depth: Blocks are nested too deeply (5). Maximum allowed is 4.",
+    "7185: max-lines-per-function: Async arrow function has too many lines (111). Maximum allowed is 100.",
+    "7185: complexity: Async arrow function has a complexity of 25. Maximum allowed is 15.",
+    "7975: complexity: Async arrow function has a complexity of 20. Maximum allowed is 15.",
+    "8100: complexity: Async arrow function has a complexity of 17. Maximum allowed is 15."
+   ]
+  },
+  {
+   "file": "server/services/authoring/__tests__/authoring-draft-passage.test.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/services/authoring/authoring-draft-passage.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/services/authoring/authoring-draft-template.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  },
+  {
+   "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+   "newFile": false,
+   "errorsBefore": 0,
+   "warningsBefore": 1,
+   "errorsAfter": 0,
+   "warningsAfter": 1,
+   "newRules": {},
+   "messagesBefore": [
+    "max-params: Async function 'createDraftCandidate' has too many parameters (8). Maximum allowed is 5."
+   ],
+   "messagesAfter": [
+    "181: max-params: Async function 'createDraftCandidate' has too many parameters (8). Maximum allowed is 5."
+   ]
+  },
+  {
+   "file": "shared/authoring/draft-passage.ts",
+   "newFile": true,
+   "errorsBefore": 0,
+   "warningsBefore": 0,
+   "errorsAfter": 0,
+   "warningsAfter": 0,
+   "newRules": {},
+   "messagesBefore": [],
+   "messagesAfter": []
+  }
+ ],
+ "totals": {
+  "errorsAfter": 0,
+  "warningsBefore": 41,
+  "warningsAfter": 41,
+  "filesWithNewRules": []
+ }
+}

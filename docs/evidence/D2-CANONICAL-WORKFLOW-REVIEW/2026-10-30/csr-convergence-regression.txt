@@ -1,0 +1,224 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_SOURCE_RECEIPT_REVOKED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_EVIDENCE_STUDY_MISMATCH
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_DATA_UNAVAILABLE without saving it
+[csr-job-runner] Job 42 failed on section '13': CSR_SOURCE_DATA_UNAVAILABLE
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_APPROVAL_REQUIRED without saving it
+[csr-job-runner] Job 42 failed on section '13': CSR_SOURCE_APPROVAL_REQUIRED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_CHANGED without saving it
+[csr-job-runner] Job 42 failed on section '13': CSR_SOURCE_CHANGED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a changed source digest between the model request and section save
+[csr-job-runner] Job 42 failed on section '13': CSR_EVIDENCE_CHANGED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > rechecks current edit access after the model even when evidence-bound=true
+[csr-job-runner] Job 42 failed on section '13': Current project edit access was revoked
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > rechecks current edit access after the model even when evidence-bound=false
+[csr-job-runner] Job 42 failed on section '13': Current project edit access was revoked
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses withdrawn evidence and preserves saved work
+[csr-job-runner] Job 42 failed on section '13': CSR_SOURCE_DATA_UNAVAILABLE
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses changed evidence and preserves saved work
+[csr-job-runner] Job 42 failed on section '13': CSR_EVIDENCE_CHANGED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses missing-provenance evidence and preserves saved work
+[csr-job-runner] Job 42 failed on section '13': CSR_EVIDENCE_PROVENANCE_MISSING
+
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 32ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 6ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 7ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_DATA_UNAVAILABLE without saving it 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_APPROVAL_REQUIRED without saving it 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a late model result after CSR_SOURCE_CHANGED without saving it 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > refuses a changed source digest between the model request and section save 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > rechecks current edit access after the model even when evidence-bound=true 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > rechecks current edit access after the model even when evidence-bound=false 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses withdrawn evidence and preserves saved work 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses changed evidence and preserves saved work 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > a fully populated resume still refuses missing-provenance evidence and preserves saved work 2ms
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > does not bypass source withdrawal when the selected section has no table mapping
+[csr-job-runner] Job 42 failed on section '6': CSR_SOURCE_DATA_UNAVAILABLE
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > retains earlier sections when a later model result loses source eligibility and permits explicit recovery
+[csr-job-runner] Job 42 failed on section '12.2.2': CSR_SOURCE_DATA_UNAVAILABLE
+
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > revalidates a fully populated resume and completes without another model call when provenance still matches 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > does not bypass source withdrawal when the selected section has no table mapping 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > current source admission across asynchronous CSR drafting and resume > retains earlier sections when a later model result loses source eligibility and permits explicit recovery 10ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > persists exact partial coverage and resumes only the missing section without changing retained output 213ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps retained work readable after an edit-to-use downgrade but refuses a reader cancelling queued work 106ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 74ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 56ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 34ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 80ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 79ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 64ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a use-only member starting a new build before any job, quota or model work 19ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 49ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current edit permission and preserves the requester 47ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 16ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 27ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 24ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 21ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench sources require readable document membership > does not read the previous document section or publish its evidence while the next pinned document sections are pending 1235ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs 446ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session 855ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session 630ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session 611ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement 594ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=false) 542ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true) 744ms
+stdout | server/services/csr/__tests__/csr-current-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-30T17:00:12.803Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T17:00:12.804Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-current-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-30T17:00:12.804Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-current-scope.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > allows current owner, editor or administrator 5 to write 25ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > allows current owner, editor or administrator 6 to write 15ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > allows current owner, editor or administrator 9 to write 16ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > retains reader/reviewer 7 reads but refuses explicit and default writes 24ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > retains reader/reviewer 8 reads but refuses explicit and default writes 24ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > does not turn organization visibility into edit permission 15ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > uses current normalized edit membership after a downgrade, retaining read access 15ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > keeps archived history readable and refuses new builds by its owner 16ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR current project policy through real SQL and Drizzle > keeps pending-deletion retained project reads available under the existing read-only tenant policy 23ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > returns only the current persisted role 13ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > refuses a disabled actor even when membership and project ownership remain 11ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > refuses a deleted actor even when membership and project ownership remain 10ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > refuses a missing user and an ambiguous or empty membership 12ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > refuses a disabled tenant even for retained reads 10ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > refuses a deleted tenant even for retained reads 11ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: sql > allows pending-deletion retained actor reads only by explicit policy, never writer locks 12ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > returns only the current persisted role 11ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > refuses a disabled actor even when membership and project ownership remain 9ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > refuses a deleted actor even when membership and project ownership remain 12ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > refuses a missing user and an ambiguous or empty membership 12ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > refuses a disabled tenant even for retained reads 10ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > refuses a deleted tenant even for retained reads 10ms
+ ✓ server/services/csr/__tests__/csr-current-scope.pglite.test.ts > CSR active actor parity: drizzle > allows pending-deletion retained actor reads only by explicit policy, never writer locks 11ms
+stdout | server/services/__tests__/csr-builder-expertise.test.ts
+{
+  "timestamp": "2026-10-30T17:00:16.313Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T17:00:16.315Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-expertise.test.ts
+{
+  "timestamp": "2026-10-30T17:00:16.315Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-expertise.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > includes the full trusted writing brief while sponsor values stay quoted user data 10ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.1 conduct or timing assertions 4ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.3 conduct or timing assertions 3ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §9.7.1 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.1 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > can keep an honest missing-record statement without fabricating approval 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > preserves qualified missing-record wording: No evidence that the study was conducted in accordance with GCP was supplied. [DATA TO BE INSERTED] 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > preserves qualified missing-record wording: The study was not approved by an IRB according to the available metadata; approval records are awaited. [DATA TO BE INSERTED] 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > provenance reaches the existing writing owner > preserves qualified missing-record wording: Consent waivers and late SAP finalization require source review; their status is not established. [DATA TO BE INSERTED] 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > includes the full trusted writing brief while sponsor values stay quoted user data 4ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.1 conduct or timing assertions 7ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.3 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §9.7.1 conduct or timing assertions 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.1 conduct or timing assertions 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > refuses unsupported §5.2 conduct or timing assertions 4ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > can keep an honest missing-record statement without fabricating approval 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > preserves qualified missing-record wording: No evidence that the study was conducted in accordance with GCP was supplied. [DATA TO BE INSERTED] 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > preserves qualified missing-record wording: The study was not approved by an IRB according to the available metadata; approval records are awaited. [DATA TO BE INSERTED] 1ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > on demand reaches the existing writing owner > preserves qualified missing-record wording: Consent waivers and late SAP finalization require source review; their status is not established. [DATA TO BE INSERTED] 2ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > explicit retained evidence cannot silently become metadata-only drafting > keeps unavailable §11.4.1 evidence and returns needs-data without accepting qualitative findings 3ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > explicit retained evidence cannot silently become metadata-only drafting > keeps unavailable §12.2.1 evidence and returns needs-data without accepting qualitative findings 3ms
+ ✓ server/services/__tests__/csr-builder-expertise.test.ts > explicit retained evidence cannot silently become metadata-only drafting > retained table text stays quoted user data even when it contains instruction-like text 4ms
+ ✓ server/services/csr/__tests__/csr-evidence-target.pglite.test.ts > CSR retained evidence numeric target > retains the original program/run/study when it matches the actual target 46ms
+ ✓ server/services/csr/__tests__/csr-evidence-target.pglite.test.ts > CSR retained evidence numeric target > refuses a retained source from a different program before creating a job for the same protocol 10ms
+ ✓ server/services/csr/__tests__/csr-evidence-target.pglite.test.ts > CSR retained evidence numeric target > refuses a numeric target from another program even when no separate context program was supplied 8ms
+ ✓ server/services/csr/__tests__/csr-evidence-target.pglite.test.ts > CSR retained evidence numeric target > a late admission refusal cannot overwrite cancellation of a previously queued job 16ms
+ ✓ server/services/csr/__tests__/csr-evidence-target.pglite.test.ts > CSR retained evidence numeric target > a late admission refusal cannot overwrite cancellation of a previously failed job 13ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > primary endpoint met=true still reaches sensitivity questions 5ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > primary endpoint met=false still reaches sensitivity questions 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > preserves the oncology branch before sensitivity for either primary outcome 4ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > preserves the vaccines branch before sensitivity for either primary outcome 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > does not require a reason for failure after success, or a summary of analyses not performed 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > still asks for source-supported reasons after failure 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > the registered CSR interview always asks about robustness > distinguishes same-estimand sensitivity, different-estimand supplementary, and post hoc work 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts > absolute adverse event counts do not establish incidence > offers neutral review of nonzero counts, without an uncomputed high-rate finding 2ms
+
+ Test Files  7 passed (7)
+      Tests  107 passed (107)
+   Start at  16:59:50
+   Duration  32.24s (transform 8.02s, setup 351ms, import 14.85s, tests 15.06s, environment 619ms)
+

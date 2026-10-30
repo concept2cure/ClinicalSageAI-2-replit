@@ -1,0 +1,18 @@
+{
+  "canonical_base": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "tests": 265,
+  "suites": 20,
+  "failed": 0,
+  "skipped": 0,
+  "build_exit": 0,
+  "frozen_inputs": 40,
+  "input_mismatches": [],
+  "prior_qualification_inputs_unchanged": 20,
+  "new_lint_warnings": 0,
+  "publication": "accepted directly on concept2cure-v2",
+  "new_native_or_browser_qualification_claimed": false,
+  "source_commit": "c0325308d2a8a220ede8a6cae8cfe7d9289419c8",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "publication_receipt": "source-publication.json"
+}

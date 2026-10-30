@@ -1,0 +1,144 @@
+"""Read existing public synthetic qualification ZIPs; never publish or mutate them."""
+from pathlib import Path
+import datetime
+import hashlib
+import json
+import re
+import zipfile
+
+root = Path('/workspace/ClinicalSageAI-2-replit/docs/evidence/MR-10/2026-10-30-agency-qualification')
+normalizations = [
+    (rb'<xmp:(ModifyDate|CreateDate|MetadataDate)>[^<]+', rb'<xmp:\1>RUN_DATE'),
+    (rb"xmpMM:DocumentID='uuid:[^']+'", b"xmpMM:DocumentID='uuid:RUN_ID'"),
+    (rb'/(CreationDate|ModDate)\([^)]*\)', rb'/\1(RUN_DATE)'),
+    (rb'/ID\s*\[\s*<[^>]+>\s*<[^>]+>\s*\]', b'/ID [<RUN_ID><RUN_ID>]'),
+]
+
+def normalized_pdf(data):
+    for pattern, replacement in normalizations:
+        data = re.sub(pattern, replacement, data)
+    return data
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def pdf_metadata(data):
+    patterns = {
+        'producer': rb'/Producer\(([^)]*)\)',
+        'xmpModifyDate': rb'<xmp:ModifyDate>([^<]+)',
+        'xmpCreateDate': rb'<xmp:CreateDate>([^<]+)',
+        'xmpMetadataDate': rb'<xmp:MetadataDate>([^<]+)',
+        'xmpDocumentId': rb"xmpMM:DocumentID='([^']+)'",
+        'pdfCreationDate': rb'/CreationDate\(([^)]*)\)',
+        'pdfModDate': rb'/ModDate\(([^)]*)\)',
+        'trailerId': rb'/ID\s*\[\s*<([^>]+)>\s*<([^>]+)>\s*\]',
+    }
+    values = {}
+    for key, pattern in patterns.items():
+        found = re.search(pattern, data)
+        values[key] = [value.decode('latin1') for value in found.groups()] if found else []
+    return values
+
+sequences = []
+pdf_pairs = []
+for sequence in ['0000', '0001']:
+    before_path = root / 'unconfigured-candidate' / f'synthetic-{sequence}.zip'
+    after_path = root / 'final-unconfigured-candidate' / f'synthetic-{sequence}.zip'
+    with zipfile.ZipFile(before_path) as before, zipfile.ZipFile(after_path) as after:
+        row = {
+            'sequence': sequence,
+            'beforeZip': str(before_path.relative_to(root)),
+            'afterZip': str(after_path.relative_to(root)),
+            'beforeZipSha256': digest(before_path.read_bytes()),
+            'afterZipSha256': digest(after_path.read_bytes()),
+            'membershipIdentical': set(before.namelist()) == set(after.namelist()),
+        }
+        for name in before.namelist():
+            if not name.endswith('.pdf'):
+                continue
+            old, new = before.read(name), after.read(name)
+            pdf_pairs.append({
+                'sequence': sequence,
+                'file': name,
+                'beforeBytes': len(old),
+                'afterBytes': len(new),
+                'beforeSha256': digest(old),
+                'afterSha256': digest(new),
+                'rawBytesIdentical': old == new,
+                'byteIdenticalAfterOnlyListedMetadataNormalization': normalized_pdf(old) == normalized_pdf(new),
+                'beforeMetadata': pdf_metadata(old),
+                'afterMetadata': pdf_metadata(new),
+            })
+        xml_comparisons = []
+        for name in ['index.xml', 'm1/us/us-regional.xml']:
+            old, new = before.read(name), after.read(name)
+            xml_comparisons.append({
+                'file': name,
+                'rawBytesIdentical': old == new,
+                'byteIdenticalAfterOnlyChecksumAttributeNormalization':
+                    re.sub(rb'checksum="[a-fA-F0-9]{32}"', b'checksum="DIGEST"', old) ==
+                    re.sub(rb'checksum="[a-fA-F0-9]{32}"', b'checksum="DIGEST"', new),
+            })
+        row['xmlComparisons'] = xml_comparisons
+        row['utilIndexMd5IdenticalAfterOnlyLeadingDigestNormalization'] = (
+            re.sub(rb'(?m)^[a-fA-F0-9]{32}', b'DIGEST', before.read('util/index-md5.txt')) ==
+            re.sub(rb'(?m)^[a-fA-F0-9]{32}', b'DIGEST', after.read('util/index-md5.txt'))
+        )
+        row['stfComparisons'] = [
+            {'file': name, 'rawBytesIdentical': before.read(name) == after.read(name),
+             'beforeSha256': digest(before.read(name)), 'afterSha256': digest(after.read(name))}
+            for name in before.namelist() if re.search(r'/stf-[^/]+\.xml$', name)
+        ]
+        row['changedArchiveTimestamps'] = [
+            {'file': name, 'beforeDateTime': list(before.getinfo(name).date_time),
+             'afterDateTime': list(after.getinfo(name).date_time)}
+            for name in before.namelist()
+            if before.getinfo(name).date_time != after.getinfo(name).date_time
+        ]
+        sequences.append(row)
+
+record = {
+    'kind': 'read-only metadata attribution for existing public synthetic candidate packages',
+    'recordedAtUtc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    'inputComparisonRecord': 'candidate-final-input-verification.json',
+    'qualifiedFinalBase': json.loads((root / 'candidate-final-input-verification.json').read_text())['canonicalBase'],
+    'pdfPairCount': len(pdf_pairs),
+    'normalizationFields': [
+        'XMP xmp:ModifyDate', 'XMP xmp:CreateDate', 'XMP xmp:MetadataDate',
+        'XMP xmpMM:DocumentID UUID', 'PDF /CreationDate', 'PDF /ModDate', 'PDF trailer /ID pair',
+    ],
+    'allPdfPairsMatchAfterOnlyListedMetadataNormalization': all(
+        item['byteIdenticalAfterOnlyListedMetadataNormalization'] for item in pdf_pairs),
+    'allPdfPairsDeclareGhostscript10_05_1': all(
+        item[side]['producer'] == ['GPL Ghostscript 10.05.1']
+        for item in pdf_pairs for side in ['beforeMetadata', 'afterMetadata']),
+    'pdfPairs': pdf_pairs,
+    'sequences': sequences,
+    'sourceAttribution': [
+        {'path': 'server/services/ectd/qualification/golden-fixtures.ts', 'line': 151,
+         'observation': 'v3GoldenInput returns normal packager input without skipPdfaConversion.'},
+        {'path': 'server/services/submission-gateways/regional-packager.ts', 'line': 285,
+         'observation': 'Only explicit skipPdfaConversion returns the PDF unchanged; otherwise finalizePdfA is called at286.'},
+        {'path': 'server/services/ectd/pdfa-pipeline.ts', 'line': 142,
+         'observation': 'Available Ghostscript conversion is invoked.'},
+        {'path': 'server/services/ectd/pdfa-pipeline.ts', 'line': 211,
+         'observation': 'Ghostscript conversion uses random temporary names and its PDF/A invocation has no deterministic date/document-ID override.'},
+        {'path': 'server/services/submission-gateways/regional-packager.ts', 'line': 1333,
+         'observation': 'ZIP entries are added without an explicit date.'},
+        {'path': 'node_modules/jszip/lib/object.js', 'line': 33,
+         'observation': 'Installed JSZip defaults entry date to new Date().'},
+        {'path': 'server/services/submission-gateways/regional-packager.ts', 'line': 952,
+         'observation': 'Captured package re-addition preserves the original entry date.'},
+    ],
+    'finding': 'Observed PDF differences are confined to Ghostscript-produced dates and document IDs. Downstream XML and manifest differences are confined to checksums. Archive timestamps also vary. STF bytes are identical.',
+    'limits': [
+        'Read-only comparison of these two already generated public synthetic original/amendment candidate pairs only.',
+        'Normalization is an analysis operation in memory; no PDF, ZIP, source or evidence bytes were modified.',
+        'This establishes the observed difference attribution, not general repeat-byte determinism or equivalent rendered appearance.',
+        'Each qualification run remains bound to its own raw report and exact package hashes.',
+        'No new publisher invocation, unit test, build, compiler, Git job, provider or agency call occurred.',
+        'No agency qualification, licensed external engine execution or acceptance is established.',
+    ],
+}
+Path('/tmp/ectd-agency-candidate-metadata-review.json').write_text(json.dumps(record, indent=2) + '\n')
+print(json.dumps({key: record[key] for key in ['pdfPairCount', 'allPdfPairsMatchAfterOnlyListedMetadataNormalization', 'allPdfPairsDeclareGhostscript10_05_1']}))

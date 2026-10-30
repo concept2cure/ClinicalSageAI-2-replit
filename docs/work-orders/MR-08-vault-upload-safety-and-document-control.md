@@ -363,6 +363,16 @@ Steps 3 and 6 are open; each waits on a decision named below.
 - Exporting 5 versions returns 202, then a ZIP whose `SHA256SUMS` verifies against each version's `content_hash`. Tampering with one stored object makes the export fail as a whole.
 - A DOCX preview renders inline with the rendition label, and download of the same document still returns the original bytes with a matching `X-Content-SHA256`.
 
+**Step 1 was delivered by gap 7.1** (`client/src/concept2cure/v2/FileDropZone.tsx`, around the Vault picker and the Data Room; folder upload; skipped files listed with the reason).
+
+**Step 2 done 2026-10-30** (`docs/evidence/D2/2026-10-30-vault-upload-progress/`): the ingest request goes through `client/src/concept2cure/v2/vaultIngestTransport.ts` (XHR, `upload.onprogress`). The request is the same: the bearer header, the session cookie, a browser-written multipart body. Each row of the upload list says one of:
+- waiting while the file before it goes;
+- "Uploading… n% of size sent", with a labelled progress bar;
+- "Sent. The server is scanning it and storing it…";
+- then recorded as vN, or refused in the server's words.
+
+The per-row document type was already there (gap 7.1). **Concurrency stays one file at a time:** a second file in flight shares the same person's bandwidth, so the batch finishes no sooner, and it doubles the server's concurrent scans for one person. The evidence README records the reasoning.
+
 **Step 3 done 2026-10-30, as a folder export** (`docs/evidence/D2/2026-10-30-vault-folder-export/`):
 - **The route:** `GET /api/c2c/project-vault/:id/folders/:folderId/export` composes the builder VR-20 built (`vault-archive-builder.ts`) and the verified reader. The archive holds the folder's current versions, `manifest.json`, `INDEX.txt`, `SHA256SUMS` and the chained audit rows of those versions.
 - **Refusals:** one file that fails its hash refuses the whole export, and the refusal names it. A disposition-withdrawn file is listed as withheld.

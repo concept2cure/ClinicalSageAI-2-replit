@@ -60,6 +60,29 @@
 --
 -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it
 -- does not. Nothing is dropped (Rule 1).
+--
+-- AMENDED IN PLACE 2026-10-30 (Rule 1; D6, P-72 slice 1a; evidence
+-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). ADDED: the CHECK
+-- organization_users_role_known, last in this file. organization_users.role
+-- had no CHECK, so any writer the policies admit could store any string. A
+-- scope whose role string was 'app_super_admin' wrote that string onto its own
+-- membership: the trigger above reads the setting, so it let it through
+-- (slice 0, item 5). Every later sign-in then minted the platform role. Now the
+-- column admits:
+--   - the roles an administrator assigns (shared/constants/org-roles.ts
+--     ASSIGNABLE_ORG_ROLES);
+--   - the legacy organization roles the server still reads on memberships
+--     (owner, editor: server/middleware/auth.ts ORG_ROLE_FUNCTIONAL_GRANTS);
+--   - the staff spellings the trigger above guards (super_admin, superadmin,
+--     platform_admin);
+--   - any other value a database already holds when this runs, so no existing
+--     row stops being writable.
+-- It never admits 'app_super_admin', from any writer, owner and superuser
+-- included. The constraint is added NOT VALID and validated only once every row
+-- passes, so a row that already holds a refused value cannot fail the deploy.
+-- A warning names such rows. The replacement is conditional on the stored
+-- definition (pg_get_constraintdef), so a second run changes nothing (Rule 1's
+-- corollary).
 
 CREATE OR REPLACE FUNCTION public.organization_users_staff_role_platform_only()
 RETURNS trigger
@@ -135,3 +158,64 @@ BEGIN
   RAISE NOTICE '[organization-users-writes] own-org or platform writes; staff roles minted by the platform only';
 END
 $$;
+
+-- Added 2026-10-30 (P-72 slice 1a; see the amendment note in the header).
+DO $role_known$
+DECLARE
+  -- What the column admits whatever a database holds. Never 'app_super_admin'.
+  v_known   CONSTANT text[] := ARRAY[
+    'admin', 'approver', 'manager', 'reviewer', 'member', 'viewer',   -- ASSIGNABLE_ORG_ROLES
+    'owner', 'editor',                                                -- legacy organization roles still read
+    'super_admin', 'superadmin', 'platform_admin'                     -- the staff spellings the trigger guards
+  ];
+  v_held    text[];
+  v_admit   text[];
+  v_def     text;
+  v_have    text[];
+  v_valid   boolean;
+  v_refused integer;
+BEGIN
+  IF to_regclass('public.organization_users') IS NULL
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'organization_users' AND column_name = 'role') THEN
+    RAISE NOTICE '[organization-users-writes] role check skipped — public.organization_users.role not provisioned';
+    RETURN;
+  END IF;
+
+  -- Values rows already hold (organization_users' read policy is open, so the
+  -- applier sees every row on any owner). Kept writable, except the platform role
+  -- in any case or padding (the request scope refuses those spellings too:
+  -- server/db/tenantStore.ts isPlatformScopeRole).
+  SELECT array_agg(DISTINCT u.role) INTO v_held
+    FROM public.organization_users u
+   WHERE u.role IS NOT NULL AND lower(btrim(u.role)) <> 'app_super_admin' AND NOT (u.role = ANY (v_known));
+  SELECT array_agg(DISTINCT r ORDER BY r) INTO v_admit FROM unnest(v_known || COALESCE(v_held, '{}')) AS r;
+
+  SELECT pg_get_constraintdef(c.oid), c.convalidated INTO v_def, v_valid
+    FROM pg_constraint c
+   WHERE c.conrelid = 'public.organization_users'::regclass AND c.conname = 'organization_users_role_known';
+  IF v_def IS NOT NULL THEN
+    SELECT array_agg(DISTINCT m[1] ORDER BY m[1]) INTO v_have FROM regexp_matches(v_def, '''([^'']*)''', 'g') AS m;
+  END IF;
+
+  IF v_def IS NULL OR v_have IS DISTINCT FROM v_admit THEN
+    EXECUTE format(
+      'ALTER TABLE public.organization_users DROP CONSTRAINT IF EXISTS organization_users_role_known, '
+      'ADD CONSTRAINT organization_users_role_known CHECK (role IN (%s)) NOT VALID',
+      (SELECT string_agg(quote_literal(r), ', ' ORDER BY r) FROM unnest(v_admit) AS r));
+    v_valid := false;
+    IF v_held IS NOT NULL THEN
+      RAISE WARNING '[organization-users-writes] organization_users_role_known also admits % (held by existing rows, kept writable)', v_held;
+    END IF;
+  END IF;
+
+  IF NOT v_valid THEN
+    SELECT count(*) INTO v_refused FROM public.organization_users u WHERE NOT (u.role = ANY (v_admit));
+    IF v_refused = 0 THEN
+      ALTER TABLE public.organization_users VALIDATE CONSTRAINT organization_users_role_known;
+    ELSE
+      RAISE WARNING '[organization-users-writes] % membership row(s) hold the platform role (app_super_admin, in any case or padding); the check stays NOT VALID and refuses any write to them that keeps that role, until an administrator corrects it', v_refused;
+    END IF;
+  END IF;
+END
+$role_known$;

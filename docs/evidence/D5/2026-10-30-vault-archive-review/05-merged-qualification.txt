@@ -1,0 +1,11 @@
+2026-10-30 canonical merge qualification
+
+First normal push: all pre-push gates pass, full TypeScript zero errors, then Git rejects the update because another session advanced canonical origin. No hook bypass or forced update.
+Incoming canonical 9c4085a395e7ba2e2a4d258c5934a976598a96ba contains prompt-intelligence core-owner convergence and oncology-guidance scope changes. No overlap with the Vault archive/upload/ratchet implementation files. Accepted information architecture updates are preserved.
+Merged normally at cddc8c543c1d232355cd23f2ceff40e5f8f71ef4, no source conflict.
+
+Combined-source verification:
+21 test files, 315/315 tests pass (11 incoming files plus 5 upload and 5 archive/filing files). This overlaps earlier cohorts; do not add it to the2,620 total.
+Production client/server/audit-verifier build exits0 on the merged code.
+The original separate28 native database checks,19 lint-gate controls and24 browser component checks remain recorded in04-integration.txt; these are not rerun or claimed as new checks here.
+Normal push retried only after the merged checks pass. Exact final receipt and hook output: /workspace/shared/vault-handoff-release.json and /workspace/shared/vault-handoff-push.txt.

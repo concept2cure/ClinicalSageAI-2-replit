@@ -1,0 +1,15 @@
+{
+  "reason": "Full compiler rejected handwritten UiSurface metadata; use real canonical Apps registry entry. No production source or assertion weakened.",
+  "focusedTests": {
+    "passed": 12,
+    "suites": 1,
+    "failed": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "source": "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx",
+  "sha256": "9da51cc87c3dc754d5f20454c2d615ef8e8040345f62a971c06afa5a09a156b3",
+  "fullCompiler": "Pending on final canonical integration; unchanged zero baseline."
+}

@@ -24,7 +24,7 @@
  * answer that does not say so is `unkeyed`, never rows.
  */
 import React, { useCallback, useState } from 'react';
-import { ErrorState, useLiveData } from './dataConnect';
+import { ErrorState, useLiveData, type DataReadOwner } from './dataConnect';
 import { describeReadFailure, readFailureFor, type ReadRefusal } from '../mdx/hooks/useFetchJson';
 import { OPEN_PROGRAM_LABEL, openPrograms } from './programAction';
 
@@ -147,6 +147,8 @@ export function projectRefusalOfRead(read: { status?: number; code?: string; err
 export type ProjectReadStatus = 'idle' | 'loading' | 'refused' | 'error' | 'unkeyed' | 'ready';
 
 export interface ProjectReadOptions {
+  /** Existing account/project visit guard; optional for callers that own their state elsewhere. */
+  owner?: DataReadOwner;
   /** The open project, or null. */
   programId: string | null;
   /** Read nothing without a project (Engineering). Otherwise the organization's records are read; no mount has asked
@@ -200,7 +202,7 @@ export function useProjectScopedRead<T>(base: string, o: ProjectReadOptions): Pr
   const [tick, setTick] = useState(0);
   const retry = useCallback(() => setTick((t) => t + 1), []);
   const path = pathFor(base, o);
-  const read = useLiveData<T[]>(path, [path, tick]);
+  const read = useLiveData<T[]>(path, [path, tick], undefined, o.owner);
   const refusal = o.refusal ?? projectRefusalOfRead(read);
   const status = statusOf(o, path, refusal, read);
   const ready = status === 'ready';

@@ -2,6 +2,7 @@ import React from 'react';
 import { isDeviceFamily, isIvdFamily, productTypeForFilingType } from '@shared/constants/domain/product-types';
 import { compileWorkPackages, type Specialization, type WorkPackage } from '@shared/regulatory/work-packages';
 import { DEVICE_DOORS } from '../projectDoors';
+import { openEngineeringPanel, type EngineeringPanel } from '../../mdx/surfaces/engineeringPanelTarget';
 import '../styles/mdx-project-workflow.css';
 
 /** The verified project read, not the shell handoff or an organization default. */
@@ -68,14 +69,15 @@ export function mdxProjectPlan(project: MdxWorkflowProject, otherFilings: string
 
 /** Destinations are existing features or the project's own evidence/document stages. Each door is named for its
  *  job (projectDoors.ts, section 9's Door names), not for where it goes. */
-type WorkDestination = { surface?: string; stage?: string; label: string;
+type WorkDestination = { surface?: string; stage?: string; panel?: EngineeringPanel; label: string;
   /** Where the door goes when the organization cannot open `surface`. Evidence when absent. */
   fallback?: WorkDestination };
 const ENGINEERING_DESTINATION = { surface: 'device-engineering', label: DEVICE_DOORS.engineering };
 const EVIDENCE_DESTINATION = { stage: 'evidence', label: DEVICE_DOORS.evidence };
 const DOCUMENT_DESTINATION = { stage: 'author', label: DEVICE_DOORS.documents };
 const WORK_DESTINATIONS: Record<string, WorkDestination> = {
-  'design-controls': ENGINEERING_DESTINATION, 'risk-management': ENGINEERING_DESTINATION,
+  'design-controls': { ...ENGINEERING_DESTINATION, panel: 'design-controls' },
+  'risk-management': { ...ENGINEERING_DESTINATION, panel: 'risk' },
   'manufacturing-transfer': ENGINEERING_DESTINATION,
   'software-cybersecurity': { surface: 'device-software', label: DEVICE_DOORS.software },
   'medical-writing': DOCUMENT_DESTINATION,
@@ -115,7 +117,7 @@ export interface WorkstreamPlanSlots {
   assignAction?: (deliverable: { id: string; title: string; group: string }) => React.ReactNode;
 }
 
-function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName, assignmentOf, assignAction }: {
+function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName, projectId, assignmentOf, assignAction }: {
   item: WorkPackage;
   plan: NonNullable<ReturnType<typeof mdxProjectPlan>>;
   onNav: (id: string) => void;
@@ -123,6 +125,7 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName,
   onAsk: (text: string) => void;
   available: (id: string) => boolean;
   projectName: string;
+  projectId: string;
 } & WorkstreamPlanSlots) {
   const planned = packageDestination(item, plan.primary);
   /* A feature the organization cannot open is never offered: the door goes where its fallback says, or Evidence. */
@@ -145,7 +148,8 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName,
         <ul>{item.acceptanceCriteria.map(text => <li key={text}>{text}</li>)}</ul>
         <div className="pj-mdx-actions">
           <button type="button" className="btn ghost" onClick={() => {
-            if (destination.surface) onNav(destination.surface);
+            if (destination.surface && destination.panel) openEngineeringPanel(projectId, destination.panel, onNav);
+            else if (destination.surface) onNav(destination.surface);
             else onStage(destination.stage ?? 'evidence');
           }}>{destination.label}</button>
           {further.map(door => (
@@ -186,7 +190,7 @@ export function ProjectMdxWorkflow({ project, otherFilings, marketsState, onNav,
         ? 'Assign a workstream to name the person who does it. Approvals remain in document reviews.'
         : 'named assignments and approvals remain in the project team and document reviews.'}</p>
       <div className="pj-mdx-workstreams" aria-label="Project workstreams">
-        {plan.packages.map(item => <Workstream key={item.id} item={item} plan={plan} onNav={onNav} onStage={onStage} onAsk={onAsk} available={available} projectName={project.name || 'in context'}
+        {plan.packages.map(item => <Workstream key={item.id} item={item} plan={plan} onNav={onNav} onStage={onStage} onAsk={onAsk} available={available} projectName={project.name || 'in context'} projectId={project.id}
           assignmentOf={assignmentOf} assignAction={assignAction} />)}
       </div>
     </section>

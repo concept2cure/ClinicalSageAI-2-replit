@@ -68,7 +68,7 @@ import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './Cont
 
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
-import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel } from './TrainingCoverage';
+import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
 import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
 import { TrainingExpiry } from './TrainingExpiry';
 import { RegisterSignatureLine } from './RegisterSignatureLine';
@@ -641,14 +641,15 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           defaultMeaning="approval"
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
-          renderMeaningDetails={(_meaning, committing) => (
+          renderMeaningDetails={(_meaning, committing) => (<>
             <label className="qms-effective-date">
               Effective from (UTC day)
               <input type="date" value={effectiveFrom} min={todayUtc()} disabled={committing} required
                 onChange={(e) => setEffectiveFrom(e.target.value)} aria-describedby="qms-effective-date-help" />
               <span id="qms-effective-date-help">Signed with the approval. A later day leaves the version in force until then.</span>
             </label>
-          )}
+            <ApprovalTrainingReach documentId={approving.id} effectiveFrom={effectiveFrom || todayUtc()} today={todayUtc()} />
+          </>)}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
             const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input, effectiveFrom || todayUtc());

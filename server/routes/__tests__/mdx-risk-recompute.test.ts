@@ -35,7 +35,8 @@ function appWith(org: number | null) {
   app.use((req: Request, _res: Response, next: NextFunction) => {
     // An editing role: the risk writes take requireEditorAccess since D2 fold F1
     // slice A (2026-10-29); mdx-risk-program-scope.test.ts pins a viewer's refusal.
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, role: 'member' };
+    if (org !== null) (req as unknown as { user: unknown }).user = { id: 1, organizationId: org, role: 'member' };
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => query(...args) } });
     next();
   });
   app.use('/api/mdx', riskRouter);
@@ -51,7 +52,9 @@ function updateCall() {
 
 beforeEach(() => {
   query.mockReset();
-  query.mockResolvedValue({ rows: [{ id: 1 }] });
+  query.mockImplementation(async (sql: string) => ({
+    rows: /SELECT ou\.role/.test(sql) ? [{ role: 'member' }] : [{ id: 1, program_id: null }],
+  }));
 });
 
 describe('risk score recomputation', () => {
@@ -128,7 +131,6 @@ describe('risk score recomputation', () => {
     expect(updateCall().sql).not.toMatch(/residual_risk/);
 
     query.mockClear();
-    query.mockResolvedValue({ rows: [{ id: 1 }] });
     await request(appWith(1)).patch('/api/mdx/risk-items/1').send({ residualProbability: 1 });
     expect(updateCall().sql).not.toMatch(/initial_risk/);
   });

@@ -1,0 +1,50 @@
+{
+  "branch": "concept2cure-v2",
+  "baseline": "be078603b00397bb86c8244b634aeff3338c5ae0",
+  "workstream": "D2/W2",
+  "production_files": [
+    "client/src/concept2cure/v2/useVaultUpload.ts",
+    "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx"
+  ],
+  "red": {
+    "hook": {
+      "failed": 37,
+      "passed": 5
+    },
+    "device_caller": {
+      "failed": 2,
+      "passed": 1
+    },
+    "vault_caller": {
+      "failed": 3,
+      "passed": 2
+    },
+    "stored_title_strengthening": {
+      "failed": 1,
+      "skipped": 46
+    }
+  },
+  "final_regression": {
+    "passed": 225,
+    "suites": 24
+  },
+  "production_build": "passed",
+  "lint_errors": 0,
+  "lint_warning_growth": 0,
+  "existing_hook_warnings": 2,
+  "upload_hook_lines": 446,
+  "normal_push_gates": "pending",
+  "proof_limit": "Synthetic UI/HTTP fixtures and existing route tests; no live upload, deployed acceptance, signed OQ or agency transmission claimed.",
+  "merged_canonical_baseline": "6747c44709702ed016afa446ef52d2c99710614d",
+  "convergence_regression": {
+    "passed": 59,
+    "suites": 4,
+    "overlap_passed": 5,
+    "overlap_suites": 1
+  },
+  "distinct_regression": {
+    "passed": 279,
+    "suites": 27
+  },
+  "merged_production_build": "passed"
+}

@@ -1,0 +1,7 @@
+{
+  "receipt": "progress-race-negative.json",
+  "mutation": "Remove only the initial-progress UPDATE drafting/org predicate, restoring the earlier unguarded writer.",
+  "restoreVerified": true,
+  "purpose": "Prove the added cancellation/progress test catches the actual stale progress write, rather than only ever passing.",
+  "notClaimedAsOriginalPrepatchRed": true
+}

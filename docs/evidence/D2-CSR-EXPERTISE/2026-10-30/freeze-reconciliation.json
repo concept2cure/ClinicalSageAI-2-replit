@@ -1,0 +1,6 @@
+{
+  "receipt": "lint.json",
+  "originalNamedSnapshot": "final-source-freeze.json",
+  "retainedOriginalPins": "lint-initial-source-freeze.json",
+  "explanation": "The generic final-source-freeze.json name was reused for the later integrated fallback-green check. Original inline before/after hashes are retained unchanged in lint.json, with identical pins reconstructed separately. The final qualified publication uses the distinct publication-source-freeze.json name."
+}

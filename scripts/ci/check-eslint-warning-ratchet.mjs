@@ -54,6 +54,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { lintSourceVersions } from './lib/lint-source-versions.mjs';
 
 const TAG = '[ci:eslint-warning-ratchet]';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -199,15 +200,12 @@ function countWarnings(report) {
  * sound here because a warning is a property of one file's contents, so a file
  * nobody touched cannot have changed its count.
  *
- * The <ref> bytes are linted from a SIBLING temp file, never by checking the
- * old version out over the working copy: a crash mid-run would otherwise leave
- * the developer's tree silently reverted. The temp name PREFIXES the basename
- * (`__eslint_ratchet_prev__.foo.test.ts`) so every suffix-shaped config glob --
- * `**\/*.test.ts`, `**\/*.tsx` -- and every directory-shaped ignore still
- * matches exactly as it does for the real file. Renaming to a different suffix
- * would lint the old bytes under a different rule set and invent deltas.
+ * Historical bytes are linted in memory under the ORIGINAL filename. This
+ * preserves every directory, suffix and exact-basename override while keeping
+ * old source out of the working tree: concurrent scanners and TypeScript must
+ * never discover historical files that disappear while they are being read.
  */
-function runSinceMode(ref) {
+async function runSinceMode(ref) {
   const git = (args, opts = {}) =>
     spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts });
 
@@ -257,46 +255,22 @@ function runSinceMode(ref) {
     .filter((c) => c.status !== 'D' && fs.existsSync(path.join(repoRoot, c.file)))
     .map((c) => c.file);
 
-  const PREV_PREFIX = '__eslint_ratchet_prev__.';
-  /** @type {Map<string,string>} temp path -> original path */
-  const tempToReal = new Map();
-  const cleanup = () => {
-    for (const tmp of tempToReal.keys()) {
-      try { fs.unlinkSync(path.join(repoRoot, tmp)); } catch { /* already gone */ }
-    }
-    tempToReal.clear();
-  };
-  // Cleanup on the ways out that skip `finally`: ^C, and a throw that escapes.
-  process.on('SIGINT', () => { cleanup(); process.exit(130); });
-  process.on('SIGTERM', () => { cleanup(); process.exit(143); });
-  process.on('exit', cleanup);
-
-  let currentByFile;
-  let prevByFile;
-  try {
-    for (const { file, status } of changed) {
-      if (status === 'A') continue; // did not exist at <ref>
-      const show = git(['show', `${sha}:${file}`], { maxBuffer: 64 * 1024 * 1024 });
-      if (show.status !== 0) continue; // not present at <ref> after all
-      const dir = path.dirname(file);
-      if (!fs.existsSync(path.join(repoRoot, dir))) continue; // directory itself is gone
-      const tmp = path.join(dir, PREV_PREFIX + path.basename(file));
-      if (fs.existsSync(path.join(repoRoot, tmp))) {
-        fail([
-          `refusing to overwrite an existing file at ${tmp}.`,
-          "  That path is this mode's scratch name; a leftover means a previous run died.",
-          '  Delete it and re-run.',
-        ]);
-      }
-      fs.writeFileSync(path.join(repoRoot, tmp), show.stdout);
-      tempToReal.set(tmp, file);
-    }
-
-    currentByFile = messagesByFile(lintPaths(currentFiles), (p) => p);
-    prevByFile = messagesByFile(lintPaths([...tempToReal.keys()]), (p) => tempToReal.get(p) ?? p);
-  } finally {
-    cleanup();
+  const previousSources = [];
+  for (const { file, status } of changed) {
+    if (status === 'A') continue; // did not exist at <ref>
+    const show = git(['show', `${sha}:${file}`], { maxBuffer: 64 * 1024 * 1024 });
+    if (show.status !== 0) continue; // not present at <ref> after all
+    previousSources.push({ filePath: file, source: show.stdout });
   }
+
+  const currentByFile = messagesByFile(lintPaths(currentFiles), (p) => p);
+  let previousReport;
+  try {
+    previousReport = await lintSourceVersions(previousSources, repoRoot);
+  } catch (error) {
+    fail([`ESLint could not lint historical source -- not a lint result: ${error.message}`]);
+  }
+  const prevByFile = messagesByFile(previousReport, (p) => p);
 
   const allFiles = [...new Set([...currentByFile.keys(), ...prevByFile.keys()])].sort();
   const rows = allFiles
@@ -517,7 +491,7 @@ if (sinceIdx !== -1) {
       "  e.g. `" + SELF + " --since origin/concept2cure-v2`",
     ]);
   }
-  runSinceMode(ref);
+  await runSinceMode(ref);
 }
 
 const report = produceReport();

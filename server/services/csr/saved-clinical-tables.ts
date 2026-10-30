@@ -10,8 +10,13 @@ import { validateCsrSourceReceipts } from './source-receipt-eligibility.js';
  * source data dispositions and current project ACL on every aggregate read.
  * Never serialize input_snapshot: it contains private participant observations. */
 export async function readSavedClinicalTables(q: RequestSqlClient, scope: CsrSourceScope, runId: string,
-  options: { forRelease?: boolean } = {}) {
-  const verified = await readVerifiedRetainedStudies(q, scope, runId, { historical: options.forRelease !== true, lock: options.forRelease === true });
+  options: { forRelease?: boolean; requireCurrent?: boolean } = {}) {
+  // Drafting checks current approval without holding a transaction/lock across
+  // a model call. Ordinary retained reads keep their historical semantics.
+  const verified = await readVerifiedRetainedStudies(q, scope, runId, {
+    historical: options.forRelease !== true && options.requireCurrent !== true,
+    lock: options.forRelease === true,
+  });
   const studies = verified.map(({ source, study }) => ({ source, tables: buildCSRTables(study) }));
   return { runId, programId: scope.programId, historical: true as const, releaseEligibilityVerified: options.forRelease === true, studies };
 }

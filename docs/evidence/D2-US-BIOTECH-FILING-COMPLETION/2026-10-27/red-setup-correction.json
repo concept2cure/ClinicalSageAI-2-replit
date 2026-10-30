@@ -1,0 +1,5 @@
+{
+  "originalSetupFailure": "Wrong helper path v2/programSequence.ts caused assertion before freeze creation; no Vitest suite ran.",
+  "correctPath": "client/src/concept2cure/v2/surfaces/programSequence.ts",
+  "applicationOrAssertionChanged": false
+}

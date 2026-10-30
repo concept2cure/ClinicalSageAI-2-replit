@@ -1,0 +1,139 @@
+Updating f0e0ff863..13be18d3d
+Fast-forward
+ .../v2/__tests__/useVaultUpload.test.tsx           |   2 +-
+ .../v2/__tests__/vaultUploadManifest.test.ts       |   4 +-
+ .../v2/__tests__/vaultUploadManifestPanel.test.tsx |   4 +-
+ .../v2/__tests__/vaultUploadReview.test.tsx        | 128 ++++
+ .../v2/__tests__/vaultUploadStaging.test.tsx       |  49 ++
+ client/src/concept2cure/v2/surfaces/Vault.tsx      |   3 +
+ .../v2/surfaces/VaultUploadManifestControls.tsx    |  16 +-
+ .../v2/surfaces/VaultUploadStaging.tsx             |  16 +-
+ .../v2/surfaces/vaultUploadManifest.ts             |  25 +-
+ client/src/concept2cure/v2/useVaultUpload.ts       |  26 +-
+ client/src/concept2cure/v2/vaultIngestTransport.ts |  23 +-
+ docs/design/VEEVA_GAP_2026-10-22.md                |   4 +-
+ .../D2/2026-10-30-vault-folder-export/README.md    |   4 +
+ .../D2/2026-10-30-vault-upload-review/01-red.txt   |  24 +
+ .../D2/2026-10-30-vault-upload-review/02-green.txt | 678 +++++++++++++++++++++
+ .../D2/2026-10-30-vault-upload-review/README.md    |  37 ++
+ .../browser-check.json                             |  58 ++
+ .../upload-busy-1440-dark.png                      | Bin 0 -> 95642 bytes
+ .../upload-busy-1440-light.png                     | Bin 0 -> 96604 bytes
+ .../upload-busy-390-dark.png                       | Bin 0 -> 85751 bytes
+ .../upload-busy-390-light.png                      | Bin 0 -> 86574 bytes
+ .../upload-settled-1440-dark.png                   | Bin 0 -> 93251 bytes
+ .../upload-settled-1440-light.png                  | Bin 0 -> 93263 bytes
+ .../upload-settled-390-dark.png                    | Bin 0 -> 83395 bytes
+ .../upload-settled-390-light.png                   | Bin 0 -> 83579 bytes
+ .../D5/2026-10-30-vault-archive-review/01-red.txt  |   9 +
+ .../2026-10-30-vault-archive-review/02-green.txt   |  14 +
+ .../03-mutations.json                              |  83 +++
+ .../04-integration.txt                             |  20 +
+ .../05-merged-qualification.txt                    |  11 +
+ .../06-client-ownership-merge.txt                  |   8 +
+ .../D5/2026-10-30-vault-archive-review/README.md   |  33 +
+ .../changed-file-lint-ratchet.txt.gz               | Bin 0 -> 156 bytes
+ .../client-ownership-merged-build.txt.gz           | Bin 0 -> 4713 bytes
+ .../client-ownership-merged-tests.txt.gz           | Bin 0 -> 5813 bytes
+ .../db-green.txt.gz                                | Bin 0 -> 3092 bytes
+ .../db-original-red.txt.gz                         | Bin 0 -> 4733 bytes
+ .../delivery-missing-module-red.txt.gz             | Bin 0 -> 479 bytes
+ .../disposable-deploy-migrate.txt.gz               | Bin 0 -> 13391 bytes
+ .../disposable-install-fresh.txt.gz                | Bin 0 -> 2843 bytes
+ .../lint-ratchet-tests.txt.gz                      | Bin 0 -> 1098 bytes
+ .../merged-production-build.txt.gz                 | Bin 0 -> 4711 bytes
+ .../merged-targeted-tests.txt.gz                   | Bin 0 -> 9972 bytes
+ .../mutation-audit-identity.txt.gz                 | Bin 0 -> 1255 bytes
+ .../mutation-cabinet-placement.txt.gz              | Bin 0 -> 1215 bytes
+ .../mutation-closed-response.txt.gz                | Bin 0 -> 1026 bytes
+ .../mutation-document-export-audit.txt.gz          | Bin 0 -> 3654 bytes
+ .../mutation-duplicate-build.txt.gz                | Bin 0 -> 853 bytes
+ .../mutation-missing-document.txt.gz               | Bin 0 -> 1045 bytes
+ .../mutation-route-audit-authority.txt.gz          | Bin 0 -> 3579 bytes
+ .../mutation-route-build-guard.txt.gz              | Bin 0 -> 3502 bytes
+ .../mutation-stale-release.txt.gz                  | Bin 0 -> 754 bytes
+ .../planner-original-red.txt.gz                    | Bin 0 -> 1332 bytes
+ .../production-build.txt.gz                        | Bin 0 -> 4710 bytes
+ .../projection-original-red.txt.gz                 | Bin 0 -> 1250 bytes
+ .../push-attempt-1-all-gates-pass-ref-race.txt.gz  | Bin 0 -> 4803 bytes
+ .../push-attempt-2-all-gates-pass-ref-race.txt.gz  | Bin 0 -> 4702 bytes
+ .../regressions.txt.gz                             | Bin 0 -> 94870 bytes
+ .../typecheck.txt.gz                               | Bin 0 -> 146 bytes
+ .../unit-green.txt.gz                              | Bin 0 -> 2270 bytes
+ .../W2/2026-10-30-eslint-ratchet-race/01-red.txt   |  75 +++
+ .../W2/2026-10-30-eslint-ratchet-race/02-green.txt | 124 ++++
+ .../W2/2026-10-30-eslint-ratchet-race/03-lint.txt  |   3 +
+ .../W2/2026-10-30-eslint-ratchet-race/README.md    |  25 +
+ docs/work-orders/README.md                         |   1 +
+ .../eslint-ratchet-source-versions.test.mjs        | 139 +++++
+ scripts/ci/check-eslint-warning-ratchet.mjs        |  68 +--
+ scripts/ci/lib/lint-source-versions.mjs            |  13 +
+ server/routes/c2c/project-vault.ts                 |  91 +--
+ .../vault-archive-audit-projection.test.ts         |  83 +++
+ .../vault/__tests__/vault-archive-delivery.test.ts | 106 ++++
+ .../vault/__tests__/vault-folder-export.test.ts    |  51 ++
+ server/services/vault/vault-archive-delivery.ts    |  45 ++
+ server/services/vault/vault-filing.service.ts      |   7 +
+ server/services/vault/vault-folder-export.ts       |  24 +-
+ server/services/vault/vault-seal-archive.ts        |  22 +-
+ tests/db/vault-data-room-seal.dbtest.ts            |  32 +-
+ tests/db/vault-folder-export.dbtest.ts             |  95 ++-
+ 78 files changed, 2143 insertions(+), 140 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/01-red.txt
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/02-green.txt
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/README.md
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/browser-check.json
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-busy-1440-dark.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-busy-1440-light.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-busy-390-dark.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-busy-390-light.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-settled-1440-dark.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-settled-1440-light.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-settled-390-dark.png
+ create mode 100644 docs/evidence/D2/2026-10-30-vault-upload-review/upload-settled-390-light.png
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/01-red.txt
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/02-green.txt
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/03-mutations.json
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/04-integration.txt
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/05-merged-qualification.txt
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/06-client-ownership-merge.txt
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/README.md
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/changed-file-lint-ratchet.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/client-ownership-merged-build.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/client-ownership-merged-tests.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/db-green.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/db-original-red.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/delivery-missing-module-red.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/disposable-deploy-migrate.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/disposable-install-fresh.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/lint-ratchet-tests.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/merged-production-build.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/merged-targeted-tests.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-audit-identity.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-cabinet-placement.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-closed-response.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-document-export-audit.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-duplicate-build.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-missing-document.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-route-audit-authority.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-route-build-guard.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/mutation-stale-release.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/planner-original-red.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/production-build.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/projection-original-red.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/push-attempt-1-all-gates-pass-ref-race.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/push-attempt-2-all-gates-pass-ref-race.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/regressions.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/typecheck.txt.gz
+ create mode 100644 docs/evidence/D5/2026-10-30-vault-archive-review/unit-green.txt.gz
+ create mode 100644 docs/evidence/W2/2026-10-30-eslint-ratchet-race/01-red.txt
+ create mode 100644 docs/evidence/W2/2026-10-30-eslint-ratchet-race/02-green.txt
+ create mode 100644 docs/evidence/W2/2026-10-30-eslint-ratchet-race/03-lint.txt
+ create mode 100644 docs/evidence/W2/2026-10-30-eslint-ratchet-race/README.md
+ create mode 100644 scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs
+ create mode 100644 scripts/ci/lib/lint-source-versions.mjs
+ create mode 100644 server/services/vault/__tests__/vault-archive-audit-projection.test.ts
+ create mode 100644 server/services/vault/__tests__/vault-archive-delivery.test.ts
+ create mode 100644 server/services/vault/__tests__/vault-folder-export.test.ts
+ create mode 100644 server/services/vault/vault-archive-delivery.ts

@@ -1,0 +1,423 @@
+Updating be078603b..6747c4470
+Fast-forward
+ .../concept2cure/v2/styles/surface-text-ramp.css   |    7 +-
+ .../CSR_EXPERTISE_IMPROVEMENTS_2026-10-30.md       |    2 +
+ .../evidence/D2-CSR-EXPERTISE/2026-10-30/README.md |   39 +-
+ .../accepted-source-freeze-lint-targets.json       |   27 +
+ .../2026-10-30/accepted-source-freeze.json         | 2998 ++++++++++
+ .../2026-10-30/access-green-source-freeze.json     |   10 +
+ .../D2-CSR-EXPERTISE/2026-10-30/access-green.json  |   37 +
+ .../2026-10-30/access-green.log.gz                 |  Bin 0 -> 1065 bytes
+ .../2026-10-30/access-red-source-freeze.json       |   10 +
+ .../D2-CSR-EXPERTISE/2026-10-30/access-red.json    |   37 +
+ .../D2-CSR-EXPERTISE/2026-10-30/access-red.log.gz  |  Bin 0 -> 1702 bytes
+ .../2026-10-30/canonical-csr-reconciliation.json   |   24 +
+ .../2026-10-30/canonical-integration-note.json     |    7 +
+ .../2026-10-30/canonical-integration.json          | 5936 +++++++++++++++++++
+ .../2026-10-30/canonical-integration.log.gz        |  Bin 0 -> 2093 bytes
+ .../2026-10-30/canonical-preflight-fetch.json      | 5926 +++++++++++++++++++
+ .../2026-10-30/canonical-preflight-fetch.log.gz    |  Bin 0 -> 144 bytes
+ .../2026-10-30/checkpoint-source.json              |    9 +
+ .../compiler-source-freeze-lint-targets.json       |   27 +
+ .../2026-10-30/compiler-source-freeze.json         | 2958 ++++++++++
+ .../2026-10-30/control-reconciliation.log.gz       |  Bin 0 -> 40 bytes
+ .../corrected-fixture-regression-final.json        | 5933 +++++++++++++++++++
+ .../corrected-fixture-regression-final.log.gz      |  Bin 0 -> 1615 bytes
+ .../2026-10-30/corrected-fixture-regression.json   | 5933 +++++++++++++++++++
+ .../2026-10-30/corrected-fixture-regression.log.gz |  Bin 0 -> 2224 bytes
+ .../2026-10-30/corrected-fixture-tests.json        |    5 +
+ .../corrected-source-freeze-lint-targets.json      |   27 +
+ .../2026-10-30/corrected-source-freeze.json        | 2958 ++++++++++
+ .../2026-10-30/current-implementation-commit.json  | 6027 +++++++++++++++++++
+ .../current-implementation-commit.log.gz           |  Bin 0 -> 1888 bytes
+ .../2026-10-30/editor-gate-corrections.json        |   19 +
+ .../D2-CSR-EXPERTISE/2026-10-30/editor-gates.json  | 6005 +++++++++++++++++++
+ .../2026-10-30/editor-gates.log.gz                 |  Bin 0 -> 1078 bytes
+ .../2026-10-30/expertise-green-source-freeze.json  |   12 +
+ .../2026-10-30/expertise-green.json                |   42 +
+ .../2026-10-30/expertise-green.log.gz              |  Bin 0 -> 1558 bytes
+ .../2026-10-30/expertise-red-source-freeze.json    |   12 +
+ .../D2-CSR-EXPERTISE/2026-10-30/expertise-red.json |   42 +
+ .../2026-10-30/expertise-red.log.gz                |  Bin 0 -> 8344 bytes
+ .../2026-10-30/expertise/README.md                 |   36 +
+ .../2026-10-30/fallback-green.json                 | 5933 +++++++++++++++++++
+ .../2026-10-30/fallback-green.log.gz               |  Bin 0 -> 1752 bytes
+ .../fallback-red-source-freeze-lint-targets.json   |   27 +
+ .../2026-10-30/fallback-red-source-freeze.json     | 2958 ++++++++++
+ .../D2-CSR-EXPERTISE/2026-10-30/fallback-red.json  | 5931 +++++++++++++++++++
+ .../2026-10-30/fallback-red.log.gz                 |  Bin 0 -> 3880 bytes
+ .../2026-10-30/final-fallback-fixture.json         | 6011 +++++++++++++++++++
+ .../2026-10-30/final-fallback-fixture.log.gz       |  Bin 0 -> 1711 bytes
+ .../2026-10-30/final-qualification-bridge.json     |   21 +
+ .../2026-10-30/final-regression-tests.json         |   60 +
+ .../2026-10-30/final-regression.json               | 6010 +++++++++++++++++++
+ .../2026-10-30/final-regression.log.gz             |  Bin 0 -> 24679 bytes
+ .../final-source-freeze-lint-targets.json          |   27 +
+ .../2026-10-30/final-source-freeze.json            | 2959 ++++++++++
+ .../fixture-final-source-freeze-lint-targets.json  |   27 +
+ .../2026-10-30/fixture-final-source-freeze.json    | 2958 ++++++++++
+ .../2026-10-30/freeze-reconciliation.json          |    6 +
+ ...eneration-green-source-freeze-lint-targets.json |   22 +
+ .../2026-10-30/generation-green-source-freeze.json | 2011 +++++++
+ .../2026-10-30/generation-green.json               | 4036 +++++++++++++
+ .../2026-10-30/generation-green.log.gz             |  Bin 0 -> 4896 bytes
+ .../2026-10-30/generation-red-source-freeze.json   |   11 +
+ .../2026-10-30/generation-scope-red.json           |   40 +
+ .../2026-10-30/generation-scope-red.log.gz         |  Bin 0 -> 3552 bytes
+ .../2026-10-30/generation-smoke-tests.json         |   12 +
+ .../2026-10-30/generation/README.md                |   17 +
+ .../incoming-csr-90e5c3a1a/changes.patch.gz        |  Bin 0 -> 31627 bytes
+ .../incoming-csr-90e5c3a1a/manifest.json           |   31 +
+ .../csr-workflow-program-scope.pglite.test.ts.gz   |  Bin 0 -> 1710 bytes
+ .../server/routes/csr-jobs.ts.gz                   |  Bin 0 -> 7061 bytes
+ .../__tests__/csr-builder-completeness.test.ts.gz  |  Bin 0 -> 3594 bytes
+ .../__tests__/csr-builder-expertise.test.ts.gz     |  Bin 0 -> 2673 bytes
+ .../ana/__tests__/csr-expertise-writing.test.ts.gz |  Bin 0 -> 753 bytes
+ .../__tests__/module2-csr-inputs.pglite.test.ts.gz |  Bin 0 -> 1922 bytes
+ .../__tests__/csr-expertise-flow.test.ts.gz        |  Bin 0 -> 1680 bytes
+ .../intelligence-questions/flows/csr-report.ts.gz  |  Bin 0 -> 20448 bytes
+ .../server/services/csr-builder.ts.gz              |  Bin 0 -> 13505 bytes
+ .../__tests__/csr-current-scope.pglite.test.ts.gz  |  Bin 0 -> 1982 bytes
+ .../csr-evidence-target.pglite.test.ts.gz          |  Bin 0 -> 2129 bytes
+ .../__tests__/csr-job-runner.evidence.test.ts.gz   |  Bin 0 -> 5454 bytes
+ ...r-latest-completed-generation.pglite.test.ts.gz |  Bin 0 -> 1725 bytes
+ .../__tests__/csr-project-scope.pglite.test.ts.gz  |  Bin 0 -> 2142 bytes
+ .../csr-worker-private-access.pglite.test.ts.gz    |  Bin 0 -> 4633 bytes
+ .../csr/__tests__/saved-clinical-tables.test.ts.gz |  Bin 0 -> 2860 bytes
+ .../study-pivotal-declaration.pglite.test.ts.gz    |  Bin 0 -> 2848 bytes
+ .../csr/__tests__/unsupplied-statistics.test.ts.gz |  Bin 0 -> 3424 bytes
+ .../services/csr/cortex-authoring-reader.ts.gz     |  Bin 0 -> 803 bytes
+ .../server/services/csr/csr-job-runner.ts.gz       |  Bin 0 -> 9131 bytes
+ .../server/services/csr/project-scope.ts.gz        |  Bin 0 -> 2904 bytes
+ .../services/csr/saved-clinical-tables.ts.gz       |  Bin 0 -> 1854 bytes
+ .../services/ind/ctd/csr-e3-sections-plan.ts.gz    |  Bin 0 -> 9051 bytes
+ .../server/services/ind/ctd/csr-e3-writing.ts.gz   |  Bin 0 -> 5935 bytes
+ .../tests/unit/csr-job-runner.test.ts.gz           |  Bin 0 -> 7217 bytes
+ .../2026-10-30/lint-corrections.json               |   10 +
+ .../D2-CSR-EXPERTISE/2026-10-30/lint-details.json  |  427 ++
+ .../D2-CSR-EXPERTISE/2026-10-30/lint-final.json    | 6006 +++++++++++++++++++
+ .../D2-CSR-EXPERTISE/2026-10-30/lint-final.log.gz  |  Bin 0 -> 77 bytes
+ .../2026-10-30/lint-initial-details.json           |  540 ++
+ .../2026-10-30/lint-initial-source-freeze.json     | 2958 ++++++++++
+ .../evidence/D2-CSR-EXPERTISE/2026-10-30/lint.json | 5926 +++++++++++++++++++
+ .../D2-CSR-EXPERTISE/2026-10-30/lint.log.gz        |  Bin 0 -> 231 bytes
+ .../2026-10-30/preclaim-cancellation-red.json      |   35 +
+ .../2026-10-30/preclaim-cancellation-red.log.gz    |  Bin 0 -> 1158 bytes
+ .../2026-10-30/preclaim-red-source-freeze.json     |    8 +
+ .../D2-CSR-EXPERTISE/2026-10-30/prepare-inputs.py  |   72 +
+ .../2026-10-30/progress-race-negative-note.json    |    7 +
+ .../2026-10-30/progress-race-negative.json         | 6051 ++++++++++++++++++++
+ .../2026-10-30/progress-race-negative.log.gz       |  Bin 0 -> 1457 bytes
+ ...ogress-race-red-source-freeze-lint-targets.json |   31 +
+ .../progress-race-red-source-freeze.json           | 3017 ++++++++++
+ .../publication-source-freeze-lint-targets.json    |   27 +
+ .../2026-10-30/publication-source-freeze.json      | 2998 ++++++++++
+ .../D2-CSR-EXPERTISE/2026-10-30/publish.py         |   21 +
+ .../2026-10-30/qualified-regression.json           | 5929 +++++++++++++++++++
+ .../2026-10-30/qualified-regression.log.gz         |  Bin 0 -> 28612 bytes
+ .../qualified-source-freeze-lint-targets.json      |   24 +
+ .../2026-10-30/qualified-source-freeze.json        | 2958 ++++++++++
+ ...nciled-accepted-source-freeze-lint-targets.json |   31 +
+ .../reconciled-accepted-source-freeze.json         | 3017 ++++++++++
+ .../2026-10-30/reconciled-build.json               | 6044 +++++++++++++++++++
+ .../2026-10-30/reconciled-build.log.gz             |  Bin 0 -> 4717 bytes
+ .../2026-10-30/reconciled-editor-gates.json        | 6043 +++++++++++++++++++
+ .../2026-10-30/reconciled-editor-gates.log.gz      |  Bin 0 -> 894 bytes
+ .../2026-10-30/reconciled-lint.json                | 6044 +++++++++++++++++++
+ .../2026-10-30/reconciled-lint.log.gz              |  Bin 0 -> 77 bytes
+ .../2026-10-30/reconciled-prepublish-fetch.json    | 6044 +++++++++++++++++++
+ .../2026-10-30/reconciled-prepublish-fetch.log.gz  |  Bin 0 -> 143 bytes
+ .../reconciled-qualification-bridge.json           |   27 +
+ .../2026-10-30/reconciled-regression-tests.json    |   73 +
+ .../2026-10-30/reconciled-regression.json          | 6048 +++++++++++++++++++
+ .../2026-10-30/reconciled-regression.log.gz        |  Bin 0 -> 32042 bytes
+ .../2026-10-30/reconciled-runner-fixture.json      | 6049 +++++++++++++++++++
+ .../2026-10-30/reconciled-runner-fixture.log.gz    |  Bin 0 -> 1378 bytes
+ .../reconciled-source-freeze-lint-targets.json     |   31 +
+ .../2026-10-30/reconciled-source-freeze.json       | 3017 ++++++++++
+ .../2026-10-30/regression-fixture-corrections.json |   13 +
+ .../2026-10-30/regression-tests.json               |   53 +
+ .../D2-CSR-EXPERTISE/2026-10-30/release-build.json | 6026 +++++++++++++++++++
+ .../2026-10-30/release-build.log.gz                |  Bin 0 -> 4705 bytes
+ .../2026-10-30/release-canonical-fetch.json        | 6026 +++++++++++++++++++
+ .../2026-10-30/release-canonical-fetch.log.gz      |  Bin 0 -> 142 bytes
+ .../2026-10-30/release-editor-gates.json           | 6025 +++++++++++++++++++
+ .../2026-10-30/release-editor-gates.log.gz         |  Bin 0 -> 894 bytes
+ .../D2-CSR-EXPERTISE/2026-10-30/release-lint.json  | 6026 +++++++++++++++++++
+ .../2026-10-30/release-lint.log.gz                 |  Bin 0 -> 77 bytes
+ .../2026-10-30/release-regression-tests.json       |   65 +
+ .../2026-10-30/release-regression.json             | 6030 +++++++++++++++++++
+ .../2026-10-30/release-regression.log.gz           |  Bin 0 -> 27776 bytes
+ .../release-source-freeze-lint-targets.json        |   28 +
+ .../2026-10-30/release-source-freeze.json          | 3008 ++++++++++
+ .../2026-10-30/release-typecheck.json              | 6026 +++++++++++++++++++
+ .../2026-10-30/release-typecheck.log.gz            |  Bin 0 -> 146 bytes
+ .../D2-CSR-EXPERTISE/2026-10-30/run-check.py       |   54 +
+ .../D2-CSR-EXPERTISE/2026-10-30/run-gates.py       |   15 +
+ .../D2-CSR-EXPERTISE/2026-10-30/run-lint.mjs       |   35 +
+ .../D2-CSR-EXPERTISE/2026-10-30/run-regression.py  |    9 +
+ .../2026-10-30/source-prepublish-fetch.json        | 6006 +++++++++++++++++++
+ .../2026-10-30/source-prepublish-fetch.log.gz      |  Bin 0 -> 143 bytes
+ .../2026-10-30/template-review-findings.json       |   31 +
+ .../2026-10-30/typecheck-fixture-correction.json   |    7 +
+ .../D2-CSR-EXPERTISE/2026-10-30/typecheck.json     | 5926 +++++++++++++++++++
+ .../D2-CSR-EXPERTISE/2026-10-30/typecheck.log.gz   |  Bin 0 -> 496 bytes
+ .../unbound-results-fixture-correction.json        |    6 +
+ .../unbound-results-leaf-source-freeze.json        |    8 +
+ .../2026-10-30/unbound-results-red-leaf.json       |   35 +
+ .../2026-10-30/unbound-results-red-leaf.log.gz     |  Bin 0 -> 1631 bytes
+ .../unbound-results-red-source-freeze.json         |    8 +
+ .../2026-10-30/unbound-results-red.json            |   35 +
+ .../2026-10-30/unbound-results-red.log.gz          |  Bin 0 -> 1734 bytes
+ .../2026-10-30/verify-publication.py               |   34 +
+ .../2026-10-27/blueprints/README.md                |   20 +
+ .../2026-10-27/blueprints/public-source-index.json |  119 +
+ .../2026-10-27/checkpoint-source.json              |    4 +
+ .../2026-10-27/company-red-export.json             | 5341 +++++++++++++++++
+ .../2026-10-27/company-red-export.log.gz           |  Bin 0 -> 31049 bytes
+ .../company-red-source-freeze-lint-targets.json    |    3 +
+ .../2026-10-27/company-red-source-freeze.json      | 2663 +++++++++
+ .../2026-10-27/company-red-tests.json              |    3 +
+ .../2026-10-27/prepare-inputs.py                   |   71 +
+ .../2026-10-27/project/README.md                   |   13 +
+ .../2026-10-27/project/discovery.json              |   21 +
+ .../2026-10-27/publish.py                          |   21 +
+ .../2026-10-27/red-owned-source-freeze.json        |   22 +
+ .../2026-10-27/red-setup-correction.json           |    5 +
+ .../2026-10-27/run-check.py                        |   54 +
+ .../2026-10-27/run-gates.py                        |   15 +
+ .../2026-10-27/run-lint.mjs                        |   35 +
+ .../2026-10-27/run-regression.py                   |    9 +
+ .../2026-10-27/source-project-blueprint-red.json   |   64 +
+ .../2026-10-27/source-project-blueprint-red.log.gz |  Bin 0 -> 13598 bytes
+ .../2026-10-27/source-red-tests.json               |    6 +
+ .../specialty/biologics-public-source-index.json   |  109 +
+ .../meeting-access-eua-public-source-index.json    |   85 +
+ .../2026-10-27/verify-publication.py               |   34 +
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |   10 +
+ .../csr-jobs-build-and-review.pglite.test.ts       |   10 +
+ .../__tests__/csr-study-pivotal.pglite.test.ts     |    6 +
+ .../csr-workflow-program-scope.pglite.test.ts      |   16 +-
+ server/routes/csr-jobs.ts                          |   17 +-
+ server/routes/csr-workflow-routes.ts               |    2 +-
+ .../__tests__/csr-builder-e3-brief.test.ts         |   47 +-
+ .../__tests__/csr-builder-expertise.test.ts        |   29 +-
+ .../csr-builder-writing-expertise.test.ts          |  195 +
+ .../ana/__tests__/csr-expertise-writing.test.ts    |   11 +
+ .../__tests__/module2-csr-inputs.pglite.test.ts    |    6 +-
+ .../__tests__/csr-expertise-flow.test.ts           |    5 +-
+ .../__tests__/csr-scientific-reasoning.test.ts     |   96 +
+ .../flows/csr-report-robustness.ts                 |   79 +
+ .../ana/intelligence-questions/flows/csr-report.ts |   81 +-
+ server/services/csr-builder.ts                     |   93 +-
+ .../csr/__tests__/csr-job-runner.evidence.test.ts  |   82 +-
+ .../csr-job-runner.source-revalidation.test.ts     |  368 ++
+ .../csr-latest-completed-generation.pglite.test.ts |    6 +-
+ .../services/csr/__tests__/csr-nct-number.test.ts  |    6 +-
+ .../csr/__tests__/csr-project-scope.pglite.test.ts |   10 +-
+ .../csr-scope-active-write.pglite.test.ts          |  117 +
+ .../csr-worker-private-access.pglite.test.ts       |   31 +-
+ .../csr/__tests__/unsupplied-statistics.test.ts    |   21 +-
+ server/services/csr/csr-job-evidence.ts            |   87 +
+ server/services/csr/csr-job-runner.ts              |  160 +-
+ server/services/csr/project-scope.ts               |   21 +-
+ server/services/ind/ctd/csr-e3-sections-plan.ts    |   12 +-
+ server/services/ind/ctd/csr-e3-writing.ts          |   15 +-
+ 223 files changed, 225318 insertions(+), 299 deletions(-)
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/accepted-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/accepted-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-green-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-green.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/access-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-csr-reconciliation.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-integration-note.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-integration.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-integration.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-preflight-fetch.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/canonical-preflight-fetch.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/checkpoint-source.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/compiler-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/compiler-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/control-reconciliation.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-fixture-regression-final.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-fixture-regression-final.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-fixture-regression.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-fixture-regression.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-fixture-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/corrected-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/current-implementation-commit.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/current-implementation-commit.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/editor-gate-corrections.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/editor-gates.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/editor-gates.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-green-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-green.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/expertise/README.md
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-green.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-red-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fallback-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-fallback-fixture.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-fallback-fixture.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-qualification-bridge.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-regression-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-regression.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-regression.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/final-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fixture-final-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/fixture-final-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/freeze-reconciliation.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-green-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-green-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-green.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-green.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-scope-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-scope-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation-smoke-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/generation/README.md
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/changes.patch.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/manifest.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/routes/csr-jobs.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/__tests__/csr-builder-completeness.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/__tests__/csr-builder-expertise.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ana/__tests__/csr-expertise-writing.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ana/intelligence-questions/flows/csr-report.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr-builder.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-current-scope.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-evidence-target.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-job-runner.evidence.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-project-scope.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/saved-clinical-tables.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/study-pivotal-declaration.pglite.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/__tests__/unsupplied-statistics.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/cortex-authoring-reader.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/csr-job-runner.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/project-scope.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/csr/saved-clinical-tables.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ind/ctd/csr-e3-sections-plan.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/server/services/ind/ctd/csr-e3-writing.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/incoming-csr-90e5c3a1a/tests/unit/csr-job-runner.test.ts.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-corrections.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-details.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-final.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-final.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-initial-details.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint-initial-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/lint.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/preclaim-cancellation-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/preclaim-cancellation-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/preclaim-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/prepare-inputs.py
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/progress-race-negative-note.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/progress-race-negative.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/progress-race-negative.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/progress-race-red-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/progress-race-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/publication-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/publication-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/publish.py
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/qualified-regression.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/qualified-regression.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/qualified-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/qualified-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-accepted-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-accepted-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-build.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-build.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-editor-gates.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-editor-gates.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-lint.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-lint.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-prepublish-fetch.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-prepublish-fetch.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-qualification-bridge.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-regression-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-regression.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-regression.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-runner-fixture.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-runner-fixture.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/reconciled-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/regression-fixture-corrections.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/regression-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-build.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-build.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-canonical-fetch.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-canonical-fetch.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-editor-gates.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-editor-gates.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-lint.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-lint.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-regression-tests.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-regression.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-regression.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-typecheck.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/release-typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-check.py
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-gates.py
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-lint.mjs
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-regression.py
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/source-prepublish-fetch.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/source-prepublish-fetch.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/template-review-findings.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/typecheck-fixture-correction.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/typecheck.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/typecheck.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-fixture-correction.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-leaf-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-red-leaf.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-red-leaf.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-red.json
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/unbound-results-red.log.gz
+ create mode 100644 docs/evidence/D2-CSR-EXPERTISE/2026-10-30/verify-publication.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/blueprints/README.md
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/blueprints/public-source-index.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/checkpoint-source.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/company-red-export.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/company-red-export.log.gz
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/company-red-source-freeze-lint-targets.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/company-red-source-freeze.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/company-red-tests.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/prepare-inputs.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/project/README.md
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/project/discovery.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/publish.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/red-owned-source-freeze.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/red-setup-correction.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/run-check.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/run-gates.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/run-lint.mjs
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/run-regression.py
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/source-project-blueprint-red.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/source-project-blueprint-red.log.gz
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/source-red-tests.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/specialty/biologics-public-source-index.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/specialty/meeting-access-eua-public-source-index.json
+ create mode 100644 docs/evidence/D2-US-BIOTECH-FILING-COMPLETION/2026-10-27/verify-publication.py
+ create mode 100644 server/services/__tests__/csr-builder-writing-expertise.test.ts
+ create mode 100644 server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts
+ create mode 100644 server/services/ana/intelligence-questions/flows/csr-report-robustness.ts
+ create mode 100644 server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts
+ create mode 100644 server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts
+ create mode 100644 server/services/csr/csr-job-evidence.ts

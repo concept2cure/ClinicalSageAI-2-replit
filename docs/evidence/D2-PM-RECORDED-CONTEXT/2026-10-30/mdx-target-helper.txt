@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > focuses the requested heading on arrival and consumes the handoff once 312ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > supports repeated moves on the already mounted feature 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > never changes the selected project or focuses another project’s panel 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > retires a handoff across A to B to A visits and session changes 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > refuses unknown subsection names and leaves a current dialog in control 6ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  18:12:18
+   Duration  2.39s (transform 709ms, setup 384ms, import 661ms, tests 360ms, environment 717ms)
+

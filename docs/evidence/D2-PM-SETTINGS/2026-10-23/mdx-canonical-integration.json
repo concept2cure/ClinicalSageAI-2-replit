@@ -1,0 +1,27 @@
+{
+  "recordedAtUtc": "2026-10-23T21:13:58.775038+00:00",
+  "incomingRemote": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+  "mergedHead": "413d7350c3bd567cc96dfeabe4bb19cc06ddc080",
+  "conflicts": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "hunks": 2,
+      "resolution": "Keep both Settings and MDx imports; retain actual Settings header once; retain metadataEpoch deps plus every MDx lifecycle/context/panel change."
+    }
+  ],
+  "changedPreviouslyBoundInputs": [
+    "client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx",
+    "client/src/concept2cure/v2/catalogWorkflows.ts",
+    "client/src/concept2cure/v2/registryModel.ts",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "shared/constants/ui-surface-registry.ts"
+  ],
+  "boundInputCount": 106,
+  "qualification": "One composed authenticated IVD save/refresh/MDx+Review case added; existing backend/UI and targeted MDx/catalog tests qualify merged code. Full combined build/TypeScript recorded separately. Incoming evidence is preserved byte-for-byte, including pre-existing trailing blank lines in logs.",
+  "additionalDirectSupportInputs": [
+    "shared/constants/domain/product-types.ts",
+    "client/src/concept2cure/v2/fixtures/project-home-data.tsx",
+    "client/src/components/ui/button.tsx",
+    "client/src/lib/utils.ts"
+  ]
+}
