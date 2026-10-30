@@ -45,8 +45,14 @@ const VAULT_SEAL_BUILDERS = new Map([
 const VAULT_RESTORE_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
 ]);
+// A folder export (MR-08 Stage 6, 2026-10-30) lists a withdrawn file as
+// withheld, by the one availability predicate, alias `d`.
+const VAULT_FOLDER_EXPORT_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
+]);
 const CALLERS = new Map([
   ['server/services/vault/vault-version-restore.ts', { alias: 's', builders: VAULT_RESTORE_BUILDERS }],
+  ['server/services/vault/vault-folder-export.ts', { alias: 'd', builders: VAULT_FOLDER_EXPORT_BUILDERS }],
   ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
   ['server/services/vault/vault-search.ts', { alias: 'd', builders: VAULT_FILTER_FROM_VAULT }],
   ['server/services/vault/vault-seal.service.ts', { alias: 'd', builders: VAULT_SEAL_BUILDERS }],

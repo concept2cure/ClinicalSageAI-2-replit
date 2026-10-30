@@ -8,6 +8,7 @@ import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
 import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultHoldNotice, type VaultHoldNoticeShape } from './VaultHoldNotice';
+import { FolderExportButton } from './VaultFolderExport';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
@@ -2111,6 +2112,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             )}
             {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {!searching && projectId && folder ? (
+              <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
+                documentCount={folderDocs.filter((d) => d.src === 'upload' && d.docId).length} />
+            ) : null}
             {libraryMode ? (
               <VaultLibraryResults
                 query={trimmedQ}

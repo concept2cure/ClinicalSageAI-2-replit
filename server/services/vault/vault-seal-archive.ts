@@ -36,18 +36,25 @@ export class SealArchiveError extends Error {
   }
 }
 
-async function readAuditExtract(pool: Pick<Pool, 'connect'>, organizationId: number, userId: number | undefined, seal: VaultSeal, manifest: SealManifest) {
+/**
+ * The audit extract an archive carries: the chained rows of the records it
+ * holds, read through the one record-history reader with its chain verdict and
+ * projected as the document history projects them. Shared by a seal's closing
+ * archive and a folder's export. `of` names what the trail is of, in the
+ * refusal a trail at the reader's ceiling gets.
+ */
+export async function readArchiveAuditExtract(
+  pool: Pick<Pool, 'connect'>, organizationId: number, userId: number | undefined,
+  record: { tableName: string; recordId: string | string[]; also?: Array<{ tableName: string; recordId: string[] }> }, of: string,
+) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, organizationId);
-    const read = await readRecordAuditHistory(client, organizationId, {
-      tableName: 'vault_data_room_seal', recordId: seal.id, limit: SEAL_ARCHIVE_AUDIT_CEILING,
-      also: [{ tableName: 'vault_document', recordId: manifest.documents.map((d) => d.id) }],
-    });
+    const read = await readRecordAuditHistory(client, organizationId, { ...record, limit: SEAL_ARCHIVE_AUDIT_CEILING });
     if (read.data.length >= SEAL_ARCHIVE_AUDIT_CEILING) {
       throw new SealArchiveError(409, 'ARCHIVE_AUDIT_TOO_LONG',
-        `The audit trail of this seal and its documents has ${SEAL_ARCHIVE_AUDIT_CEILING} rows or more, which one archive cannot hold whole. No archive was built.`);
+        `The audit trail of ${of} has ${SEAL_ARCHIVE_AUDIT_CEILING} rows or more, which one archive cannot hold whole. No archive was built.`);
     }
     const history = await projectVaultRelationshipHistory(client, { organizationId, userId }, read);
     await client.query('COMMIT');
@@ -69,7 +76,10 @@ export async function buildSealArchiveContents(
   const { seal, manifest } = input;
   const withheld = input.withheld ?? [];
   const builtAt = (input.builtAt ?? new Date()).toISOString();
-  const history = await readAuditExtract(pool, input.organizationId, input.userId, seal, manifest);
+  const history = await readArchiveAuditExtract(pool, input.organizationId, input.userId, {
+    tableName: 'vault_data_room_seal', recordId: seal.id,
+    also: [{ tableName: 'vault_document', recordId: manifest.documents.map((d) => d.id) }],
+  }, 'this seal and its documents');
   const entries = [...history.data].reverse();
   const auditPath = 'audit/audit-trail.json';
   const audit = {
