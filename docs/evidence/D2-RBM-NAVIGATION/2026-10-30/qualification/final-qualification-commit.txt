@@ -1,0 +1,25 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 18c7858d3] Retain RBM qualification through canonical eCTD outcome convergence
+ 28 files changed, 2338 insertions(+), 38 deletions(-)
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-qualification-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-qualification-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-qualification-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-qualification-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-qualification.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-lint.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-results.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-selection.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualification-tests.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualify-qualification.py.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-61fe-merge-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-61fe-merge.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-61fe-qualification-review.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/lint-qualification-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/run-build-qualification.sh.txt

@@ -9,8 +9,9 @@ without fabricated assessments, scores or clinical-study records.
 The approval gap found during release review is closed: assessment and plan
 approvals now persist a content-bound canonical electronic signature, the governed
 ledger and the domain approval on the same request transaction. A failed signature
-write rolls them all back. Current-source whole TypeScript, normal push gates and
-fresh remote/source verification remain pending; publication is not yet claimed.
+write rolls them all back. Whole TypeScript passed with zero errors, every normal
+push gate passed, and source `233df9070` was accepted on `concept2cure-v2`.
+Fresh remote proof matched all 328 selected inputs; see [PUBLICATION.md](PUBLICATION.md).
 
 Professional-tier licensing, project sharing and editor/human-confirmation
 checks remain the governing owners. No default module grants, new monitoring
@@ -68,7 +69,8 @@ build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and later canonical integrations have their own named checks and
 source-preservation links. The current packet selects 310 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
-Whole TypeScript, normal push gates and fresh remote proof remain pending.
+Whole TypeScript, normal push gates and fresh remote/source proof are now
+recorded in [PUBLICATION.md](PUBLICATION.md).
 
 - Navigation: initial RED **37 passed / 31 failed** on unchanged inputs. Raw
   receipts distinguish the omitted rail/scope failures from overbroad test-array
@@ -388,8 +390,8 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   files remained 190→190 with zero errors. The CLI check executes an explicitly
   unconfigured local command and verifies a blocked outcome; it does not prove
   agency-corpus, external-engine or human-witnessed qualification.
-  Current-source whole TypeScript, all normal push
-  gates and fresh remote proof remain pending.
+  Current-source whole TypeScript passed with zero errors; all normal push
+  gates and fresh remote/source proof are recorded in [PUBLICATION.md](PUBLICATION.md).
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -425,7 +427,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   launch scope, launch API scope, signature ceremony and SQL-interpolation CI
   checks all pass **exit 0**, with **210 selected inputs unchanged** through
   those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
-  receipts; the current eCTD outcome integration still requires all normal push gates.
+  receipts; the current eCTD outcome integration has passed all normal push gates; see [PUBLICATION.md](PUBLICATION.md).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -440,12 +442,10 @@ do not add their counts. Selected source pins are not a complete dependency clos
 
 ## Publication and acceptance limits
 
-Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
-explicitly synthetic browser behavior only at the named sources. It does not
-establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
-validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459`,
-`5d7568304` and `7f5af0e27`; remote advancement then refused those updates. The current 328-input
-integration still requires its own
-compiler/gated-push retry
-and fresh remote/source verification before publication can be claimed.
+Source publication is verified on `concept2cure-v2` at `233df9070`, including
+a zero-error whole TypeScript check, all normal push gates and a fresh match of
+328 selected source inputs. The exact receipts are linked in [PUBLICATION.md](PUBLICATION.md).
+Local mounted HTTP, SQL/PGlite and explicitly synthetic browser behavior remain
+bounded to their named sources and collaborators. They do not establish native
+PostgreSQL RLS, an authenticated hosted deployment, clinical validation or agency
+acceptance.
