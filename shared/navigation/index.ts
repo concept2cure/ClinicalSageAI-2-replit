@@ -187,7 +187,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
   { id: 'registrations', label: 'Registrations', description: 'The registrations & lifecycle workspace — marketing authorizations by market, the approvals tracker, renewals & variations, HA commitments, and submission strategy.', scope: 'project', group: 'module' },
   { id: 'cro-portfolio', label: 'CRO portfolio', description: 'The CRO sponsor portfolio — the org’s sponsor roster and their program engagements.', scope: 'global', group: 'module' },
-  { id: 'agency-meetings', label: 'Agency meetings', description: 'The agency-meetings workspace — Type A/B/C and scientific-advice meetings with briefing books and minutes.', scope: 'global', group: 'module' },
+  { id: 'agency-meetings', label: 'Agency meetings', description: "Agency meetings, in Communication since 2026-10-30: each meeting is recorded, moved and given its minutes letter on Communication's Meetings tab; its briefing book is the meeting package in the editor, on the IND screen.", scope: 'global', group: 'module' },
   { id: 'source-tracer', label: 'Source tracer', description: 'The source-tracer — every authored section with where each sentence came from: the cited sources and their verification state.', scope: 'global', group: 'module' },
   { id: 'decision-lineage', label: 'Decision lineage', description: 'The decision-lineage graph — how a governed artifact was reached, node by node, with live hash-chain integrity.', scope: 'global', group: 'module' },
 
