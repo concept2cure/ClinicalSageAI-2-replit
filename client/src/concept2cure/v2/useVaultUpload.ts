@@ -36,6 +36,8 @@ import type { VaultClassification, VaultIngestDocumentType } from '@shared/const
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
 import { IngestUnconfirmedError, sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
 import { readVaultIngestReceipt } from './vaultIngestReceipt';
+import { mutationUnconfirmed } from './mutationOutcome';
+import { useVaultUploadVisit } from './vaultUploadVisit';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -272,15 +274,20 @@ async function uploadOne(
     body?.message ??
     (typeof err === 'string' ? err : undefined);
   const code = typeof err === 'object' && err && typeof err.code === 'string' ? err.code : null;
+  // Body-size/type refusals precede admission. An explicit unknown result
+  // still takes precedence; gateways and server failures cannot prove rollback.
+  const unknown = code === 'OUTCOME_UNKNOWN' || (![413, 415].includes(res.status) && mutationUnconfirmed(res.status, code ?? undefined));
   /* Through the internals filter before it can reach a screen. The ingest route
      answers a refused upload with a real sentence, but a proxy, a body-size
      limit or an unhandled throw can put something else on this path, and this
      string is rendered verbatim. */
   return {
     ok: false,
-    reason: redactInternals(raw, `the server refused it (HTTP ${res.status})`),
+    reason: redactInternals(raw, unknown
+      ? `the server reply did not confirm whether it was recorded (HTTP ${res.status})`
+      : `the server refused it (HTTP ${res.status})`),
     code,
-    ...(code === 'OUTCOME_UNKNOWN' ? { unknown: true as const } : {}),
+    ...(unknown ? { unknown: true as const } : {}),
   };
 }
 
@@ -349,26 +356,28 @@ function progressOf(index: number, onFileStatus: NonNullable<VaultUploadOptions[
  * @param programId The regulatory program to file under. Uploading is disabled
  *   while this is null — every vault document is program-scoped, and the server
  *   would refuse an unscoped one anyway.
+ * @param visitKey Optional caller context, such as an open dossier section.
+ *   Changing it retires queued dispatch and results without changing the request's program.
  */
-export function useVaultUpload(programId: string | null | undefined): VaultUploadState {
-  const [uploading, setUploading] = React.useState(false);
-  const [note, setNote] = React.useState<VaultUploadState['note']>(null);
+export function useVaultUpload(programId: string | null | undefined, visitKey?: string): VaultUploadState {
+  const { owner, uploading, note } = useVaultUploadVisit(programId, visitKey);
 
   const upload = React.useCallback(
     async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
       const empty: VaultUploadOutcome = { succeeded: [], recorded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
-      if (list.length === 0) return empty;
+      if (list.length === 0 || !owner.current()) return empty;
       if (!programId) {
-        setNote({
+        owner.setNote({
           tone: 'error',
           text: 'Open a project first — every vault document is filed against one.',
         });
         return empty;
       }
 
-      setUploading(true);
-      setNote(null);
+      const attempt = owner.begin();
+      if (!attempt) return empty;
+      const current = attempt.current;
       const outcome: VaultUploadOutcome = { succeeded: [], recorded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
@@ -380,12 +389,15 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
            in the order the list shows. What the step needed was each row
            saying how far its file has got, which it now does. */
         for (const [index, file] of list.entries()) {
+          if (!current()) return empty;
           opts?.onFileStatus?.(index, { state: 'uploading' });
+          if (!current()) return empty;
           const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, {
             newVersionOf: opts?.newVersionOf,
             fields: opts?.newVersionOf ? undefined : opts?.fields?.[index],
-            onProgress: opts?.onFileStatus ? progressOf(index, opts.onFileStatus) : undefined,
+            onProgress: opts?.onFileStatus ? progressOf(index, (i, status) => { if (current()) opts.onFileStatus?.(i, status); }) : undefined,
           });
+          if (!current()) return empty;
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
               ...(r.readingText ? { readingText: true as const } : {}), ...(r.already?.updated ? { recordUpdated: true as const } : {}) }
@@ -416,15 +428,15 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
           }
         }
 
-        setNote(outcomeNote(outcome));
+        if (!current()) return empty;
+        owner.setNote(outcomeNote(outcome));
       } finally {
-        setUploading(false);
+        attempt.finish();
       }
       return outcome;
     },
-    [programId],
+    [programId, owner],
   );
 
-  const clearNote = React.useCallback(() => setNote(null), []);
-  return { uploading, note, clearNote, upload };
+  return { uploading, note, clearNote: owner.clearNote, upload };
 }
