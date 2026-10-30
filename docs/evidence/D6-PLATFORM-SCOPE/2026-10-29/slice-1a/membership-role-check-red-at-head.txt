@@ -1,0 +1,59 @@
+######## r1_red as app_service
+     who     | role_check 
+-------------+------------
+ app_service | 
+
+== 1. the system scope (tenant 0, app_super_admin, the platform arm) writes app_super_admin onto A's membership
+BEGIN
+UPDATE 1
+ROLLBACK
+== 2. the system scope writes an unknown role string (no assignable role, no staff role)
+BEGIN
+UPDATE 1
+ROLLBACK
+== 3. A's own scope (role admin) writes an unknown role string onto its own member
+BEGIN
+UPDATE 1
+ROLLBACK
+== 4. control: A's own scope assigns each assignable role (ASSIGNABLE_ORG_ROLES), and changes a persona
+BEGIN
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+ROLLBACK
+== 5. control: the system scope mints a staff role the platform still recognises (super_admin)
+BEGIN
+UPDATE 1
+ROLLBACK
+######## r1_red as the RDS master (table owner)
+      who       | superuser 
+----------------+-----------
+ c2c_rds_master | f
+
+BEGIN
+UPDATE 1
+ROLLBACK
+== distinct roles held today, every organization
+      role       | count 
+-----------------+-------
+ admin           |     2
+ legacy_reviewer |     1
+
+######## r1_red as the superuser
+   who    | superuser 
+----------+-----------
+ postgres | t
+
+BEGIN
+UPDATE 1
+ROLLBACK
+== distinct roles held today, every organization
+      role       | count 
+-----------------+-------
+ admin           |     2
+ legacy_reviewer |     1
+
