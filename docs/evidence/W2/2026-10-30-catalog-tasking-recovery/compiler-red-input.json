@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "80156568e",
+  "typeErrors": 1,
+  "baseline": 0,
+  "fixture": "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx",
+  "sha256": "27afaba399c9da399c2df1ba30c1bfe3715299230d9e299e2ea59b38348c51e5",
+  "error": "TS2352: handwritten surface fixture lacks UiSurface required fields and uses an invalid navTier",
+  "correction": "Use actual canonical Apps registry entry; do not weaken type checks or baseline."
+}
