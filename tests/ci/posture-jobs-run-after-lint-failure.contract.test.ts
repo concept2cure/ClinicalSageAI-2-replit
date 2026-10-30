@@ -41,6 +41,7 @@ const AGGREGATES = ['build', 'assemble-release-evidence', 'release-evidence-gate
 /** The jobs this contract exists for, named so a rename cannot empty the population unnoticed. */
 const POSTURE_JOBS = [
   'test',
+  'test-shard',
   'integration-tests',
   'blank-db-provisioning',
   'production-boot-smoke',
