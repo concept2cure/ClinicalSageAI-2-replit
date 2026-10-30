@@ -19,6 +19,10 @@ beforeAll(async () => {
   database = new PGlite();
   h.database = drizzle(database);
   await database.exec(`
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(6),(7),(8),(9);
+    INSERT INTO organizations (id) VALUES (7),(8);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer, status text, regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}'::jsonb);
     INSERT INTO projects (id,organization_id,client_workspace_id,status,regulatory_program_id) VALUES (11,7,71,'active','${PROGRAM}'),(12,7,72,'active',NULL),(13,7,71,'archived',NULL),(21,8,81,'active','${FOREIGN}');
     CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
@@ -57,4 +61,14 @@ describe('CSR board follows its actual program in PostgreSQL', () => {
     expect(organization.body.data.program.title).toBe('Sibling project study');
     expect(organization.body.data.meta.computedScope).toBe('organization');
   });
+});
+
+
+it('retains an authorized board read in a pending-deletion tenant', async () => {
+  await database.exec("UPDATE organizations SET status='pending_deletion' WHERE id=7");
+  try {
+    const response = await request(app).get(`/api/csr-workflow/board?programId=${PROGRAM}`);
+    expect(response.status).toBe(200);
+    expect(response.body.data.meta.projectId).toBe(11);
+  } finally { await database.exec("UPDATE organizations SET status='active' WHERE id=7"); }
 });

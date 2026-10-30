@@ -330,16 +330,39 @@ function usagePhrase(u: LicenceUsage, noun: string): string {
 
 export function Apps({ onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
+  const [catalogRead, setCatalogRead] = useState(0);
+  const [licenseRead, setLicenseRead] = useState(0);
+  const catalogRetrying = useRef(false);
+  const licenseRetrying = useRef(false);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
   const catState = useLiveData<{ modules: LiveModuleEntry[]; launchScope?: { enforced: boolean } }>(
     '/api/module-subscriptions/catalog',
-    ['/api/module-subscriptions/catalog'],
+    ['/api/module-subscriptions/catalog', catalogRead],
     // A 200 that is not the catalog contract belongs in the error branch below,
     // not in the empty one — see isCatalogPayload.
     isCatalogPayload,
   );
-  const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
+  const licState = useLiveData<Record<string, unknown>>(
+    '/api/module-subscriptions/license', ['/api/module-subscriptions/license', licenseRead],
+  );
+  // Reset on an actual hook result, including an identical repeated failure.
+  // The refs also reject repeat clicks before the hook commits its loading state.
+  useEffect(() => { if (!catState.loading) catalogRetrying.current = false; }, [catState]);
+  useEffect(() => { if (!licState.loading) licenseRetrying.current = false; }, [licState]);
+  const retryCatalog = () => {
+    if (catState.loading || catalogRetrying.current) return;
+    catalogRetrying.current = true;
+    setCatalogRead(value => value + 1);
+  };
+  const retryLicense = () => {
+    if (licState.loading || licenseRetrying.current) return;
+    licenseRetrying.current = true;
+    setLicenseRead(value => value + 1);
+  };
+  // A valid empty catalog is { modules: [] }; an absent body is unavailable.
+  // Keep the shared reader's null/204 semantics unchanged for other surfaces.
+  const catalogUnavailable = !catState.loading && (Boolean(catState.error) || !isCatalogPayload(catState.data));
   const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
   // The org's plan tier decides whether an unavailable module is a tier gap or
   // an industry-mode mismatch, so the catalog mapping depends on the licence
@@ -480,7 +503,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
     if (catState.loading || licState.loading) {
       return { summary: 'Subscription & features and licence details are still loading; nothing on screen is final yet.' };
     }
-    if (catState.error) {
+    if (catalogUnavailable) {
       return {
         summary:
           'Subscription & features could not be read, so this screen is showing no features because of a ' +
@@ -543,7 +566,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
         'Read the subscription tier and the project / user usage against their limits',
       ],
     };
-  }, [catState.loading, catState.error, licState.loading, licState.error, groups, lic, pj, us, admin, query, catalogView]);
+  }, [catState.loading, catalogUnavailable, licState.loading, licState.error, groups, lic, pj, us, admin, query, catalogView]);
   /* AnA's hands on this screen (wave 7): the admin controls strip, the one
      thing a person switches here. Enabling or disabling a module for the
      organisation is an entitlement change and stays a governed human act —
@@ -555,7 +578,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
         return { ok: false, reason: `"${params.state}" is not a state for the admin controls — choose on or off.` };
       }
       if (catState.loading) return { ok: false, reason: 'Subscription & features is still loading.', retry: true };
-      if (catState.error) return { ok: false, reason: 'Subscription & features could not be read, so the admin controls are not on screen.' };
+      if (catalogUnavailable) return { ok: false, reason: 'Subscription & features could not be read, so the admin controls are not on screen.' };
       const next = want === 'on';
       if (admin === next) return { ok: true, detail: `The admin controls are already ${want}` };
       setAdmin(next);
@@ -720,18 +743,17 @@ export function Apps({ onNav }: SurfaceViewProps) {
         </button>
       </div>
       ) : (
-        <div
-          className="scaf-note"
-          style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}
-        >
-          {I.info}
-          <span>
-            License &amp; entitlement details are unavailable right now
-            {licState.error ? " — the billing service didn't respond" : ''}.
-          </span>
+        <div style={{ marginBottom: 16 }}>
+          <EmptyState
+            tone="error"
+            title="License & entitlement details are unavailable right now"
+            hint="Your subscription details could not be loaded. Check your connection and try again."
+            retry={retryLicense}
+            retryLabel="Retry subscription details"
+          />
           <button
             className="btn ghost"
-            style={{ height: 28, marginLeft: 'auto' }}
+            style={{ height: 28, marginTop: 8 }}
             onClick={() => open('licensing')}
             data-testid="admin-manage-plan-fallback"
           >
@@ -744,12 +766,14 @@ export function Apps({ onNav }: SurfaceViewProps) {
         <div className="sec">
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading features…</div>
         </div>
-      ) : catState.error ? (
+      ) : catalogUnavailable ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load features"
           hint="Your workspace features could not be loaded. Check your connection and try again."
+          retry={retryCatalog}
+          retryLabel="Retry features"
         />
       ) : groups.length === 0 ? (
         <EmptyState

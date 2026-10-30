@@ -1,0 +1,7 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "08eed37363421815b6d6bf3906ac8422bf546fcc70d08ad9b6d897fbec8eb506",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "172f98c094be6851e22f3e072940bed9a5c196ea6d83ee7f7038d930e66c4ac2"
+  },
+  "note": "Initial 22 checks passed before final explicit retry coverage/source completion."
+}

@@ -1,0 +1,89 @@
+{
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 4074,
+      "sha256": "2fe8e8233c6efc0f5c141f3b83442b220a9c34ff1e53093696a2ec56d32ddac7"
+    },
+    {
+      "path": "checks.json",
+      "bytes": 1863,
+      "sha256": "975b993b2d3fdc072c210bde87332e39c552f8924ee719e94b0530a8f9dafa25"
+    },
+    {
+      "path": "companions-before-notice-correction.log.gz",
+      "bytes": 4206,
+      "sha256": "81ac18f65d19b9a5a1f4b9952363f490bac9bd289fd444226953483544301ea1"
+    },
+    {
+      "path": "companions.log.gz",
+      "bytes": 4683,
+      "sha256": "c412d16db9e657931d15eae51ca7ffad0e28f2d87ec64714c0ccd3c04bf93773"
+    },
+    {
+      "path": "green-22.log.gz",
+      "bytes": 983,
+      "sha256": "9add95da60e396dc220c46a756cb75e101e736f60183af478570f7da76d56ec1"
+    },
+    {
+      "path": "green.log.gz",
+      "bytes": 1207,
+      "sha256": "8a3187dc762b68ced66dd92ce3cb0e50b5eeff0479698e9b25a1d1cb1f84a8fe"
+    },
+    {
+      "path": "lint-before.log.gz",
+      "bytes": 366,
+      "sha256": "b5b5d031587890a1504c58f4899668ff24685712bbd14ea94b8adf80a8c29acb"
+    },
+    {
+      "path": "lint.log.gz",
+      "bytes": 364,
+      "sha256": "c17185f0b6530d0d8b784ff6b4f0171e5439719b85f7a0a217ca4a25c151b6b6"
+    },
+    {
+      "path": "notice-correction.log.gz",
+      "bytes": 2476,
+      "sha256": "e236c93c8fd6903cf7be2e7c471fee8fa38d13c94284227af617f74d28ac0700"
+    },
+    {
+      "path": "qualified-inputs.json",
+      "bytes": 455,
+      "sha256": "1b9acaa8f71e4088a740b565a5f6b36a37d86d84ff1f52b82143831771bf8009"
+    },
+    {
+      "path": "recovery-before-inputs.json",
+      "bytes": 379,
+      "sha256": "96992521016e10f483e1d0704002d7b52e74f381a0ab6339dd81f8ee6b49d982"
+    },
+    {
+      "path": "recovery-red-inputs.json",
+      "bytes": 285,
+      "sha256": "8d50d83234d821166c23d224ea95e5413711de6211ca45b2207ce84b8eacc0fa"
+    },
+    {
+      "path": "recovery-red.log.gz",
+      "bytes": 5732,
+      "sha256": "c6c839420ab148b20840c32338a29462ed046719b4acdbc17d50f232a5824d74"
+    },
+    {
+      "path": "red-inputs.json",
+      "bytes": 341,
+      "sha256": "30d5537b60c469fbc6c4461a96ce682c945e38fd1ebd7ee9cdc00fbf3346e142"
+    },
+    {
+      "path": "red.log.gz",
+      "bytes": 6381,
+      "sha256": "e27d35aa7804f3ec14a568bb2b8feb1590e33cac1a2515774ca93ef0d334dd4d"
+    },
+    {
+      "path": "truthfulness-source.patch.gz",
+      "bytes": 3200,
+      "sha256": "8fe3f977a5d18639eacf0915b1a182f4579183b737169cf95735ac86081f7011"
+    },
+    {
+      "path": "truthfulness-test.tsx.gz",
+      "bytes": 3794,
+      "sha256": "5f0d48fffdefaf9fce2defe25f97f6ec85126175acf80f176df1a4c657582d8f"
+    }
+  ]
+}

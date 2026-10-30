@@ -26,7 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { statusText } from '../surfaces/VaultUploadStaging';
-import { FAKE_BODY_BYTES, stubIngestXhr } from './_ingest-xhr-fake';
+import { FAKE_BODY_BYTES, ingestReceipt, stubIngestXhr, type IngestInit } from './_ingest-xhr-fake';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
 function mockApi() {
@@ -41,8 +41,8 @@ function stubIngest(answers: Array<{ status: number; body: unknown }>) {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
-    const a = answers.shift() ?? { status: 201, body: { success: true, document: { version: '1.0' } } };
-    return { ok: a.status < 300, status: a.status, json: async () => a.body } as Response;
+    const a = answers.shift() ?? { status: 201, body: ingestReceipt(init.body as FormData) };
+    return { ok: a.status < 300, status: a.status, json: async () => typeof a.body === 'function' ? a.body(init.body as FormData) : a.body } as Response;
   }));
   return sent;
 }
@@ -71,7 +71,7 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
   });
 
   it("sends each row's title, type, classification and the folder chosen, with its kind and section, and no version", async () => {
-    const sent = stubIngest([{ status: 201, body: { success: true, document: { version: '1.0' }, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } } }]);
+    const sent = stubIngest([{ status: 201, body: (form: FormData) => ingestReceipt(form, { filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } }) }]);
     const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
     const row = within(panel).getByTestId('vault-stage-row');
     fireEvent.change(within(row).getByLabelText('Title'), { target: { value: 'Stability summary, 24 months' } });
@@ -106,9 +106,9 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
 
   it('says what the Vault refused, row by row, and tries only that one again', async () => {
     const sent = stubIngest([
-      { status: 201, body: { success: true, document: { version: '1.0' } } },
+      { status: 201, body: (form: FormData) => ingestReceipt(form) },
       { status: 422, body: { error: { message: 'The file failed the malware scan' } } },
-      { status: 201, body: { success: true, document: { version: '1.0' } } },
+      { status: 201, body: (form: FormData) => ingestReceipt(form) },
     ]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
@@ -125,7 +125,7 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
   });
 
   it('says when a recorded file’s text is still being read (MR-08 Stage 3)', async () => {
-    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0', extraction: 'pending' } } }]);
+    stubIngest([{ status: 201, body: (form: FormData) => ingestReceipt(form, { document: { extraction: 'pending' } }) }]);
     const panel = await choose([new File(['%PDF scanned'], 'scan.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     const [row] = within(panel).getAllByTestId('vault-stage-row');
@@ -186,9 +186,9 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
   it('shows the share sent with a progress bar, and the rows behind it wait their turn', async () => {
     let release!: () => void;
     const held = new Promise<void>((r) => { release = r; });
-    stubIngestXhr(vi.fn(async () => {
+    stubIngestXhr(vi.fn(async (_url: string, init: IngestInit) => {
       await held;
-      return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+      return { ok: true, status: 201, json: async () => ingestReceipt(init.body as FormData) };
     }), [0.5]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
@@ -211,3 +211,52 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
   });
 });
 
+
+describe('retry queue and current upload failures remain distinct', () => {
+  it('clears old refusals for a new attempt so a retry queued behind another file waits', async () => {
+    let release!: () => void;
+    let requests = 0;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    stubIngestXhr(vi.fn(async (_url: string, init: IngestInit) => {
+      requests += 1;
+      if (requests <= 2) return { status: 422, json: async () => ({ error: { message: 'Earlier refusal' } }) };
+      if (requests === 3) await held;
+      return { status: 201, json: async () => ingestReceipt(init.body as FormData) };
+    }), [0.5]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    await within(panel).findByRole('button', { name: 'Try again for 2 files' });
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const rows = within(panel).getAllByTestId('vault-stage-row');
+    await within(rows[0]).findByText(/Uploading/);
+    const waiting = within(rows[1]).getByText('Waiting: files are sent one at a time.');
+    expect(waiting.className).not.toContain('vd-dr-err');
+    expect(within(rows[1]).queryByText(/Earlier refusal/)).toBeNull();
+    release();
+    await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+
+  it.each([false, true])('keeps a new refusal or unknown result visible while the next file is uploading (unknown=%s)', async (unknown) => {
+    let release!: () => void;
+    let requests = 0;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    stubIngestXhr(vi.fn(async (_url: string, init: IngestInit) => {
+      requests += 1;
+      if (requests === 1) {
+        if (unknown) throw new Error('reply lost after sending');
+        return { status: 422, json: async () => ({ error: { message: 'Current refusal' } }) };
+      }
+      await held;
+      return { status: 201, json: async () => ingestReceipt(init.body as FormData) };
+    }), [1]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const rows = within(panel).getAllByTestId('vault-stage-row');
+    await within(rows[1]).findByText(/Sent\. The server/);
+    const refusal = within(rows[0]).getByText(unknown ? /Not known whether it was recorded/ : 'Not recorded: Current refusal');
+    expect(refusal.className).toContain('vd-dr-err');
+    expect(within(rows[0]).queryByText(/Waiting/)).toBeNull();
+    release();
+    await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+});

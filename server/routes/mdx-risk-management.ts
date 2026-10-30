@@ -19,18 +19,13 @@
  * Tenant-scoped via risk_items.organization_id. Audit-logged via global
  * mutation middleware. AnA can create + update via the new tools.
  *
- * D2, fold F1 slice A, 2026-10-29
- * (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f1a-risk-design-controls-safety/):
- *   - A request that names a project (`program_id` on the list,
- *     `:programId` on the summary, `programId` in a create or update body) is
- *     admitted first, through admitProject (server/lib/admit-project.ts, over
- *     programInOrganization): 404 when the organization does not own the live
- *     project, 503 when the check cannot run, and nothing read or written
- *     either way. A project is stored only after that check. The list says
- *     `meta.scope: 'program'` with the `programId`, or `'organization'`.
- *   - Every write takes an editing role (requireEditorAccess, as the UDI and
- *     labeling writes do since 43fb57cc). The reads stay open to every member.
- *   - Accepting a hazard's residual risk is an electronic signature (below).
+ * Current request admission (D2, 2026-10-30): the canonical current actor,
+ * unique project anchor and durable sharing policy govern reads and writes.
+ * Global lists include accessible project records and unassigned organization
+ * records; explicit program_id selectors also bind every item/control action.
+ * Shared read/review access never authorizes editing. The request transaction
+ * retains current actor and shared-edit admission; signed acts repeat it on
+ * their own signing transaction. mdx-risk-access.ts composes those policies.
  *
  * P-63, 2026-10-29 (docs/evidence/D5-SIGNED-CONTENT-LOCKED/2026-10-29/): while a
  * hazard carries its acceptance, what the acceptance binds is not edited, its
@@ -43,16 +38,20 @@ import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
 import {
-  ok, created, clientError, orgRequired, notFoundInTenant, serverError,
+  ok, created, clientError, orgRequired, notFoundInTenant,
 } from '../lib/api-response';
-import { pool } from '../db';
-import { admitProject as admitProjectShared } from '../lib/admit-project';
-import { checkOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../services/c2c/current-program-access';
+import {
+  admitRiskAssignee, admitRiskScope, admittedRisk, assertRiskSigner, RiskAccessError, riskActorInput,
+  riskClient, riskRowProgram, riskScopeOf, RISK_ACCESS_CODE_STATUS, riskFailure,
+  validateIntroducedRisk, validateRiskReparent, withRiskWrite,
+} from './mdx-risk-access';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { readSignedContentStates } from '../services/part11/signed-content-state';
-import { insertRiskControl } from '../services/part11/signed-content-lock';
+import { hazardChildRefusal, insertRiskControl } from '../services/part11/signed-content-lock';
 import {
   answerControlWrite, hazardEditWhere, refuseAcceptedControlEdit, refuseAcceptedHazardEdit, reopenResidualAcceptanceSigned,
 } from './mdx-risk-acceptance-lock';
@@ -65,47 +64,6 @@ function getOrgId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
-}
-
-/** The shared project-ownership refusal (server/lib/admit-project.ts). */
-const admitProject = (res: Response, programId: string | null | undefined, orgId: number) =>
-  admitProjectShared(res, log, programId, orgId);
-
-/** What a list covers: one project's register, or, with no project named, the organization's. */
-function scopeOf(programId: string | null | undefined): { scope: 'program'; programId: string } | { scope: 'organization' } {
-  return programId ? { scope: 'program', programId } : { scope: 'organization' };
-}
-
-/**
- * An assignee must belong to the risk's organization. `public.users` has no RLS,
- * and the engineering panel (mdx-engineering.ts) joins users on assigned_to to
- * show the owner's name — so an unchecked id here let an editor in one tenant
- * assign another tenant's user and read that user's name back. Refused with 422,
- * not silently dropped; an unverifiable membership throws and fails closed.
- */
-async function assigneeRefusal(orgId: number, assignedTo: number | null | undefined): Promise<string | null> {
-  if (assignedTo === null || assignedTo === undefined) return null;
-  const membership = await checkOrgMembership(assignedTo, orgId);
-  if (membership === 'member') return null;
-  if (membership === 'revoked') return 'assignedTo is not a member of this organization';
-  throw new Error('assignee organization membership could not be verified');
-}
-
-/**
- * The checks a hazard write runs before it touches risk_items: the project it
- * names (admitProject), then the assignee (assigneeRefusal). True when one of
- * them has answered the request, and nothing may be written.
- */
-async function writeRefused(
-  res: Response, orgId: number, programId: string | null | undefined, assignedTo: number | null | undefined,
-): Promise<boolean> {
-  if (!(await admitProject(res, programId, orgId))) return true;
-  const refusal = await assigneeRefusal(orgId, assignedTo);
-  if (refusal) {
-    clientError(res, 422, refusal);
-    return true;
-  }
-  return false;
 }
 
 /**
@@ -189,6 +147,7 @@ const createControlBody = z.object({
 });
 
 const patchControlBody = createControlBody.partial();
+const scopeQuery = z.object({ program_id: z.string().regex(UUID_RE).optional() });
 
 /* ─── GET /api/mdx/risk-items ─────────────────────────────────────── */
 
@@ -197,25 +156,29 @@ router.get('/risk-items', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { program_id: programId, status, limit = 200 } = parsed.data;
+  const { program_id: rawProgramId, status, limit = 200 } = parsed.data;
+  const programId = rawProgramId?.toLowerCase();
 
   const filters: string[] = [`organization_id = $1`, `deleted_at IS NULL`];
   const args: unknown[] = [orgId];
-  if (programId) { args.push(programId); filters.push(`program_id = $${args.length}`); }
-  if (status)    { args.push(status);    filters.push(`status = $${args.length}`); }
-  args.push(limit);
-
   try {
-    if (!(await admitProject(res, programId, orgId))) return;
-    const { rows } = await pool.query(
+    const q = riskClient(req);
+    const identity = { ...riskActorInput(req, orgId), programId };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    if (programId) { args.push(programId); filters.push(`program_id = $${args.length}`); }
+    else { args.push(scope.programIds); filters.push(`(program_id IS NULL OR program_id = ANY($${args.length}::uuid[]))`); }
+    if (status) { args.push(status); filters.push(`status = $${args.length}`); }
+    args.push(limit);
+    const { rows } = await q.query(
       `SELECT * FROM risk_items WHERE ${filters.join(' AND ')}
         ORDER BY (residual_risk IS NULL) DESC, residual_risk DESC, initial_risk DESC, updated_at DESC
         LIMIT $${args.length}`,
       args,
     );
-    return ok(res, rows, { count: rows.length, ...scopeOf(programId) });
+    await requireProgramScopeStillCurrent(q, identity, scope);
+    return ok(res, rows, { count: rows.length, ...riskScopeOf(programId), reconciliationRequired: scope.reconciliationRequired });
   } catch (err) {
-    return serverError(res, log, 'list-items', err);
+    return riskFailure(res, log, 'list-items', err);
   }
 });
 
@@ -226,12 +189,21 @@ router.post('/risk-items', requireEditorAccess, refuseAcceptedCreate, async (req
   if (orgId === null) return orgRequired(res);
   const parsed = createItemBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
   const p = parsed.data;
+  const expectedProgram = scoped.data.program_id?.toLowerCase();
+  if (expectedProgram && p.programId !== undefined && p.programId?.toLowerCase() !== expectedProgram) {
+    return clientError(res, 422, 'programId must match the selected project');
+  }
+  const programId = expectedProgram ?? p.programId?.toLowerCase() ?? null;
   const initialRisk = p.severity * p.probability;
 
   try {
-    if (await writeRefused(res, orgId, p.programId, p.assignedTo)) return;
-    const { rows } = await pool.query(
+    const row = await withRiskWrite(req, async q => {
+      await admitRiskScope(q, req, orgId, programId, true);
+      await admitRiskAssignee(q, orgId, p.assignedTo);
+      const { rows } = await q.query(
       `INSERT INTO risk_items (
          organization_id, program_id, ref_code, hazard, hazardous_situation, harm,
          sequence_of_events, severity, probability, detectability, initial_risk,
@@ -241,15 +213,17 @@ router.post('/risk-items', requireEditorAccess, refuseAcceptedCreate, async (req
        )
        RETURNING *`,
       [
-        orgId, p.programId ?? null, p.refCode ?? null, p.hazard, p.hazardousSituation ?? null,
+        orgId, programId, p.refCode ?? null, p.hazard, p.hazardousSituation ?? null,
         p.harm, p.sequenceOfEvents ?? null, p.severity, p.probability, p.detectability ?? null,
         initialRisk, p.controlStrategy ?? null, p.status ?? 'open', p.source ?? null,
         p.assignedTo ?? null,
       ],
-    );
-    return created(res, rows[0]);
+      );
+      return rows[0];
+    });
+    return created(res, row);
   } catch (err) {
-    return serverError(res, log, 'create-item', err);
+    return riskFailure(res, log, 'create-item', err);
   }
 });
 
@@ -260,23 +234,34 @@ router.get('/risk-items/:id', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
 
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM risk_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, orgId],
+    const q = riskClient(req);
+    const source = await admittedRisk(q, req, orgId, id, { expectedProgram: scoped.data.program_id?.toLowerCase() });
+    const programId = riskRowProgram(source);
+    const readIdentity = { ...riskActorInput(req, orgId), programId };
+    const readScope = await getCurrentAccessibleProgramScope(q, readIdentity);
+    const { rows } = await q.query(
+      `SELECT * FROM risk_items WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL
+        AND program_id IS NOT DISTINCT FROM $3::uuid`, [id, orgId, programId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Risk item');
-    const controls = await pool.query(
-      `SELECT * FROM risk_controls WHERE risk_item_id = $1 ORDER BY id`,
-      [id],
+    const controls = await q.query(
+      `SELECT * FROM risk_controls WHERE risk_item_id=$1 AND organization_id=$2 ORDER BY id`,
+      [id, orgId],
     );
     /* Whether the residual acceptance still binds the hazard and controls it
        accepted (21 CFR 11.70; services/part11/signed-content-state.ts). */
-    const signed = await readSignedContentStates({ query: (sql, params) => pool.query(sql, params) }, orgId, [`risk-item:${id}`]);
+    const signed = await readSignedContentStates(q, orgId, [`risk-item:${id}`]);
+    await requireProgramScopeStillCurrent(q, readIdentity, readScope);
+    const current = await admittedRisk(q, req, orgId, id, { expectedProgram: programId ?? undefined });
+    if (riskRowProgram(current) !== programId) throw new ProgramReadAccessError(503,
+      'PROJECT_ACCESS_CHANGED', 'The risk record changed projects during the read. No risk data was supplied.');
     return ok(res, { ...rows[0], controls: controls.rows, signedContent: signed.get(`risk-item:${id}`) });
   } catch (err) {
-    return serverError(res, log, 'get-item', err);
+    return riskFailure(res, log, 'get-item', err);
   }
 });
 
@@ -310,6 +295,7 @@ const whenAccepting: RequestHandler = (req, res, next) =>
 
 /** The acceptance's own refusals, by code, for signGovernedAct. */
 const RESIDUAL_ACCEPTANCE_CODE_STATUS = {
+  ...RISK_ACCESS_CODE_STATUS,
   RISK_ITEM_NOT_FOUND: 404,
   RISK_ALREADY_ACCEPTED: 409,
 } as const;
@@ -348,7 +334,7 @@ function acceptedHazard(id: number, h: AcceptedHazardRow): Record<string, unknow
 
 /** The signed acceptance of risk item `id`'s residual risk. Answers the request itself. */
 async function acceptResidualSigned(
-  req: Request, res: Response, id: number, patch: Record<string, unknown>,
+  req: Request, res: Response, id: number, patch: Record<string, unknown>, expectedProgram?: string,
 ): Promise<void> {
   /* The signature covers the hazard as it stands. A field edited in the same
      request would be signed before anyone reviewed it. */
@@ -370,7 +356,15 @@ async function acceptResidualSigned(
     codeStatus: RESIDUAL_ACCEPTANCE_CODE_STATUS,
     // The hazard and its controls as they stand are what is accepted (21 CFR 11.70).
     contentBasis: BINDING_BASIS.RISK_RESIDUAL_ACCEPTANCE_CONTENT,
-    run: async (client, orgId) => {
+    precheck: async (client, orgId, userId) => {
+      assertRiskSigner(req, userId);
+      await admittedRisk(client, req, orgId, id, { expectedProgram, write: true });
+    },
+    run: async (client, orgId, userId) => {
+      assertRiskSigner(req, userId);
+      // The signing transaction's current actor/shared-edit admission is
+      // authoritative; the credential precheck never substitutes for it.
+      await admittedRisk(client, req, orgId, id, { expectedProgram, write: true });
       /* On the signing transaction, under the ceremony's lock on this target
          (DP-65): a second acceptance waits here and then reads what the first
          left. The hazard must be live and the organization's. */
@@ -405,7 +399,13 @@ router.patch('/risk-items/:id', requireEditorAccess, refuseUnsignedAcceptability
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = patchItemBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  if (parsed.data.status === 'accepted') return acceptResidualSigned(req, res, id, parsed.data);
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
+  const expectedProgram = scoped.data.program_id?.toLowerCase();
+  if (expectedProgram && parsed.data.programId !== undefined && parsed.data.programId?.toLowerCase() !== expectedProgram) {
+    return clientError(res, 422, 'programId must match the selected project');
+  }
+  if (parsed.data.status === 'accepted') return acceptResidualSigned(req, res, id, parsed.data, expectedProgram);
 
   const COL: Record<string, string> = {
     programId: 'program_id', refCode: 'ref_code', hazard: 'hazard',
@@ -478,21 +478,31 @@ router.patch('/risk-items/:id', requireEditorAccess, refuseUnsignedAcceptability
   }
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);
-  args.push(id, orgId);
   // While the hazard carries its acceptance, what it binds is not edited, nor is it taken off (P-63).
-  const { where, guard } = hazardEditWhere(args.length, parsed.data);
 
   try {
-    if (await writeRefused(res, orgId, parsed.data.programId, parsed.data.assignedTo)) return;
-    const { rows } = await pool.query(
-      `UPDATE risk_items SET ${setFrags.join(', ')} WHERE ${where.join(' AND ')} RETURNING *`,
-      args,
-    );
+    const rows = await withRiskWrite(req, async q => {
+      const source = await admittedRisk(q, req, orgId, id, { expectedProgram, write: true });
+      const sourceProgram = riskRowProgram(source);
+      const destination = parsed.data.programId === undefined ? sourceProgram : parsed.data.programId?.toLowerCase() ?? null;
+      if (destination !== sourceProgram) {
+        await admitRiskScope(q, req, orgId, destination, true);
+        await validateRiskReparent(q, orgId, id, destination);
+      }
+      await admitRiskAssignee(q, orgId, parsed.data.assignedTo);
+      // admittedRisk holds this exact hazard FOR UPDATE until commit, so its
+      // checked source programme cannot change between admission and this write.
+      args.push(id, orgId);
+      const { where } = hazardEditWhere(args.length, parsed.data);
+      const result = await q.query(
+        `UPDATE risk_items SET ${setFrags.join(', ')} WHERE ${where.join(' AND ')} RETURNING *`, args);
+      return result.rows;
+    });
     // Nothing written: 404, or, for a guarded edit, why (an unguarded one matched no hazard).
-    if (rows.length === 0) return refuseAcceptedHazardEdit(res, id, orgId, guard);
+    if (rows.length === 0) return refuseAcceptedHazardEdit(res, id, orgId, hazardEditWhere(args.length, parsed.data).guard, riskClient(req));
     return ok(res, rows[0]);
   } catch (err) {
-    return serverError(res, log, 'patch-item', err);
+    return riskFailure(res, log, 'patch-item', err);
   }
 });
 
@@ -502,7 +512,12 @@ router.post('/risk-items/:id/reopen', requireEditorAccess, signedActAttempts, as
   if (getOrgId(req) === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  return reopenResidualAcceptanceSigned(req, res, id);
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
+  return reopenResidualAcceptanceSigned(req, res, id, async (client, orgId, userId) => {
+    assertRiskSigner(req, userId);
+    await admittedRisk(client, req, orgId, id, { expectedProgram: scoped.data.program_id?.toLowerCase(), write: true });
+  });
 });
 
 /* ─── POST /api/mdx/risk-items/:id/controls ───────────────────────── */
@@ -514,14 +529,22 @@ router.post('/risk-items/:id/controls', requireEditorAccess, async (req: Request
   if (!Number.isFinite(itemId)) return clientError(res, 422, 'id must be numeric');
   const parsed = createControlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
 
   try {
     /* One statement: the organization's live hazard, and only while it carries
        no acceptance, which binds its controls (P-63). */
-    const written = await insertRiskControl(pool, orgId, itemId, parsed.data);
+    const written = await withRiskWrite(req, async q => {
+      const parent = await admittedRisk(q, req, orgId, itemId, { expectedProgram: scoped.data.program_id?.toLowerCase(), write: true });
+      const editable = await hazardChildRefusal(q, orgId, itemId);
+      if (editable.outcome === 'refused' || editable.outcome === 'not-found') return editable;
+      await validateIntroducedRisk(q, orgId, riskRowProgram(parent), parsed.data.newRiskItemId);
+      return insertRiskControl(q, orgId, itemId, parsed.data);
+    });
     return written.outcome === 'written' ? created(res, written.row) : answerControlWrite(res, written, 'Risk item');
   } catch (err) {
-    return serverError(res, log, 'create-control', err);
+    return riskFailure(res, log, 'create-control', err);
   }
 });
 
@@ -534,6 +557,9 @@ router.patch('/risk-controls/:controlId', requireEditorAccess, async (req: Reque
   if (!Number.isFinite(ctrlId)) return clientError(res, 422, 'controlId must be numeric');
   const parsed = patchControlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
+  const expectedProgram = scoped.data.program_id?.toLowerCase();
 
   const COL: Record<string, string> = {
     description: 'description', controlType: 'control_type',
@@ -554,13 +580,30 @@ router.patch('/risk-controls/:controlId', requireEditorAccess, async (req: Reque
   }
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);
-  args.push(ctrlId, orgId);
 
   try {
     /* Every field here is one the acceptance binds: no control of a hazard
        that carries its acceptance is edited (P-63). The hazard's row is share
        locked, so a signing act waits for this write or this write for it. */
-    const { rows } = await pool.query(
+    const rows = await withRiskWrite(req, async q => {
+      if (expectedProgram) await admitRiskScope(q, req, orgId, expectedProgram, true);
+      const identity = await q.query(`SELECT c.id, c.risk_item_id, c.new_risk_item_id, r.program_id
+        FROM risk_controls c JOIN risk_items r ON r.id=c.risk_item_id AND r.organization_id=c.organization_id
+        WHERE c.id=$1 AND c.organization_id=$2 AND r.deleted_at IS NULL
+          AND ($3::uuid IS NULL OR r.program_id=$3::uuid) FOR UPDATE OF c,r`, [ctrlId, orgId, expectedProgram ?? null]);
+      if (identity.rows.length !== 1) throw new RiskAccessError('RISK_CONTROL_NOT_FOUND', 'Risk control not found. Nothing was changed.');
+      const control = identity.rows[0];
+      const parent = await admittedRisk(q, req, orgId, Number(control.risk_item_id), { expectedProgram, write: true });
+      const editable = await hazardChildRefusal(q, orgId, Number(control.risk_item_id));
+      if (editable.outcome === 'refused' || editable.outcome === 'not-found') return [];
+      const reference = parsed.data.newRiskItemId === undefined ? control.new_risk_item_id : parsed.data.newRiskItemId;
+      if (reference !== null && (typeof reference !== 'number' || !Number.isSafeInteger(reference) || reference <= 0)) {
+        throw new RiskAccessError('RISK_LINK_SCOPE_MISMATCH', 'The introduced risk reference could not be verified. Nothing was changed.');
+      }
+      await validateIntroducedRisk(q, orgId, riskRowProgram(parent), reference);
+      // The control and its admitted parent remain locked through this write.
+      args.push(ctrlId, orgId);
+      const result = await q.query(
       `UPDATE risk_controls SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length}
           AND EXISTS (
@@ -570,11 +613,13 @@ router.patch('/risk-controls/:controlId', requireEditorAccess, async (req: Reque
                FOR SHARE)
         RETURNING *`,
       args,
-    );
-    if (rows.length === 0) return refuseAcceptedControlEdit(res, ctrlId, orgId);
+      );
+      return result.rows;
+    });
+    if (rows.length === 0) return refuseAcceptedControlEdit(res, ctrlId, orgId, riskClient(req));
     return ok(res, rows[0]);
   } catch (err) {
-    return serverError(res, log, 'patch-control', err);
+    return riskFailure(res, log, 'patch-control', err);
   }
 });
 
@@ -585,13 +630,17 @@ router.get('/risk-summary/:programId', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  const scoped = scopeQuery.safeParse(req.query);
+  if (!scoped.success) return clientError(res, 422, 'Invalid query', scoped.error.flatten().fieldErrors);
+  if (scoped.data.program_id && scoped.data.program_id.toLowerCase() !== programId.toLowerCase()) {
+    return clientError(res, 422, 'program_id must match the selected project');
+  }
 
   try {
-    if (!(await admitProject(res, programId, orgId))) return;
-    const { rows } = await pool.query<{
-      total: number; open: number; high_residual: number; accepted: number;
-      avg_initial: number | null; avg_residual: number | null;
-    }>(
+    const q = riskClient(req);
+    const identity = { ...riskActorInput(req, orgId), programId: programId.toLowerCase() };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    const { rows } = await q.query(
       `SELECT
           COUNT(*)::int                                         AS total,
           COUNT(*) FILTER (WHERE status IN ('open','mitigating'))::int AS open,
@@ -603,6 +652,7 @@ router.get('/risk-summary/:programId', async (req: Request, res: Response) => {
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
       [orgId, programId],
     );
+    await requireProgramScopeStillCurrent(q, identity, scope);
     const r = rows[0] ?? { total: 0, open: 0, high_residual: 0, accepted: 0, avg_initial: null, avg_residual: null };
     return ok(res, {
       total:         r.total,
@@ -613,7 +663,7 @@ router.get('/risk-summary/:programId', async (req: Request, res: Response) => {
       avgResidual:   r.avg_residual !== null ? Number(r.avg_residual) : null,
     });
   } catch (err) {
-    return serverError(res, log, 'summary', err);
+    return riskFailure(res, log, 'summary', err);
   }
 });
 

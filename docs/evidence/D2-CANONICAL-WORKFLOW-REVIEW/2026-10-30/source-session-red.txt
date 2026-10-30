@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx > same-mounted Workbench source reads retain their canonical session owner > rejects a prior-session catalog body after replacement prose for the same document and section has settled 1298ms
+   → expected <button class="nda-open" …(2)></button> to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx > same-mounted Workbench source reads retain their canonical session owner > retains the pending current catalog and editor across ordinary canonical bearer refresh 739ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx > same-mounted Workbench source reads retain their canonical session owner > rejects a prior-session catalog body after replacement prose for the same document and section has settled
+AssertionError: expected <button class="nda-open" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="nda-open"
+  style="text-align: left;"
+  title="Record this section as drafted from this source"
+>
+  Prior-session protocol source
+</button>
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx:126:64
+    124|
+    125|     expect(document.querySelector('.tiptap')?.textContent).toContain('…
+    126|     expect(screen.queryByRole('button', { name: OLD_SOURCE })).toBeNul…
+       |                                                                ^
+    127|     expect(document.body.textContent).not.toContain(OLD_SOURCE);
+    128|     await waitFor(() => expect(catalogOwners).toContain('replacement')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  16:22:32
+   Duration  5.92s (transform 2.47s, setup 148ms, import 3.11s, tests 2.04s, environment 491ms)
+

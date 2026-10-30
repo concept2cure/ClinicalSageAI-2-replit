@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference 2439ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > clears description and recorded target with null without inventing another change 986ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > leaves an admitted reader read-only when the fresh capability is false 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > does not propose trimming a legacy description that the person has not edited 98ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > pins writes to the verified GET parent when the global workspace was empty 145ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed program settings read without blank editable defaults 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed actor settings read without blank editable defaults 16ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed organization settings read without blank editable defaults 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed anchor settings read without blank editable defaults 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed workspace settings read without blank editable defaults 16ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed revision settings read without blank editable defaults 16ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed date settings read without blank editable defaults 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed priority settings read without blank editable defaults 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed pending settings read without blank editable defaults 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > bounds the governed reason before sending a write 91ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a network outcome across collapse until an explicit reload 136ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a zero outcome across collapse until an explicit reload 131ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a server outcome across collapse until an explicit reload 124ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a explicit outcome across collapse until an explicit reload 120ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a receipt outcome across collapse until an explicit reload 109ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a audit outcome across collapse until an explicit reload 126ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a scope outcome across collapse until an explicit reload 127ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a unchanged-field outcome across collapse until an explicit reload 121ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a changed-fields outcome across collapse until an explicit reload 117ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > requires a fresh read after a stale row refusal and never automatically repeats PATCH 89ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > withdraws editable private values after a current access refusal 75ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > blocks duplicate saves and settings Escape/close until the pending reply settles 98ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a account change 84ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a role change 69ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a organization change 65ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a workspace change 70ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a program-roundtrip change 79ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a token change 79ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > withholds a delayed GET after a token switch without another render 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > blocks a stale same-frame review click before any PATCH dispatch 38ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > preserves a pending save through ordinary same-account bearer refresh 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio 588ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage 362ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 50ms
+
+ Test Files  2 passed (2)
+      Tests  39 passed (39)
+   Start at  20:28:36
+   Duration  15.50s (transform 4.02s, setup 1.15s, import 4.70s, tests 7.00s, environment 1.69s)

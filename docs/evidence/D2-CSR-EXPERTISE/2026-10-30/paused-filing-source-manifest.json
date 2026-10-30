@@ -1,0 +1,37 @@
+{
+  "status": "In progress; preserved for subsequent filing completion. No shipped source/test was removed.",
+  "sourceHead": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "files": {
+    "server/services/company-documents/__tests__/authoring-presentation-rendering.test.ts": {
+      "snapshot": "paused/server/services/company-documents/__tests__/authoring-presentation-rendering.test.ts.gz",
+      "sha256": "fde946d7b2ac41de70f69bc454afde7211ae9c4a2dbd3ab35858ae1b6ed308d8",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    },
+    "server/services/company-documents/authoring-presentation.ts": {
+      "snapshot": "paused/server/services/company-documents/authoring-presentation.ts.gz",
+      "sha256": "fe85f9f63482c6af48da97609f60f8fd556fe3336e2898d7e22799de33c975a3",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    },
+    "shared/authoring/company-presentation.ts": {
+      "snapshot": "paused/shared/authoring/company-presentation.ts.gz",
+      "sha256": "a110af36411779edcd929c043f5fb90b29becb0c80f66aa9f8a35bab4578b0a5",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    },
+    "server/services/ind/ctd/__tests__/specialty-lifecycle-biologics.test.ts": {
+      "snapshot": "paused/server/services/ind/ctd/__tests__/specialty-lifecycle-biologics.test.ts.gz",
+      "sha256": "ac6e4bd0795eec0d6538baef3c3bf113c92a8359f15e0b1eaea0307a78ba9767",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    },
+    "server/services/ind/ctd/__tests__/specialty-lifecycle-meetings-access-eua.test.ts": {
+      "snapshot": "paused/server/services/ind/ctd/__tests__/specialty-lifecycle-meetings-access-eua.test.ts.gz",
+      "sha256": "ecdee22309137bc5b37ee5ea43e19984afac100913b5774197be7725900f10f0",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    },
+    "server/services/regulatory/registry/__tests__/us-biotech-completion-blueprints.test.ts": {
+      "snapshot": "paused/server/services/regulatory/registry/__tests__/us-biotech-completion-blueprints.test.ts.gz",
+      "sha256": "1549196d12e57dcda9838ef714d42c0ce3d2a22030203bcc70bc3034bd0da0a8",
+      "reason": "Unintegrated paused filing/template source or intentional RED test; retained exactly for continuation, not a completed capability."
+    }
+  },
+  "trackedProjectTest": "Exact earlier modified bytes and patch are retained in paused-project-tests.tsx.gz / paused-project-tests.patch.gz; the canonical shipped test is active."
+}

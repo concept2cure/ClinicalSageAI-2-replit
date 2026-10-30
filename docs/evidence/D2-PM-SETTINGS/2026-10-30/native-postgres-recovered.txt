@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-30T16:25:10.940Z","pid":3590,"hostname":"b6fa308a46b2","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T16:25:10.941Z","pid":3590,"hostname":"b6fa308a46b2","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T16:25:10.941Z","pid":3590,"hostname":"b6fa308a46b2","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > commits exact reviewed fields and their chained reason/before-after audit together, preserving actuals and approved work 272ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > persists deliberate clearing and refuses a semantic no-op without a second audit 192ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > serializes two real editors into one save and one stale refusal without a lock-upgrade deadlock 186ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > rolls profile changes back if the actual chained-audit insert fails 197ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > reports unknown after a real committed save loses its acknowledgement and discards once 223ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > does not claim absence when rollback acknowledgement is lost 224ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > uses current persisted role and active membership rather than the stale administrator request claim 166ms
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > retains private/cross-organization admission and refuses a contradictory workspace claim 123ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  16:25:09
+   Duration  6.64s (transform 2.44s, setup 71ms, import 212ms, tests 6.08s, environment 0ms)

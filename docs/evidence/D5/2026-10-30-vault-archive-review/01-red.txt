@@ -1,0 +1,9 @@
+Base: 47ce1d3d9, before archive review source edits. Added controls; actual disposable PostgreSQL16, app_service, RLS_ENFORCE=on.
+
+Database: 11 failed, 17 passed (28). All six original folder-export cases pass. Six added folder controls fail for actor/IP disclosure, missing projection description, absent per-document events, retained-folder Unfiled rows exported, absent route build guard, and no per-document audit rollback. Extended seal viewer and seal guard controls fail. Three additional pre-existing seal cleanup assertions observed two leftover staging directories; these are reported separately, not counted as new-feature controls. db-original-red.txt.gz retains the full output.
+
+Planner: 3 failed. Retained-folder Unfiled row exported; a planned row absent from the next query silently omitted; all-Unfiled selection treated as nonempty. planner-original-red.txt.gz.
+
+Shared extract: 4 failed, 1 passed. Default/false access leaks named actors/IPs; missing account-reference human fallback and System-IP omission fail. Explicit true preserves the original history and already passes. projection-original-red.txt.gz.
+
+Delivery module: import fails because the shared module did not yet exist; this proves reachability only. Behavioral negative controls for the closed-response and admission rules are separately demonstrated by the in-memory mutations, not inferred from the import failure.

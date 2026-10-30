@@ -20,6 +20,25 @@ import { readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
+/** Test-controlled pause after the real ZIP is finished; all production work remains real. */
+const archiveAccessRace = vi.hoisted(() => ({
+  afterFinish: undefined as (() => Promise<void>) | undefined,
+  afterAudit: undefined as (() => Promise<void>) | undefined,
+}));
+vi.mock('../../server/services/vault/vault-archive-builder', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../server/services/vault/vault-archive-builder')>();
+  return { ...real, openVaultArchive: async (...args: Parameters<typeof real.openVaultArchive>) => {
+    const stage = await real.openVaultArchive(...args);
+    return { ...stage, finish: async (...params: Parameters<typeof stage.finish>) => {
+      const built = await stage.finish(...params);
+      const change = archiveAccessRace.afterFinish;
+      archiveAccessRace.afterFinish = undefined;
+      await change?.();
+      return built;
+    } };
+  } };
+});
+
 /* The chained writer, real unless a case asks the next archive row to fail. */
 const failArchiveAudit = vi.hoisted(() => ({ on: false }));
 vi.mock('../../server/services/auditService', async (importOriginal) => {
@@ -31,7 +50,13 @@ vi.mock('../../server/services/auditService', async (importOriginal) => {
         failArchiveAudit.on = false;
         throw new Error('injected audit write failure');
       }
-      return real.writeChainedAuditRow(...args);
+      const written = await real.writeChainedAuditRow(...args);
+      if (args[1]?.action === 'vault.data_room.archive') {
+        const change = archiveAccessRace.afterAudit;
+        archiveAccessRace.afterAudit = undefined;
+        await change?.();
+      }
+      return written;
     },
   };
 });
@@ -162,6 +187,54 @@ afterAll(async () => {
   finally { await owner?.end(); }
 });
 
+/** A change to the synthetic private project's only viewer grant, restored by each case. */
+async function removeViewerGrant(): Promise<() => Promise<void>> {
+  const removed = (await owner.query(`DELETE FROM project_members
+    WHERE organization_id=$1 AND user_id=$2 RETURNING project_id,organization_id,user_id,role,status,invited_by_id`,
+  [mine.orgId, viewer.userId])).rows;
+  expect(removed).toHaveLength(1);
+  return async () => {
+    for (const row of removed) await owner.query(`INSERT INTO project_members
+      (project_id,organization_id,user_id,role,status,invited_by_id) VALUES($1,$2,$3,$4,$5,$6)`,
+    [row.project_id,row.organization_id,row.user_id,row.role,row.status,row.invited_by_id]);
+  };
+}
+
+async function demoteSigner(): Promise<() => Promise<void>> {
+  await owner.query("UPDATE organization_users SET role='viewer' WHERE organization_id=$1 AND user_id=$2", [mine.orgId, signer.userId]);
+  return async () => { await owner.query("UPDATE organization_users SET role='admin' WHERE organization_id=$1 AND user_id=$2", [mine.orgId, signer.userId]); };
+}
+
+const disclosureRows = async () => (await owner.query(`SELECT id FROM audit_logs
+  WHERE tenant_id=$1 AND action=ANY($2::text[])`, [mine.orgId, ['vault.data_room.archive', 'vault.document.exported']])).rows;
+
+/** Observe both aggregate/per-document refusal and the existing cleanup/admission owners. */
+async function expectChangedAccessRefusal(input: {
+  actor: Actor; change: () => Promise<() => Promise<void>>; status: number; error: string;
+  phase?: 'afterFinish' | 'afterAudit';
+}) {
+  const before = (await disclosureRows()).length;
+  let restore: (() => Promise<void>) | undefined;
+  const phase = input.phase ?? 'afterFinish';
+  archiveAccessRace[phase] = async () => { restore = await input.change(); };
+  try {
+    const res = await archive(mine, sealId, input.actor);
+    expect(restore, 'the change ran after the real ZIP was built').toBeTypeOf('function');
+    expect(res.status).toBe(input.status);
+    expect(JSON.parse(Buffer.isBuffer(res.body) ? res.body.toString('utf8') : JSON.stringify(res.body)).error).toBe(input.error);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.headers['x-content-sha256']).toBeUndefined();
+    expect((await disclosureRows()).length).toBe(before);
+    await vi.waitFor(() => expect(leftovers()).toEqual([]));
+    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
+    const release = beginArchiveBuild(mine.orgId, input.actor.userId);
+    try { expect(release).toBeTypeOf('function'); } finally { release?.(); }
+  } finally {
+    archiveAccessRace[phase] = undefined;
+    await restore?.();
+  }
+}
+
 let sealId = '';
 
 describe('sealing a Vault (VR-19)', () => {
@@ -287,8 +360,56 @@ describe("a seal's closing archive (VR-20)", () => {
     expect((await archiveRows(sealId)).length).toBe(before);
   });
 
-  it('a viewer the project admits may download it', async () => {
-    expect((await archive(mine, sealId, viewer)).status).toBe(200);
+  it('a viewer may download it with audit account references and each document export recorded', async () => {
+    const res = await archive(mine, sealId, viewer);
+    expect(res.status).toBe(200);
+    const zip = new AdmZip(res.body as Buffer);
+    const manifest = JSON.parse(zip.readAsText('manifest.json'));
+    const trail = JSON.parse(zip.readAsText('audit/audit-trail.json'));
+    expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+    expect(trail.entries.length).toBeGreaterThan(0);
+    for (const entry of trail.entries) {
+      expect(entry).not.toHaveProperty('ip');
+      expect(entry.actor).toBe(entry.actorRef ?? (entry.actor === 'System' ? 'System' : 'not named in this copy'));
+    }
+    expect(manifest.auditTrail.actorIdentity).toBe(trail.actorIdentity);
+    expect(zip.readAsText('INDEX.txt')).toContain(trail.actorIdentity);
+    const rows = (await owner.query(`SELECT record_id, new_values FROM audit_logs
+      WHERE tenant_id = $1 AND action = 'vault.document.exported' AND new_values->>'archiveSha256' = $2`,
+    [mine.orgId, sha256(res.body as Buffer)])).rows;
+    expect(rows).toHaveLength(manifest.files.length);
+    for (const file of manifest.files) expect(rows.find((r) => r.record_id === file.id)?.new_values)
+      .toMatchObject({ documentId: file.id, contentHash: file.sha256, archiveAction: 'vault.data_room.archive' });
+  });
+
+
+  it('refuses a finished closing archive after its viewer project grant was revoked', async () => {
+    await expectChangedAccessRefusal({ actor: viewer, change: removeViewerGrant, status: 404, error: 'PROJECT_NOT_FOUND' });
+  });
+
+  it('refuses a prepared named-actor closing archive after the current organization role changed', async () => {
+    await expectChangedAccessRefusal({ actor: signer, change: demoteSigner, status: 503, error: 'PROJECT_ACCESS_CHANGED' });
+  });
+
+  it('uses the current database role for closing-archive identities despite an old request admin role', async () => {
+    const restore = await demoteSigner();
+    try {
+      const res = await archive(mine, sealId, signer);
+      expect(res.status).toBe(200);
+      const trail = JSON.parse(new AdmZip(res.body as Buffer).readAsText('audit/audit-trail.json'));
+      expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+      expect(trail.entries.length).toBeGreaterThan(0);
+      for (const entry of trail.entries) { expect(entry).not.toHaveProperty('ip'); expect(entry.actor).toBe(entry.actorRef ?? 'System'); }
+    } finally { await restore(); }
+  });
+
+  it('shares the per-account build guard with folder exports and releases it afterwards', async () => {
+    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
+    const release = beginArchiveBuild(mine.orgId, signer.userId);
+    expect(release).toBeTypeOf('function');
+    try { expect((await archive(mine, sealId)).status).toBe(429); }
+    finally { release?.(); }
+    expect((await archive(mine, sealId)).status).toBe(200);
   });
 
   it('sends nothing when the archive cannot be recorded in the audit trail', async () => {

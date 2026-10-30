@@ -3,6 +3,8 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from '../surfaces/ProjectMdxWorkflow';
+import { clearNavParams, consumeNavParams } from '../navParams';
+import { DEVICE_DOORS } from '../projectDoors';
 import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '@shared/constants/mdx-project-features';
 
 const project: MdxWorkflowProject = {
@@ -12,9 +14,18 @@ const project: MdxWorkflowProject = {
 };
 const props = () => ({ project, otherFilings: [], marketsState: 'ready' as const,
   onNav: vi.fn(), onStage: vi.fn(), onAsk: vi.fn(), available: () => true });
-afterEach(cleanup);
+afterEach(() => { cleanup(); clearNavParams(); });
 
 describe('project MDX workflow', () => {
+  it('targets the existing risk panel for the same project when opening engineering work', () => {
+    const p = props();
+    render(<ProjectMdxWorkflow {...p} />);
+    const risk = screen.getByTestId('pj-mdx-workflow').querySelector('[data-work-package="risk-management"]')! as HTMLElement;
+    fireEvent.click(within(risk).getByRole('button', { name: DEVICE_DOORS.engineering }));
+    expect(p.onNav).toHaveBeenCalledWith('device-engineering');
+    expect(consumeNavParams('device-engineering')).toMatchObject({ engineeringPanel: 'risk', programId: project.id });
+  });
+
   it('keeps a US diagnostic on its recorded 510(k) route and adds the assay bench', () => {
     const plan = mdxProjectPlan({ ...project, product_type: 'ivd' })!;
     /* Named as Plan names a US IND's list (slice A.1: it read "510(k) · Diagnostic project workflow"). */

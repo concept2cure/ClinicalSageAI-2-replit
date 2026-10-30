@@ -33,7 +33,8 @@ const H = vi.hoisted(() => ({
   failFor: null as string | null,
 }));
 
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(), getAuthToken: () => 'test-token', getOrgId: () => '7' }));
 const programs = vi.hoisted(() => ({ programs: [] as Program[], loading: false, error: null as string | null, refresh: () => {} }));
 vi.mock('../hooks/useMdxPrograms', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../hooks/useMdxPrograms')>()),

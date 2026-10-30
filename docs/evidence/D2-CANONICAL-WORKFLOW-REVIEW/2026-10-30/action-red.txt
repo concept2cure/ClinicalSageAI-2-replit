@@ -1,0 +1,92 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps the newer personal selection after an older team filter finally receives readiness 10ms
+   → an old ready signal must not undo the newer personal scope: expected [ 'true', 'false' ] to deeply equal [ 'true' ]
+ × client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > reports replacement once and clears the old retry timer after a newer immediate success 2ms
+   → expected 1 to be +0 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler refused 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler throws 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps an independent queued view action when a filter on that same surface applies 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > leaves a queued action for another surface owned by that surface 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: false) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: true) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > retains the existing queued-to-queued replacement behavior 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves the deferred outcome when the caller retries the identical directive object 1ms
+ × client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves a newer action queued by the old replacement observer 3ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > returns the exact newer commit promise and detail while retiring its older retry 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps the newer personal selection after an older team filter finally receives readiness
+AssertionError: an old ready signal must not undo the newer personal scope: expected [ 'true', 'false' ] to deeply equal [ 'true' ]
+
+- Expected
++ Received
+
+  [
+    "true",
++   "false",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts:56:83
+     54|   notifySurfaceActionReady('tasks');
+     55|   notifySurfaceActionReady('tasks');
+     56|   expect(h.applied, 'an old ready signal must not undo the newer perso…
+       |                                                                                   ^
+     57|   expect(h.deferred).toHaveBeenCalledTimes(1);
+     58|   expect(h.deferred.mock.calls[0][0]).toMatchObject({ status: 'unavail…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > reports replacement once and clears the old retry timer after a newer immediate success
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts:67:30
+     65|   h.ready();
+     66|   expect(applySurfaceAction(filter('true'), h.navigate).status).toBe('…
+     67|   expect(vi.getTimerCount()).toBe(0);
+       |                              ^
+     68|   expect(h.deferred).toHaveBeenCalledTimes(1);
+     69|   vi.advanceTimersByTime(PENDING_ACTION_TTL_MS * 2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves a newer action queued by the old replacement observer
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts:215:23
+    213|   filterReady = true;
+    214|   expect(applySurfaceAction(filter('true'), vi.fn())).toEqual({ status…
+    215|   expect(oldDeferred).toHaveBeenCalledTimes(1);
+       |                       ^
+    216|   expect(oldDeferred.mock.calls[0][0]).toMatchObject({ status: 'unavai…
+    217|   expect(observerDeferred).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > returns the exact newer commit promise and detail while retiring its older retry
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts:245:23
+    243|   expect(outcome).toEqual({ status: 'applied', detail: 'My own work.',…
+    244|   expect(awaitCommit).toHaveBeenCalledTimes(1);
+    245|   expect(oldDeferred).toHaveBeenCalledTimes(1);
+       |                       ^
+    246|   expect(oldDeferred.mock.calls[0][0].status).toBe('unavailable');
+    247|   expect(vi.getTimerCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 passed (12)
+   Start at  16:16:11
+   Duration  613ms (transform 265ms, setup 78ms, import 246ms, tests 27ms, environment 0ms)
+

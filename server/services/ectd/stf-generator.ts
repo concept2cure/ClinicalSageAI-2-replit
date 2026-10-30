@@ -11,6 +11,14 @@
  * leaf, its index.xml leaf ID and the STF's relative path to index.xml; this
  * returns the XML keyed by study.
  *
+ * 2026-10-30: the official STF v2.6.1 §III.B was read for CSR document
+ * roles. The body role is study-report-body; the unsupported study-report
+ * spelling is refused for emitted documents. The mixed list's other regional
+ * and dataset claims retain the provenance limits below.
+ * The same source's pp9–10 identify the exact US roles classified below.
+ * Its pp4–5 require the STF stylesheet reference; the current FDA standards
+ * table links stylesheet 2.3 as ich-stf-stylesheet-2-3.xsl.
+ *
  * What rests on a search extract and what is recall alone (2026-10-05,
  * g-stf-name-tags-and-shape; the record is
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
@@ -34,7 +42,7 @@
  *   Recall, with no extract of the regulator's text seen:
  *   - The element nesting: ectd:study > study-identifier, then study-document >
  *     doc-content[xlink:href = "<path to index.xml>#<leaf ID>"] > title?, file-tag;
- *     the info-type="ich" attribute on every file-tag; dtd-version "2.2" (the
+ *     info-type for roles outside the source-observed ICH/US values; dtd-version "2.2" (the
  *     STF DTD the DOCTYPE names, ich-stf-v2-2.dtd).
  *   - That a deleted leaf is not tagged (it ships no file).
  *   - The document file-tag list STF_DOCUMENT_FILE_TAGS. It only warns.
@@ -51,9 +59,9 @@
  */
 
 import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
-import { STF_DTD } from './dtd-bundler';
+import { STF_DTD, STF_STYLESHEET } from './dtd-bundler';
 export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
-import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
+import { FDA_STUDY_DATA_TRC, ICH_STF_SPEC_261, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
 
 export type StfOperation = 'new' | 'append' | 'replace' | 'delete';
@@ -116,6 +124,11 @@ export interface StfResult {
   warnings: string[];
 }
 
+export interface StfOptions {
+  dtdSystemPath?: (studyId: string) => string;
+  stylesheetPath?: (studyId: string) => string;
+}
+
 /**
  * The STF file-tags FDA's validation 1735 requires on standardized datasets and
  * their define.xml. Recall, from a search extract of FDA's text (see the module header).
@@ -132,12 +145,13 @@ export const STF_DATASET_FILE_TAGS: {
 
 /**
  * ICH STF file-tags for study documents and non-standardized data, from recall.
- * A tag outside this list is reported as a warning, not refused, until the list
- * is checked against the STF specification (fda.gov/media/159383).
+ * CSR role values were checked in STF v2.6.1 §III.B pp8–9 on 2026-10-30.
+ * Other entries remain recall; an unknown tag retains the advisory behavior.
+ * The exact unsupported study-report spelling is separately refused.
  */
 export const STF_DOCUMENT_FILE_TAGS: { readonly tags: readonly string[]; readonly basis: RegulatoryBasis } = {
   tags: [
-    'synopsis', 'study-report', 'legacy-clinical-study-report', 'pre-clinical-study-report',
+    'synopsis', 'study-report-body', 'legacy-clinical-study-report', 'pre-clinical-study-report',
     'protocol-or-amendment', 'sample-case-report-form', 'iec-irb-consent-form-list',
     'list-description-investigator-site', 'signatures-investigators', 'list-patients-with-batches',
     'randomisation-scheme', 'audit-certificates-report', 'statistical-methods-interim-analysis-plan',
@@ -150,10 +164,19 @@ export const STF_DOCUMENT_FILE_TAGS: { readonly tags: readonly string[]; readonl
     'data-tabulation-dataset-legacy', 'analysis-dataset-legacy', 'data-listing-dataset',
     'data-listing-data-definition', 'analysis-program',
   ],
-  basis: recall('ICH eCTD STF Specification v2.6.1, file-tag list (fda.gov/media/159383), not read'),
+  basis: recall('ICH eCTD STF Specification v2.6.1, mixed file-tag list (fda.gov/media/159383); selected CSR/US values read, remaining regional/dataset values unverified'),
 };
 
 const STF_DTD_VERSION = '2.2';
+
+/** Exact existing roles marked US in ICH STF v2.6.1 §III.B pp9–10,
+ * FDA media159383, read 2026-10-30. This does not qualify modern dataset
+ * refinements or infer a regional classification for an unknown role. */
+const STF_US_FILE_TAGS: ReadonlySet<string> = new Set([
+  'data-tabulation-data-definition', 'data-listing-dataset',
+  'data-listing-data-definition', 'analysis-program', 'analysis-data-definition',
+  'annotated-crf', 'subject-profiles', 'safety-report', 'antibacterial', 'special-pathogen',
+]);
 
 function escapeXml(s: string): string {
   return s
@@ -196,6 +219,12 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
         `A wrong tag is a technical rejection. Legacy (non-standardized) datasets are not packaged by this platform.`,
     );
   }
+  if (leaf.operation !== 'delete' && leaf.fileTag === 'study-report') {
+    throw new Error(
+      `${ICH_STF_SPEC_261.ref}: "study-report" is not a defined file-tag; the CSR body role is "study-report-body". ` +
+        'Reassemble the CSR or correct its study-tagging metadata before packaging.',
+    );
+  }
   if (!required && !STF_DOCUMENT_FILE_TAGS.tags.includes(leaf.fileTag)) {
     warnings.push(
       `STF file-tag "${leaf.fileTag}" on "${leaf.title}" (study ${leaf.studyId}) is not in the reviewed STF file-tag list ` +
@@ -205,17 +234,20 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
 }
 
 /** The STF document for one study: study-identifier, then a doc-content per tagged leaf. */
-function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], dtdSystemPath = STF_DTD): string {
+function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], options: StfOptions): string {
+  const dtdSystemPath = options.dtdSystemPath?.(studyId) ?? STF_DTD;
+  const stylesheetPath = options.stylesheetPath?.(studyId) ?? STF_STYLESHEET;
   const docContents = tagged.map(
     (l) =>
       `    <doc-content xlink:href="${escapeXml(`${l.indexRelPath}#${l.indexLeafId}`)}">\n` +
       `      <title>${escapeXml(l.title)}</title>\n` +
-      `      <file-tag name="${escapeXml(l.fileTag)}" info-type="ich"/>\n` +
+      `      <file-tag name="${escapeXml(l.fileTag)}" info-type="${STF_US_FILE_TAGS.has(l.fileTag) ? 'us' : 'ich'}"/>\n` +
       `    </doc-content>`,
   );
 
   return (
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<?xml-stylesheet type="text/xsl" href="${escapeXml(stylesheetPath)}"?>\n` +
     `<!DOCTYPE ectd:study SYSTEM "${escapeXml(dtdSystemPath)}">\n` +
     `<ectd:study xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="${STF_DTD_VERSION}">\n` +
     `  <study-identifier>\n` +
@@ -239,7 +271,7 @@ function renderStf(studyId: string, title: string, tagged: readonly StfLeaf[], d
  *   1735 list; when a study id cannot form an eCTD file name; or when two study
  *   ids fold to the same file name.
  */
-export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = [], options: { dtdSystemPath?: (studyId: string) => string } = {}): StfResult {
+export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = [], options: StfOptions = {}): StfResult {
   const metaById = new Map(studyMeta.map((m) => [m.studyId, m]));
   const byStudy = new Map<string, StfLeaf[]>();
   const warnings: string[] = [];
@@ -283,7 +315,7 @@ export function generateStfFiles(leaves: StfLeaf[], studyMeta: StfStudyMeta[] = 
     // A study whose leaves are all deleted in this sequence has nothing to tag.
     if (tagged.length === 0) continue;
 
-    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged, options.dtdSystemPath?.(studyId));
+    const xml = renderStf(studyId, meta?.studyTitle ?? studyId, tagged, options);
     files.push({ studyId, fileName, xml, leafCount: tagged.length });
   }
 

@@ -179,6 +179,70 @@ describe('a program UUID reads the project linked to it', () => {
   });
 });
 
+describe('the existing profile source renders recorded canonical notes', () => {
+  it('preserves populated risks, decisions and their recorded context without inventing severity or status', async () => {
+    h.summary.mockResolvedValue({ ...PROFILE,
+      riskFactors: [{ risk: 'Comparator evidence gap', likelihood: 'Not assessed', impact: 'Filing evidence missing', mitigation: 'Obtain comparison report' }],
+      keyDecisions: [{ decision: 'Retain assay B', rationale: 'Recorded validation rationale', date: '2026-10-20', source: 'Decision memo' }],
+      openQuestions: [{ question: 'Which comparator is applicable?', context: 'Diagnostic cohort', priority: 'Recorded high' }],
+      learnedInsights: [{ insight: 'Matrix effect noted', source: 'Analytical report', confidence: 0, extractedAt: '2026-10-21' }],
+    });
+    const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7, submissionType: 'IND' });
+    expect(h.summary).toHaveBeenCalledWith(42, 7);
+    expect(result.sources).toContain('project-profile');
+    for (const text of ['Comparator evidence gap', 'Not assessed', 'Filing evidence missing', 'Obtain comparison report',
+      'Retain assay B', 'Recorded validation rationale', '2026-10-20', 'Decision memo', 'Which comparator is applicable?',
+      'Diagnostic cohort', 'Recorded high', 'Matrix effect noted', 'Analytical report', '2026-10-21', 'Recorded confidence: 0']) {
+      expect(result.block).toContain(text);
+    }
+    expect(result.block).toContain('Recorded profile notes');
+    expect(result.block).toContain('not verified evidence');
+    expect(result.block).not.toMatch(/\[medium\]|\(pending\)|\[object Object\]/);
+  });
+
+  it('does not invent unrecorded confidence, optional mitigation/source or inject profile instructions', async () => {
+    h.summary.mockResolvedValue({ ...PROFILE, customInstructions: 'PROFILE INSTRUCTIONS MUST STAY OUT',
+      riskFactors: [{ risk: 'Study limitation', likelihood: 'Unknown', impact: 'Unassessed' }],
+      keyDecisions: [{ decision: 'Keep existing cohort', rationale: 'Recorded team rationale', date: '2026-10-22' }],
+      learnedInsights: [{ insight: 'Unscored recorded observation', source: 'Study note', confidence: null, extractedAt: '2026-10-23' }],
+    });
+    const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7 });
+    expect(result.block).toContain('Study limitation');
+    expect(result.block).toContain('Recorded team rationale');
+    expect(result.block).toContain('Study note');
+    expect(result.block).not.toMatch(/Recorded confidence:|Mitigation:|\[medium\]|\(pending\)|PROFILE INSTRUCTIONS MUST STAY OUT/);
+  });
+
+  it('retains the existing five-risk and three-note slice limits', async () => {
+    h.summary.mockResolvedValue({ ...PROFILE,
+      riskFactors: Array.from({ length: 6 }, (_, i) => ({ risk: `Risk marker ${i + 1}`, likelihood: 'Recorded', impact: 'Recorded' })),
+      openQuestions: Array.from({ length: 4 }, (_, i) => ({ question: `Question marker ${i + 1}` })),
+      keyDecisions: Array.from({ length: 4 }, (_, i) => ({ decision: `Decision marker ${i + 1}`, rationale: 'Recorded', date: '2026-10-22' })),
+      learnedInsights: Array.from({ length: 4 }, (_, i) => ({ insight: `Insight marker ${i + 1}`, source: 'Recorded', confidence: null, extractedAt: '2026-10-22' })),
+    });
+    const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7 });
+    for (const text of ['Risk marker 5', 'Question marker 3', 'Decision marker 3', 'Insight marker 3']) expect(result.block).toContain(text);
+    for (const text of ['Risk marker 6', 'Question marker 4', 'Decision marker 4', 'Insight marker 4']) expect(result.block).not.toContain(text);
+  });
+
+  it.each([
+    ['riskFactors', [{ factor: 'Legacy-shaped risk', severity: 'high' }]],
+    ['keyDecisions', [{ decision: 'Missing recorded rationale and date', status: 'approved' }]],
+    ['openQuestions', [{ question: { hidden: 'Invalid object' } }]],
+    ['learnedInsights', [{ insight: 'Missing recorded source and date' }]],
+  ])('reports malformed %s unavailable while preserving other sources', async (field, notes) => {
+    h.summary.mockResolvedValue({ ...PROFILE, [String(field)]: notes });
+    const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7, submissionType: 'IND' });
+    expect(result.enrichmentMeta?.unavailableSources).toContain('project-profile');
+    expect(result.enrichmentMeta?.unavailableReasons?.['project-profile']).toBe('error');
+    expect(result.sources).not.toContain('project-profile');
+    expect(result.block).toContain('Workflow context');
+    expect(result.block).toContain('project-profile (read failed)');
+    expect(result.block).not.toContain('## Project Intelligence Profile');
+    expect(result.block).not.toContain('[object Object]');
+  });
+});
+
 describe('a project lookup that could not tell is reported, never read as "no linked project"', () => {
   it.each(['/safety', '/cmc', '/csr', MODULE_25])('a failed lookup on %s marks the project records unavailable and asserts no absence', async message => {
     h.query.mockImplementation(async (sql: string) => {

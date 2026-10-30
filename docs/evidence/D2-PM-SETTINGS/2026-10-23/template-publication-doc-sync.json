@@ -1,0 +1,23 @@
+{
+  "recordedAtUtc": "2026-10-23T20:51:50.534538+00:00",
+  "priorHead": "8192566736b7b524309712f12ed803a6aba8ae5d",
+  "incomingRemote": "1eca721b1081d1fe1ef2491b70b726cc0f083fad",
+  "mergedHead": "0f8a64e7c92e3c4b6a34ad66a6a57906e019a539",
+  "paths": [
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/README.md",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/artifact-manifest.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/implementation-push.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/implementation-push.log.gz",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/integration-commit.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/integration-commit.log.gz",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/publication-verification-fetch.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/publication-verification-fetch.log.gz",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/publication.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/qualification.json",
+    "docs/evidence/D2-ASSEMBLY-TEMPLATE-SEARCH/2026-10-23/source-git-verification.json",
+    "docs/work-orders/README.md"
+  ],
+  "runtimeChanges": 0,
+  "boundInputsUnchanged": 88,
+  "qualification": "Documentation-only publication receipts; exact running compiler and completed combined build/UI inputs preserved."
+}

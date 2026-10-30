@@ -1,0 +1,11 @@
+{
+  "scope": "Owned job/scope/evidence inputs and tests; disjoint expertise changes are not claimed frozen.",
+  "files": {
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "e68be92d6d36f5c3ac60cba9481046a6ef729b08c53b8bfe77c70ce8f2eaf6f0",
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "c486cfdc1b7b7d828d9e64d6ff76990cb5a0ecbfdc95c43338843d573f6f44a5",
+    "server/services/csr/project-scope.ts": "515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e",
+    "server/services/csr/csr-job-runner.ts": "5c14fa24abe739fc06acf0cf5b18e047a4c248715f2d7263549ac9c8cfdeda81",
+    "server/services/csr/cortex-authoring-reader.ts": "f7310492e99593e16525fad840eeab3d8abfe74281e97f629741a867553733cf",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  }
+}

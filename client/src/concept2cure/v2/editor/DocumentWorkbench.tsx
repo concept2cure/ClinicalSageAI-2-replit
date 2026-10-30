@@ -45,7 +45,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
@@ -1525,22 +1525,35 @@ export function DocumentWorkbench({
 
   // What the active section is drafted from, plus the project's Data Room for the
   // picker. Both are live reads; neither has a fixture fallback.
-  const [sources, setSources] = useState<SectionSource[]>([]);
-  const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const projectCatalogue = useProjectSourceCatalog(programId);
+  const projectSourceOwner: DataReadOwner = { key: writerContext,
+    current: () => currentWriterContext.current === writerContext && readSession.sameRevision() };
+  const documentSourceOwner: DataReadOwner = { key: readKey,
+    current: () => currentReadKey.current === readKey && readSession.sameRevision() };
+  const documentSourceVisit = useDataReadVisit(activeDocId, documentSourceOwner);
+  const readableSourceSectionId = sectionsCurrent
+    ? sections.find(section => section.id === activeSectionId && section.doc_id === activeDocId)?.id ?? null : null;
+  const sectionSourceVisit = useDataReadVisit(readableSourceSectionId, documentSourceOwner);
+  const [sourceRead, setSourceRead] = useState<{ visit: DataReadVisit | null;
+    rows: SectionSource[]; state: 'idle' | 'loading' | 'ready' | 'error' }>({ visit: null, rows: [], state: 'idle' });
+  const sourcesCurrent = sourceRead.visit === sectionSourceVisit.visit && sectionSourceVisit.current();
+  const sources = useMemo(() => sourcesCurrent ? sourceRead.rows : [], [sourcesCurrent, sourceRead.rows]);
+  const sourcesState = sourcesCurrent ? sourceRead.state : readableSourceSectionId ? 'loading' : 'idle';
+  const projectCatalogue = useProjectSourceCatalog(programId, projectSourceOwner);
   const { sources: projectSources, state: projectSourcesState, retry: loadProjectSources } = projectCatalogue;
-  const citationAdmission = useDocumentCitationAdmission(activeDocId, programId);
+  const citationAdmission = useDocumentCitationAdmission(activeDocId, programId, documentSourceOwner);
   const refreshCitationAdmission = citationAdmission.retry;
-  const citationScope = `${programId ?? ''}:${activeDocId ?? ''}:${activeSectionId ?? ''}`;
+  const citationScope = `${readKey}:${readableSourceSectionId ?? ''}`;
   const citationScopeRef = useRef(citationScope);
   citationScopeRef.current = citationScope;
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
    *  finding belongs. */
-  const [skippedRefreshes, setSkippedRefreshes] = useState<
-    Array<{ cite_id: string; reason: string }>
-  >([]);
+  const [sourceRefresh, setSourceRefresh] = useState<{ visit: DataReadVisit | null; busy: boolean;
+    skipped: Array<{ cite_id: string; reason: string }> }>({ visit: null, busy: false, skipped: [] });
+  const sourceRefreshCurrent = sourceRefresh.visit === documentSourceVisit.visit && documentSourceVisit.current();
+  const refreshingAll = sourceRefreshCurrent && sourceRefresh.busy;
+  const skippedRefreshes = useMemo(() => sourceRefreshCurrent ? sourceRefresh.skipped : [], [sourceRefreshCurrent, sourceRefresh.skipped]);
   const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
@@ -2006,7 +2019,7 @@ export function DocumentWorkbench({
       surface: 'document-authoring',
       documentId: activeDocId,
       documentTitle: activeDoc?.title ?? null,
-      sectionId: activeSectionId,
+      sectionId: readableSourceSectionId,
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
       sectionUpdatedAt: activeSection?.updated_at ?? null,
@@ -2034,7 +2047,7 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext, partialRead]);
+  }, [activeDocId, activeDoc?.title, readableSourceSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext, partialRead]);
   editorModuleContextRef.current = moduleContext;
   usePublishSurfaceContext('document-authoring', embedded ? null : {
     summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
@@ -2912,28 +2925,28 @@ export function DocumentWorkbench({
      an empty list: "we could not load what this section cites" and "this section
      cites nothing" are different facts, and on a regulated surface conflating
      them is the more dangerous mistake. */
-  const sourcesSectionRef = useRef<string | null>(null);
+  const sourcesGeneration = useRef(0);
   const loadSources = useCallback(async (sectionId: string) => {
-    /* Section-scoped like the other loaders: without the ref, fast section
+    /* Section-scoped like the other loaders: without the captured visit, fast section
        switching let §A's citation list resolve last and render as §B's
        "Drafted from" — with Re-read / Remove buttons that then posted §A's
        citation ids against §B — and fed the editor's citation picker the
        wrong section's library for the same window. */
-    sourcesSectionRef.current = sectionId;
-    setSourcesState('loading');
-    setSources([]);
+    if (sectionId !== readableSourceSectionId || !sectionSourceVisit.current() || !aliveRef.current) return;
+    const generation = ++sourcesGeneration.current;
+    const current = () => aliveRef.current && sectionSourceVisit.current() && sourcesGeneration.current === generation;
+    setSourceRead(previous => current() ? { visit: sectionSourceVisit.visit, state: 'loading', rows: [] } : previous);
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
-    if (sourcesSectionRef.current !== sectionId) return;
-    if (!ok || !body) {
-      setSourcesState('error');
-      setSources([]);
-      return;
-    }
-    setSources(Array.isArray(body.sources) ? body.sources : []);
-    setSourcesState('ready');
-  }, []);
+    if (!current()) return;
+    setSourceRead(previous => current() ? { visit: sectionSourceVisit.visit,
+      state: ok && body ? 'ready' : 'error', rows: ok && Array.isArray(body?.sources) ? body.sources : [] } : previous);
+    // The canonical visit, not its fresh render wrapper, owns this loader.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readableSourceSectionId, sectionSourceVisit.visit]);
+  const sourceLoaderRef = useRef({ sectionId: readableSourceSectionId, load: loadSources });
+  sourceLoaderRef.current = { sectionId: readableSourceSectionId, load: loadSources };
 
   /* ── Recompute the revision ledger server-side ──
      The server walks the section's revision chain oldest-first and recomputes
@@ -2967,13 +2980,14 @@ export function DocumentWorkbench({
        the editor's citation picker offers this library, and a writer citing a
        source mid-sentence should not have to open a rail first to make the
        list exist. The rail re-reads on open through the same callbacks. */
-    if (activeSectionId) {
-      void loadSources(activeSectionId);
+    if (readableSourceSectionId) {
+      void loadSources(readableSourceSectionId);
     }
   }, [
     rail,
     activeSectionId,
     activeDocId,
+    readableSourceSectionId,
     loadHistory,
     loadComments,
     loadAudit,
@@ -2982,10 +2996,10 @@ export function DocumentWorkbench({
 
   /* The catalogue supplies metadata, while exact recorded associations admit
      each section's references. Previous sections advance the same registry. */
-  const citationLibrary = useMemo<CitationSource[]>(() => admittedCitationSources(projectSources, citationAdmission.admissions, activeSectionId),
-    [projectSources, citationAdmission.admissions, activeSectionId]);
-  const precedingCitations = useMemo(() => admittedPrecedingSources(sections, activeSectionId, projectSources, citationAdmission.admissions),
-    [sections, activeSectionId, projectSources, citationAdmission.admissions]);
+  const citationLibrary = useMemo<CitationSource[]>(() => admittedCitationSources(projectSources, citationAdmission.admissions, readableSourceSectionId),
+    [projectSources, citationAdmission.admissions, readableSourceSectionId]);
+  const precedingCitations = useMemo(() => admittedPrecedingSources(sections, readableSourceSectionId, projectSources, citationAdmission.admissions),
+    [sections, readableSourceSectionId, projectSources, citationAdmission.admissions]);
   const citationChoices = useMemo(() => projectSources.filter(sourceCitationEligible).map(source => ({ id: String(source.id), title: source.title })), [projectSources]);
   const citationResolutionState = projectSourcesState === 'error' || citationAdmission.state === 'error' ? 'error'
     : projectSourcesState === 'loading' || citationAdmission.state === 'loading' ? 'loading' : 'ready';
@@ -3023,19 +3037,22 @@ export function DocumentWorkbench({
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
     async (sourceId: number) => {
-      if (!activeSectionId || citationResolutionState !== 'ready'
-        || !projectSources.some(source => source.id === sourceId && sourceCitationEligible(source))) return false;
       const scope = citationScope;
+      const current = () => aliveRef.current && sectionSourceVisit.current() && citationScopeRef.current === scope;
+      const eligible = () => citationResolutionState === 'ready'
+        && projectSources.some(source => source.id === sourceId && sourceCitationEligible(source));
+      if (!readableSourceSectionId || !current() || !eligible()) return false;
       try {
         const res = await apiRequest(
           'POST',
-          `/api/authoring/sections/${activeSectionId}/cite-source`,
+          `/api/authoring/sections/${readableSourceSectionId}/cite-source`,
           {
             source_id: sourceId,
           }
         );
+        if (!current()) return false;
         const json = await res.json().catch(() => null);
-        if (citationScopeRef.current !== scope) return false;
+        if (!current()) return false;
         if (!res.ok || !json || json.success !== true) {
           fireToast(
             'Couldn’t record the source — ' +
@@ -3051,19 +3068,19 @@ export function DocumentWorkbench({
             ? 'Source recorded — this section now cites it, with the source’s current checksum.'
             : 'This section already records the source; its original citation checksum is retained.'
         );
-        citationAdmission.admit(activeSectionId, sourceId);
-        setPicking(false);
+        citationAdmission.admit(readableSourceSectionId, sourceId);
+        setPicking(previous => current() ? false : previous);
         if (created) {
           // Same staleness as the comment count: the section row is the only
           // source of the rail button's number.
           setSections(ss =>
-            ss.map(s => (s.id === activeSectionId ? { ...s, citation_count: num(s.citation_count) + 1 } : s))
+            current() ? ss.map(s => (s.id === readableSourceSectionId ? { ...s, citation_count: num(s.citation_count) + 1 } : s)) : ss
           );
         }
-        void loadSources(activeSectionId);
+        void loadSources(readableSourceSectionId);
         return true;
       } catch (e) {
-        if (citationScopeRef.current !== scope) return false;
+        if (!current()) return false;
         fireToast(
           'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
@@ -3071,13 +3088,17 @@ export function DocumentWorkbench({
         return false;
       }
     },
-    [activeSectionId, citationScope, citationResolutionState, projectSources, citationAdmission, fireToast, loadSources]
+    // The captured canonical visit fences receipts; wrapper identity is not a callback trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [readableSourceSectionId, citationScope, sectionSourceVisit.visit, citationResolutionState, projectSources, citationAdmission, fireToast, loadSources]
   );
 
   /* ── Stop citing a source ── */
   const uncite = useCallback(
     async (sourceId: number) => {
-      if (!activeSectionId) return;
+      const scope = citationScope;
+      const current = () => aliveRef.current && sectionSourceVisit.current() && citationScopeRef.current === scope;
+      if (!readableSourceSectionId || !current()) return;
       /* apiRequest THROWS on the server's actual refusal (404 "a frozen
          citation is immutable") and RETURNS a 401. The old shape had no catch,
          so the real refusal was an unhandled rejection with no toast and a row
@@ -3086,28 +3107,33 @@ export function DocumentWorkbench({
       try {
         const res = await apiRequest(
           'DELETE',
-          `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+          `/api/authoring/sections/${readableSourceSectionId}/cite-source/${sourceId}`
         );
+        if (!current()) return;
         if (res.status === 401) {
           fireToast('Not removed — your session isn’t authenticated. Nothing was changed.', 'error');
           return;
         }
         if (!res.ok) {
           const json = await res.json().catch(() => null);
+          if (!current()) return;
           fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
           return;
         }
         citationAdmission.retry();
         fireToast('Citation removed.');
-        void loadSources(activeSectionId);
+        void loadSources(readableSourceSectionId);
       } catch (e) {
+        if (!current()) return;
         fireToast(
           'Couldn’t remove the citation — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
       }
     },
-    [activeSectionId, fireToast, loadSources, citationAdmission]
+    // Keep the original canonical visit through awaits and retained callbacks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [readableSourceSectionId, citationScope, sectionSourceVisit.visit, fireToast, loadSources, citationAdmission]
   );
 
   /* ── Re-read the source and record what it says now ──
@@ -3115,7 +3141,9 @@ export function DocumentWorkbench({
      A citation whose source is gone, or which is frozen, is refused with a reason. */
   const reresolve = useCallback(
     async (citationId: string) => {
-      if (!activeSectionId) return;
+      const scope = citationScope;
+      const current = () => aliveRef.current && sectionSourceVisit.current() && citationScopeRef.current === scope;
+      if (!readableSourceSectionId || !current()) return;
       /* The route refuses with a phrased reason (frozen citation, source no
          longer resolves) as a 404/409 — which apiRequest THROWS, and this
          handler had no catch: "Re-read source" was a silent no-op on exactly
@@ -3123,12 +3151,14 @@ export function DocumentWorkbench({
       try {
         const res = await apiRequest(
           'POST',
-          `/api/authoring/sections/${activeSectionId}/refresh-token`,
+          `/api/authoring/sections/${readableSourceSectionId}/refresh-token`,
           {
             cite_id: citationId,
           }
         );
+        if (!current()) return;
         const json = await res.json().catch(() => null);
+        if (!current()) return;
         if (res.status === 401) {
           fireToast('Not re-read — your session isn’t authenticated. Nothing was changed.', 'error');
           return;
@@ -3138,15 +3168,18 @@ export function DocumentWorkbench({
           return;
         }
         fireToast(serverMessage(json) ?? 'Source re-read.');
-        void loadSources(activeSectionId);
+        void loadSources(readableSourceSectionId);
       } catch (e) {
+        if (!current()) return;
         fireToast(
           'Couldn’t re-read the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
       }
     },
-    [activeSectionId, fireToast, loadSources]
+    // Keep the original canonical visit through awaits and retained callbacks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [readableSourceSectionId, citationScope, sectionSourceVisit.visit, fireToast, loadSources]
   );
 
   /* ── Re-read every source in the DOCUMENT ──
@@ -3160,18 +3193,22 @@ export function DocumentWorkbench({
      said. Collapsing `skipped` into the success count is the tempting summary
      and the dishonest one: a citation whose source no longer exists is exactly
      what the person about to file this needs to see. */
-  const [refreshingAll, setRefreshingAll] = useState(false);
   const refreshAllSources = useCallback(async () => {
-    if (!activeDocId) return;
-    setRefreshingAll(true);
+    const current = () => aliveRef.current && documentSourceVisit.current();
+    if (!activeDocId || !current()) return;
+    const visit = documentSourceVisit.visit;
+    setSourceRefresh(previous => current() ? { visit, busy: true,
+      skipped: previous.visit === visit ? previous.skipped : [] } : previous);
     try {
       const res = await apiRequest('POST', `/api/authoring/docs/${activeDocId}/refresh-all`, {});
+      if (!current()) return;
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         refreshed?: number;
         changed?: number;
         skipped?: Array<{ cite_id: string; reason: string }>;
       } | null;
+      if (!current()) return;
       if (!res.ok || json?.ok !== true) {
         fireToast(
           'Couldn’t re-read this document’s sources — ' +
@@ -3184,7 +3221,7 @@ export function DocumentWorkbench({
       const refreshed = typeof json.refreshed === 'number' ? json.refreshed : 0;
       const changed = typeof json.changed === 'number' ? json.changed : 0;
       const skipped = Array.isArray(json.skipped) ? json.skipped : [];
-      setSkippedRefreshes(skipped);
+      setSourceRefresh(previous => current() ? { visit, busy: true, skipped } : previous);
       /* A refresh that changed nothing is a real and useful outcome — it means
          the citations still say what they said. It is reported as that, not as
          a bare "done". */
@@ -3198,8 +3235,10 @@ export function DocumentWorkbench({
             : '.'),
         skipped.length > 0 ? 'error' : 'ok',
       );
-      if (activeSectionId) void loadSources(activeSectionId);
+      const currentSources = sourceLoaderRef.current;
+      if (currentSources.sectionId) void currentSources.load(currentSources.sectionId);
     } catch (e) {
+      if (!current()) return;
       fireToast(
         'Couldn’t re-read this document’s sources — ' +
           redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
@@ -3207,9 +3246,11 @@ export function DocumentWorkbench({
         'error',
       );
     } finally {
-      setRefreshingAll(false);
+      setSourceRefresh(previous => current() && previous.visit === visit ? { ...previous, busy: false } : previous);
     }
-  }, [activeDocId, activeSectionId, loadSources, fireToast]);
+    // A document receipt survives section changes, but never a retired document visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDocId, documentSourceVisit.visit, fireToast]);
 
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
@@ -5924,7 +5965,8 @@ export function DocumentWorkbench({
                   {skippedRefreshes.length === 1 ? '' : 's'} could not be re-read
                 </b>
                 <span style={{ flex: 1 }} />
-                <button className="nda-open" onClick={() => setSkippedRefreshes([])}>
+                <button className="nda-open" onClick={() => setSourceRefresh(previous =>
+                  documentSourceVisit.current() && previous.visit === documentSourceVisit.visit ? { ...previous, skipped: [] } : previous)}>
                   Dismiss
                 </button>
               </div>
@@ -6080,7 +6122,7 @@ export function DocumentWorkbench({
                             <button
                               className="nda-open"
                               onClick={() =>
-                                askAna(
+                                sectionSourceVisit.current() && askAna(
                                   `The source "${
                                     s.source?.title ?? 'this document'
                                   }" changed after section ${
@@ -6112,6 +6154,7 @@ export function DocumentWorkbench({
         <aside className="ed-comments" aria-label="Project files">
           <ProjectFilesPanel
             programId={programId}
+            readOwner={projectSourceOwner}
             programName={programName(program)}
             sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}

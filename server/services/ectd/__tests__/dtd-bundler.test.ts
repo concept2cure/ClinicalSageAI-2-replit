@@ -16,6 +16,7 @@ import {
   ICH_BACKBONE_STYLESHEET,
   requiredStylesheetsForRegion,
   listVendoredStylesheets,
+  hasPassedPackageDtdValidation,
   type DtdRegion,
 } from '../dtd-bundler';
 import { classifyRegionalBackbone } from '../regional-backbone-readiness';
@@ -202,6 +203,123 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
     expect(r.selfContained).toBe(false);
     expect(r.requiredStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
     expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
+  });
+});
+
+describe('STF stylesheet self-containment — current FDA stylesheet 2.3', () => {
+  // The current FDA standards page names this file; keep this oracle separate
+  // from the bundler's exported filename so a drift cannot bless itself.
+  const currentStfStylesheet = 'ich-stf-stylesheet-2-3.xsl';
+  const completeDtds = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd', 'ich-stf-v2-2.dtd'];
+  const backboneStylesheets = ['ectd-2-0.xsl', 'us-regional.xsl'];
+
+  it('requires the current STF stylesheet only when the package generates an STF', () => {
+    expect(requiredStylesheetsForRegion('fda', true)).toEqual([
+      'ectd-2-0.xsl', 'us-regional.xsl', currentStfStylesheet,
+    ]);
+    expect(requiredStylesheetsForRegion('ema', true)).toEqual(['ectd-2-0.xsl', currentStfStylesheet]);
+    expect(requiredStylesheetsForRegion('fda', false)).toEqual(backboneStylesheets);
+    expect(requiredStylesheetsForRegion('fda')).toEqual(backboneStylesheets);
+  });
+
+  it('refuses required production when the DTDs and backbone stylesheets exist but the STF stylesheet does not', () => {
+    const result = assessDtdReadiness({ region: 'fda', present: completeDtds,
+      presentStylesheets: backboneStylesheets, hasStudyTaggingFiles: true,
+      environment: 'production', requireDtd: true });
+    expect(result.missing).toEqual([]);
+    expect(result.missingStylesheets).toEqual([currentStfStylesheet]);
+    expect(result.selfContained).toBe(false);
+    expect(result.cleared).toBe(false);
+    expect(result.blockers.join(' ')).toContain(currentStfStylesheet);
+  });
+
+  it('clears the same STF-bearing package when the exact current stylesheet is present', () => {
+    const result = assessDtdReadiness({ region: 'fda', present: completeDtds,
+      presentStylesheets: [...backboneStylesheets, currentStfStylesheet], hasStudyTaggingFiles: true,
+      environment: 'production', requireDtd: true });
+    expect(result.requiredStylesheets).toEqual([...backboneStylesheets, currentStfStylesheet]);
+    expect(result.missingStylesheets).toEqual([]);
+    expect(result.selfContained).toBe(true);
+    expect(result.cleared).toBe(true);
+    expect(result.blockers).toEqual([]);
+  });
+
+  it.each(['ich-stf-stylesheet.xsl', 'ICH-STF-STYLESHEET-2-3.XSL'])(
+    'does not substitute the older sample filename or different case (%s)', filename => {
+      const result = assessDtdReadiness({ region: 'fda', present: completeDtds,
+        presentStylesheets: [...backboneStylesheets, filename], hasStudyTaggingFiles: true,
+        environment: 'production', requireDtd: true });
+      expect(result.missingStylesheets).toEqual([currentStfStylesheet]);
+      expect(result.cleared).toBe(false);
+    },
+  );
+
+  it.each([
+    { environment: 'staging' as const, requireDtd: true },
+    { environment: 'production' as const, requireDtd: false },
+  ])('retains the report-only posture while naming the missing STF stylesheet (%o)', posture => {
+    const result = assessDtdReadiness({ region: 'fda', present: completeDtds,
+      presentStylesheets: backboneStylesheets, hasStudyTaggingFiles: true, ...posture });
+    expect(result.missingStylesheets).toEqual([currentStfStylesheet]);
+    expect(result.selfContained).toBe(false);
+    expect(result.cleared).toBe(true);
+  });
+
+  it('keeps an otherwise complete non-STF package clear without the STF stylesheet', () => {
+    const result = assessDtdReadiness({ region: 'fda',
+      present: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'], presentStylesheets: backboneStylesheets,
+      hasStudyTaggingFiles: false, environment: 'production', requireDtd: true });
+    expect(result.requiredStylesheets).toEqual(backboneStylesheets);
+    expect(result.missingStylesheets).toEqual([]);
+    expect(result.selfContained).toBe(true);
+    expect(result.cleared).toBe(true);
+  });
+});
+
+describe('retained STF proof still needs the current mandatory supportive files', () => {
+  const stfPath = 'm5/5-3-5-1/study-1/stf-study-1.xml';
+
+  function completeStfProof() {
+    const proof = syntheticDtdStatus();
+    proof.required.push('ich-stf-v2-2.dtd');
+    proof.present.push('ich-stf-v2-2.dtd');
+    proof.requiredStylesheets.push('ich-stf-stylesheet-2-3.xsl');
+    proof.presentStylesheets.push('ich-stf-stylesheet-2-3.xsl');
+    proof.validation.integrity.verified.push('ich-stf-v2-2.dtd', 'ich-stf-stylesheet-2-3.xsl');
+    proof.validation.expectedFiles.push(stfPath);
+    proof.validation.files.push({ ...proof.validation.files[0], relPath: stfPath });
+    return proof;
+  }
+
+  it('refuses otherwise complete historical STF proof that omits the current stylesheet from its inventories', () => {
+    const proof = completeStfProof();
+    proof.requiredStylesheets = proof.requiredStylesheets.filter(name => name !== 'ich-stf-stylesheet-2-3.xsl');
+    proof.presentStylesheets = proof.presentStylesheets.filter(name => name !== 'ich-stf-stylesheet-2-3.xsl');
+    proof.validation.integrity.verified = proof.validation.integrity.verified.filter(name => name !== 'ich-stf-stylesheet-2-3.xsl');
+    expect(proof.validation.passed).toBe(true);
+    expect(proof.selfContained).toBe(true);
+    expect(hasPassedPackageDtdValidation(proof, 1)).toBe(false);
+  });
+
+  it('refuses otherwise complete STF proof that omits the STF DTD from its inventories', () => {
+    const proof = completeStfProof();
+    proof.required = proof.required.filter(name => name !== 'ich-stf-v2-2.dtd');
+    proof.present = proof.present.filter(name => name !== 'ich-stf-v2-2.dtd');
+    proof.validation.integrity.verified = proof.validation.integrity.verified.filter(name => name !== 'ich-stf-v2-2.dtd');
+    expect(proof.validation.passed).toBe(true);
+    expect(proof.selfContained).toBe(true);
+    expect(hasPassedPackageDtdValidation(proof, 1)).toBe(false);
+  });
+
+  it('accepts the complete STF proof with current DTD, stylesheet and exact file coverage', () => {
+    expect(hasPassedPackageDtdValidation(completeStfProof(), 1)).toBe(true);
+  });
+
+  it('keeps complete non-STF proof valid without adding unused STF supportive files', () => {
+    const proof = syntheticDtdStatus();
+    expect(proof.required).not.toContain('ich-stf-v2-2.dtd');
+    expect(proof.requiredStylesheets).not.toContain('ich-stf-stylesheet-2-3.xsl');
+    expect(hasPassedPackageDtdValidation(proof, 0)).toBe(true);
   });
 });
 

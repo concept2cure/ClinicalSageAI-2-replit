@@ -47,13 +47,16 @@ Renaming any file will break self-containment and gateway acceptance.
 | --- | --- | --- | --- | --- |
 | `ich-ectd-3-2.dtd` | ICH backbone (`index.xml`) | ICH eCTD v3.2.2 | `buildIndexXml` ⇒ `<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">` | ICH eCTD Specification (https://www.ich.org/page/ich-electronic-common-technical-document-ectd) |
 | `us-regional-v3-3.dtd` | FDA (`us-regional.xml`) | FDA US Regional DTD v3.3 (Module 1 Backbone Files Spec; verify mandated version before acquisition) | `buildFdaBackbone` ⇒ `<!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">` | FDA eCTD Technical Conformance Guide & specifications (https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd) |
+| `ich-stf-v2-2.dtd` | ICH STF, when STFs exist | DTD2.2 / specification2.6.1 | STF package-relative DOCTYPE | Current FDA production standards table / ICH STF related files |
+| `ich-stf-stylesheet-2-3.xsl` | ICH STF stylesheet, when STFs exist | Stylesheet2.3 | STF package-relative PI to `util/style/` | https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3.xsl |
 | `eu-regional.dtd` | EMA (`eu-regional.xml`) | EU Module 1 Specification v3.0.x | `buildEmaBackbone` ⇒ `<!DOCTYPE eu-regional SYSTEM "../../util/dtd/eu-regional.dtd">` | EMA / Heads of Medicines Agencies eSubmission portal (https://esubmission.ema.europa.eu/eumodule1/index.htm) |
 | `jp-regional.dtd` | PMDA (`jp-regional.xml`) | PMDA Notification PFSB/ELD No.0617001 (latest) | `buildPmdaBackbone` ⇒ `<!DOCTYPE jp-regional SYSTEM "../../util/dtd/jp-regional.dtd">` | PMDA eCTD page (https://www.pmda.go.jp/english/review-services/regulatory-info/0006.html) |
 | `ca-regional.dtd` | Health Canada (`ca-regional.xml`) | Health Canada Module 1 / Regional CTD (current) | `buildHcBackbone` ⇒ `<!DOCTYPE ca-regional SYSTEM "../../util/dtd/ca-regional.dtd">` | Health Canada eCTD guidance (https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/applications-submissions/guidance-documents/ectd.html) |
 | `ectd-2-0.xsl` | ICH stylesheet (`index.xml`) | ICH eCTD v3.2.2 stylesheet | `buildIndexXml` ⇒ `<?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>` | ICH eCTD Specification — same page as the DTD |
 | `us-regional.xsl` | FDA stylesheet (`us-regional.xml`) | FDA US Regional stylesheet (Module 1 Backbone Files Spec, current) | `buildFdaBackbone` ⇒ `<?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>` | FDA eCTD specifications page — same page as the DTD |
 
-> Only the FDA backbone emits a stylesheet processing instruction today, so only
+> Generated STFs also reference the current STF stylesheet; packages without STFs do not require it.
+> Only the FDA regional backbone emits a stylesheet processing instruction today, so only
 > FDA requires a regional stylesheet; the ICH stylesheet is required for every
 > region because every `index.xml` references it. Extend `REGIONAL_STYLESHEET`
 > in `dtd-bundler.ts` in the same change that adds a PI to another backbone.
@@ -168,3 +171,8 @@ assets/ectd-dtd/
 
 Everything in this directory is committed — the DTDs once acquired, with their
 checksums recorded in `checksums.txt`.
+
+
+## 2026-10-30 US source review
+
+The current FDA standards table still lists ICH DTD3.2, US regional DTD3.3 and STF DTD2.2. It lists STF stylesheet **2.3** at the versioned filename above, distinct from the 2008 specification’s generic example. Normal packaging now emits that PI and requires its captured bytes for STF packages. No official asset was acquired in this review and no checksum was invented. The exact unsigned source/notice review is in `docs/evidence/MR-10/2026-10-30-agency-qualification/ASSET_REVIEW.md`. Per-DTD counsel signoff and actual licensed-validator qualification remain prerequisites under the existing runbook.

@@ -1,0 +1,58 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/v2/dataConnect.tsx (728 lines)
+  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx (6674 lines)
+  client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx (563 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+✅ Pre-commit checks complete
+[concept2cure-v2 b5eaf1e34] Bind editor sources and file presentation to their readable visits
+ 51 files changed, 9756 insertions(+), 150 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/convergence-build-final.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/convergence-lint-gate-tests.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/convergence-qualification-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/convergence-regression-final.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/convergence-regression-tests.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/core-ci-observation.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/core-commit.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/core-publication-gates.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/core-publication.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-baseline-lint.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-red-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-session-red.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/final-source-hooks-files-pins.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/final-source-hooks-files-review.md
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/final-source-sha256.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/final-workbench-source-pins.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/final-workbench-source-review.md
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/membership-red-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/metadata-red-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/metadata-session-red.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/qualification-summary.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-red-corrected-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-red-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-session-red-corrected.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/receipts-session-red.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-build-final.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-convergence.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-fetch.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-hooks-files-green-first.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-lint-final.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-lint-first.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-qualification-inputs.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-regression-final.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-regression-tests.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-baseline-lint.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-files-green-first.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-files-lint-first.json
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-membership-red-executed.txt
+ create mode 100644 docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-membership-red.txt

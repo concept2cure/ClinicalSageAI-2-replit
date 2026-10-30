@@ -1,0 +1,35 @@
+[
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/useVaultUpload.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'uploadOne' has a complexity of 45. Maximum allowed is 15.",
+        "line": 172,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 172,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 32. Maximum allowed is 15.",
+        "line": 354,
+        "column": 101,
+        "messageId": "complex",
+        "endLine": 354,
+        "endColumn": 103
+      }
+    ]
+  }
+]
